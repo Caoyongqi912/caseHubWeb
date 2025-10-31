@@ -375,3 +375,11 @@ export const CONFIG: IObjGet = {
     3: '飞书',
   },
 };
+export const CaseContentType = {
+  API: 1,
+  GROUP: 2,
+  CONDITION: 3,
+  WAIT: 6,
+  SCRIPT: 4,
+  ASSERT: 8,
+};

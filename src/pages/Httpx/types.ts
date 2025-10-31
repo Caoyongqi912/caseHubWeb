@@ -46,6 +46,13 @@ export interface IInterfaceCaseContent {
   api_script_text?: string;
 }
 
+export interface IInterfaceCaseContentAssert {
+  id: number;
+  assert_key: string;
+  assert_option: number;
+  assert_value: string;
+}
+
 export interface IInterfaceCaseCondition {
   id: number;
   uid: string;

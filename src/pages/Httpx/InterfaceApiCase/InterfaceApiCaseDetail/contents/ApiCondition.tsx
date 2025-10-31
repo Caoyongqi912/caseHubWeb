@@ -12,7 +12,7 @@ import InterfaceCaseChoiceApiTable from '@/pages/Httpx/InterfaceApiCaseResult/In
 import { IInterfaceAPI, IInterfaceCaseContent } from '@/pages/Httpx/types';
 import { CONFIG } from '@/utils/config';
 import { queryData } from '@/utils/somefunc';
-import { SelectOutlined, UngroupOutlined } from '@ant-design/icons';
+import { SelectOutlined } from '@ant-design/icons';
 import {
   ActionType,
   DragSortTable,
@@ -196,12 +196,12 @@ const ApiCondition: FC<SelfProps> = ({
   ];
 
   const items: MenuProps['items'] = [
-    {
-      key: 'choice_group',
-      label: '选择公共组',
-      icon: <UngroupOutlined style={{ color: 'blue' }} />,
-      onClick: () => setChoiceGroupOpen(true),
-    },
+    // {
+    //   key: 'choice_group',
+    //   label: '选择公共组',
+    //   icon: <UngroupOutlined style={{ color: 'blue' }} />,
+    //   onClick: () => setChoiceGroupOpen(true),
+    // },
     {
       key: 'choice_common',
       label: '选择公共API',

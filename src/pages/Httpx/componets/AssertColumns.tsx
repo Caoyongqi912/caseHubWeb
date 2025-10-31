@@ -1,4 +1,5 @@
 import AceCodeEditor from '@/components/CodeEditor/AceCodeEditor';
+import { AssertEnum } from '@/pages/Httpx/componets/assertEnum';
 import { IAsserts } from '@/pages/Httpx/types';
 import { ProColumns } from '@ant-design/pro-table/lib/typing';
 import { Tag } from 'antd';
@@ -52,6 +53,7 @@ const AssertColumns: ProColumns<IAsserts>[] = [
     title: '断言方法',
     dataIndex: 'assert_opt',
     key: 'assert_opt',
+    valueEnum: AssertEnum,
     render: (text) => <Tag color={'blue'}>{text}</Tag>,
   },
   {

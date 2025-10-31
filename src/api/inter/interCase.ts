@@ -4,6 +4,7 @@ import {
   IInterfaceAPICase,
   IInterfaceCaseCondition,
   IInterfaceCaseContent,
+  IInterfaceCaseContentAssert,
   IInterfaceCaseResult,
   IInterfaceResultByCase,
   ITryResponseInfo,
@@ -231,6 +232,29 @@ export const queryContentsByCaseId = async (
   );
 };
 
+export const updateContentAssert = async (
+  data: IInterfaceCaseContentAssert,
+  opt?: IObjGet,
+) => {
+  return request<IResponse<IInterfaceCaseContentAssert>>(
+    '/api/interface/case/updateCaseContentAssert',
+    {
+      method: 'POST',
+      data,
+      ...(opt || {}),
+    },
+  );
+};
+export const detailContentAssert = async (data: number, opt?: IObjGet) => {
+  return request<IResponse<IInterfaceCaseContentAssert>>(
+    '/api/interface/case/getCaseContentAssert',
+    {
+      method: 'GET',
+      params: { assert_id: data },
+      ...(opt || {}),
+    },
+  );
+};
 /**
  * 获取条件 APIs
  * @param data

@@ -1,4 +1,5 @@
 import MyDrawer from '@/components/MyDrawer';
+import { AssertOption } from '@/pages/Httpx/componets/assertEnum';
 import { FormEditableOnValueChange } from '@/pages/Httpx/componets/FormEditableOnValueChange';
 import JsonPathTool from '@/pages/Httpx/componets/JsonPathTool';
 import { IInterfaceAPI } from '@/pages/Httpx/types';
@@ -24,32 +25,6 @@ import {
 import { FormInstance, Space, Tag, Tooltip } from 'antd';
 import { FC, useEffect, useState } from 'react';
 
-const AssertOpt = {
-  '==': {
-    text: '等于',
-  },
-  '!=': {
-    text: '不等',
-  },
-  '>': {
-    text: '大于',
-  },
-  '<': {
-    text: '小于',
-  },
-  '>=': {
-    text: '大于等于',
-  },
-  '<=': {
-    text: '小于等于',
-  },
-  in: {
-    text: '存在',
-  },
-  notIn: {
-    text: '不存在',
-  },
-};
 const AssertTarget = {
   status_code: {
     text: 'Response Status Code',
@@ -268,7 +243,7 @@ const InterAssertList: FC<ISelfProps> = ({ form, readonly = false }) => {
                         width="md"
                         allowClear={false}
                         name="assert_opt"
-                        valueEnum={AssertOpt}
+                        options={AssertOption}
                         disabled={editingIndex !== index} // 根据编辑状态禁用该项
                       />
                       <ProFormText

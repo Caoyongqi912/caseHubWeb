@@ -23,6 +23,7 @@ import { ModuleEnum } from '@/utils/config';
 import { fetchModulesEnum } from '@/utils/somefunc';
 import { useParams } from '@@/exports';
 import {
+  AimOutlined,
   AlignLeftOutlined,
   ArrowRightOutlined,
   BranchesOutlined,
@@ -300,6 +301,22 @@ const Index = () => {
                       const { code } = await addCaseContent({
                         case_id: parseInt(caseApiId),
                         content_type: 4,
+                      });
+                      if (code === 0) {
+                        await refresh();
+                      }
+                    }
+                  },
+                },
+                {
+                  key: 'add_assert',
+                  label: '添加断言',
+                  icon: <AimOutlined style={{ color: 'orange' }} />,
+                  onClick: async () => {
+                    if (caseApiId) {
+                      const { code } = await addCaseContent({
+                        case_id: parseInt(caseApiId),
+                        content_type: 8,
                       });
                       if (code === 0) {
                         await refresh();
