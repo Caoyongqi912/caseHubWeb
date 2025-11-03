@@ -1,11 +1,7 @@
-import {
-  handleAddTestCaseStep,
-  queryTestCaseSupStep,
-} from '@/api/case/testCase';
+import { queryTestCaseSupStep } from '@/api/case/testCase';
 import { CaseHubConfig } from '@/pages/CaseHub/CaseConfig';
 import CaseSubSteps from '@/pages/CaseHub/TestCase/CaseSubSteps';
 import { CaseSubStep, ITestCase } from '@/pages/CaseHub/type';
-import { PlusOutlined } from '@ant-design/icons';
 import {
   ProCard,
   ProForm,
@@ -20,7 +16,7 @@ interface Props {
   callback: () => void;
 }
 
-const TestCaseDetail: FC<Props> = ({ testcase, callback }) => {
+const TestCaseDetail: FC<Props> = ({ testcase }) => {
   const [caseForm] = Form.useForm<ITestCase>();
 
   const [testCaseSteps, setTestCaseSteps] = useState<CaseSubStep[]>([]);
@@ -30,21 +26,12 @@ const TestCaseDetail: FC<Props> = ({ testcase, callback }) => {
   const reload = () => {
     setEditStatus(editStatus + 1);
   };
-  const addSubStepLine = () => {
-    if (testcase?.id) {
-      handleAddTestCaseStep({ caseId: testcase!.id }).then(async ({ code }) => {
-        if (code === 0) {
-          reload();
-        }
-      });
-    }
-  };
 
   useEffect(() => {
     if (testcase) {
       caseForm.setFieldsValue(testcase);
       queryTestCaseSupStep(testcase.id!.toString()).then(
-        async ({ code, data, msg }) => {
+        async ({ code, data }) => {
           if (code === 0) {
             setTestCaseSteps(data);
           }
@@ -55,8 +42,6 @@ const TestCaseDetail: FC<Props> = ({ testcase, callback }) => {
 
   const submit = async () => {
     const values = await caseForm.validateFields();
-    console.log(values);
-    console.log(testCaseSteps);
   };
   return (
     <ProCard extra={<Button onClick={submit}>保存</Button>}>
@@ -90,21 +75,12 @@ const TestCaseDetail: FC<Props> = ({ testcase, callback }) => {
             />
           </ProForm.Group>
         </ProCard>
-        <ProCard
-          actions={
-            <Button onClick={addSubStepLine} type={'link'}>
-              <PlusOutlined />
-              步骤
-            </Button>
-          }
-          bodyStyle={{ padding: 0 }}
-        >
+        <ProCard>
           <CaseSubSteps
             caseId={testcase?.id}
-            caseSubStepDataSource={testCaseSteps}
-            callback={reload}
             hiddenStatusBut={true}
-            setCaseSubStepDataSource={setTestCaseSteps}
+            callback={reload}
+            case_status={testcase?.case_status}
           />
         </ProCard>
       </ProForm>

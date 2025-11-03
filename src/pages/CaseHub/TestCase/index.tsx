@@ -1,7 +1,5 @@
 import {
   copyTestCase,
-  handleAddTestCaseStep,
-  queryTestCaseSupStep,
   removeTestCase,
   saveTestCase,
   updateTestCase,
@@ -13,15 +11,12 @@ import CaseTagSelect from '@/pages/CaseHub/component/CaseTagSelect';
 import CaseTypeSelect from '@/pages/CaseHub/component/CaseTypeSelect';
 import CaseSubSteps from '@/pages/CaseHub/TestCase/CaseSubSteps';
 import DynamicInfo from '@/pages/CaseHub/TestCase/DynamicInfo';
-import { CaseSubStep, ITestCase } from '@/pages/CaseHub/type';
+import { ITestCase } from '@/pages/CaseHub/type';
 import {
   CopyOutlined,
   DeleteOutlined,
-  DownOutlined,
   MessageOutlined,
   MoreOutlined,
-  PlusOutlined,
-  RightOutlined,
 } from '@ant-design/icons';
 import { ProCard, ProForm, ProFormText } from '@ant-design/pro-components';
 import {
@@ -34,11 +29,8 @@ import {
   message,
   Space,
   Tag,
-  Typography,
 } from 'antd';
 import React, { FC, useEffect, useState } from 'react';
-
-const { Text } = Typography;
 
 interface Props {
   top: any;
@@ -67,31 +59,17 @@ const Index: FC<Props> = (props) => {
   } = props;
   let timeout: NodeJS.Timeout | null = null;
   const [form] = Form.useForm<ITestCase>();
-  const [collapsible, setCollapsible] = useState<boolean>(true);
-  const [caseSubStepDataSource, setCaseSubStepDataSource] = useState<
-    CaseSubStep[]
-  >([]);
   const [openDynamic, setOpenDynamic] = useState(false);
   const { CASE_STATUS_TEXT_ENUM, CASE_STATUS_COLOR_ENUM } = CaseHubConfig;
   const [status, setStatus] = useState(0);
+  const [openCaseSteps, setOpenCaseSteps] = useState(false);
+
   useEffect(() => {
     if (testcaseData) {
       form.setFieldsValue(testcaseData);
     }
   }, [testcaseData]);
-  useEffect(() => {
-    if (!collapsible) {
-      if (testcaseData?.id) {
-        queryTestCaseSupStep(testcaseData.id.toString()).then(
-          async ({ code, data, msg }) => {
-            if (code === 0) {
-              setCaseSubStepDataSource(data);
-            }
-          },
-        );
-      }
-    }
-  }, [collapsible, status]);
+
   useEffect(() => {
     if (selectedCase) {
       console.log(selectedCase);
@@ -131,18 +109,6 @@ const Index: FC<Props> = (props) => {
             }
           }}
         />
-        <div
-          style={{
-            marginRight: 8,
-            cursor: 'pointer',
-            flexShrink: 0,
-            display: 'flex',
-            alignItems: 'center',
-          }}
-          onClick={() => setCollapsible(!collapsible)}
-        >
-          {collapsible ? <RightOutlined /> : <DownOutlined />}
-        </div>
       </Space>
 
       <Space size={'small'} style={{ marginLeft: 10 }}>
@@ -168,28 +134,6 @@ const Index: FC<Props> = (props) => {
       </Space>
     </div>
   );
-
-  const addSubStepLine = () => {
-    // 如果当前是折叠状态，则展开
-    if (collapsible) {
-      setCollapsible(false);
-    }
-    if (testcaseData?.id) {
-      handleAddTestCaseStep({ caseId: testcaseData!.id }).then(
-        async ({ code }) => {
-          if (code === 0) {
-            reloadCaseStep();
-          }
-        },
-      );
-    }
-    // const newCaseSubStepDataSource: CaseSubStep = {
-    //   uid: Date.now().toString(),
-    //   action: `请填写步骤描述`,
-    //   expected_result: '请填写预期描述',
-    // };
-    // setCaseSubStepDataSource((item) => [...item, newCaseSubStepDataSource]);
-  };
 
   const menuItems: MenuProps['items'] = [
     {
@@ -257,10 +201,6 @@ const Index: FC<Props> = (props) => {
       <CaseLevelSelect testcaseData={testcaseData} />
       <CaseTypeSelect testcaseData={testcaseData} />
 
-      <Button onClick={addSubStepLine} type={'link'}>
-        <PlusOutlined />
-        步骤
-      </Button>
       <Dropdown menu={{ items: menuItems, onClick: handleMenuClick }}>
         <Button type={'link'} icon={<MoreOutlined />} />
       </Dropdown>
@@ -284,7 +224,7 @@ const Index: FC<Props> = (props) => {
       timeout = setTimeout(async () => {
         console.log('发送更新请求，当前值：', allValues);
 
-        const { code, data, msg } = await updateTestCase(values);
+        const { code, msg } = await updateTestCase(values);
         if (code === 0) {
           message.success(msg);
         }
@@ -294,7 +234,7 @@ const Index: FC<Props> = (props) => {
         console.log('发送插入请求，当前值：', values);
         if (values.case_name && values.case_tag) {
           console.log(allValues);
-          const { code, data, msg } = await saveTestCase(values);
+          const { code, msg } = await saveTestCase(values);
           if (code === 0) {
             message.success(msg);
           }
@@ -304,42 +244,7 @@ const Index: FC<Props> = (props) => {
   };
 
   return (
-    <ProForm<ITestCase>
-      form={form}
-      submitter={false}
-      onValuesChange={handleValuesChange}
-    >
-      <Badge.Ribbon
-        text={CASE_STATUS_TEXT_ENUM[testcaseData!.case_status!]}
-        color={CASE_STATUS_COLOR_ENUM[testcaseData!.case_status!]}
-      >
-        <ProCard
-          ref={top}
-          hoverable
-          title={CardTitle}
-          extra={ExtraOpt}
-          split="vertical"
-          bordered
-          bodyStyle={{
-            padding: 10,
-          }}
-          defaultCollapsed={props.collapsible}
-          collapsible
-          collapsed={collapsible}
-          headerBordered
-          headStyle={{
-            height: 80,
-            padding: '0 16px',
-          }}
-        >
-          <CaseSubSteps
-            caseId={testcaseData?.id}
-            caseSubStepDataSource={caseSubStepDataSource}
-            callback={reloadCaseStep}
-            setCaseSubStepDataSource={setCaseSubStepDataSource}
-          />
-        </ProCard>
-      </Badge.Ribbon>
+    <>
       <MyDrawer
         name={'动态'}
         width={'40%'}
@@ -348,7 +253,47 @@ const Index: FC<Props> = (props) => {
       >
         <DynamicInfo caseId={testcaseData?.id} />
       </MyDrawer>
-    </ProForm>
+      <MyDrawer
+        name={testcaseData.case_name}
+        open={openCaseSteps}
+        setOpen={setOpenCaseSteps}
+      >
+        <CaseSubSteps
+          caseId={testcaseData?.id}
+          case_status={testcaseData?.case_status}
+          callback={reloadCaseStep}
+        />
+      </MyDrawer>
+      <ProForm<ITestCase>
+        form={form}
+        submitter={false}
+        onValuesChange={handleValuesChange}
+      >
+        <Badge.Ribbon
+          text={CASE_STATUS_TEXT_ENUM[testcaseData!.case_status!]}
+          color={CASE_STATUS_COLOR_ENUM[testcaseData!.case_status!]}
+        >
+          <ProCard
+            ref={top}
+            hoverable
+            title={CardTitle}
+            extra={ExtraOpt}
+            bordered
+            collapsible
+            defaultCollapsed
+            collapsibleIconRender={({ collapsed }) => null}
+            onClick={() => {
+              setOpenCaseSteps(true);
+            }}
+            headerBordered
+            headStyle={{
+              height: 80,
+              padding: '0 16px',
+            }}
+          ></ProCard>
+        </Badge.Ribbon>
+      </ProForm>
+    </>
   );
 };
 export default Index;

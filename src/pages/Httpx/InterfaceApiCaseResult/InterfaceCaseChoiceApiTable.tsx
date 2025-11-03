@@ -3,7 +3,6 @@ import { pageInterApi } from '@/api/inter';
 import {
   associationApis,
   selectCommonAPI2ConditionAPI,
-  selectCommonApisCopy2Case,
 } from '@/api/inter/interCase';
 import { addInterfaceGroupApis } from '@/api/inter/interGroup';
 import { associationApisByTaskId } from '@/api/inter/interTask';
@@ -194,25 +193,25 @@ const InterfaceCaseChoiceApiTable: FC<SelfProps> = ({
             >
               引用添加
             </Button>
-            {currentCaseApiId &&
-              currentGroupId === undefined &&
-              currentTaskId === undefined && (
-                <Button
-                  type={'primary'}
-                  onClick={async () => {
-                    const { code, msg } = await selectCommonApisCopy2Case({
-                      caseId: currentCaseApiId,
-                      commonApis: selectedRowKeys as number[],
-                    });
-                    if (code === 0) {
-                      message.success(msg);
-                      refresh?.();
-                    }
-                  }}
-                >
-                  复制添加
-                </Button>
-              )}
+            {/*{currentCaseApiId &&*/}
+            {/*  currentGroupId === undefined &&*/}
+            {/*  currentTaskId === undefined && (*/}
+            {/*    <Button*/}
+            {/*      type={'primary'}*/}
+            {/*      onClick={async () => {*/}
+            {/*        const { code, msg } = await selectCommonApisCopy2Case({*/}
+            {/*          caseId: currentCaseApiId,*/}
+            {/*          commonApis: selectedRowKeys as number[],*/}
+            {/*        });*/}
+            {/*        if (code === 0) {*/}
+            {/*          message.success(msg);*/}
+            {/*          refresh?.();*/}
+            {/*        }*/}
+            {/*      }}*/}
+            {/*    >*/}
+            {/*      复制添加*/}
+            {/*    </Button>*/}
+            {/*  )}*/}
           </Space>
         );
       }}

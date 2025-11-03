@@ -61,7 +61,6 @@ const InterfaceApiTaskResultTable: FC<SelfProps> = ({ apiCaseTaskId }) => {
       hideInTable: true,
       valueType: 'select',
       valueEnum: projectEnumMap,
-      initialValue: selectProjectId,
       fieldProps: {
         onSelect: (value: number) => {
           setSelectProjectId(value);
@@ -74,9 +73,7 @@ const InterfaceApiTaskResultTable: FC<SelfProps> = ({ apiCaseTaskId }) => {
       dataIndex: 'interfaceModuleId',
       hideInTable: true,
       valueType: 'treeSelect',
-      initialValue: selectModuleId,
       fieldProps: {
-        value: selectModuleId,
         onSelect: (value: number) => {
           setSelectModuleId(value);
         },
@@ -210,7 +207,7 @@ const InterfaceApiTaskResultTable: FC<SelfProps> = ({ apiCaseTaskId }) => {
     <>
       <MyProTable
         // @ts-ignore
-        // polling={polling}
+        polling={apiCaseTaskId ? false : 2}
         rowKey={'uid'}
         actionRef={actionRef}
         request={fetchResults}

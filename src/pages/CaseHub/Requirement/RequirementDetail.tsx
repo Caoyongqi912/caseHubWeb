@@ -32,7 +32,7 @@ const RequirementDetail: FC<Props> = ({ callback, requirementId }) => {
     queryProject().then(async ({ code, data }) => {
       if (code === 0) {
         setProjects(
-          data.map((itme) => ({ label: itme.title, value: itme.id })),
+          data.map((item) => ({ label: item.title, value: item.id })),
         );
       }
     });

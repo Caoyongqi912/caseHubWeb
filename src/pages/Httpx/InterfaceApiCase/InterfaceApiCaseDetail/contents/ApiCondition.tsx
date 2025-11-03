@@ -6,6 +6,7 @@ import {
   updateConditionContentInfo,
 } from '@/api/inter/interCase';
 import MyDrawer from '@/components/MyDrawer';
+import { AssertOption } from '@/pages/Httpx/componets/assertEnum';
 import InterfaceApiDetail from '@/pages/Httpx/Interface/InterfaceApiDetail';
 import GroupApiChoiceTable from '@/pages/Httpx/Interface/interfaceApiGroup/GroupApiChoiceTable';
 import InterfaceCaseChoiceApiTable from '@/pages/Httpx/InterfaceApiCaseResult/InterfaceCaseChoiceApiTable';
@@ -35,12 +36,14 @@ interface SelfProps {
 }
 
 const OperatorOption: { [key: number]: string } = {
-  1: '等于',
-  2: '不等于',
-  3: '为空',
-  4: '不为空',
-  5: '大于',
-  6: '小与',
+  0: '等于',
+  1: '不等于',
+  2: '大于',
+  3: '小于',
+  4: '大于等于',
+  5: '小于等于',
+  6: '包含',
+  7: '不包含',
 };
 const ApiCondition: FC<SelfProps> = ({
   projectId,
@@ -50,6 +53,7 @@ const ApiCondition: FC<SelfProps> = ({
   case_id,
   caseContent,
 }) => {
+  const timeoutRef = useRef<any>(null);
   const [conditionForm] = Form.useForm();
   const [choiceGroupOpen, setChoiceGroupOpen] = useState(false);
   const [choiceOpen, setChoiceOpen] = useState(false);
@@ -87,17 +91,6 @@ const ApiCondition: FC<SelfProps> = ({
     );
   }, [caseContent]);
 
-  const onSaveInfo = async () => {
-    const values = await conditionForm.validateFields();
-    const { code, data, msg } = await updateConditionContentInfo({
-      id: caseContent.target_id,
-      ...values,
-    });
-    if (code === 0) {
-      conditionForm.setFieldsValue(data);
-      message.success(msg);
-    }
-  };
   const handleDragSortEnd = async (
     beforeIndex: number,
     afterIndex: number,
@@ -196,12 +189,6 @@ const ApiCondition: FC<SelfProps> = ({
   ];
 
   const items: MenuProps['items'] = [
-    // {
-    //   key: 'choice_group',
-    //   label: '选择公共组',
-    //   icon: <UngroupOutlined style={{ color: 'blue' }} />,
-    //   onClick: () => setChoiceGroupOpen(true),
-    // },
     {
       key: 'choice_common',
       label: '选择公共API',
@@ -210,8 +197,25 @@ const ApiCondition: FC<SelfProps> = ({
     },
   ];
 
+  const onValuesChange = (changedValues: any, allValues: any) => {
+    clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(async () => {
+      const { code, data, msg } = await updateConditionContentInfo({
+        id: caseContent.target_id,
+        ...allValues,
+      });
+      if (code === 0) {
+        conditionForm.setFieldsValue(data);
+      }
+    }, 2000);
+  };
   const formRender = (
-    <ProForm form={conditionForm} submitter={false} style={{ padding: 30 }}>
+    <ProForm
+      form={conditionForm}
+      onValuesChange={onValuesChange}
+      submitter={false}
+      style={{ padding: 30 }}
+    >
       <Space>
         判断条件
         <ProFormText
@@ -240,14 +244,7 @@ const ApiCondition: FC<SelfProps> = ({
               setShowValueInput(true);
             }
           }}
-          options={[
-            { label: '等于', value: 1 },
-            { label: '不等于', value: 2 },
-            { label: '为空', value: 3 },
-            { label: '不为空', value: 4 },
-            { label: '大于', value: 5 },
-            { label: '小于', value: 6 },
-          ]}
+          options={AssertOption}
         />
         {showValueInput && (
           <ProFormText
@@ -277,7 +274,6 @@ const ApiCondition: FC<SelfProps> = ({
       >
         <DragSortTable
           actionRef={actionRef}
-          toolBarRender={() => [<a onClick={onSaveInfo}>保存</a>]}
           headerTitle={formRender}
           columns={columns}
           options={false}
