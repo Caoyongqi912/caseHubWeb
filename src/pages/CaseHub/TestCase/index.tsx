@@ -253,22 +253,23 @@ const Index: FC<Props> = (props) => {
       >
         <DynamicInfo caseId={testcaseData?.id} />
       </MyDrawer>
-      <MyDrawer
-        name={testcaseData.case_name}
-        open={openCaseSteps}
-        setOpen={setOpenCaseSteps}
-      >
-        <CaseSubSteps
-          caseId={testcaseData?.id}
-          case_status={testcaseData?.case_status}
-          callback={reloadCaseStep}
-        />
-      </MyDrawer>
+
       <ProForm<ITestCase>
         form={form}
         submitter={false}
         onValuesChange={handleValuesChange}
       >
+        <MyDrawer
+          name={testcaseData.case_name}
+          open={openCaseSteps}
+          setOpen={setOpenCaseSteps}
+        >
+          <CaseSubSteps
+            caseId={testcaseData?.id}
+            case_status={testcaseData?.case_status}
+            callback={reloadCaseStep}
+          />
+        </MyDrawer>
         <Badge.Ribbon
           text={CASE_STATUS_TEXT_ENUM[testcaseData!.case_status!]}
           color={CASE_STATUS_COLOR_ENUM[testcaseData!.case_status!]}
@@ -290,7 +291,7 @@ const Index: FC<Props> = (props) => {
               height: 80,
               padding: '0 16px',
             }}
-          ></ProCard>
+          />
         </Badge.Ribbon>
       </ProForm>
     </>

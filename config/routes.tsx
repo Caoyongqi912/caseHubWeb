@@ -220,25 +220,25 @@ export default [
       },
       {
         path: '/interface/caseApi/cases',
-        name: '业务场景',
+        name: '用例管理',
         component: '@/pages/Httpx/InterfaceApiCase',
       },
       {
         path: '/interface/caseApi/detail',
-        name: '接口用例详情',
+        name: '接口详情',
         hideInMenu: true,
         component: '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail',
       },
       {
         path: '/interface/caseApi/detail/caseApiId=:caseApiId',
-        name: '业务用例',
+        name: '用例详情',
         hideInMenu: true,
         component: '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail',
       },
 
       {
         path: '/interface/tasks',
-        name: '自动化任务',
+        name: '任务',
         component: '@/pages/Httpx/InterfaceApiCaseTask',
       },
       {

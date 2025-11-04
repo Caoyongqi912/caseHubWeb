@@ -89,7 +89,6 @@ const CaseSubSteps: FC<IProps> = ({
     CaseSubStep[]
   >([]);
   const [addLine, setAddLine] = useState(0);
-
   useEffect(() => {
     if (!caseId) return;
     queryTestCaseSupStep(caseId.toString()).then(async ({ code, data }) => {
@@ -109,6 +108,9 @@ const CaseSubSteps: FC<IProps> = ({
     [caseSubStepDataSource],
   );
 
+  /*
+   保存步骤  2s自动保存
+   */
   const saveStep = async (data: CaseSubStep) => {
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(async () => {
@@ -120,41 +122,8 @@ const CaseSubSteps: FC<IProps> = ({
           setEditStatus(0);
         }, 1500);
       }
-    }, 3000);
+    }, 2000);
   };
-
-  // 行编辑进行3s后保存
-  // const saveRecord = async (data: CaseSubStep[]) => {
-  //   console.log('=====', data);
-  //   // 如果定时器存在，先清除掉
-  //   if (timerRef.current) clearTimeout(timerRef.current);
-  //
-  //   // 设置一个新的定时器，5秒后执行保存请求
-  //   timerRef.current = setTimeout(async () => {
-  //     setEditStatus(1);
-  //
-  //     // 使用 Promise.all 来并行处理多个保存请求
-  //     const savePromises = data.map(async (item) => {
-  //       const { code, msg } = await updateTestCaseStep(item);
-  //       return { code, msg, item };
-  //     });
-  //
-  //     const results = await Promise.all(savePromises);
-  //
-  //     // 检查所有保存结果
-  //     const failedItems = results.filter((result) => result.code !== 0);
-  //
-  //     if (failedItems.length === 0) {
-  //       setEditStatus(2);
-  //       // 2秒后恢复为初始状态
-  //       setTimeout(() => {
-  //         setEditStatus(0);
-  //       }, 1000);
-  //     } else {
-  //       setEditStatus(0);
-  //     }
-  //   }, 1500); // 3秒后执行保存
-  // };
 
   useEffect(() => {
     if (caseSubStepDataSource) {
@@ -180,6 +149,9 @@ const CaseSubSteps: FC<IProps> = ({
     switch (status) {
       case 0:
         statusText = null;
+        break;
+      case 1:
+        statusText = <Text type={'secondary'}>编辑中。。。</Text>;
         break;
       case 2:
         statusText = <Text type={'secondary'}>已保存</Text>;
@@ -208,6 +180,7 @@ const CaseSubSteps: FC<IProps> = ({
   };
   return (
     <ProCard
+      extra={StatusArea(editStatus)}
       actions={
         <Button onClick={addSubStepLine} type={'link'}>
           <PlusOutlined />
@@ -334,22 +307,8 @@ const CaseSubSteps: FC<IProps> = ({
               step: CaseSubStep,
               records: CaseSubStep[],
             ) => {
-              console.log('_===', step);
-              console.log('records===', records);
+              setEditStatus(1);
               await saveStep(step);
-              // const modifiedRecords = records.filter((r) => {
-              //   // 比较原始记录和修改后的记录，
-              //   const originalRecord = caseSubStepDataSource?.find(
-              //     (data) => data.id === r.id,
-              //   );
-              //   return (
-              //     r.action !== originalRecord?.action ||
-              //     r.expected_result !== originalRecord?.expected_result
-              //   );
-              // });
-              // if (modifiedRecords.length > 0) {
-              //   await saveRecord(records); // 只提交修改过的记录
-              // }
             },
             onChange: setEditableRowKeys,
           }}
@@ -363,7 +322,6 @@ const CaseSubSteps: FC<IProps> = ({
           rows: 3,
         }}
       />
-      {StatusArea(editStatus)}
     </ProCard>
   );
 };

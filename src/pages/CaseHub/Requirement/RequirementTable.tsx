@@ -58,7 +58,7 @@ const RequirementTable: FC<SelfProps> = ({
       dataIndex: 'requirement_level',
       editable: false,
       valueEnum: CONFIG.CASE_LEVEL_ENUM,
-      render: (text, record) => {
+      render: (_, record) => {
         return (
           <Tag color={CONFIG.RENDER_CASE_LEVEL[record.requirement_level].color}>
             {CONFIG.RENDER_CASE_LEVEL[record.requirement_level].text}
@@ -73,7 +73,7 @@ const RequirementTable: FC<SelfProps> = ({
       valueType: 'select',
       width: '12%',
       valueEnum: RequirementProcessEnum,
-      render: (text, record) => {
+      render: (_, record) => {
         return (
           <Space size={'small'}>
             <Tag>{RequirementProcessEnum[record.process].text}</Tag>{' '}
@@ -85,7 +85,7 @@ const RequirementTable: FC<SelfProps> = ({
           </Space>
         );
       },
-      renderFormItem: (text, { type, defaultRender, ...rest }, form) => {
+      renderFormItem: (text) => {
         // 这里可以自定义渲染方式
         return <Select options={RequirementProcessOption} value={text} />;
       },
@@ -96,7 +96,7 @@ const RequirementTable: FC<SelfProps> = ({
       dataIndex: 'case_number',
       hideInSearch: true,
       editable: false,
-      render: (text, record) => {
+      render: (_, record) => {
         return <Tag>{record.case_number}</Tag>;
       },
     },
@@ -179,7 +179,7 @@ const RequirementTable: FC<SelfProps> = ({
       id: record.id,
       process: record.process,
     };
-    const { code, data } = await updateRequirement(values);
+    const { code } = await updateRequirement(values as IRequirement);
     if (code === 0) {
       actionRef.current?.reload();
     }
