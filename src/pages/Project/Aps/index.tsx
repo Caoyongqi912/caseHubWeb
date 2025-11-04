@@ -45,10 +45,16 @@ const Index = () => {
       width: '10%',
       copyable: true,
       render: (text, record) => {
+        let url = '';
+        if (record.tag === 'API') {
+          url = '/interface/task/detail/taskId=' + record.id;
+        } else {
+          url = '/ui/task/detail/taskId=' + record.id;
+        }
         return (
           <a
             onClick={() => {
-              history.push(`/play/task/detail/taskId=${record.id}`);
+              history.push(url);
             }}
           >
             {record.uid}
