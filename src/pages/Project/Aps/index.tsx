@@ -105,13 +105,6 @@ const Index = () => {
 
       hideInSearch: true,
     },
-    // {
-    //   title: '操作',
-    //   valueType: 'option',
-    //   key: 'option',
-    //   fixed: 'right',
-    //   render: (_, record) => {},
-    // },
   ];
 
   return (
