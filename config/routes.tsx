@@ -196,13 +196,13 @@ export default [
 
       {
         path: '/interface/interApi/detail/interId=:interId',
-        name: '接口详情添加',
+        name: '接口详情',
         hideInMenu: true,
         component: '@/pages/Httpx/Interface/InterfaceApiDetail',
       },
       {
-        path: '/interface/interApi/detail',
-        name: '接口详情',
+        path: '/interface/interApi/detail/projectId=:projectId&moduleId=:moduleId',
+        name: '接口详情添加',
         hideInMenu: true,
         component: '@/pages/Httpx/Interface/InterfaceApiDetail',
       },

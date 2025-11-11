@@ -10,7 +10,6 @@ import { CodeOutlined } from '@ant-design/icons';
 import {
   ProCard,
   ProForm,
-  ProFormDigit,
   ProFormSelect,
   ProFormText,
   ProFormTextArea,
@@ -39,16 +38,22 @@ const ApiDetailForm: FC<IProps> = (props) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [script, setScript] = useState();
   const { API_REQUEST_METHOD } = CONFIG;
-  const [currentEnvId, setCurrentEnvId] = useState<number>();
   const [headersLength, setHeadersLength] = useState<number>();
   const [queryLength, setQueryLength] = useState<number>();
   const [bodyLength, setBodyLength] = useState<number>();
+  const { API_LEVEL_SELECT, API_STATUS_SELECT } = CONFIG;
 
   useEffect(() => {
     if (interfaceApiInfo) {
       setQueryLength(interfaceApiInfo.params?.length);
-      setBodyLength(interfaceApiInfo.body_type !== 0 ? 1 : undefined);
       setHeadersLength(interfaceApiInfo.headers?.length);
+      if (interfaceApiInfo.body_type) {
+        if (interfaceApiInfo.body_type !== 1) {
+          setBodyLength(1);
+        } else {
+          setBodyLength(undefined);
+        }
+      }
     }
   }, [interfaceApiInfo]);
   const renderTab = (type: number) => {
@@ -74,6 +79,7 @@ const ApiDetailForm: FC<IProps> = (props) => {
     );
   };
 
+  // url before ENV
   const addonBefore = (
     <>
       <ProFormSelect
@@ -84,13 +90,10 @@ const ApiDetailForm: FC<IProps> = (props) => {
         required={true}
         placeholder={'环境选择'}
         label={'Env'}
-        fieldProps={{
-          onChange: (value: number) => setCurrentEnvId(value),
-        }}
       />
     </>
   );
-
+  // url after METHOD
   const addonAfter = (
     <>
       <ProFormSelect
@@ -195,35 +198,28 @@ const ApiDetailForm: FC<IProps> = (props) => {
         />
       </ProForm.Group>
       <ProForm.Group>
-        <ProFormSelect
-          disabled={currentMode === 1}
-          width={'sm'}
-          label={'是否重定向'}
-          name={'follow_redirects'}
-          initialValue={0}
-          options={[
-            { label: '是', value: 1 },
-            { label: '否', value: 0 },
-          ]}
-        />
-        <ProFormDigit
-          disabled={currentMode === 1}
-          width={'sm'}
-          label={'请求超时(s)'}
-          name={'connect_timeout'}
-          initialValue={6}
-          min={0}
-        />
-        <ProFormDigit
-          width={'sm'}
-          disabled={currentMode === 1}
-          label={'响应超时(s)'}
-          initialValue={6}
-          min={0}
-          name={'response_timeout'}
-        />
-      </ProForm.Group>
-      <ProForm.Group>
+        <ProForm.Group>
+          <ProFormSelect
+            disabled={currentMode === 1}
+            name="level"
+            label="优先级"
+            width={'sm'}
+            initialValue={'P1'}
+            options={API_LEVEL_SELECT}
+            required={true}
+            rules={[{ required: true, message: '用例优先级必选' }]}
+          />
+          <ProFormSelect
+            disabled={currentMode === 1}
+            name="status"
+            label="状态"
+            initialValue={'DEBUG'}
+            width={'sm'}
+            options={API_STATUS_SELECT}
+            required={true}
+            rules={[{ required: true, message: '用例状态必须选' }]}
+          />
+        </ProForm.Group>
         <ProFormTextArea
           label={'步骤描述'}
           disabled={currentMode === 1}
@@ -239,7 +235,12 @@ const ApiDetailForm: FC<IProps> = (props) => {
         />
       </ProForm.Group>
       <ProCard bodyStyle={{ padding: 0 }}>
-        <MyTabs defaultActiveKey={'2'} items={TabItems} />
+        <MyTabs
+          type={'line'}
+          size={'small'}
+          defaultActiveKey={'2'}
+          items={TabItems}
+        />
       </ProCard>
     </>
   );

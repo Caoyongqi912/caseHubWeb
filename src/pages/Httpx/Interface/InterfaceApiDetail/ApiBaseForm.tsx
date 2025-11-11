@@ -1,11 +1,10 @@
 import { IModuleEnum } from '@/api';
 import { CONFIG } from '@/utils/config';
-import { useModel } from '@@/exports';
 import {
   ProCard,
   ProForm,
   ProFormSelect,
-  ProFormTreeSelect,
+  ProFormText,
 } from '@ant-design/pro-components';
 import React, { FC } from 'react';
 
@@ -17,44 +16,16 @@ interface IProps {
 }
 
 const ApiBaseForm: FC<IProps> = (props) => {
-  const { hidden, moduleEnum, setCurrentProjectId, currentMode } = props;
   const { API_LEVEL_SELECT, API_STATUS_SELECT } = CONFIG;
-  const { initialState } = useModel('@@initialState');
-  const projects = initialState?.projects || [];
 
   return (
-    <ProCard hidden={hidden}>
+    <ProCard hidden={true}>
       <ProForm.Group>
-        <ProFormSelect
-          disabled={currentMode === 1}
-          width={'md'}
-          options={projects}
-          label={'所属项目'}
-          name={'project_id'}
-          required={true}
-          onChange={(value) => {
-            setCurrentProjectId(value as number);
-          }}
-        />
-        <ProFormTreeSelect
-          disabled={currentMode === 1}
-          required
-          name="module_id"
-          label="所属模块"
-          rules={[{ required: true, message: '所属模块必选' }]}
-          fieldProps={{
-            treeData: moduleEnum,
-            fieldNames: {
-              label: 'title',
-            },
-            filterTreeNode: true,
-          }}
-          width={'md'}
-        />
+        <ProFormText width={'md'} label={'所属项目'} name={'project_id'} />
+        <ProFormText required name="module_id" label="所属模块" />
       </ProForm.Group>
       <ProForm.Group>
         <ProFormSelect
-          disabled={currentMode === 1}
           name="level"
           label="优先级"
           width={'md'}
@@ -64,7 +35,6 @@ const ApiBaseForm: FC<IProps> = (props) => {
           rules={[{ required: true, message: '用例优先级必选' }]}
         />
         <ProFormSelect
-          disabled={currentMode === 1}
           name="status"
           label="用例状态"
           initialValue={'DEBUG'}

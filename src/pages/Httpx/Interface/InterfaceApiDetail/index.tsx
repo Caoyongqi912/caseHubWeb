@@ -12,6 +12,7 @@ import InterAssertList from '@/pages/Httpx/componets/InterAssertList';
 import InterAuth from '@/pages/Httpx/componets/InterAuth';
 import InterDoc from '@/pages/Httpx/componets/InterDoc';
 import InterExtractList from '@/pages/Httpx/componets/InterExtractList';
+import InterOtherSetting from '@/pages/Httpx/componets/InterOtherSetting';
 import InterPerf from '@/pages/Httpx/componets/InterPerf';
 import ApiAfterItems from '@/pages/Httpx/Interface/InterfaceApiDetail/ApiAfterItems';
 import ApiBaseForm from '@/pages/Httpx/Interface/InterfaceApiDetail/ApiBaseForm';
@@ -32,6 +33,7 @@ import {
   SaveOutlined,
   SendOutlined,
   SettingOutlined,
+  SmallDashOutlined,
 } from '@ant-design/icons';
 import { ProCard, ProForm } from '@ant-design/pro-components';
 import {
@@ -53,7 +55,11 @@ interface SelfProps {
 }
 
 const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
-  const { interId } = useParams<{ interId: string }>();
+  const { interId, moduleId, projectId } = useParams<{
+    interId: string;
+    projectId: string;
+    moduleId: string;
+  }>();
   const [interApiForm] = Form.useForm<IInterfaceAPI>();
   // 1详情 2新增 3 修改
   const [currentMode, setCurrentMode] = useState(1);
@@ -67,6 +73,18 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
   const [currentInterAPIId, setCurrentInterAPIId] = useState<number>();
   const [openDoc, setOpenDoc] = useState(false);
   const [hiddenBaseInfo, setHiddenBaseInfo] = useState(false);
+
+  useEffect(() => {
+    if (projectId && moduleId) {
+      interApiForm.setFieldsValue({
+        project_id: parseInt(projectId),
+        module_id: parseInt(moduleId),
+      });
+    }
+    if (projectId) {
+      setCurrentProjectId(parseInt(projectId));
+    }
+  }, [moduleId, projectId]);
 
   //路由用例详情打开
   useEffect(() => {
@@ -255,6 +273,14 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
         <ApiAfterItems interApiForm={interApiForm} currentMode={currentMode} />
       ),
     },
+    {
+      key: '8',
+      label: '设置',
+      icon: <SmallDashOutlined />,
+      children: (
+        <InterOtherSetting currentMode={currentMode} form={interApiForm} />
+      ),
+    },
     ...(interId
       ? [
           {
@@ -278,11 +304,7 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
       >
         <InterDoc />
       </MyDrawer>
-      <ProCard
-        bordered
-        split={'horizontal'}
-        extra={<DetailExtra currentMode={currentMode} />}
-      >
+      <ProCard bodyStyle={{ padding: 0 }}>
         <ProForm form={interApiForm} submitter={false}>
           <ApiBaseForm
             hidden={hiddenBaseInfo}
@@ -295,17 +317,20 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
               defaultActiveKey={'2'}
               items={TabItems}
               tabBarExtraContent={
-                <Button
-                  size={'middle'}
-                  loading={tryLoading}
-                  type={'primary'}
-                  color={'danger'}
-                  disabled={currentMode !== 1}
-                  onClick={TryClick}
-                >
-                  <SendOutlined />
-                  Try
-                </Button>
+                <Space>
+                  <DetailExtra currentMode={currentMode} />
+                  <Button
+                    size={'middle'}
+                    loading={tryLoading}
+                    type={'primary'}
+                    color={'danger'}
+                    disabled={currentMode !== 1}
+                    onClick={TryClick}
+                  >
+                    <SendOutlined />
+                    Try
+                  </Button>
+                </Space>
               }
             />
           </ProCard>

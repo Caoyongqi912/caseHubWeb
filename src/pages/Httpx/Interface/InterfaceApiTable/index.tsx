@@ -326,7 +326,9 @@ const Index: FC<SelfProps> = ({
           <Button
             type={'primary'}
             onClick={() => {
-              window.open('/interface/interApi/detail');
+              window.open(
+                `/interface/interApi/detail/projectId=${currentProjectId}&moduleId=${currentModuleId}`,
+              );
             }}
           >
             <PlusOutlined />
