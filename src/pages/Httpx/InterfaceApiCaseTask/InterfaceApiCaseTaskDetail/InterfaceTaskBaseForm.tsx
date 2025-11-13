@@ -6,60 +6,19 @@ import {
   ProFormSwitch,
   ProFormText,
   ProFormTextArea,
-  ProFormTreeSelect,
 } from '@ant-design/pro-components';
-import React, { FC, useState } from 'react';
+import { useState } from 'react';
 
-import { IModuleEnum } from '@/api';
 import { CONFIG } from '@/utils/config';
-import { useModel } from '@@/exports';
 
-interface SelfProps {
-  setCurrentProjectId: React.Dispatch<React.SetStateAction<number | undefined>>;
-  moduleEnum: IModuleEnum[];
-}
-
-const InterfaceTaskBaseForm: FC<SelfProps> = (props) => {
-  const { setCurrentProjectId, moduleEnum } = props;
-  const { initialState } = useModel('@@initialState');
-  const projects = initialState?.projects || [];
-  const [currentModuleId, setCurrentModuleId] = useState<number>();
+const InterfaceTaskBaseForm = () => {
   const { API_LEVEL_SELECT } = CONFIG;
   const [isAuto, setIsAuto] = useState<boolean>(false);
 
   return (
     <>
-      <ProForm.Group>
-        <ProFormSelect
-          width={'md'}
-          options={projects}
-          label={'所属项目'}
-          name={'project_id'}
-          required={true}
-          onChange={(value) => {
-            setCurrentProjectId(value as number);
-          }}
-        />
-        <ProFormTreeSelect
-          required
-          name="module_id"
-          label="所属模块"
-          allowClear
-          rules={[{ required: true, message: '所属模块必选' }]}
-          fieldProps={{
-            onChange: (value) => {
-              setCurrentModuleId(value);
-            },
-            value: currentModuleId,
-            treeData: moduleEnum,
-            fieldNames: {
-              label: 'title',
-            },
-            filterTreeNode: true,
-          }}
-          width={'md'}
-        />
-      </ProForm.Group>
+      <ProFormText hidden width={'md'} label={'所属项目'} name={'project_id'} />
+      <ProFormText hidden required name="module_id" label="所属模块" />
       <ProForm.Group>
         <ProFormText
           width={'md'}

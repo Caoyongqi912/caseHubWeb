@@ -1,17 +1,42 @@
+import { IModuleEnum } from '@/api';
 import {
   getNextTaskRunTime,
   pageApiTask,
   removeApiTaskBaseInfo,
   setApiTaskAuto,
+  updateApiTaskBaseInfo,
 } from '@/api/inter/interTask';
 import MyProTable from '@/components/Table/MyProTable';
 import { IInterfaceAPITask } from '@/pages/Httpx/types';
 import { CONFIG, ModuleEnum } from '@/utils/config';
-import { pageData } from '@/utils/somefunc';
+import { fetchModulesEnum, pageData } from '@/utils/somefunc';
 import { history } from '@@/core/history';
-import { ActionType, ProColumns } from '@ant-design/pro-components';
-import { Button, Divider, message, Popconfirm, Switch, Tag } from 'antd';
-import { FC, useCallback, useEffect, useRef } from 'react';
+import { useModel } from '@@/exports';
+import {
+  DashOutlined,
+  DeleteOutlined,
+  DeliveredProcedureOutlined,
+} from '@ant-design/icons';
+import {
+  ActionType,
+  ProColumns,
+  ProForm,
+  ProFormSelect,
+  ProFormTreeSelect,
+} from '@ant-design/pro-components';
+import {
+  Button,
+  Divider,
+  Dropdown,
+  Form,
+  message,
+  Modal,
+  Popconfirm,
+  Space,
+  Switch,
+  Tag,
+} from 'antd';
+import { FC, useCallback, useEffect, useRef, useState } from 'react';
 
 interface SelfProps {
   currentProjectId?: number;
@@ -25,6 +50,25 @@ const Index: FC<SelfProps> = ({
   perKey,
 }) => {
   const actionRef = useRef<ActionType>(); //Table action 的引用，便于自定义触发
+  const [openModal, setOpenModal] = useState(false);
+  const [form] = Form.useForm();
+  const [currentTaskId, setCurrentTaskId] = useState<number>();
+  const { initialState } = useModel('@@initialState');
+  const projects = initialState?.projects || [];
+  const [moduleEnum, setModuleEnum] = useState<IModuleEnum[]>([]);
+
+  const [copyProjectId, setCopyProjectId] = useState<number>();
+
+  // 根据当前项目ID获取环境和用例部分
+  useEffect(() => {
+    if (copyProjectId) {
+      fetchModulesEnum(
+        copyProjectId,
+        ModuleEnum.API_TASK,
+        setModuleEnum,
+      ).then();
+    }
+  }, [copyProjectId]);
 
   useEffect(() => {
     actionRef.current?.reload();
@@ -83,6 +127,15 @@ const Index: FC<SelfProps> = ({
       },
     },
     {
+      title: '状态',
+      dataIndex: 'status',
+      valueType: 'select',
+      valueEnum: CONFIG.API_STATUS_ENUM,
+      render: (text) => {
+        return <Tag color={'warning'}>{text}</Tag>;
+      },
+    },
+    {
       title: '自动执行',
       dataIndex: 'is_auto',
       key: 'is_auto',
@@ -106,15 +159,7 @@ const Index: FC<SelfProps> = ({
         return <Tag color={'blue'}>{record.level}</Tag>;
       },
     },
-    {
-      title: '状态',
-      dataIndex: 'status',
-      valueType: 'select',
-      valueEnum: CONFIG.API_STATUS_ENUM,
-      render: (text) => {
-        return <Tag color={'warning'}>{text}</Tag>;
-      },
-    },
+
     {
       title: '创建人',
       dataIndex: 'creatorName',
@@ -128,65 +173,144 @@ const Index: FC<SelfProps> = ({
       key: 'option',
       fixed: 'right',
       render: (text, record, _) => {
-        return (
-          <>
-            <a
-              onClick={async () => {
-                const { code, data } = await getNextTaskRunTime(record.uid);
-                if (code === 0) {
-                  message.success(data);
-                }
-              }}
-            >
-              下次运行时间
+        return [
+          <a
+            onClick={async () => {
+              const { code, data } = await getNextTaskRunTime(record.uid);
+              if (code === 0) {
+                message.success(data);
+              }
+            }}
+          >
+            下次运行时间
+          </a>,
+          <a
+            onClick={() => {
+              history.push(`/interface/task/detail/taskId=${record.id}`);
+            }}
+          >
+            详情
+          </a>,
+          <Dropdown
+            menu={{
+              items: [
+                {
+                  key: '2',
+                  label: '移动至',
+                  icon: <DeliveredProcedureOutlined />,
+                  onClick: () => {
+                    setCurrentTaskId(record.id);
+                    setOpenModal(true);
+                  },
+                },
+
+                {
+                  type: 'divider',
+                },
+                {
+                  key: '3',
+                  icon: <DeleteOutlined />,
+                  label: (
+                    <Popconfirm
+                      title={'确认删除？'}
+                      okText={'确认'}
+                      cancelText={'点错了'}
+                      onConfirm={async () => {
+                        const { code, msg } = await removeApiTaskBaseInfo(
+                          record.id,
+                        );
+                        if (code === 0) {
+                          message.success(msg);
+                          actionRef.current?.reload();
+                        }
+                      }}
+                    >
+                      <Divider type={'vertical'} />
+                      <a>删除</a>
+                    </Popconfirm>
+                  ),
+                },
+              ],
+            }}
+          >
+            <a onClick={(e) => e.preventDefault()}>
+              <Space>
+                <DashOutlined />
+              </Space>
             </a>
-            <Divider type="vertical" />
-            <a
-              onClick={() => {
-                history.push(`/interface/task/detail/taskId=${record.id}`);
-              }}
-            >
-              详情
-            </a>
-            <Popconfirm
-              title={'确认删除？'}
-              okText={'确认'}
-              cancelText={'点错了'}
-              onConfirm={async () => {
-                const { code, msg } = await removeApiTaskBaseInfo(record.id);
-                if (code === 0) {
-                  message.success(msg);
-                  actionRef.current?.reload();
-                }
-              }}
-            >
-              <Divider type={'vertical'} />
-              <a>删除</a>
-            </Popconfirm>
-          </>
-        );
+          </Dropdown>,
+        ];
       },
     },
   ];
   return (
-    <MyProTable
-      persistenceKey={perKey}
-      columns={taskColumns}
-      rowKey={'id'}
-      x={1000}
-      actionRef={actionRef}
-      request={fetchPageTasks}
-      toolBarRender={() => [
-        <Button
-          type={'primary'}
-          onClick={() => {
-            history.push('/interface/task/detail');
-          }}
-        >
-          添加
-        </Button>,
-      ]}
-    />
+    <>
+      <Modal
+        open={openModal}
+        onOk={async () => {
+          const values = await form.validateFields();
+          const { code, msg } = await updateApiTaskBaseInfo({
+            id: currentTaskId,
+            ...values,
+          });
+          if (code === 0) {
+            message.success(msg);
+            actionRef.current?.reload();
+            form.resetFields();
+            setOpenModal(false);
+          }
+        }}
+        onCancel={() => setOpenModal(false)}
+        title={'移动'}
+      >
+        <ProForm submitter={false} form={form}>
+          <ProFormSelect
+            width={'md'}
+            options={projects}
+            label={'项目'}
+            name={'project_id'}
+            required={true}
+            onChange={(value) => {
+              setCopyProjectId(value as number);
+            }}
+          />
+          <ProFormTreeSelect
+            required
+            name="module_id"
+            label="模块"
+            rules={[{ required: true, message: '所属模块必选' }]}
+            fieldProps={{
+              treeData: moduleEnum,
+              fieldNames: {
+                label: 'title',
+              },
+              filterTreeNode: true,
+            }}
+            width={'md'}
+          />
+        </ProForm>
+      </Modal>
+      <MyProTable
+        persistenceKey={perKey}
+        columns={taskColumns}
+        rowKey={'id'}
+        x={1500}
+        actionRef={actionRef}
+        request={fetchPageTasks}
+        toolBarRender={() => [
+          <Button
+            type={'primary'}
+            onClick={() => {
+              history.push(
+                `/interface/task/detail/projectId=${currentProjectId}&moduleId=${currentModuleId}`,
+              );
+            }}
+          >
+            添加
+          </Button>,
+        ]}
+      />
+    </>
   );
 };
 export default Index;

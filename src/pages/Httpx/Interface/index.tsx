@@ -73,7 +73,7 @@ const Index = () => {
       <Splitter layout="horizontal">
         <Splitter.Panel
           collapsible={true}
-          defaultSize="10%"
+          defaultSize="15%"
           min="10%"
           max="30%"
           style={{ height: '100vh' }}

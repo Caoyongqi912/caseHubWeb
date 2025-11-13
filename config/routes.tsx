@@ -255,7 +255,7 @@ export default [
           '@/pages/Httpx/InterfaceApiTaskResult/InterfaceApiTaskResultDetail.tsx',
       },
       {
-        path: '/interface/task/detail',
+        path: '/interface/task/detail/projectId=:projectId&moduleId=:moduleId',
         name: '添加任务',
         component:
           '@/pages/Httpx/InterfaceApiCaseTask/InterfaceApiCaseTaskDetail',

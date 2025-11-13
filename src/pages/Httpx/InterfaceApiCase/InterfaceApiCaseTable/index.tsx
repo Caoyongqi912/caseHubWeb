@@ -55,13 +55,11 @@ const Index: FC<SelfProps> = ({
       dataIndex: 'title',
       key: 'title',
       fixed: 'left',
-      width: '15%',
     },
     {
       title: '步骤数量',
       dataIndex: 'apiNum',
       valueType: 'text',
-      width: '10%',
       render: (_, record) => {
         return <Tag color={'blue'}>{record.apiNum}</Tag>;
       },
@@ -71,7 +69,6 @@ const Index: FC<SelfProps> = ({
       dataIndex: 'level',
       valueType: 'select',
       valueEnum: CONFIG.API_LEVEL_ENUM,
-      width: '10%',
       render: (_, record) => {
         return <Tag color={'blue'}>{record.level}</Tag>;
       },
@@ -88,7 +85,6 @@ const Index: FC<SelfProps> = ({
     {
       title: '创建人',
       dataIndex: 'creatorName',
-      width: '10%',
       render: (_, record) => {
         return <Tag>{record.creatorName}</Tag>;
       },
@@ -105,7 +101,6 @@ const Index: FC<SelfProps> = ({
       valueType: 'option',
       key: 'option',
       fixed: 'right',
-      width: '18%',
       render: (text, record, _) => {
         return (
           <>
@@ -118,8 +113,6 @@ const Index: FC<SelfProps> = ({
             >
               详情
             </a>
-            <Divider type={'vertical'} />
-            <a>执行</a>
             <Divider type={'vertical'} />
             <a
               onClick={async () => {
@@ -157,7 +150,7 @@ const Index: FC<SelfProps> = ({
       key={perKey}
       rowKey={'id'}
       actionRef={actionRef}
-      x={1000}
+      x={1500}
       columns={columns}
       request={fetchInterfaceCase}
       toolBarRender={() => [

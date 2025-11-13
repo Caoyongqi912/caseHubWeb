@@ -14,7 +14,7 @@ import {
   ProFormText,
   ProFormTextArea,
 } from '@ant-design/pro-components';
-import { Button, FormInstance, Modal, TabsProps } from 'antd';
+import { Button, FormInstance, Modal, Space, TabsProps } from 'antd';
 import React, { Dispatch, FC, useEffect, useState } from 'react';
 
 interface IProps {
@@ -44,11 +44,12 @@ const ApiDetailForm: FC<IProps> = (props) => {
   const { API_LEVEL_SELECT, API_STATUS_SELECT } = CONFIG;
 
   useEffect(() => {
+    console.log(interfaceApiInfo);
     if (interfaceApiInfo) {
       setQueryLength(interfaceApiInfo.params?.length);
       setHeadersLength(interfaceApiInfo.headers?.length);
       if (interfaceApiInfo.body_type) {
-        if (interfaceApiInfo.body_type !== 1) {
+        if (interfaceApiInfo.body_type !== 0) {
           setBodyLength(1);
         } else {
           setBodyLength(undefined);
@@ -72,10 +73,10 @@ const ApiDetailForm: FC<IProps> = (props) => {
         : 0;
     // 根据长度动态渲染内容
     return (
-      <span>
-        {tabConfig.name}{' '}
+      <Space>
+        {tabConfig.name}
         {length > 0 && <span style={{ color: 'green' }}>({length})</span>}
-      </span>
+      </Space>
     );
   };
 

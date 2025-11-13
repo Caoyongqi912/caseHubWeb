@@ -1,4 +1,3 @@
-import { IModuleEnum } from '@/api';
 import {
   executeTask,
   getApiTaskBaseDetail,
@@ -11,8 +10,6 @@ import AssociationCases from '@/pages/Httpx/InterfaceApiCaseTask/InterfaceApiCas
 import InterfaceTaskBaseForm from '@/pages/Httpx/InterfaceApiCaseTask/InterfaceApiCaseTaskDetail/InterfaceTaskBaseForm';
 import InterfaceApiTaskResultTable from '@/pages/Httpx/InterfaceApiTaskResult/InterfaceApiTaskResultTable';
 import { IInterfaceAPITask } from '@/pages/Httpx/types';
-import { ModuleEnum } from '@/utils/config';
-import { fetchModulesEnum } from '@/utils/somefunc';
 import { useParams } from '@@/exports';
 import { ProCard, ProForm } from '@ant-design/pro-components';
 import { Button, FloatButton, Form, message } from 'antd';
@@ -20,13 +17,28 @@ import { FC, useEffect, useState } from 'react';
 import { history } from 'umi';
 
 const Index = () => {
-  const { taskId } = useParams<{ taskId: string }>();
+  const { taskId, projectId, moduleId } = useParams<{
+    taskId: string;
+    projectId: string;
+    moduleId: string;
+  }>();
   const [taskForm] = Form.useForm<IInterfaceAPITask>();
   const [currentStatus, setCurrentStatus] = useState(1);
   const [editTsk, setEditTask] = useState<number>(0);
 
   const [currentProjectId, setCurrentProjectId] = useState<number>();
-  const [moduleEnum, setModuleEnum] = useState<IModuleEnum[]>([]);
+
+  useEffect(() => {
+    if (projectId && moduleId) {
+      taskForm.setFieldsValue({
+        project_id: parseInt(projectId),
+        module_id: parseInt(moduleId),
+      });
+    }
+    if (projectId) {
+      setCurrentProjectId(parseInt(projectId));
+    }
+  }, [moduleId, projectId]);
 
   useEffect(() => {
     if (taskId) {
@@ -40,16 +52,6 @@ const Index = () => {
       setCurrentStatus(2);
     }
   }, [editTsk]);
-
-  useEffect(() => {
-    if (currentProjectId) {
-      fetchModulesEnum(
-        currentProjectId,
-        ModuleEnum.API_TASK,
-        setModuleEnum,
-      ).then();
-    }
-  }, [currentProjectId]);
 
   const refresh = () => {
     setEditTask(editTsk + 1);
@@ -161,10 +163,7 @@ const Index = () => {
           form={taskForm}
           submitter={false}
         >
-          <InterfaceTaskBaseForm
-            setCurrentProjectId={setCurrentProjectId}
-            moduleEnum={moduleEnum}
-          />
+          <InterfaceTaskBaseForm />
         </ProForm>
       </ProCard>
       {taskId ? (
