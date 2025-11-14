@@ -242,7 +242,6 @@ const Index: FC<SelfProps> = ({
           <a onClick={(e) => e.preventDefault()}>
             <Space>
               <DashOutlined />
-              {/*<MoreOne theme="multi-color" size="24" fill={['#333' ,'#2F88FF' ,'#FFF' ,'#43CCF8']} strokeLinejoin="bevel" strokeLinecap="square"/>*/}
             </Space>
           </a>
         </Dropdown>,

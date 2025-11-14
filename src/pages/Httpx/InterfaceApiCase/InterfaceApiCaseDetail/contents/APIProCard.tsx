@@ -59,7 +59,14 @@ const ApiProCard: FC<Props> = (props) => {
               style={{ color: '#c3cad4', marginRight: 20 }}
             />
             <Tag color={'green-inverse'}>STEP_{step}</Tag>
-            <Tag color={'gold-inverse'}>API</Tag>
+            <Tag color={'gold-inverse'}>
+              API
+              {caseContent.is_common_api === 1 ? (
+                <span style={{ marginLeft: 5 }}>共</span>
+              ) : (
+                <span style={{ marginLeft: 5 }}>私</span>
+              )}
+            </Tag>
             {caseContent.content_desc && (
               <Text
                 strong

@@ -629,12 +629,20 @@ export const initAPICondition = async (
   data: { interface_case_id: number },
   options?: IObjGet,
 ) => {
-  return request<IResponse<IUIVars[]>>(
-    '/api/interface/case/associationCondition',
-    {
-      method: 'POST',
-      data,
-      ...(options || {}),
-    },
-  );
+  return request<IResponse<null>>('/api/interface/case/associationCondition', {
+    method: 'POST',
+    data,
+    ...(options || {}),
+  });
+};
+
+export const add_empty_api = async (
+  data: { case_id: number; module_id: number; project_id: number },
+  options?: IObjGet,
+) => {
+  return request<IResponse<null>>('/api/interface/case/associationApi', {
+    method: 'POST',
+    data,
+    ...(options || {}),
+  });
 };

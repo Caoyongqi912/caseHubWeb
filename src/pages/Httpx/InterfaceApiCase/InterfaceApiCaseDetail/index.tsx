@@ -1,6 +1,7 @@
 import { IModuleEnum } from '@/api';
 import {
   addCaseContent,
+  add_empty_api,
   baseInfoApiCase,
   initAPICondition,
   insertApiCase,
@@ -25,6 +26,7 @@ import { useParams } from '@@/exports';
 import {
   AimOutlined,
   AlignLeftOutlined,
+  ApiOutlined,
   ArrowRightOutlined,
   BranchesOutlined,
   FieldTimeOutlined,
@@ -260,6 +262,23 @@ const Index = () => {
                 },
                 {
                   type: 'divider',
+                },
+                {
+                  key: 'add_api',
+                  label: '添加API',
+                  icon: <ApiOutlined style={{ color: 'orange' }} />,
+                  onClick: async () => {
+                    if (caseApiId && currentProjectId && currentModuleId) {
+                      const { code } = await add_empty_api({
+                        case_id: parseInt(caseApiId),
+                        project_id: currentProjectId,
+                        module_id: currentModuleId,
+                      });
+                      if (code === 0) {
+                        await refresh();
+                      }
+                    }
+                  },
                 },
                 {
                   key: 'add_condition',

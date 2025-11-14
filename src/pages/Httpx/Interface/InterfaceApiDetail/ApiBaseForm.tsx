@@ -1,4 +1,3 @@
-import { IModuleEnum } from '@/api';
 import { CONFIG } from '@/utils/config';
 import {
   ProCard,
@@ -6,16 +5,9 @@ import {
   ProFormSelect,
   ProFormText,
 } from '@ant-design/pro-components';
-import React, { FC } from 'react';
+import { FC } from 'react';
 
-interface IProps {
-  hidden: boolean;
-  currentMode: number;
-  setCurrentProjectId: React.Dispatch<React.SetStateAction<number | undefined>>;
-  moduleEnum: IModuleEnum[];
-}
-
-const ApiBaseForm: FC<IProps> = (props) => {
+const ApiBaseForm: FC = () => {
   const { API_LEVEL_SELECT, API_STATUS_SELECT } = CONFIG;
 
   return (

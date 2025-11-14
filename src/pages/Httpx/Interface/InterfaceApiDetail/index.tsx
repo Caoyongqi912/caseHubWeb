@@ -1,4 +1,3 @@
-import { IModuleEnum } from '@/api';
 import {
   detailInterApiById,
   insertInterApi,
@@ -20,8 +19,6 @@ import ApiBeforeItems from '@/pages/Httpx/Interface/InterfaceApiDetail/ApiBefore
 import ApiDetailForm from '@/pages/Httpx/Interface/InterfaceApiDetail/ApiDetailForm';
 import InterfaceApiResponseDetail from '@/pages/Httpx/InterfaceApiResponse/InterfaceApiResponseDetail';
 import { IInterfaceAPI, ITryResponseInfo } from '@/pages/Httpx/types';
-import { ModuleEnum } from '@/utils/config';
-import { fetchModulesEnum } from '@/utils/somefunc';
 import {
   ApiOutlined,
   CheckCircleOutlined,
@@ -67,13 +64,12 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
   const [envs, setEnvs] = useState<{ label: string; value: number | null }[]>(
     [],
   );
-  const [moduleEnum, setModuleEnum] = useState<IModuleEnum[]>([]);
   const [tryLoading, setTryLoading] = useState(false);
   const [responseInfo, setResponseInfo] = useState<ITryResponseInfo[]>();
   const [currentInterAPIId, setCurrentInterAPIId] = useState<number>();
   const [openDoc, setOpenDoc] = useState(false);
-  const [hiddenBaseInfo, setHiddenBaseInfo] = useState(false);
 
+  //路由进入。空白页
   useEffect(() => {
     if (projectId && moduleId) {
       interApiForm.setFieldsValue({
@@ -89,7 +85,6 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
   //路由用例详情打开
   useEffect(() => {
     if (interId) {
-      setHiddenBaseInfo(false);
       setCurrentMode(1);
       fetchInterfaceDetails(interId).then();
     } else {
@@ -102,7 +97,6 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
     // 如果存在接口API信息，则设置当前模式、表单值、数据长度和当前接口API ID
     if (interfaceId) {
       setCurrentInterAPIId(interfaceId);
-      setHiddenBaseInfo(true); //不展示基础信息
       setCurrentMode(1); // 设置当前模式为查看模式
       fetchInterfaceDetails(interfaceId).then(); //请求接口信息
     }
@@ -112,7 +106,6 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
   useEffect(() => {
     if (currentProjectId) {
       queryEnvByProjectIdFormApi(currentProjectId, setEnvs, true).then();
-      fetchModulesEnum(currentProjectId, ModuleEnum.API, setModuleEnum).then();
     }
   }, [currentProjectId]);
 
@@ -132,6 +125,7 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
       if (code === 0) {
         message.success(msg);
         setCurrentMode(1);
+        callback();
         return true;
       }
     } else {
@@ -180,16 +174,16 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
       case 1:
         return (
           <>
-            {interId ? (
+            {interId || interfaceId ? (
               <>
-                <Button
+                <a
                   type={'primary'}
-                  style={{ marginLeft: 10 }}
+                  style={{ marginRight: 10 }}
                   onClick={() => setCurrentMode(3)}
                 >
                   <EditOutlined />
                   Edit
-                </Button>
+                </a>
               </>
             ) : null}
           </>
@@ -198,27 +192,27 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
       case 2:
         return (
           <>
-            <Button
+            <a
               onClick={SaveOrUpdate}
               style={{ marginLeft: 10 }}
               type={'primary'}
             >
               <SaveOutlined />
               Save
-            </Button>
+            </a>
           </>
         );
       //编辑
       case 3:
         return (
           <Space>
-            <Button onClick={SaveOrUpdate} type={'primary'}>
+            <a onClick={SaveOrUpdate} type={'primary'}>
               <SaveOutlined />
               Save
-            </Button>
-            <Button style={{ marginLeft: 5 }} onClick={() => setCurrentMode(1)}>
+            </a>
+            <a style={{ marginLeft: 5 }} onClick={() => setCurrentMode(1)}>
               Cancel
-            </Button>
+            </a>
           </Space>
         );
       default:
@@ -306,12 +300,7 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
       </MyDrawer>
       <ProCard bodyStyle={{ padding: 0 }}>
         <ProForm form={interApiForm} submitter={false}>
-          <ApiBaseForm
-            hidden={hiddenBaseInfo}
-            currentMode={currentMode}
-            setCurrentProjectId={setCurrentProjectId}
-            moduleEnum={moduleEnum}
-          />
+          <ApiBaseForm />
           <ProCard>
             <MyTabs
               defaultActiveKey={'2'}

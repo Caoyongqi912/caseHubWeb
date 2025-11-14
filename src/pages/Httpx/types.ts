@@ -41,6 +41,7 @@ export interface IInterfaceCaseContent {
   content_name?: string | undefined;
   content_desc?: string | undefined;
 
+  is_common_api: number;
   enable?: boolean;
   api_wait_time?: number;
   api_script_text?: string;

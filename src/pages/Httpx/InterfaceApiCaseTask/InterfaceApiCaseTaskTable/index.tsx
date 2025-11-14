@@ -172,7 +172,7 @@ const Index: FC<SelfProps> = ({
       valueType: 'option',
       key: 'option',
       fixed: 'right',
-      render: (text, record, _) => {
+      render: (__, record, _) => {
         return [
           <a
             onClick={async () => {
