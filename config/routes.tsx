@@ -224,13 +224,13 @@ export default [
         component: '@/pages/Httpx/InterfaceApiCase',
       },
       {
-        path: '/interface/caseApi/detail',
+        path: '/interface/caseApi/detail/projectId=:projectId&moduleId=:moduleId',
         name: '接口详情',
         hideInMenu: true,
         component: '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail',
       },
       {
-        path: '/interface/caseApi/detail/caseApiId=:caseApiId',
+        path: '/interface/caseApi/detail/caseApiId=:caseApiId&projectId=:projectId&moduleId=:moduleId',
         name: '用例详情',
         hideInMenu: true,
         component: '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail',

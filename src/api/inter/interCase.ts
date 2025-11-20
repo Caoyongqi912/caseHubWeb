@@ -53,7 +53,10 @@ export const setApiCase = async (
  * @param caseId
  * @param opt
  */
-export const baseInfoApiCase = async (caseId: string, opt?: IObjGet) => {
+export const baseInfoApiCase = async (
+  caseId: string | number,
+  opt?: IObjGet,
+) => {
   return request<IResponse<IInterfaceAPICase>>('/api/interface/case/baseInfo', {
     method: 'GET',
     params: { id: caseId },
@@ -355,20 +358,34 @@ export const removeCaseContentStep = async (
 /**
  * 执行用例
  */
-export const runApiCaseIo = async (data: string | number, opt?: IObjGet) => {
+export const runApiCaseIo = async (
+  data: {
+    case_id: string | number;
+    env_id: number;
+    error_stop: boolean;
+  },
+  opt?: IObjGet,
+) => {
   return request<IResponse<null>>('/api/interface/case/execute/io', {
     method: 'POST',
-    data: { caseId: data },
+    data,
     ...(opt || {}),
   });
 };
 /**
  * 执行用例
  */
-export const runApiCaseBack = async (data: string | number, opt?: IObjGet) => {
+export const runApiCaseBack = async (
+  data: {
+    case_id: string | number;
+    env_id: number;
+    error_stop: boolean;
+  },
+  opt?: IObjGet,
+) => {
   return request<IResponse<null>>('/api/interface/case/execute/back', {
     method: 'POST',
-    data: { caseId: data },
+    data: data,
     ...(opt || {}),
   });
 };

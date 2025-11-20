@@ -1,103 +1,131 @@
-import { IModuleEnum } from '@/api';
-import { CONFIG } from '@/utils/config';
-import { useModel } from '@@/exports';
 import {
+  baseInfoApiCase,
+  insertApiCase,
+  setApiCase,
+} from '@/api/inter/interCase';
+import { CONFIG } from '@/utils/config';
+import { history } from '@@/core/history';
+import {
+  ProCard,
   ProForm,
   ProFormSelect,
   ProFormText,
   ProFormTextArea,
-  ProFormTreeSelect,
 } from '@ant-design/pro-components';
-import React, { FC } from 'react';
+import { Button, Form, message } from 'antd';
+import { FC, useEffect } from 'react';
 
-interface IProps {
-  setCurrentProjectId: React.Dispatch<React.SetStateAction<number | undefined>>;
-  setCurrentModuleId: React.Dispatch<React.SetStateAction<number | undefined>>;
-  moduleEnum: IModuleEnum[];
+interface SelfProps {
+  case_id?: number;
+  currentProjectId?: number;
+  currentModuleId?: number;
+  callback?: () => void;
 }
 
-const ApiCaseBaseForm: FC<IProps> = (props) => {
-  const { setCurrentProjectId, setCurrentModuleId, moduleEnum } = props;
-  const { initialState } = useModel('@@initialState');
-  const projects = initialState?.projects || [];
-  const { API_STATUS_SELECT, API_LEVEL_SELECT, API_CASE_ERROR_STOP_OPT } =
-    CONFIG;
+const ApiCaseBaseForm: FC<SelfProps> = (props) => {
+  const { case_id, currentProjectId, callback, currentModuleId } = props;
+  const [baseForm] = Form.useForm();
+  const { API_STATUS_SELECT, API_LEVEL_SELECT } = CONFIG;
+
+  //路由进入。空白页
+  useEffect(() => {
+    if (currentProjectId && currentModuleId) {
+      baseForm.setFieldsValue({
+        project_id: currentProjectId,
+        module_id: currentModuleId,
+      });
+    }
+  }, [currentProjectId, currentModuleId]);
+
+  useEffect(() => {
+    if (case_id) {
+      Promise.all([baseInfoApiCase(case_id)]).then(([baseInfo]) => {
+        if (baseInfo.code === 0) {
+          baseForm.setFieldsValue(baseInfo.data);
+        }
+      });
+    }
+  }, [case_id]);
+
+  /**
+   * 保存基本信息
+   */
+  const saveBaseInfo = async () => {
+    const values = await baseForm.getFieldsValue(true);
+    if (case_id) {
+      await setApiCase(values).then(async ({ code, msg }) => {
+        if (code === 0) {
+          await message.success(msg);
+        }
+      });
+    } else {
+      await insertApiCase(values).then(async ({ code, data }) => {
+        if (code === 0) {
+          history.push(
+            `/interface/caseApi/detail/caseApiId=${data.id}&projectId=${currentProjectId}&moduleId=${currentModuleId}`,
+          );
+          message.success('添加成功');
+        }
+      });
+    }
+    callback?.();
+  };
   return (
-    <>
-      <ProForm.Group>
-        <ProFormSelect
+    <ProCard
+      extra={
+        <Button onClick={saveBaseInfo} type={'primary'}>
+          Save
+        </Button>
+      }
+    >
+      <ProForm submitter={false} form={baseForm}>
+        <ProFormText
+          hidden={true}
           width={'md'}
-          options={projects}
           label={'所属项目'}
           name={'project_id'}
-          required={true}
-          onChange={(value) => {
-            setCurrentProjectId(value as number);
-          }}
         />
-        <ProFormTreeSelect
-          required
-          name="module_id"
-          label="所属模块"
-          rules={[{ required: true, message: '所属模块必选' }]}
-          fieldProps={{
-            treeData: moduleEnum,
-            onChange: (value) => {
-              setCurrentModuleId(value as number);
-            },
-            fieldNames: {
-              label: 'title',
-            },
-            filterTreeNode: true,
-          }}
-          width={'md'}
-        />
-      </ProForm.Group>
-      <ProForm.Group>
+        <ProFormText hidden={true} required name="module_id" label="所属模块" />
         <ProFormText
-          width={'md'}
+          width={'lg'}
           name="title"
           label="用例标题"
           required={true}
           rules={[{ required: true, message: '用例标题必填' }]}
         />
-        <ProFormSelect
-          name="level"
-          label="优先级"
-          width={'md'}
-          initialValue={'P1'}
-          options={API_LEVEL_SELECT}
-          required={true}
-          rules={[{ required: true, message: '用例优先级必选' }]}
-        />
-        <ProFormSelect
-          name="status"
-          label="用例状态"
-          initialValue={'DEBUG'}
-          width={'md'}
-          options={API_STATUS_SELECT}
-          required={true}
-          rules={[{ required: true, message: '用例状态必须选' }]}
-        />
-      </ProForm.Group>
-      <ProForm.Group>
+
+        <ProForm.Group>
+          <ProFormSelect
+            name="level"
+            label="优先级"
+            width={'md'}
+            initialValue={'P1'}
+            options={API_LEVEL_SELECT}
+            required={true}
+            rules={[{ required: true, message: '用例优先级必选' }]}
+          />
+          <ProFormSelect
+            name="status"
+            label="用例状态"
+            initialValue={'DEBUG'}
+            width={'md'}
+            options={API_STATUS_SELECT}
+            required={true}
+            rules={[{ required: true, message: '用例状态必须选' }]}
+          />
+        </ProForm.Group>
         <ProFormTextArea
-          width={'md'}
+          width={'lg'}
           name="desc"
           label="用例描述"
           required={true}
+          fieldProps={{
+            rows: 2,
+          }}
           rules={[{ required: true, message: '用例描述必填' }]}
         />
-        <ProFormSelect
-          width={'md'}
-          name="error_stop"
-          label="错误停止"
-          initialValue={0}
-          required={true}
-          options={API_CASE_ERROR_STOP_OPT}
-        />
-      </ProForm.Group>
-    </>
+      </ProForm>
+    </ProCard>
   );
 };
 

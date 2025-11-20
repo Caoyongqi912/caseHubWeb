@@ -39,6 +39,33 @@ export const queryProjectEnum = async (
   });
 };
 
+export const queryEnvByProjectId = async (
+  project_id: number,
+  setEnv: React.Dispatch<
+    React.SetStateAction<{ key: number; label: string; value: number }[]>
+  >,
+  noEnv: boolean,
+) => {
+  queryEnvBy({ project_id: project_id } as IEnv).then(
+    async ({ code, data }) => {
+      if (code === 0) {
+        // 请求成功
+        const envs = data.map((item) => ({
+          label: item.name,
+          key: item.id,
+          value: item.id,
+        }));
+        if (noEnv) {
+          const noEnv = { label: '自定义', key: 99999, value: 99999 };
+          setEnv([noEnv, ...envs]); // 设置环境列表
+        } else {
+          setEnv(envs); // 设置环境列表
+        }
+      }
+    },
+  );
+};
+
 export const queryEnvByProjectIdFormApi = async (
   projectId: number,
   setter: React.Dispatch<

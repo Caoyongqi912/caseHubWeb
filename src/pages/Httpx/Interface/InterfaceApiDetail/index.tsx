@@ -1,10 +1,11 @@
+import { IEnv } from '@/api';
+import { queryEnvBy } from '@/api/base';
 import {
   detailInterApiById,
   insertInterApi,
   tryInterApi,
   updateInterApiById,
 } from '@/api/inter';
-import { queryEnvByProjectIdFormApi } from '@/components/CommonFunc';
 import MyDrawer from '@/components/MyDrawer';
 import MyTabs from '@/components/MyTabs';
 import InterAssertList from '@/pages/Httpx/componets/InterAssertList';
@@ -34,7 +35,7 @@ import {
 } from '@ant-design/icons';
 import { ProCard, ProForm } from '@ant-design/pro-components';
 import {
-  Button,
+  Dropdown,
   FloatButton,
   Form,
   message,
@@ -61,7 +62,8 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
   // 1详情 2新增 3 修改
   const [currentMode, setCurrentMode] = useState(1);
   const [currentProjectId, setCurrentProjectId] = useState<number>();
-  const [envs, setEnvs] = useState<{ label: string; value: number | null }[]>(
+  const [tryEnvs, setTryEnvs] = useState<{ key: number; label: string }[]>([]);
+  const [apiEnvs, setApiEnvs] = useState<{ value: number; label: string }[]>(
     [],
   );
   const [tryLoading, setTryLoading] = useState(false);
@@ -105,7 +107,26 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
   // 根据API 所属项目 查询 ENV Module
   useEffect(() => {
     if (currentProjectId) {
-      queryEnvByProjectIdFormApi(currentProjectId, setEnvs, true).then();
+      queryEnvBy({ project_id: currentProjectId } as IEnv).then(
+        async ({ code, data }) => {
+          if (code === 0) {
+            setTryEnvs(
+              data.map((item: IEnv) => ({
+                key: item.id,
+                label: item.name,
+              })),
+            );
+            setApiEnvs([
+              { label: '自定义', value: 99999 },
+              ...data.map((item: IEnv) => ({
+                value: item.id,
+                label: item.name,
+              })),
+            ]);
+          }
+        },
+      );
+      // queryEnvByProjectIdFormApi(currentProjectId, setEnvs, true).then();
     }
   }, [currentProjectId]);
 
@@ -125,7 +146,7 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
       if (code === 0) {
         message.success(msg);
         setCurrentMode(1);
-        callback();
+        callback?.();
         return true;
       }
     } else {
@@ -153,14 +174,18 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
    * 接口 try
    * @constructor
    */
-  const TryClick = async () => {
+  const TryClick = async (e: any) => {
+    console.log('=====', e.key);
     setTryLoading(true);
     const interfaceId = interId || currentInterAPIId;
     if (!interfaceId) {
       setTryLoading(false);
       return;
     }
-    tryInterApi({ interfaceId: interfaceId }).then(({ code, data }) => {
+    tryInterApi({
+      interface_id: interfaceId,
+      env_id: e.key,
+    }).then(({ code, data }) => {
       if (code === 0) {
         setResponseInfo(data);
         setTryLoading(false);
@@ -234,7 +259,7 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
       children: (
         <ApiDetailForm
           interApiForm={interApiForm}
-          envs={envs}
+          envs={apiEnvs}
           interfaceApiInfo={interApiForm.getFieldsValue(true)}
           currentMode={currentMode}
         />
@@ -308,17 +333,27 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
               tabBarExtraContent={
                 <Space>
                   <DetailExtra currentMode={currentMode} />
-                  <Button
-                    size={'middle'}
-                    loading={tryLoading}
+                  <Dropdown.Button
                     type={'primary'}
-                    color={'danger'}
+                    loading={tryLoading}
                     disabled={currentMode !== 1}
-                    onClick={TryClick}
+                    menu={{ items: tryEnvs, onClick: TryClick }}
                   >
                     <SendOutlined />
                     Try
-                  </Button>
+                  </Dropdown.Button>
+
+                  {/*<Button*/}
+                  {/*  size={'middle'}*/}
+                  {/*  loading={tryLoading}*/}
+                  {/*  type={'primary'}*/}
+                  {/*  color={'danger'}*/}
+                  {/*  disabled={currentMode !== 1}*/}
+                  {/*  onClick={TryClick}*/}
+                  {/*>*/}
+                  {/*  <SendOutlined />*/}
+                  {/*  Try*/}
+                  {/*</Button>*/}
                 </Space>
               }
             />

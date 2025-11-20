@@ -1,16 +1,41 @@
+import { IModuleEnum } from '@/api';
 import {
   copyApiCase,
   pageInterApiCase,
   removeApiCase,
+  setApiCase,
 } from '@/api/inter/interCase';
+import MyDrawer from '@/components/MyDrawer';
 import MyProTable from '@/components/Table/MyProTable';
+import ApiCaseBaseForm from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/ApiCaseBaseForm';
 import { IInterfaceAPICase } from '@/pages/Httpx/types';
 import { CONFIG, ModuleEnum } from '@/utils/config';
-import { pageData } from '@/utils/somefunc';
+import { fetchModulesEnum, pageData } from '@/utils/somefunc';
 import { history } from '@@/core/history';
-import { ActionType, ProColumns } from '@ant-design/pro-components';
-import { Button, Divider, Popconfirm, Tag } from 'antd';
-import { FC, useCallback, useEffect, useRef } from 'react';
+import { useModel } from '@@/exports';
+import {
+  CopyOutlined,
+  DashOutlined,
+  DeliveredProcedureOutlined,
+} from '@ant-design/icons';
+import {
+  ActionType,
+  ProColumns,
+  ProForm,
+  ProFormSelect,
+  ProFormTreeSelect,
+} from '@ant-design/pro-components';
+import {
+  Button,
+  Dropdown,
+  Form,
+  message,
+  Modal,
+  Popconfirm,
+  Space,
+  Tag,
+} from 'antd';
+import { FC, useCallback, useEffect, useRef, useState } from 'react';
 
 interface SelfProps {
   currentProjectId?: number;
@@ -24,10 +49,30 @@ const Index: FC<SelfProps> = ({
   perKey,
 }) => {
   const actionRef = useRef<ActionType>(); //Table action 的引用，便于自定义触发
+  const [currentCaseId, setCurrentCaseId] = useState<number>();
+  const [openModal, setOpenModal] = useState(false);
+  const [form] = Form.useForm();
+  const { initialState } = useModel('@@initialState');
+  const projects = initialState?.projects || [];
+  const [moduleEnum, setModuleEnum] = useState<IModuleEnum[]>([]);
+
+  const [copyProjectId, setCopyProjectId] = useState<number>();
+  const [openCaseDetail, setOpenCaseDetail] = useState(false);
+  // 根据当前项目ID获取环境和用例部分
+  useEffect(() => {
+    if (copyProjectId) {
+      fetchModulesEnum(
+        copyProjectId,
+        ModuleEnum.API_CASE,
+        setModuleEnum,
+      ).then();
+    }
+  }, [copyProjectId]);
 
   useEffect(() => {
     actionRef.current?.reload();
   }, [currentModuleId, currentProjectId]);
+
   const fetchInterfaceCase = useCallback(
     async (params: any, sort: any) => {
       const searchData = {
@@ -46,15 +91,12 @@ const Index: FC<SelfProps> = ({
       title: '接口编号',
       dataIndex: 'uid',
       key: 'uid',
-      fixed: 'left',
-      width: '10%',
       copyable: true,
     },
     {
       title: '名称',
       dataIndex: 'title',
       key: 'title',
-      fixed: 'left',
     },
     {
       title: '步骤数量',
@@ -102,68 +144,167 @@ const Index: FC<SelfProps> = ({
       key: 'option',
       fixed: 'right',
       render: (text, record, _) => {
-        return (
-          <>
-            <a
-              onClick={() => {
-                history.push(
-                  `/interface/caseApi/detail/caseApiId=${record.id}`,
-                );
-              }}
-            >
-              详情
+        return [
+          <a
+            onClick={() => {
+              // history.push(
+              //   `/interface/caseApi/detail/caseApiId=${record.id}&projectId=${record.project_id}&moduleId=${record.module_id}`,
+              // );
+              setCurrentCaseId(record.id);
+              setOpenCaseDetail(true);
+            }}
+          >
+            详情
+          </a>,
+          <a
+            onClick={() => {
+              history.push(
+                `/interface/caseApi/detail/caseApiId=${record.id}&projectId=${record.project_id}&moduleId=${record.module_id}`,
+              );
+            }}
+          >
+            关联步骤
+          </a>,
+          <Dropdown
+            menu={{
+              items: [
+                {
+                  key: '1',
+                  label: '复制',
+                  icon: <CopyOutlined />,
+                  onClick: async () => {
+                    const { code } = await copyApiCase(record.id);
+                    if (code === 0) {
+                      actionRef.current?.reload();
+                    }
+                  },
+                },
+                {
+                  key: '3',
+                  label: '移动至',
+                  icon: <DeliveredProcedureOutlined />,
+                  onClick: () => {
+                    setCurrentCaseId(record.id);
+                    setOpenModal(true);
+                  },
+                },
+
+                {
+                  type: 'divider',
+                },
+                {
+                  key: '2',
+                  label: (
+                    <Popconfirm
+                      title={'确认删除？'}
+                      okText={'确认'}
+                      cancelText={'点错了'}
+                      onConfirm={async () => {
+                        await removeApiCase(record.id).then(
+                          async ({ code }) => {
+                            if (code === 0) {
+                              actionRef.current?.reload();
+                            }
+                          },
+                        );
+                      }}
+                    >
+                      <a>删除</a>
+                    </Popconfirm>
+                  ),
+                },
+              ],
+            }}
+          >
+            <a onClick={(e) => e.preventDefault()}>
+              <Space>
+                <DashOutlined />
+              </Space>
             </a>
-            <Divider type={'vertical'} />
-            <a
-              onClick={async () => {
-                const { code } = await copyApiCase(record.id);
-                if (code === 0) {
-                  actionRef.current?.reload();
-                }
-              }}
-            >
-              复制
-            </a>
-            <Popconfirm
-              title={'确认删除？'}
-              okText={'确认'}
-              cancelText={'点错了'}
-              onConfirm={async () => {
-                await removeApiCase(record.id).then(async ({ code }) => {
-                  if (code === 0) {
-                    actionRef.current?.reload();
-                  }
-                });
-              }}
-            >
-              <Divider type={'vertical'} />
-              <a>删除</a>
-            </Popconfirm>
-          </>
-        );
+          </Dropdown>,
+        ];
       },
     },
   ];
 
   return (
-    <MyProTable
-      key={perKey}
-      rowKey={'id'}
-      actionRef={actionRef}
-      x={1500}
-      columns={columns}
-      request={fetchInterfaceCase}
-      toolBarRender={() => [
-        <Button
-          type={'primary'}
-          onClick={() => {
-            history.push('/interface/caseApi/detail');
+    <>
+      <MyDrawer name={''} open={openCaseDetail} setOpen={setOpenCaseDetail}>
+        <ApiCaseBaseForm
+          case_id={currentCaseId}
+          currentProjectId={currentProjectId}
+          currentModuleId={currentModuleId}
+          callback={() => {
+            setOpenCaseDetail(false);
+            actionRef.current?.reload();
           }}
-        >
-          添加
-        </Button>,
-      ]}
-    />
+        />
+      </MyDrawer>
+      <Modal
+        open={openModal}
+        onOk={async () => {
+          const values = await form.validateFields();
+          const { code, msg } = await setApiCase({
+            id: currentCaseId,
+            ...values,
+          });
+          if (code === 0) {
+            message.success(msg);
+            actionRef.current?.reload();
+            form.resetFields();
+            setOpenModal(false);
+          }
+        }}
+        onCancel={() => setOpenModal(false)}
+        title={'移动'}
+      >
+        <ProForm submitter={false} form={form}>
+          <ProFormSelect
+            width={'md'}
+            options={projects}
+            label={'项目'}
+            name={'project_id'}
+            required={true}
+            onChange={(value) => {
+              setCopyProjectId(value as number);
+            }}
+          />
+          <ProFormTreeSelect
+            required
+            name="module_id"
+            label="模块"
+            rules={[{ required: true, message: '所属模块必选' }]}
+            fieldProps={{
+              treeData: moduleEnum,
+              fieldNames: {
+                label: 'title',
+              },
+              filterTreeNode: true,
+            }}
+            width={'md'}
+          />
+        </ProForm>
+      </Modal>
+      <MyProTable
+        key={perKey}
+        rowKey={'id'}
+        actionRef={actionRef}
+        x={1500}
+        columns={columns}
+        request={fetchInterfaceCase}
+        toolBarRender={() => [
+          <Button
+            type={'primary'}
+            onClick={() => {
+              // history.push(`/interface/caseApi/detail/projectId=${currentProjectId}&moduleId=${currentModuleId}`);
+              setOpenCaseDetail(true);
+            }}
+          >
+            添加
+          </Button>,
+        ]}
+      />
+    </>
   );
 };
 export default Index;

@@ -1,64 +1,56 @@
-import { IModuleEnum } from '@/api';
 import {
   addCaseContent,
   add_empty_api,
   baseInfoApiCase,
   initAPICondition,
-  insertApiCase,
   queryContentsByCaseId,
   reorderCaseContents,
   runApiCaseBack,
-  setApiCase,
 } from '@/api/inter/interCase';
 import DnDDraggable from '@/components/DnDDraggable';
 import MyDrawer from '@/components/MyDrawer';
 import GroupApiChoiceTable from '@/pages/Httpx/Interface/interfaceApiGroup/GroupApiChoiceTable';
-import ApiCaseBaseForm from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/ApiCaseBaseForm';
 import CaseContentCollapsible from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/CaseContentCollapsible';
 import InterfaceApiCaseVars from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/InterfaceApiCaseVars';
+import RunConfig from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/RunConfig';
 import InterfaceApiCaseResultDrawer from '@/pages/Httpx/InterfaceApiCaseResult/InterfaceApiCaseResultDrawer';
-import InterfaceApiCaseResultTable from '@/pages/Httpx/InterfaceApiCaseResult/InterfaceApiCaseResultTable';
 import InterfaceCaseChoiceApiTable from '@/pages/Httpx/InterfaceApiCaseResult/InterfaceCaseChoiceApiTable';
 import { IInterfaceCaseContent } from '@/pages/Httpx/types';
-import { ModuleEnum } from '@/utils/config';
-import { fetchModulesEnum } from '@/utils/somefunc';
 import { useParams } from '@@/exports';
 import {
   AimOutlined,
   AlignLeftOutlined,
   ApiOutlined,
-  ArrowRightOutlined,
   BranchesOutlined,
   FieldTimeOutlined,
-  PlayCircleOutlined,
   PythonOutlined,
   SelectOutlined,
   UngroupOutlined,
 } from '@ant-design/icons';
-import { ProCard, ProForm } from '@ant-design/pro-components';
+import { ProCard } from '@ant-design/pro-components';
 import {
-  Button,
-  Divider,
   Dropdown,
   Empty,
   FloatButton,
   Form,
-  MenuProps,
   message,
+  Splitter,
   Tabs,
   TabsProps,
 } from 'antd';
-import { FC, useEffect, useState } from 'react';
-import { history } from 'umi';
+import { RadioChangeEvent } from 'antd/lib/radio/interface';
+import { useEffect, useState } from 'react';
 
 const Index = () => {
-  const { caseApiId } = useParams<{ caseApiId: string }>();
+  const { caseApiId, projectId, moduleId } = useParams<{
+    caseApiId: string;
+    projectId: string;
+    moduleId: string;
+  }>();
   const [baseForm] = Form.useForm();
   const [caseContentElement, setCaseContentElement] = useState<any[]>([]);
-  const [moduleEnum, setModuleEnum] = useState<IModuleEnum[]>([]);
   const [currentProjectId, setCurrentProjectId] = useState<number>();
   const [currentModuleId, setCurrentModuleId] = useState<number>();
-  const [currentStatus, setCurrentStatus] = useState(1);
 
   const [caseContents, setCaseContents] = useState<IInterfaceCaseContent[]>([]);
   const [caseContentsStepLength, setCaseContentsStepLength] =
@@ -69,6 +61,22 @@ const Index = () => {
   const [choiceOpen, setChoiceOpen] = useState(false);
   const [choiceGroupOpen, setChoiceGroupOpen] = useState(false);
   const [reloadResult, setReloadResult] = useState(0);
+
+  const [runningEnvId, setRunningEnvId] = useState<number>();
+  const [errorJump, setErrorJump] = useState<boolean>(false);
+  const [runningStyle, setRunningStyle] = useState<number>(1);
+  //路由进入。空白页
+  useEffect(() => {
+    if (projectId && moduleId) {
+      baseForm.setFieldsValue({
+        project_id: parseInt(projectId),
+        module_id: parseInt(moduleId),
+      });
+    }
+    if (projectId) {
+      setCurrentProjectId(parseInt(projectId));
+    }
+  }, [moduleId, projectId]);
 
   useEffect(() => {
     if (caseApiId) {
@@ -85,18 +93,8 @@ const Index = () => {
           setCaseContents(apisInfo.data);
         }
       });
-    } else {
-      setCurrentStatus(2);
     }
   }, [editCase, caseApiId]);
-
-  useEffect(() => {
-    if (currentProjectId) {
-      Promise.all([
-        fetchModulesEnum(currentProjectId, ModuleEnum.API_CASE, setModuleEnum),
-      ]).then();
-    }
-  }, [currentProjectId]);
 
   useEffect(() => {
     if (caseContents) {
@@ -127,102 +125,39 @@ const Index = () => {
     setChoiceGroupOpen(false);
   };
 
-  /**
-   * 保存基本信息
-   */
-  const saveBaseInfo = async () => {
-    const values = await baseForm.getFieldsValue(true);
-    if (caseApiId) {
-      await setApiCase(values).then(async ({ code, msg }) => {
+  const onMenuClick = async (e: RadioChangeEvent) => {
+    const { value } = e.target;
+    setRunningStyle(value);
+  };
+
+  const debugCase = async () => {
+    if (!runningEnvId) {
+      message.error('请选择运行环境');
+      return;
+    }
+    if (!caseApiId) return;
+    if (runningStyle === 1) {
+      await runApiCaseBack({
+        env_id: runningEnvId,
+        error_stop: errorJump,
+        case_id: caseApiId,
+      }).then(async ({ code }) => {
         if (code === 0) {
-          setCurrentStatus(1);
-          await message.success(msg);
+          setReloadResult(reloadResult + 1);
+          message.success('后台运行中。。');
         }
       });
     } else {
-      await insertApiCase(values).then(async ({ code, data }) => {
-        if (code === 0) {
-          history.push(`/interface/caseApi/detail/caseApiId=${data.id}`);
-          message.success('添加成功');
-        }
-      });
+      setReloadResult(reloadResult + 1);
+      setRunOpen(true);
     }
   };
 
-  const onMenuClick: MenuProps['onClick'] = (e) => {
-    const { key } = e;
-    if (caseApiId) {
-      if (key === '1') {
-        runApiCaseBack(caseApiId).then(async ({ code }) => {
-          if (code === 0) {
-            setReloadResult(reloadResult + 1);
-            message.success('后台运行中。。');
-          }
-        });
-      } else {
-        setRunOpen(true);
-      }
-    }
+  const onEnvChange = (value: number) => {
+    setRunningEnvId(value);
   };
-
-  const DetailExtra: FC<{ currentStatus: number }> = ({ currentStatus }) => {
-    switch (currentStatus) {
-      case 1:
-        return (
-          <div style={{ display: 'flex' }}>
-            <Dropdown.Button
-              menu={{
-                items: [
-                  {
-                    key: '1',
-                    label: '后台运行',
-                    icon: <ArrowRightOutlined />,
-                  },
-                  {
-                    key: '2',
-                    label: '实时日志运行',
-                    icon: <ArrowRightOutlined />,
-                  },
-                ],
-                onClick: onMenuClick,
-              }}
-              icon={<PlayCircleOutlined />}
-            >
-              Run By
-            </Dropdown.Button>
-            <Divider type={'vertical'} />
-            <Button
-              type={'primary'}
-              style={{ marginLeft: 10 }}
-              onClick={() => setCurrentStatus(3)}
-            >
-              Edit
-            </Button>
-          </div>
-        );
-      case 2:
-        return (
-          <Button onClick={saveBaseInfo} type={'primary'}>
-            Save
-          </Button>
-        );
-      case 3:
-        return (
-          <>
-            <Button onClick={saveBaseInfo} type={'primary'}>
-              Save
-            </Button>
-            <Button
-              style={{ marginLeft: 5 }}
-              onClick={() => setCurrentStatus(1)}
-            >
-              Cancel
-            </Button>
-          </>
-        );
-      default:
-        return null;
-    }
+  const onErrorJumpChange = (value: boolean) => {
+    setErrorJump(value);
   };
   const onDragEnd = (reorderedUIContents: any[]) => {
     setCaseContentElement(reorderedUIContents);
@@ -240,119 +175,114 @@ const Index = () => {
     }
   };
 
-  const ApisCardExtra: FC<{ current: number }> = ({ current }) => {
-    switch (current) {
-      case 1:
-        return (
-          <Dropdown.Button
-            type={'primary'}
-            menu={{
-              items: [
-                {
-                  key: 'choice_group',
-                  label: '选择公共组',
-                  icon: <UngroupOutlined style={{ color: 'blue' }} />,
-                  onClick: () => setChoiceGroupOpen(true),
-                },
-                {
-                  key: 'choice_api',
-                  label: '选择公共接口',
-                  icon: <SelectOutlined style={{ color: 'blue' }} />,
-                  onClick: () => setChoiceOpen(true),
-                },
-                {
-                  type: 'divider',
-                },
-                {
-                  key: 'add_api',
-                  label: '添加API',
-                  icon: <ApiOutlined style={{ color: 'orange' }} />,
-                  onClick: async () => {
-                    if (caseApiId && currentProjectId && currentModuleId) {
-                      const { code } = await add_empty_api({
-                        case_id: parseInt(caseApiId),
-                        project_id: currentProjectId,
-                        module_id: currentModuleId,
-                      });
-                      if (code === 0) {
-                        await refresh();
-                      }
-                    }
-                  },
-                },
-                {
-                  key: 'add_condition',
-                  label: '添加条件',
-                  icon: <BranchesOutlined style={{ color: 'orange' }} />,
-                  onClick: async () => {
-                    if (caseApiId) {
-                      const { code } = await initAPICondition({
-                        interface_case_id: parseInt(caseApiId),
-                      });
-                      if (code === 0) {
-                        await refresh();
-                      }
-                    }
-                  },
-                },
-                {
-                  key: 'wait',
-                  label: '等待',
-                  icon: <FieldTimeOutlined style={{ color: 'orange' }} />,
-                  onClick: async () => {
-                    if (caseApiId) {
-                      const { code } = await addCaseContent({
-                        case_id: parseInt(caseApiId),
-                        content_type: 6,
-                      });
-                      if (code === 0) {
-                        await refresh();
-                      }
-                    }
-                  },
-                },
-                {
-                  key: 'add_script',
-                  label: '添加脚本',
-                  icon: <PythonOutlined style={{ color: 'orange' }} />,
-                  onClick: async () => {
-                    if (caseApiId) {
-                      const { code } = await addCaseContent({
-                        case_id: parseInt(caseApiId),
-                        content_type: 4,
-                      });
-                      if (code === 0) {
-                        await refresh();
-                      }
-                    }
-                  },
-                },
-                {
-                  key: 'add_assert',
-                  label: '添加断言',
-                  icon: <AimOutlined style={{ color: 'orange' }} />,
-                  onClick: async () => {
-                    if (caseApiId) {
-                      const { code } = await addCaseContent({
-                        case_id: parseInt(caseApiId),
-                        content_type: 8,
-                      });
-                      if (code === 0) {
-                        await refresh();
-                      }
-                    }
-                  },
-                },
-              ],
-            }}
-            icon={<AlignLeftOutlined />}
-          >
-            添加
-          </Dropdown.Button>
-        );
-      default:
-        return null;
-    }
+  const ApisCardExtra = () => {
+    return (
+      <Dropdown.Button
+        type={'primary'}
+        menu={{
+          items: [
+            {
+              key: 'choice_group',
+              label: '选择公共组',
+              icon: <UngroupOutlined style={{ color: 'blue' }} />,
+              onClick: () => setChoiceGroupOpen(true),
+            },
+            {
+              key: 'choice_api',
+              label: '选择公共接口',
+              icon: <SelectOutlined style={{ color: 'blue' }} />,
+              onClick: () => setChoiceOpen(true),
+            },
+            {
+              type: 'divider',
+            },
+            {
+              key: 'add_api',
+              label: '添加API',
+              icon: <ApiOutlined style={{ color: 'orange' }} />,
+              onClick: async () => {
+                if (caseApiId && currentProjectId && currentModuleId) {
+                  const { code } = await add_empty_api({
+                    case_id: parseInt(caseApiId),
+                    project_id: currentProjectId,
+                    module_id: currentModuleId,
+                  });
+                  if (code === 0) {
+                    await refresh();
+                  }
+                }
+              },
+            },
+            {
+              key: 'add_condition',
+              label: '添加条件',
+              icon: <BranchesOutlined style={{ color: 'orange' }} />,
+              onClick: async () => {
+                if (caseApiId) {
+                  const { code } = await initAPICondition({
+                    interface_case_id: parseInt(caseApiId),
+                  });
+                  if (code === 0) {
+                    await refresh();
+                  }
+                }
+              },
+            },
+            {
+              key: 'wait',
+              label: '等待',
+              icon: <FieldTimeOutlined style={{ color: 'orange' }} />,
+              onClick: async () => {
+                if (caseApiId) {
+                  const { code } = await addCaseContent({
+                    case_id: parseInt(caseApiId),
+                    content_type: 6,
+                  });
+                  if (code === 0) {
+                    await refresh();
+                  }
+                }
+              },
+            },
+            {
+              key: 'add_script',
+              label: '添加脚本',
+              icon: <PythonOutlined style={{ color: 'orange' }} />,
+              onClick: async () => {
+                if (caseApiId) {
+                  const { code } = await addCaseContent({
+                    case_id: parseInt(caseApiId),
+                    content_type: 4,
+                  });
+                  if (code === 0) {
+                    await refresh();
+                  }
+                }
+              },
+            },
+            {
+              key: 'add_assert',
+              label: '添加断言',
+              icon: <AimOutlined style={{ color: 'orange' }} />,
+              onClick: async () => {
+                if (caseApiId) {
+                  const { code } = await addCaseContent({
+                    case_id: parseInt(caseApiId),
+                    content_type: 8,
+                  });
+                  if (code === 0) {
+                    await refresh();
+                  }
+                }
+              },
+            },
+          ],
+        }}
+        icon={<AlignLeftOutlined />}
+      >
+        添加
+      </Dropdown.Button>
+    );
   };
 
   const APIStepItems: TabsProps['items'] = [
@@ -391,8 +321,11 @@ const Index = () => {
         <InterfaceApiCaseResultDrawer
           openStatus={runOpen}
           caseApiId={caseApiId!}
+          error_stop={errorJump}
+          env_id={runningEnvId!}
         />
       </MyDrawer>
+
       <MyDrawer name={''} open={choiceGroupOpen} setOpen={setChoiceGroupOpen}>
         <GroupApiChoiceTable
           projectId={currentProjectId}
@@ -400,6 +333,7 @@ const Index = () => {
           currentCaseId={caseApiId!}
         />
       </MyDrawer>
+
       <MyDrawer name={''} open={choiceOpen} setOpen={setChoiceOpen}>
         <InterfaceCaseChoiceApiTable
           projectId={currentProjectId}
@@ -407,40 +341,44 @@ const Index = () => {
           refresh={refresh}
         />
       </MyDrawer>
-      <ProCard
-        split={'horizontal'}
-        extra={<DetailExtra currentStatus={currentStatus} />}
+      <Splitter
+        style={{ height: '100%', boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)' }}
       >
-        <ProCard>
-          <ProForm
-            disabled={currentStatus === 1}
-            form={baseForm}
-            submitter={false}
-          >
-            <ApiCaseBaseForm
-              setCurrentProjectId={setCurrentProjectId}
-              setCurrentModuleId={setCurrentModuleId}
-              moduleEnum={moduleEnum}
+        <Splitter.Panel
+          resizable
+          collapsible={{ start: true, end: true }}
+          defaultSize="90%"
+          min="90%"
+          max="100%"
+        >
+          <ProCard extra={<ApisCardExtra />}>
+            <Tabs
+              defaultActiveKey={'2'}
+              defaultValue={'2'}
+              size={'large'}
+              type={'card'}
+              items={APIStepItems}
             />
-          </ProForm>
-        </ProCard>
-        <ProCard extra={<ApisCardExtra current={currentStatus} />}>
-          <Tabs
-            defaultActiveKey={'2'}
-            defaultValue={'2'}
-            size={'large'}
-            type={'card'}
-            items={APIStepItems}
+          </ProCard>
+        </Splitter.Panel>
+        <Splitter.Panel resizable collapsible={{ start: true, end: true }}>
+          <RunConfig
+            onMenuClick={onMenuClick}
+            run={debugCase}
+            onEnvChange={onEnvChange}
+            onErrorJumpChange={onErrorJumpChange}
+            currentProjectId={currentProjectId}
           />
-        </ProCard>
-        {caseApiId ? (
-          <InterfaceApiCaseResultTable
-            apiCaseId={caseApiId}
-            reload={reloadResult}
-          />
-        ) : null}
-        <FloatButton.BackTop />
-      </ProCard>
+        </Splitter.Panel>
+      </Splitter>
+
+      {/*{caseApiId ? (*/}
+      {/*  <InterfaceApiCaseResultTable*/}
+      {/*    apiCaseId={caseApiId}*/}
+      {/*    reload={reloadResult}*/}
+      {/*  />*/}
+      {/*) : null}*/}
+      <FloatButton.BackTop />
     </>
   );
 };

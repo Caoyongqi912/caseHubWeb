@@ -18,6 +18,8 @@ import io, { Socket } from 'socket.io-client';
 interface SelfProps {
   openStatus?: boolean;
   caseApiId?: string;
+  env_id: number;
+  error_stop: boolean;
   currentCaseResultId?: string | number;
 }
 
@@ -25,6 +27,8 @@ const InterfaceApiCaseResultDrawer: FC<SelfProps> = ({
   currentCaseResultId,
   openStatus,
   caseApiId,
+  env_id,
+  error_stop,
 }) => {
   const [logMessage, setLogMessage] = useState<string[]>([]);
   const [caseResultId, setCaseResultId] = useState<string>();
@@ -61,7 +65,11 @@ const InterfaceApiCaseResultDrawer: FC<SelfProps> = ({
       socket.on('connect', () => {
         console.log('connect socket');
         if (caseApiId) {
-          runApiCaseIo(caseApiId).then();
+          runApiCaseIo({
+            case_id: caseApiId,
+            env_id: env_id,
+            error_stop: error_stop,
+          }).then();
         }
       });
 
@@ -128,6 +136,7 @@ const InterfaceApiCaseResultDrawer: FC<SelfProps> = ({
       label: '基本信息',
       key: '1',
       icon: <InfoCircleOutlined />,
+      disabled: tabDisabled,
       children: (
         <InterfaceApiCaseResultBaseInfo caseResultInfo={caseResultInfo} />
       ),
@@ -148,6 +157,7 @@ const InterfaceApiCaseResultDrawer: FC<SelfProps> = ({
     {
       label: '步骤详情',
       key: '3',
+      disabled: tabDisabled,
       icon: <OrderedListOutlined />,
       children: <InterfaceApiResultResponses caseResultId={caseResultId} />,
     },
