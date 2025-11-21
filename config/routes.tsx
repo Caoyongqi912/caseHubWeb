@@ -190,55 +190,55 @@ export default [
     routes: [
       {
         path: '/interface/interApi/api',
-        name: 'API管理',
+        name: 'API用例管理',
         component: '@/pages/Httpx/Interface',
       },
 
       {
         path: '/interface/interApi/detail/interId=:interId',
-        name: '接口详情',
+        name: 'API用例详情',
         hideInMenu: true,
         component: '@/pages/Httpx/Interface/InterfaceApiDetail',
       },
       {
         path: '/interface/interApi/detail/projectId=:projectId&moduleId=:moduleId',
-        name: '接口详情添加',
+        name: 'API用例详情添加',
         hideInMenu: true,
         component: '@/pages/Httpx/Interface/InterfaceApiDetail',
       },
       {
         path: '/interface/group/detail',
-        name: '添加group',
+        name: 'API用例组',
         hideInMenu: true,
         component: '@/pages/Httpx/Interface/interfaceApiGroup/GroupApiDetail',
       },
       {
-        path: '/interface/group/detail/groupId=:groupId',
-        name: '添加group',
+        path: '/interface/group/detail/groupId=:groupId&projectId=:projectId&moduleId=:moduleId',
+        name: 'API用例组',
         hideInMenu: true,
         component: '@/pages/Httpx/Interface/interfaceApiGroup/GroupApiDetail',
       },
       {
         path: '/interface/caseApi/cases',
-        name: '用例管理',
+        name: 'API业务流',
         component: '@/pages/Httpx/InterfaceApiCase',
       },
       {
         path: '/interface/caseApi/detail/projectId=:projectId&moduleId=:moduleId',
-        name: '接口详情',
+        name: 'API业务流',
         hideInMenu: true,
         component: '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail',
       },
       {
         path: '/interface/caseApi/detail/caseApiId=:caseApiId&projectId=:projectId&moduleId=:moduleId',
-        name: '用例详情',
+        name: 'API业务流',
         hideInMenu: true,
         component: '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail',
       },
 
       {
         path: '/interface/tasks',
-        name: '任务',
+        name: 'API任务',
         component: '@/pages/Httpx/InterfaceApiCaseTask',
       },
       {
@@ -256,14 +256,14 @@ export default [
       },
       {
         path: '/interface/task/detail/projectId=:projectId&moduleId=:moduleId',
-        name: '添加任务',
+        name: 'API任务',
         component:
           '@/pages/Httpx/InterfaceApiCaseTask/InterfaceApiCaseTaskDetail',
         hideInMenu: true,
       },
       {
-        path: '/interface/task/detail/taskId=:taskId',
-        name: '添加任务',
+        path: '/interface/task/detail/taskId=:taskId&projectId=:projectId',
+        name: 'API任务',
         component:
           '@/pages/Httpx/InterfaceApiCaseTask/InterfaceApiCaseTaskDetail',
         hideInMenu: true,

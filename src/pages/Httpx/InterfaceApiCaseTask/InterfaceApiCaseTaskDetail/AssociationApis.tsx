@@ -142,7 +142,7 @@ const AssociationApis: FC<IAssociationApisProps> = ({
         <InterfaceCaseChoiceApiTable
           projectId={currentProjectId}
           currentTaskId={currentTaskId}
-          refresh={actionRef.current?.reload}
+          refresh={() => actionRef.current?.reload}
         />
       </MyDrawer>
       <DragSortTable

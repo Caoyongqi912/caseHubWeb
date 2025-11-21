@@ -1,9 +1,7 @@
-import { queryPushConfig } from '@/api/base/pushConfig';
 import {
   ProForm,
   ProFormDigit,
   ProFormSelect,
-  ProFormSwitch,
   ProFormText,
   ProFormTextArea,
 } from '@ant-design/pro-components';
@@ -43,7 +41,6 @@ const InterfaceTaskBaseForm = () => {
           name={'retry'}
           width={'md'}
           required={true}
-          // hidden={true}
           initialValue={0}
           max={5}
           min={0}
@@ -54,55 +51,54 @@ const InterfaceTaskBaseForm = () => {
           name={'parallel'}
           required={true}
           width={'md'}
-          // hidden={true}
           initialValue={0}
           max={5}
           min={0}
         />
       </ProForm.Group>
-      <ProForm.Group>
-        <ProFormSwitch
-          name={'is_auto'}
-          label={'自动化运行'}
-          checkedChildren="开"
-          unCheckedChildren="关"
-          initialValue={isAuto}
-          fieldProps={{
-            onChange: (checked) => {
-              setIsAuto(checked);
-            },
-          }}
-        />
-        {isAuto ? (
-          <ProFormText
-            width={'md'}
-            tooltip={'m h d M (day of month)'}
-            name={'cron'}
-            label={'Cron表达式'}
-            required={isAuto}
-            placeholder={'* * * * *'}
-            rules={[{ required: isAuto, message: '表达式必填' }]}
-          />
-        ) : null}
-        <ProFormSelect
-          label={'推送方式'}
-          name={'push_id'}
-          width={'md'}
-          request={async () => {
-            const { code, data } = await queryPushConfig();
-            if (code === 0 && data.length > 0) {
-              return data.map((item) => {
-                return { label: item.push_name, value: item.id };
-              });
-            }
-            return [];
-          }}
-        />
-      </ProForm.Group>
+      {/*<ProForm.Group>*/}
+      {/*  <ProFormSwitch*/}
+      {/*    name={'is_auto'}*/}
+      {/*    label={'自动化运行'}*/}
+      {/*    checkedChildren="开"*/}
+      {/*    unCheckedChildren="关"*/}
+      {/*    initialValue={isAuto}*/}
+      {/*    fieldProps={{*/}
+      {/*      onChange: (checked) => {*/}
+      {/*        setIsAuto(checked);*/}
+      {/*      },*/}
+      {/*    }}*/}
+      {/*  />*/}
+      {/*  {isAuto ? (*/}
+      {/*    <ProFormText*/}
+      {/*      width={'md'}*/}
+      {/*      tooltip={'m h d M (day of month)'}*/}
+      {/*      name={'cron'}*/}
+      {/*      label={'Cron表达式'}*/}
+      {/*      required={isAuto}*/}
+      {/*      placeholder={'* * * * *'}*/}
+      {/*      rules={[{ required: isAuto, message: '表达式必填' }]}*/}
+      {/*    />*/}
+      {/*  ) : null}*/}
+      {/*  <ProFormSelect*/}
+      {/*    label={'推送方式'}*/}
+      {/*    name={'push_id'}*/}
+      {/*    width={'md'}*/}
+      {/*    request={async () => {*/}
+      {/*      const { code, data } = await queryPushConfig();*/}
+      {/*      if (code === 0 && data.length > 0) {*/}
+      {/*        return data.map((item) => {*/}
+      {/*          return { label: item.push_name, value: item.id };*/}
+      {/*        });*/}
+      {/*      }*/}
+      {/*      return [];*/}
+      {/*    }}*/}
+      {/*  />*/}
+      {/*</ProForm.Group>*/}
 
       <ProForm.Group>
         <ProFormTextArea
-          width={'md'}
+          width={'lg'}
           name="desc"
           label="用例描述"
           required={true}

@@ -88,9 +88,10 @@ const Index: FC<SelfProps> = ({
   );
   const columns: ProColumns<IInterfaceAPICase>[] = [
     {
-      title: '接口编号',
+      title: '业务编号',
       dataIndex: 'uid',
       key: 'uid',
+      width: '10%',
       copyable: true,
     },
     {
@@ -229,7 +230,12 @@ const Index: FC<SelfProps> = ({
 
   return (
     <>
-      <MyDrawer name={''} open={openCaseDetail} setOpen={setOpenCaseDetail}>
+      <MyDrawer
+        name={''}
+        width={'20%'}
+        open={openCaseDetail}
+        setOpen={setOpenCaseDetail}
+      >
         <ApiCaseBaseForm
           case_id={currentCaseId}
           currentProjectId={currentProjectId}

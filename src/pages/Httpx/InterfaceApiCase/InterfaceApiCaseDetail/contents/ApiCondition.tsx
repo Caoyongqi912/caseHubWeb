@@ -99,7 +99,7 @@ const ApiCondition: FC<SelfProps> = ({
     console.log('排序后的数据', newDataSource);
     setConditionAPI(newDataSource);
     const reorderIds: number[] = newDataSource.map((item) => item.id);
-    const { code } = await reorderAssociationAPI({
+    await reorderAssociationAPI({
       interface_id_list: reorderIds,
       condition_id: caseContent.target_id,
     });
@@ -200,7 +200,7 @@ const ApiCondition: FC<SelfProps> = ({
   const onValuesChange = (changedValues: any, allValues: any) => {
     clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(async () => {
-      const { code, data, msg } = await updateConditionContentInfo({
+      const { code, data } = await updateConditionContentInfo({
         id: caseContent.target_id,
         ...allValues,
       });

@@ -1,194 +1,146 @@
-import {
-  executeTask,
-  getApiTaskBaseDetail,
-  insertApiTask,
-  updateApiTaskBaseInfo,
-} from '@/api/inter/interTask';
+import { executeTask } from '@/api/inter/interTask';
 import MyTabs from '@/components/MyTabs';
 import AssociationApis from '@/pages/Httpx/InterfaceApiCaseTask/InterfaceApiCaseTaskDetail/AssociationApis';
 import AssociationCases from '@/pages/Httpx/InterfaceApiCaseTask/InterfaceApiCaseTaskDetail/AssociationCases';
-import InterfaceTaskBaseForm from '@/pages/Httpx/InterfaceApiCaseTask/InterfaceApiCaseTaskDetail/InterfaceTaskBaseForm';
-import InterfaceApiTaskResultTable from '@/pages/Httpx/InterfaceApiTaskResult/InterfaceApiTaskResultTable';
-import { IInterfaceAPITask } from '@/pages/Httpx/types';
+import RunConfig from '@/pages/Httpx/InterfaceApiCaseTask/RunConfig';
 import { useParams } from '@@/exports';
-import { ProCard, ProForm } from '@ant-design/pro-components';
-import { Button, FloatButton, Form, message } from 'antd';
-import { FC, useEffect, useState } from 'react';
-import { history } from 'umi';
+import { ProCard } from '@ant-design/pro-components';
+import { FloatButton, message, Splitter } from 'antd';
+import { debounce } from 'lodash';
+import RcResizeObserver from 'rc-resize-observer';
+import { useCallback, useState } from 'react';
 
 const Index = () => {
-  const { taskId, projectId, moduleId } = useParams<{
+  const { taskId, projectId } = useParams<{
     taskId: string;
     projectId: string;
-    moduleId: string;
   }>();
-  const [taskForm] = Form.useForm<IInterfaceAPITask>();
-  const [currentStatus, setCurrentStatus] = useState(1);
-  const [editTsk, setEditTask] = useState<number>(0);
 
-  const [currentProjectId, setCurrentProjectId] = useState<number>();
+  const [runningEnvId, setRunningEnvId] = useState<number>();
+  const [runningOption, setRunningOption] = useState<string[]>([]);
+  const [defaultSize, setDefaultSize] = useState('80%');
+  const handleResize = useCallback(
+    debounce(({ width }) => {
+      console.log('=====', width);
+      const breakpoints = [
+        { max: 768, size: '80%' }, // 平板及以下
+        { max: 1024, size: '80%' }, // 小笔记本
+        { max: 1440, size: '83%' }, // 普通显示器
+        { max: 1920, size: '88%' }, // 1K显示器
+        { max: 2560, size: '90%' }, // 2K显示器
+        { max: Infinity, size: '95%' }, // 4K+显示器
+      ];
 
-  useEffect(() => {
-    if (projectId && moduleId) {
-      taskForm.setFieldsValue({
-        project_id: parseInt(projectId),
-        module_id: parseInt(moduleId),
-      });
-    }
-    if (projectId) {
-      setCurrentProjectId(parseInt(projectId));
-    }
-  }, [moduleId, projectId]);
+      const breakpoint = breakpoints.find((bp) => width <= bp.max);
+      console.log(breakpoint?.size);
+      setDefaultSize(breakpoint?.size || '80%');
+    }, 100),
+    [],
+  );
 
-  useEffect(() => {
-    if (taskId) {
-      getApiTaskBaseDetail(taskId).then(async ({ code, data }) => {
-        if (code === 0) {
-          taskForm.setFieldsValue(data);
-          setCurrentProjectId(data.project_id);
-        }
-      });
-    } else {
-      setCurrentStatus(2);
-    }
-  }, [editTsk]);
-
-  const refresh = () => {
-    setEditTask(editTsk + 1);
+  const onOptionChange = (value: string[]) => {
+    setRunningOption(value);
   };
-  const saveTaskBase = async () => {
-    await taskForm.validateFields();
-    const values = await taskForm.getFieldsValue(true);
-    if (taskId) {
-      //回显
-      const { code, msg } = await updateApiTaskBaseInfo(values);
-      if (code === 0) {
-        setCurrentStatus(1);
-        message.success(msg);
-      }
-    } else {
-      //新增
-      const { code, data } = await insertApiTask(values);
-      if (code === 0) {
-        history.push(`/interface/task/detail/taskId=${data.id}`);
-        message.success('添加成功');
-      }
-    }
+
+  const onEnvChange = (value: number) => {
+    setRunningEnvId(value);
   };
 
   const runTask = async () => {
+    if (!runningEnvId) {
+      message.error('请选择环境');
+      return;
+    }
+    if (runningOption.length == 0) {
+      message.error('请选择用例执行模式');
+      return;
+    }
     if (taskId) {
-      const { code, msg } = await executeTask(taskId);
+      const { code, msg } = await executeTask({
+        task_id: taskId,
+        env_id: runningEnvId,
+        options: runningOption,
+      });
       if (code === 0) {
         message.success(msg);
       }
-    }
-  };
-  const DetailExtra: FC<{ currentStatus: number }> = ({ currentStatus }) => {
-    switch (currentStatus) {
-      case 1:
-        return (
-          <div style={{ display: 'flex' }}>
-            <Button onClick={runTask}>Run</Button>
-            <Button
-              type={'primary'}
-              style={{ marginLeft: 10 }}
-              onClick={() => setCurrentStatus(3)}
-            >
-              Edit
-            </Button>
-          </div>
-        );
-      case 2:
-        return (
-          <Button onClick={saveTaskBase} type={'primary'}>
-            Save
-          </Button>
-        );
-      case 3:
-        return (
-          <>
-            <Button onClick={saveTaskBase} type={'primary'}>
-              Save
-            </Button>
-            <Button
-              style={{ marginLeft: 5 }}
-              onClick={() => setCurrentStatus(1)}
-            >
-              Cancel
-            </Button>
-          </>
-        );
-      default:
-        return null;
     }
   };
 
   const TabItem = [
     {
       key: '1',
-      label: '关联接口',
+      label: '关联API用例',
       children: (
         <AssociationApis
           currentTaskId={taskId}
-          currentProjectId={currentProjectId}
+          currentProjectId={parseInt(projectId!)}
         />
       ),
     },
     {
       key: '2',
-      label: '关联用例',
+      label: '关联业务流',
       children: (
         <AssociationCases
           currentTaskId={taskId}
-          reload={refresh}
-          currentProjectId={currentProjectId}
+          currentProjectId={parseInt(projectId!)}
         />
       ),
     },
   ];
 
   return (
-    <ProCard split={'horizontal'}>
-      <ProCard
-        boxShadow
-        headerBordered
-        subTitle={''}
-        title={'项目基本信息'}
-        extra={<DetailExtra currentStatus={currentStatus} />}
-      >
-        <ProForm
-          layout={'horizontal'}
-          disabled={currentStatus === 1}
-          form={taskForm}
-          submitter={false}
-        >
-          <InterfaceTaskBaseForm />
-        </ProForm>
-      </ProCard>
-      {taskId ? (
-        <>
-          <ProCard
-            title={'关联接口与用例'}
-            headerBordered
-            boxShadow
-            style={{ marginTop: 20, padding: 0 }}
-          >
-            <MyTabs defaultActiveKey={'2'} items={TabItem} />
-          </ProCard>
-          <ProCard
-            title={'调试历史'}
-            headerBordered
-            boxShadow
-            style={{ marginTop: 20 }}
-          >
-            <InterfaceApiTaskResultTable apiCaseTaskId={taskId} />
-          </ProCard>
-        </>
-      ) : null}
-
-      <FloatButton.BackTop />
-    </ProCard>
+    <>
+      <RcResizeObserver onResize={handleResize}>
+        <ProCard bodyStyle={{ height: '100%', padding: '10px' }}>
+          {taskId && (
+            <>
+              <ProCard
+                style={{ height: '100%' }}
+                bodyStyle={{
+                  height: '100%',
+                  padding: '10px',
+                  minHeight: '100vh',
+                }}
+              >
+                <Splitter
+                  style={{
+                    height: '100%',
+                    boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
+                  }}
+                >
+                  <Splitter.Panel
+                    resizable={false}
+                    size={defaultSize}
+                    max="100%"
+                  >
+                    <MyTabs defaultActiveKey={'2'} items={TabItem} />
+                  </Splitter.Panel>
+                  <Splitter.Panel resizable={false}>
+                    <RunConfig
+                      run={runTask}
+                      setRunningOption={onOptionChange}
+                      currentProjectId={projectId}
+                      onEnvChange={onEnvChange}
+                    />
+                  </Splitter.Panel>
+                </Splitter>
+              </ProCard>
+            </>
+          )}
+          <FloatButton.BackTop />
+        </ProCard>
+        {/*<ProCard*/}
+        {/*  title={'调试历史'}*/}
+        {/*  headerBordered*/}
+        {/*  boxShadow*/}
+        {/*  style={{ marginTop: 20 }}*/}
+        {/*>*/}
+        {/*  <InterfaceApiTaskResultTable apiCaseTaskId={taskId} />*/}
+        {/*</ProCard>*/}
+      </RcResizeObserver>
+    </>
   );
 };
 

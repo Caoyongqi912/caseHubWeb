@@ -1,55 +1,32 @@
-import { IModuleEnum } from '@/api';
+import { IEnv } from '@/api';
+import { queryEnvBy } from '@/api/base';
 import {
-  getInterfaceGroup,
-  insertInterfaceGroup,
   queryInterfaceGroupApis,
   reorderInterfaceGroupApis,
   tryInterfaceGroup,
-  updateInterfaceGroup,
 } from '@/api/inter/interGroup';
-import { queryEnvByProjectIdFormApi } from '@/components/CommonFunc';
 import DnDDraggable from '@/components/DnDDraggable';
 import MyDrawer from '@/components/MyDrawer';
 import GroupApiCollapsibleCard from '@/pages/Httpx/Interface/interfaceApiGroup/GroupApiCollapsibleCard';
 import InterfaceCaseChoiceApiTable from '@/pages/Httpx/InterfaceApiCaseResult/InterfaceCaseChoiceApiTable';
 import InterfaceApiResponseDetail from '@/pages/Httpx/InterfaceApiResponse/InterfaceApiResponseDetail';
-import {
-  IInterfaceAPI,
-  IInterfaceGroup,
-  ITryResponseInfo,
-} from '@/pages/Httpx/types';
-import { ModuleEnum } from '@/utils/config';
-import { fetchModulesEnum } from '@/utils/somefunc';
-import { useModel, useParams } from '@@/exports';
-import {
-  ProCard,
-  ProForm,
-  ProFormGroup,
-  ProFormSelect,
-  ProFormText,
-  ProFormTextArea,
-  ProFormTreeSelect,
-} from '@ant-design/pro-components';
-import { Button, Divider, Form, message, Spin } from 'antd';
+import { IInterfaceAPI, ITryResponseInfo } from '@/pages/Httpx/types';
+import { SendOutlined } from '@ant-design/icons';
+import { ProCard } from '@ant-design/pro-components';
+import { Button, Dropdown, Empty, Space, Spin } from 'antd';
 import { FC, useEffect, useState } from 'react';
-import { history } from 'umi';
 
-const Index = () => {
-  const { groupId } = useParams<{ groupId: string }>();
-  const [groupForm] = Form.useForm<IInterfaceGroup>();
+interface SelfProps {
+  groupId?: number;
+  projectId?: number;
+}
+const Index: FC<SelfProps> = ({ groupId, projectId }) => {
   const [apisContent, setApisContent] = useState<any[]>([]);
-  const [currentStatus, setCurrentStatus] = useState(1);
   const [queryApis, setQueryApis] = useState<IInterfaceAPI[]>([]);
   const [choiceOpen, setChoiceOpen] = useState(false);
-  const { initialState } = useModel('@@initialState');
-  const projects = initialState?.projects || [];
   const [tryResponses, setTryResponses] = useState<ITryResponseInfo[]>([]);
-  const [moduleEnum, setModuleEnum] = useState<IModuleEnum[]>([]);
-  const [currentProjectId, setCurrentProjectId] = useState<number>();
   const [reload, setReload] = useState(0);
-  const [apiEnvs, setApiEnvs] = useState<
-    { label: string; value: number | null }[]
-  >([]);
+  const [tryEnvs, setTryEnvs] = useState<{ key: number; label: string }[]>([]);
 
   const [showTryResponses, setShowTryResponses] = useState<boolean>(false);
   const [showTryResponsesLoading, setShowTryResponsesLoading] =
@@ -58,36 +35,36 @@ const Index = () => {
     setReload(reload + 1);
   };
 
+  // 根据API 所属项目 查询 ENV Module
   useEffect(() => {
-    if (currentProjectId) {
-      Promise.all([
-        fetchModulesEnum(currentProjectId, ModuleEnum.API, setModuleEnum),
-        queryEnvByProjectIdFormApi(currentProjectId, setApiEnvs, true),
-      ]).then();
+    if (projectId) {
+      queryEnvBy({ project_id: projectId } as IEnv).then(
+        async ({ code, data }) => {
+          if (code === 0) {
+            setTryEnvs(
+              data.map((item: IEnv) => ({
+                key: item.id,
+                label: item.name,
+              })),
+            );
+          }
+        },
+      );
     }
-  }, [currentProjectId]);
+  }, [projectId]);
 
   useEffect(() => {
     if (groupId) {
-      getInterfaceGroup(groupId).then(async ({ code, data }) => {
-        if (code === 0) {
-          groupForm.setFieldsValue(data);
-          setCurrentProjectId(data.project_id);
-          setCurrentStatus(1);
-        }
-      });
       queryInterfaceGroupApis(groupId).then(async ({ code, data }) => {
         if (code === 0) {
           setQueryApis(data);
         }
       });
-    } else {
-      setCurrentStatus(2);
     }
   }, [reload, groupId]);
 
   useEffect(() => {
-    if (queryApis && moduleEnum && apiEnvs) {
+    if (queryApis) {
       setApisContent(
         queryApis.map((item, index) => ({
           id: (index + 1).toString(),
@@ -97,31 +74,14 @@ const Index = () => {
               step={index + 1}
               interfaceApiInfo={item}
               groupId={groupId!}
+              callback={handleReload}
             />
           ),
         })),
       );
     }
-  }, [queryApis, moduleEnum, apiEnvs]);
-  const saveBaseInfo = async () => {
-    const values = await groupForm.validateFields();
-    if (groupId) {
-      const { code, msg } = await updateInterfaceGroup({
-        ...values,
-        id: parseInt(groupId),
-      });
-      if (code === 0) {
-        message.success(msg);
-        setReload(reload + 1);
-        setCurrentStatus(1);
-      }
-    } else {
-      const { code, data } = await insertInterfaceGroup(values);
-      if (code === 0) {
-        history.push(`/interface/group/detail/groupId=${data.id}`);
-      }
-    }
-  };
+  }, [queryApis]);
+
   const onDragEnd = (reorderedAPIContents: any[]) => {
     setApisContent(reorderedAPIContents);
     if (groupId) {
@@ -136,11 +96,16 @@ const Index = () => {
     }
   };
 
-  const TryGroup = async () => {
+  const TryGroup = async (e: any) => {
+    console.log(e);
+    const { key } = e;
     if (groupId) {
       setShowTryResponses(true);
       setShowTryResponsesLoading(true);
-      const { code, data } = await tryInterfaceGroup(groupId);
+      const { code, data } = await tryInterfaceGroup({
+        groupId: groupId,
+        envId: key,
+      });
       if (code === 0) {
         setTryResponses(data);
         setShowTryResponsesLoading(false);
@@ -148,68 +113,12 @@ const Index = () => {
     }
   };
 
-  const DetailExtra: FC<{ currentStatus: number }> = ({ currentStatus }) => {
-    switch (currentStatus) {
-      case 1:
-        return (
-          <div style={{ display: 'flex' }}>
-            <Button onClick={TryGroup}>Try</Button>
-            <Button
-              type={'primary'}
-              style={{ marginLeft: 10 }}
-              onClick={() => setCurrentStatus(3)}
-            >
-              Edit
-            </Button>
-          </div>
-        );
-      case 2:
-        return (
-          <Button onClick={saveBaseInfo} type={'primary'}>
-            Save
-          </Button>
-        );
-      case 3:
-        return (
-          <>
-            <Button onClick={saveBaseInfo} type={'primary'}>
-              Save
-            </Button>
-            <Button
-              style={{ marginLeft: 5 }}
-              onClick={() => setCurrentStatus(1)}
-            >
-              Cancel
-            </Button>
-          </>
-        );
-      default:
-        return null;
-    }
-  };
-
-  const ApisCardExtra: FC<{ current: number }> = ({ current }) => {
-    switch (current) {
-      case 1:
-        return (
-          <>
-            <Button type={'primary'} onClick={() => setChoiceOpen(true)}>
-              Choice API
-            </Button>
-            <Divider type={'vertical'} />
-          </>
-        );
-      default:
-        return null;
-    }
-  };
-
   return (
-    <ProCard split={'horizontal'}>
+    <>
       <MyDrawer name={''} open={choiceOpen} setOpen={setChoiceOpen}>
         <InterfaceCaseChoiceApiTable
           currentGroupId={groupId}
-          projectId={currentProjectId}
+          projectId={projectId}
           refresh={handleReload}
         />
       </MyDrawer>
@@ -228,69 +137,32 @@ const Index = () => {
         </Spin>
       </MyDrawer>
       <ProCard
-        extra={<DetailExtra currentStatus={currentStatus}></DetailExtra>}
+        bodyStyle={{ padding: 20 }}
+        extra={
+          <Space>
+            <Button type={'primary'} onClick={() => setChoiceOpen(true)}>
+              Choice API
+            </Button>
+            {apisContent.length > 0 && (
+              <Dropdown.Button
+                type={'primary'}
+                menu={{ items: tryEnvs, onClick: TryGroup }}
+              >
+                <SendOutlined />
+                Try
+              </Dropdown.Button>
+            )}
+          </Space>
+        }
       >
-        <ProForm
-          disabled={currentStatus === 1}
-          layout={'vertical'}
-          submitter={false}
-          form={groupForm}
-        >
-          <ProFormGroup title={'基础信息'}>
-            <ProFormSelect
-              width={'md'}
-              options={projects}
-              label={'所属项目'}
-              name={'project_id'}
-              required={true}
-              onChange={(value) => {
-                setCurrentProjectId(value as number);
-              }}
-            />
-            <ProFormTreeSelect
-              required
-              name="module_id"
-              label="所属模块"
-              allowClear
-              rules={[{ required: true, message: '所属模块必选' }]}
-              fieldProps={{
-                treeData: moduleEnum,
-                fieldNames: {
-                  label: 'title',
-                },
-                filterTreeNode: true,
-              }}
-              width={'md'}
-            />
-
-            <ProFormText
-              width={'md'}
-              name={'name'}
-              label={'组名'}
-              required={true}
-              rules={[{ required: true, message: '组名必填' }]}
-            />
-            <ProFormTextArea
-              width={'md'}
-              name={'description'}
-              label={'描述'}
-              required={true}
-              rules={[{ required: true, message: '组描述必填' }]}
-            />
-          </ProFormGroup>
-        </ProForm>
-      </ProCard>
-      <ProCard
-        style={{ padding: 0 }}
-        extra={<ApisCardExtra current={currentStatus} />}
-      >
+        {apisContent.length === 0 && <Empty description={'No API'} />}
         <DnDDraggable
           items={apisContent}
           setItems={setApisContent}
           orderFetch={onDragEnd}
         />
       </ProCard>
-    </ProCard>
+    </>
   );
 };
 

@@ -39,7 +39,9 @@ import {
   TabsProps,
 } from 'antd';
 import { RadioChangeEvent } from 'antd/lib/radio/interface';
-import { useEffect, useState } from 'react';
+import { debounce } from 'lodash';
+import RcResizeObserver from 'rc-resize-observer';
+import { useCallback, useEffect, useState } from 'react';
 
 const Index = () => {
   const { caseApiId, projectId, moduleId } = useParams<{
@@ -65,6 +67,29 @@ const Index = () => {
   const [runningEnvId, setRunningEnvId] = useState<number>();
   const [errorJump, setErrorJump] = useState<boolean>(false);
   const [runningStyle, setRunningStyle] = useState<number>(1);
+
+  const [defaultSize, setDefaultSize] = useState('80%');
+
+  // 防抖处理，避免频繁重渲染
+  const handleResize = useCallback(
+    debounce(({ width }) => {
+      console.log('=====', width);
+      const breakpoints = [
+        { max: 768, size: '80%' }, // 平板及以下
+        { max: 1024, size: '85%' }, // 小笔记本
+        { max: 1440, size: '90%' }, // 普通显示器
+        { max: 1920, size: '90%' }, // 1K显示器
+        { max: 2560, size: '90%' }, // 2K显示器
+        { max: Infinity, size: '95%' }, // 4K+显示器
+      ];
+
+      const breakpoint = breakpoints.find((bp) => width <= bp.max);
+      console.log(breakpoint?.size);
+      setDefaultSize(breakpoint?.size || '80%');
+    }, 100),
+    [],
+  );
+
   //路由进入。空白页
   useEffect(() => {
     if (projectId && moduleId) {
@@ -311,7 +336,7 @@ const Index = () => {
   ];
 
   return (
-    <>
+    <RcResizeObserver onResize={handleResize}>
       <MyDrawer
         name={'测试结果'}
         width={'80%'}
@@ -341,37 +366,38 @@ const Index = () => {
           refresh={refresh}
         />
       </MyDrawer>
-      <Splitter
-        style={{ height: '100%', boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)' }}
+      <ProCard
+        style={{ height: '100%' }}
+        bodyStyle={{ height: '100%', padding: '10px' }}
       >
-        <Splitter.Panel
-          resizable
-          collapsible={{ start: true, end: true }}
-          defaultSize="90%"
-          min="90%"
-          max="100%"
+        <Splitter
+          style={{ height: '100%', boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)' }}
         >
-          <ProCard extra={<ApisCardExtra />}>
-            <Tabs
-              defaultActiveKey={'2'}
-              defaultValue={'2'}
-              size={'large'}
-              type={'card'}
-              items={APIStepItems}
+          <Splitter.Panel resizable={false} size={defaultSize} max="100%">
+            <ProCard extra={<ApisCardExtra />}>
+              <Tabs
+                defaultActiveKey={'2'}
+                defaultValue={'2'}
+                size={'large'}
+                type={'card'}
+                items={APIStepItems}
+              />
+            </ProCard>
+          </Splitter.Panel>
+          <Splitter.Panel
+            resizable={false}
+            collapsible={{ start: true, end: true }}
+          >
+            <RunConfig
+              onMenuClick={onMenuClick}
+              run={debugCase}
+              onEnvChange={onEnvChange}
+              onErrorJumpChange={onErrorJumpChange}
+              currentProjectId={currentProjectId}
             />
-          </ProCard>
-        </Splitter.Panel>
-        <Splitter.Panel resizable collapsible={{ start: true, end: true }}>
-          <RunConfig
-            onMenuClick={onMenuClick}
-            run={debugCase}
-            onEnvChange={onEnvChange}
-            onErrorJumpChange={onErrorJumpChange}
-            currentProjectId={currentProjectId}
-          />
-        </Splitter.Panel>
-      </Splitter>
-
+          </Splitter.Panel>
+        </Splitter>
+      </ProCard>
       {/*{caseApiId ? (*/}
       {/*  <InterfaceApiCaseResultTable*/}
       {/*    apiCaseId={caseApiId}*/}
@@ -379,7 +405,7 @@ const Index = () => {
       {/*  />*/}
       {/*) : null}*/}
       <FloatButton.BackTop />
-    </>
+    </RcResizeObserver>
   );
 };
 

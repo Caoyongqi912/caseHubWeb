@@ -11,14 +11,16 @@ const { Text } = Typography;
 
 interface SelfProps {
   step: number;
-  groupId: string;
+  groupId: number;
   interfaceApiInfo: IInterfaceAPI;
+  callback: () => void;
 }
 
 const GroupApiCollapsibleCard: FC<SelfProps> = ({
   step,
   interfaceApiInfo,
   groupId,
+  callback,
 }) => {
   const [showAPIDetail, setShowAPIDetail] = useState(false);
 
@@ -28,6 +30,7 @@ const GroupApiCollapsibleCard: FC<SelfProps> = ({
       apiId: interfaceApiInfo?.id,
     });
     if (code === 0) {
+      callback?.();
       message.success(msg);
     }
   };
@@ -48,6 +51,7 @@ const GroupApiCollapsibleCard: FC<SelfProps> = ({
               style={{ color: '#c3cad4', marginRight: 10, marginLeft: 10 }}
             />
             <Tag color={'green-inverse'}>Step_{step}</Tag>
+            <Tag color={'gold-inverse'}>API</Tag>
             <Tag color={'cyan'}>{interfaceApiInfo?.method}</Tag>
             <Tag color={'cyan'}>{interfaceApiInfo?.name}</Tag>
             <Text type={'secondary'}>{interfaceApiInfo?.url}</Text>

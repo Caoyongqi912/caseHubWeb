@@ -253,10 +253,17 @@ export const getApiTaskBaseDetail = async (
  * @param data
  * @param options
  */
-export const executeTask = async (data: string | number, options?: IObjGet) => {
+export const executeTask = async (
+  data: {
+    task_id: number | string;
+    env_id: number;
+    options: string[];
+  },
+  options?: IObjGet,
+) => {
   return request<IResponse<null>>('/api/interface/task/execute', {
     method: 'POST',
-    data: { taskId: data },
+    data,
     ...(options || {}),
   });
 };

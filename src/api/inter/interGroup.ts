@@ -27,12 +27,12 @@ export const pageInterfaceGroup = async (
  * @param options
  */
 export const tryInterfaceGroup = async (
-  data: string,
+  data: { groupId: number | string; envId: number | string },
   options?: IObjGet,
 ): Promise<IResponse<any>> => {
   return request<IResponse<any>>('/api/interface/group/try', {
     method: 'GET',
-    params: { groupId: data },
+    params: data,
     ...(options || {}),
   });
 };
@@ -88,7 +88,7 @@ export const updateInterfaceGroup = async (
  * @param options
  */
 export const getInterfaceGroup = async (
-  data: string,
+  data: string | number,
   options?: IObjGet,
 ): Promise<IResponse<any>> => {
   return request<IResponse<IInterfaceGroup>>('/api/interface/group/detail', {
@@ -137,7 +137,7 @@ export const queryInterfaceGroupApis = async (
  * @param options
  */
 export const reorderInterfaceGroupApis = async (
-  data: { groupId: string; apiIds: string[] },
+  data: { groupId: number; apiIds: string[] },
   options?: IObjGet,
 ): Promise<IResponse<any>> => {
   return request<IResponse<null>>(
@@ -172,7 +172,7 @@ export const addInterfaceGroupApi = async (
  * @param options
  */
 export const addInterfaceGroupApis = async (
-  data: { groupId: string; apiIds: number[] },
+  data: { groupId: number; apiIds: number[] },
   options?: IObjGet,
 ): Promise<IResponse<any>> => {
   return request<IResponse<null>>('/api/interface/group/add_association/apis', {
@@ -188,7 +188,7 @@ export const addInterfaceGroupApis = async (
  * @param options
  */
 export const removeInterfaceGroupApis = async (
-  data: { groupId: string; apiId: number },
+  data: { groupId: number; apiId: number },
   options?: IObjGet,
 ): Promise<IResponse<any>> => {
   return request<IResponse<null>>(

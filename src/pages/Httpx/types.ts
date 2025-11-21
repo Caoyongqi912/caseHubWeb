@@ -108,7 +108,7 @@ export interface IInterfaceGroup extends IBaseField {
   description: string;
   api_num: number;
   project_id: number;
-  part_id: number;
+  module_id: number;
 }
 
 export interface IInterfaceAPICase extends IBaseField {

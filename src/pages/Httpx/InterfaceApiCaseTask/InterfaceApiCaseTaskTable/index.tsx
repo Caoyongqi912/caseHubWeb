@@ -1,12 +1,15 @@
 import { IModuleEnum } from '@/api';
 import {
   getNextTaskRunTime,
+  insertApiTask,
   pageApiTask,
   removeApiTaskBaseInfo,
   setApiTaskAuto,
   updateApiTaskBaseInfo,
 } from '@/api/inter/interTask';
+import MyModal from '@/components/MyModal';
 import MyProTable from '@/components/Table/MyProTable';
+import InterfaceTaskBaseForm from '@/pages/Httpx/InterfaceApiCaseTask/InterfaceApiCaseTaskDetail/InterfaceTaskBaseForm';
 import { IInterfaceAPITask } from '@/pages/Httpx/types';
 import { CONFIG, ModuleEnum } from '@/utils/config';
 import { fetchModulesEnum, pageData } from '@/utils/somefunc';
@@ -16,6 +19,7 @@ import {
   DashOutlined,
   DeleteOutlined,
   DeliveredProcedureOutlined,
+  PlusOutlined,
 } from '@ant-design/icons';
 import {
   ActionType,
@@ -56,8 +60,18 @@ const Index: FC<SelfProps> = ({
   const { initialState } = useModel('@@initialState');
   const projects = initialState?.projects || [];
   const [moduleEnum, setModuleEnum] = useState<IModuleEnum[]>([]);
-
   const [copyProjectId, setCopyProjectId] = useState<number>();
+  const [taskForm] = Form.useForm<IInterfaceAPITask>();
+  const [detailTitle, setDetailTitle] = useState<string>('添加任务基本信息');
+
+  useEffect(() => {
+    if (currentProjectId && currentModuleId) {
+      taskForm.setFieldsValue({
+        project_id: currentProjectId,
+        module_id: currentModuleId,
+      });
+    }
+  }, [currentModuleId, currentProjectId]);
 
   // 根据当前项目ID获取环境和用例部分
   useEffect(() => {
@@ -94,6 +108,30 @@ const Index: FC<SelfProps> = ({
       actionRef.current?.reload();
     }
   };
+
+  const saveTaskBase = async (values: IInterfaceAPITask) => {
+    if (currentTaskId) {
+      //回显
+      const { code, msg } = await updateApiTaskBaseInfo({
+        ...values,
+        id: currentTaskId,
+      });
+      if (code === 0) {
+        message.success(msg);
+        actionRef.current?.reload();
+      }
+    } else {
+      //新增
+      const { code, data } = await insertApiTask(values);
+      if (code === 0) {
+        // history.push(`/interface/task/detail/taskId=${data.id}`);
+        message.success('添加成功');
+        actionRef.current?.reload();
+      }
+    }
+    return true;
+  };
+
   const taskColumns: ProColumns<IInterfaceAPITask>[] = [
     {
       title: '任务编号',
@@ -107,6 +145,26 @@ const Index: FC<SelfProps> = ({
       title: '名称',
       dataIndex: 'title',
       key: 'title',
+      render: (text, record) => (
+        <MyModal
+          form={taskForm}
+          title={detailTitle}
+          onFinish={saveTaskBase}
+          trigger={
+            <a
+              type={'primary'}
+              onClick={() => {
+                taskForm.setFieldsValue(record);
+                setCurrentTaskId(record.id);
+              }}
+            >
+              {text}
+            </a>
+          }
+        >
+          <InterfaceTaskBaseForm />
+        </MyModal>
+      ),
     },
     {
       title: '业务用例数',
@@ -174,6 +232,13 @@ const Index: FC<SelfProps> = ({
       fixed: 'right',
       render: (__, record, _) => {
         return [
+          // <a
+          //   onClick={() => {
+          //     history.push(`/interface/task/detail/taskId=${record.id}`);
+          //   }}
+          // >
+          //   信息
+          // </a>,
           <a
             onClick={async () => {
               const { code, data } = await getNextTaskRunTime(record.uid);
@@ -186,10 +251,12 @@ const Index: FC<SelfProps> = ({
           </a>,
           <a
             onClick={() => {
-              history.push(`/interface/task/detail/taskId=${record.id}`);
+              history.push(
+                `/interface/task/detail/taskId=${record.id}&projectId=${record.project_id}`,
+              );
             }}
           >
-            详情
+            关联详情
           </a>,
           <Dropdown
             menu={{
@@ -290,6 +357,7 @@ const Index: FC<SelfProps> = ({
           />
         </ProForm>
       </Modal>
+
       <MyProTable
         persistenceKey={perKey}
         columns={taskColumns}
@@ -298,16 +366,19 @@ const Index: FC<SelfProps> = ({
         actionRef={actionRef}
         request={fetchPageTasks}
         toolBarRender={() => [
-          <Button
-            type={'primary'}
-            onClick={() => {
-              history.push(
-                `/interface/task/detail/projectId=${currentProjectId}&moduleId=${currentModuleId}`,
-              );
-            }}
+          <MyModal
+            form={taskForm}
+            title={detailTitle}
+            onFinish={saveTaskBase}
+            trigger={
+              <Button type={'primary'}>
+                <PlusOutlined />
+                添加任务
+              </Button>
+            }
           >
-            添加
-          </Button>,
+            <InterfaceTaskBaseForm />
+          </MyModal>,
         ]}
       />
     </>

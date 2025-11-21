@@ -81,7 +81,7 @@ const ApiCaseBaseForm: FC<SelfProps> = (props) => {
       <ProForm submitter={false} form={baseForm}>
         <ProFormText
           hidden={true}
-          width={'md'}
+          width={'lg'}
           label={'所属项目'}
           name={'project_id'}
         />
@@ -98,7 +98,7 @@ const ApiCaseBaseForm: FC<SelfProps> = (props) => {
           <ProFormSelect
             name="level"
             label="优先级"
-            width={'md'}
+            width={'lg'}
             initialValue={'P1'}
             options={API_LEVEL_SELECT}
             required={true}
@@ -108,7 +108,7 @@ const ApiCaseBaseForm: FC<SelfProps> = (props) => {
             name="status"
             label="用例状态"
             initialValue={'DEBUG'}
-            width={'md'}
+            width={'lg'}
             options={API_STATUS_SELECT}
             required={true}
             rules={[{ required: true, message: '用例状态必须选' }]}
