@@ -65,6 +65,7 @@ const Index: FC<SelfProps> = ({
   const [detailTitle, setDetailTitle] = useState<string>('添加任务基本信息');
 
   useEffect(() => {
+    actionRef.current?.reload();
     if (currentProjectId && currentModuleId) {
       taskForm.setFieldsValue({
         project_id: currentProjectId,
@@ -83,10 +84,6 @@ const Index: FC<SelfProps> = ({
       ).then();
     }
   }, [copyProjectId]);
-
-  useEffect(() => {
-    actionRef.current?.reload();
-  }, [currentModuleId, currentProjectId]);
 
   const fetchPageTasks = useCallback(
     async (params: any, sort: any) => {
@@ -148,7 +145,7 @@ const Index: FC<SelfProps> = ({
       render: (text, record) => (
         <MyModal
           form={taskForm}
-          title={detailTitle}
+          title={record.title}
           onFinish={saveTaskBase}
           trigger={
             <a
@@ -371,7 +368,10 @@ const Index: FC<SelfProps> = ({
             title={detailTitle}
             onFinish={saveTaskBase}
             trigger={
-              <Button type={'primary'}>
+              <Button
+                type={'primary'}
+                onClick={() => setCurrentTaskId(undefined)}
+              >
                 <PlusOutlined />
                 添加任务
               </Button>

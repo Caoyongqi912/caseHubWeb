@@ -49,7 +49,7 @@ import { history, useParams } from 'umi';
 
 interface SelfProps {
   interfaceId?: number;
-  callback: () => void;
+  callback?: () => void;
 }
 
 const Index: FC<SelfProps> = ({ interfaceId, callback }) => {

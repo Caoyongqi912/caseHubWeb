@@ -1,7 +1,6 @@
 import {
   addCaseContent,
   add_empty_api,
-  baseInfoApiCase,
   initAPICondition,
   queryContentsByCaseId,
   reorderCaseContents,
@@ -15,7 +14,7 @@ import InterfaceApiCaseVars from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCas
 import RunConfig from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/RunConfig';
 import InterfaceApiCaseResultDrawer from '@/pages/Httpx/InterfaceApiCaseResult/InterfaceApiCaseResultDrawer';
 import InterfaceCaseChoiceApiTable from '@/pages/Httpx/InterfaceApiCaseResult/InterfaceCaseChoiceApiTable';
-import { IInterfaceCaseContent } from '@/pages/Httpx/types';
+import { IInterfaceAPICase, IInterfaceCaseContent } from '@/pages/Httpx/types';
 import { useParams } from '@@/exports';
 import {
   AimOutlined,
@@ -32,7 +31,6 @@ import {
   Dropdown,
   Empty,
   FloatButton,
-  Form,
   message,
   Splitter,
   Tabs,
@@ -41,15 +39,19 @@ import {
 import { RadioChangeEvent } from 'antd/lib/radio/interface';
 import { debounce } from 'lodash';
 import RcResizeObserver from 'rc-resize-observer';
-import { useCallback, useEffect, useState } from 'react';
+import { FC, useCallback, useEffect, useState } from 'react';
 
-const Index = () => {
-  const { caseApiId, projectId, moduleId } = useParams<{
+interface Self {
+  interfaceCase?: IInterfaceAPICase;
+  hiddenRunButton?: boolean;
+}
+
+const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
+  const { caseApiId } = useParams<{
     caseApiId: string;
     projectId: string;
     moduleId: string;
   }>();
-  const [baseForm] = Form.useForm();
   const [caseContentElement, setCaseContentElement] = useState<any[]>([]);
   const [currentProjectId, setCurrentProjectId] = useState<number>();
   const [currentModuleId, setCurrentModuleId] = useState<number>();
@@ -89,36 +91,17 @@ const Index = () => {
     }, 100),
     [],
   );
-
-  //路由进入。空白页
+  // drawer 页
   useEffect(() => {
-    if (projectId && moduleId) {
-      baseForm.setFieldsValue({
-        project_id: parseInt(projectId),
-        module_id: parseInt(moduleId),
-      });
-    }
-    if (projectId) {
-      setCurrentProjectId(parseInt(projectId));
-    }
-  }, [moduleId, projectId]);
+    if (!interfaceCase) return;
+    setCurrentModuleId(interfaceCase.module_id);
+    setCurrentProjectId(interfaceCase.project_id);
+    queryCaseContentSteps(interfaceCase.id).then();
+  }, [interfaceCase]);
 
   useEffect(() => {
-    if (caseApiId) {
-      Promise.all([
-        baseInfoApiCase(caseApiId),
-        queryContentsByCaseId(caseApiId),
-      ]).then(([baseInfo, apisInfo]) => {
-        if (baseInfo.code === 0) {
-          baseForm.setFieldsValue(baseInfo.data);
-          setCurrentProjectId(baseInfo.data.project_id);
-          setCurrentModuleId(baseInfo.data.module_id);
-        }
-        if (apisInfo.code === 0) {
-          setCaseContents(apisInfo.data);
-        }
-      });
-    }
+    if (!caseApiId) return;
+    queryCaseContentSteps(caseApiId).then();
   }, [editCase, caseApiId]);
 
   useEffect(() => {
@@ -142,6 +125,17 @@ const Index = () => {
       setCaseContentElement(init);
     }
   }, [caseContents]); // 确保所有相关变量在依赖数组中
+
+  /**
+   * 步骤查询
+   * @param case_id
+   */
+  const queryCaseContentSteps = async (case_id: number | string) => {
+    const { code, data } = await queryContentsByCaseId(case_id);
+    if (code === 0) {
+      setCaseContents(data);
+    }
+  };
 
   // 使用 useEffect 确保在 caseContentElement 更新后执行滚动操作
   const refresh = async () => {
@@ -351,7 +345,7 @@ const Index = () => {
         />
       </MyDrawer>
 
-      <MyDrawer name={''} open={choiceGroupOpen} setOpen={setChoiceGroupOpen}>
+      <MyDrawer open={choiceGroupOpen} setOpen={setChoiceGroupOpen}>
         <GroupApiChoiceTable
           projectId={currentProjectId}
           refresh={refresh}
@@ -359,7 +353,7 @@ const Index = () => {
         />
       </MyDrawer>
 
-      <MyDrawer name={''} open={choiceOpen} setOpen={setChoiceOpen}>
+      <MyDrawer open={choiceOpen} setOpen={setChoiceOpen}>
         <InterfaceCaseChoiceApiTable
           projectId={currentProjectId}
           currentCaseApiId={caseApiId}
@@ -368,7 +362,7 @@ const Index = () => {
       </MyDrawer>
       <ProCard
         style={{ height: '100%' }}
-        bodyStyle={{ height: '100%', padding: '10px' }}
+        bodyStyle={{ height: '100%', padding: '10px', minHeight: '100vh' }}
       >
         <Splitter
           style={{ height: '100%', boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)' }}
@@ -384,18 +378,17 @@ const Index = () => {
               />
             </ProCard>
           </Splitter.Panel>
-          <Splitter.Panel
-            resizable={false}
-            collapsible={{ start: true, end: true }}
-          >
-            <RunConfig
-              onMenuClick={onMenuClick}
-              run={debugCase}
-              onEnvChange={onEnvChange}
-              onErrorJumpChange={onErrorJumpChange}
-              currentProjectId={currentProjectId}
-            />
-          </Splitter.Panel>
+          {!hiddenRunButton && (
+            <Splitter.Panel resizable={false}>
+              <RunConfig
+                onMenuClick={onMenuClick}
+                run={debugCase}
+                onEnvChange={onEnvChange}
+                onErrorJumpChange={onErrorJumpChange}
+                currentProjectId={currentProjectId}
+              />
+            </Splitter.Panel>
+          )}
         </Splitter>
       </ProCard>
       {/*{caseApiId ? (*/}

@@ -2,10 +2,11 @@ import { executeTask } from '@/api/inter/interTask';
 import MyTabs from '@/components/MyTabs';
 import AssociationApis from '@/pages/Httpx/InterfaceApiCaseTask/InterfaceApiCaseTaskDetail/AssociationApis';
 import AssociationCases from '@/pages/Httpx/InterfaceApiCaseTask/InterfaceApiCaseTaskDetail/AssociationCases';
-import RunConfig from '@/pages/Httpx/InterfaceApiCaseTask/RunConfig';
+import RunConfig from '@/pages/Httpx/InterfaceApiCaseTask/InterfaceApiCaseTaskDetail/RunConfig';
 import { useParams } from '@@/exports';
+import { PlayCircleOutlined } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
-import { FloatButton, message, Splitter } from 'antd';
+import { Button, FloatButton, message, Space, Splitter } from 'antd';
 import { debounce } from 'lodash';
 import RcResizeObserver from 'rc-resize-observer';
 import { useCallback, useState } from 'react';
@@ -19,6 +20,7 @@ const Index = () => {
   const [runningEnvId, setRunningEnvId] = useState<number>();
   const [runningOption, setRunningOption] = useState<string[]>([]);
   const [defaultSize, setDefaultSize] = useState('80%');
+  const [runningLoading, setRunningLoading] = useState(false);
   const handleResize = useCallback(
     debounce(({ width }) => {
       console.log('=====', width);
@@ -55,6 +57,7 @@ const Index = () => {
       message.error('请选择用例执行模式');
       return;
     }
+    setRunningLoading(true);
     if (taskId) {
       const { code, msg } = await executeTask({
         task_id: taskId,
@@ -62,6 +65,7 @@ const Index = () => {
         options: runningOption,
       });
       if (code === 0) {
+        setRunningLoading(false);
         message.success(msg);
       }
     }
@@ -90,45 +94,62 @@ const Index = () => {
     },
   ];
 
+  const RUN = (
+    <Button
+      type="primary"
+      size="large"
+      onClick={runTask}
+      loading={runningLoading}
+      style={{
+        height: '48px',
+        borderRadius: '8px',
+        background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+        border: 'none',
+        boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
+        fontSize: '16px',
+        fontWeight: 600,
+      }}
+    >
+      <Space>
+        <PlayCircleOutlined style={{ fontSize: '18px' }} />
+        <span style={{ fontWeight: 600 }}>开始运行</span>
+      </Space>
+    </Button>
+  );
   return (
     <>
       <RcResizeObserver onResize={handleResize}>
         <ProCard bodyStyle={{ height: '100%', padding: '10px' }}>
-          {taskId && (
-            <>
-              <ProCard
-                style={{ height: '100%' }}
-                bodyStyle={{
+          <>
+            <ProCard
+              style={{ height: '100%' }}
+              bodyStyle={{
+                height: '100%',
+                padding: '10px',
+                minHeight: '100vh',
+              }}
+            >
+              <Splitter
+                style={{
                   height: '100%',
-                  padding: '10px',
-                  minHeight: '100vh',
+                  boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
                 }}
               >
-                <Splitter
-                  style={{
-                    height: '100%',
-                    boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
-                  }}
-                >
-                  <Splitter.Panel
-                    resizable={false}
-                    size={defaultSize}
-                    max="100%"
-                  >
-                    <MyTabs defaultActiveKey={'2'} items={TabItem} />
-                  </Splitter.Panel>
-                  <Splitter.Panel resizable={false}>
-                    <RunConfig
-                      run={runTask}
-                      setRunningOption={onOptionChange}
-                      currentProjectId={projectId}
-                      onEnvChange={onEnvChange}
-                    />
-                  </Splitter.Panel>
-                </Splitter>
-              </ProCard>
-            </>
-          )}
+                <Splitter.Panel resizable={false} size={defaultSize} max="100%">
+                  <MyTabs defaultActiveKey={'2'} items={TabItem} />
+                </Splitter.Panel>
+                <Splitter.Panel resizable={false}>
+                  <RunConfig
+                    runArea={RUN}
+                    setRunningOption={onOptionChange}
+                    currentProjectId={projectId}
+                    onEnvChange={onEnvChange}
+                  />
+                </Splitter.Panel>
+              </Splitter>
+            </ProCard>
+          </>
+
           <FloatButton.BackTop />
         </ProCard>
         {/*<ProCard*/}

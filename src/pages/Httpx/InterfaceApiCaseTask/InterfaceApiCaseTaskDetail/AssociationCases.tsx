@@ -4,11 +4,11 @@ import {
   reorderAssociationCasesByTaskId,
 } from '@/api/inter/interTask';
 import MyDrawer from '@/components/MyDrawer';
+import InterfaceApiCaseDetail from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail';
 import ChoiceApiCasesTable from '@/pages/Httpx/InterfaceApiCaseTask/InterfaceApiCaseTaskDetail/ChoiceApiCasesTable';
 import { IInterfaceAPICase } from '@/pages/Httpx/types';
 import { CONFIG } from '@/utils/config';
 import { queryData } from '@/utils/somefunc';
-import { history } from '@@/core/history';
 import {
   ActionType,
   DragSortTable,
@@ -28,6 +28,8 @@ const AssociationCases: FC<IInterfaceApiCaseTaskDetailProps> = ({
 }) => {
   const actionRef = useRef<ActionType>();
   const [choiceApiCaseOpen, setChoiceApiCaseOpen] = useState<boolean>(false);
+  const [caseDetailDrawerOpen, setCaseDetailDrawerOpen] = useState(false);
+  const [currentCase, setCurrentCase] = useState<IInterfaceAPICase>();
   const queryCasesByTask = useCallback(async () => {
     if (currentTaskId) {
       const { code, data } = await queryAssociationCasesByTaskId({
@@ -43,7 +45,6 @@ const AssociationCases: FC<IInterfaceApiCaseTaskDetailProps> = ({
     newDataSource: IInterfaceAPICase[],
   ) => {
     const reorderCaseIds: number[] = newDataSource.map((item) => item.id);
-    console.log('排序后的数据', newDataSource);
     if (currentTaskId) {
       const { code, msg } = await reorderAssociationCasesByTaskId({
         taskId: currentTaskId,
@@ -55,6 +56,7 @@ const AssociationCases: FC<IInterfaceApiCaseTaskDetailProps> = ({
       }
     }
   };
+
   const columns: ProColumns<IInterfaceAPICase>[] = [
     {
       title: '排序',
@@ -115,15 +117,14 @@ const AssociationCases: FC<IInterfaceApiCaseTaskDetailProps> = ({
           <>
             <a
               onClick={() => {
-                history.push(
-                  `/interface/caseApi/detail/caseApiId=${record.id}`,
-                );
+                setCurrentCase(record);
+                setCaseDetailDrawerOpen(true);
               }}
             >
               详情
             </a>
             <Popconfirm
-              title={'确认删除？'}
+              title={'确认解除？'}
               okText={'确认'}
               cancelText={'点错了'}
               onConfirm={async () => {
@@ -140,7 +141,7 @@ const AssociationCases: FC<IInterfaceApiCaseTaskDetailProps> = ({
               }}
             >
               <Divider type={'vertical'} />
-              <a>删除</a>
+              <a>移除</a>
             </Popconfirm>
           </>
         );
@@ -150,7 +151,6 @@ const AssociationCases: FC<IInterfaceApiCaseTaskDetailProps> = ({
   return (
     <>
       <MyDrawer
-        name={''}
         width={'75%'}
         open={choiceApiCaseOpen}
         setOpen={setChoiceApiCaseOpen}
@@ -159,6 +159,16 @@ const AssociationCases: FC<IInterfaceApiCaseTaskDetailProps> = ({
           currentProjectId={currentProjectId}
           currentTaskId={currentTaskId}
           reload={actionRef.current?.reload}
+        />
+      </MyDrawer>
+      <MyDrawer
+        name={currentCase?.title || ''}
+        open={caseDetailDrawerOpen}
+        setOpen={setCaseDetailDrawerOpen}
+      >
+        <InterfaceApiCaseDetail
+          interfaceCase={currentCase}
+          hiddenRunButton={true}
         />
       </MyDrawer>
       <DragSortTable

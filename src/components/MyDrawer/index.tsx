@@ -2,7 +2,7 @@ import { Drawer } from 'antd';
 import React, { FC } from 'react';
 
 interface SelfProps {
-  name: string | JSX.Element;
+  name?: string | JSX.Element;
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   width?: string | null;
@@ -24,7 +24,7 @@ const Index: FC<SelfProps> = (props) => {
       destroyOnClose={true}
       height={height || 'auto'}
       width={width || '65%'}
-      title={name}
+      title={name || false}
       extra={props.extra}
       onClose={onClose || (() => setOpen(false))}
       maskClosable={false}

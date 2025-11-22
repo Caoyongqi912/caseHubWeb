@@ -4,11 +4,11 @@ import {
   reorderAssociationApisByTaskId,
 } from '@/api/inter/interTask';
 import MyDrawer from '@/components/MyDrawer';
+import InterfaceApiDetail from '@/pages/Httpx/Interface/InterfaceApiDetail';
 import InterfaceCaseChoiceApiTable from '@/pages/Httpx/InterfaceApiCaseResult/InterfaceCaseChoiceApiTable';
 import { IInterfaceAPI } from '@/pages/Httpx/types';
 import { CONFIG } from '@/utils/config';
 import { queryData } from '@/utils/somefunc';
-import { history } from '@@/core/history';
 import {
   ActionType,
   DragSortTable,
@@ -28,13 +28,15 @@ const AssociationApis: FC<IAssociationApisProps> = ({
 }) => {
   const actionRef = useRef<ActionType>();
   const [choiceApiOpen, setChoiceApiOpen] = useState<boolean>(false);
-
   const queryApisByTask = useCallback(async () => {
     if (currentTaskId) {
       const { code, data } = await queryAssociationApisByTaskId(currentTaskId);
       return queryData(code, data);
     }
   }, [currentTaskId]);
+  const [apiDetailDrawer, setApiDetailDrawer] = useState(false);
+  const [currentAPIDetail, setCurrentAPIDetail] = useState<IInterfaceAPI>();
+
   const handleDragSortEnd = async (
     _: number,
     __: number,
@@ -106,14 +108,15 @@ const AssociationApis: FC<IAssociationApisProps> = ({
           <>
             <a
               onClick={() => {
-                history.push(`/interface/interApi/detail/interId=${record.id}`);
+                setCurrentAPIDetail(record);
+                setApiDetailDrawer(true);
               }}
             >
               详情
             </a>
             <Divider type={'vertical'} />
             <Popconfirm
-              title={'确认删除？'}
+              title={'确认移除？'}
               okText={'确认'}
               cancelText={'点错了'}
               onConfirm={async () => {
@@ -128,7 +131,7 @@ const AssociationApis: FC<IAssociationApisProps> = ({
                 }
               }}
             >
-              <a>删除</a>
+              <a>移除</a>
             </Popconfirm>
           </>
         );
@@ -138,12 +141,19 @@ const AssociationApis: FC<IAssociationApisProps> = ({
 
   return (
     <>
-      <MyDrawer name={''} open={choiceApiOpen} setOpen={setChoiceApiOpen}>
+      <MyDrawer
+        name={'API用例选择'}
+        open={choiceApiOpen}
+        setOpen={setChoiceApiOpen}
+      >
         <InterfaceCaseChoiceApiTable
           projectId={currentProjectId}
           currentTaskId={currentTaskId}
           refresh={() => actionRef.current?.reload}
         />
+      </MyDrawer>
+      <MyDrawer open={apiDetailDrawer} setOpen={setApiDetailDrawer}>
+        <InterfaceApiDetail interfaceId={currentAPIDetail?.id} />
       </MyDrawer>
       <DragSortTable
         toolBarRender={() => [

@@ -1,21 +1,14 @@
 import { IEnv } from '@/api';
 import { queryEnvBy } from '@/api/base';
 import {
+  EnvironmentOutlined,
   MessageOutlined,
   PlayCircleOutlined,
   RobotOutlined,
+  WarningOutlined,
 } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
-import {
-  Button,
-  Divider,
-  Flex,
-  Radio,
-  Select,
-  Space,
-  Switch,
-  Typography,
-} from 'antd';
+import { Button, Flex, Radio, Select, Space, Switch, Typography } from 'antd';
 import { RadioChangeEvent } from 'antd/lib/radio/interface';
 import { FC, useEffect, useState } from 'react';
 
@@ -74,41 +67,72 @@ const RunConfig: FC<Props> = ({
       }}
     >
       {/* 运行方式选择 */}
-      <Text strong style={{ fontSize: '14px', marginBottom: '4px' }}>
-        运行方式
-      </Text>
-      <Radio.Group
-        defaultValue={1}
-        onChange={onMenuClick}
-        options={[
-          {
-            label: (
-              <Flex gap="small" justify="center" align="center" vertical>
-                <RobotOutlined style={{ fontSize: 18 }} />
-                后台执行
-              </Flex>
-            ),
-            value: 1,
-          },
-          {
-            label: (
-              <Flex gap="small" justify="center" align="center" vertical>
-                <MessageOutlined style={{ fontSize: 18 }} />
-                实时日志
-              </Flex>
-            ),
-            value: 2,
-          },
-        ]}
-      ></Radio.Group>
+      <>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <EnvironmentOutlined style={{ color: '#3b82f6' }} />
+          <Text
+            strong
+            style={{
+              fontSize: '16px',
+              color: '#1e40af',
+              margin: 0,
+            }}
+          >
+            运行环境
+          </Text>
+        </div>
+        <Radio.Group
+          defaultValue={1}
+          onChange={onMenuClick}
+          options={[
+            {
+              label: (
+                <Flex gap="small" justify="center" align="center" vertical>
+                  <RobotOutlined style={{ fontSize: 18 }} />
+                  后台执行
+                </Flex>
+              ),
+              value: 1,
+            },
+            {
+              label: (
+                <Flex gap="small" justify="center" align="center" vertical>
+                  <MessageOutlined style={{ fontSize: 18 }} />
+                  实时日志
+                </Flex>
+              ),
+              value: 2,
+            },
+          ]}
+        />
+      </>
+
       {/* 运行环境选择 */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        <Text strong>运行环境</Text>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '12px',
+          padding: '16px',
+          borderRadius: '8px',
+          background: 'linear-gradient(135deg, #f8faff 0%, #f0f4ff 100%)',
+          border: '1px solid #e1e8ff',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <EnvironmentOutlined style={{ color: '#3b82f6', fontSize: '16px' }} />
+          <Text
+            strong
+            style={{ fontSize: '14px', color: '#1e40af', margin: 0 }}
+          >
+            运行环境
+          </Text>
+        </div>
         <Select
-          placeholder="选择运行环境"
+          placeholder="请选择运行环境"
           style={{
             width: '100%',
-            borderRadius: '8px',
+            borderRadius: '6px',
           }}
           options={apiEnvs}
           onChange={onEnvChange}
@@ -124,30 +148,55 @@ const RunConfig: FC<Props> = ({
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          padding: '12px 16px',
+          padding: '16px',
           borderRadius: '8px',
-          border: '1px solid #f0f0f0',
-          boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+          background: 'linear-gradient(135deg, #f8faff 0%, #f0f4ff 100%)',
+          border: '1px solid #e1e8ff',
+          boxShadow: '0 1px 4px rgba(59, 130, 246, 0.08)',
         }}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-          <Text strong>遇到错误继续</Text>
-          <Text type="secondary" style={{ fontSize: '12px' }}>
-            启用后遇到错误不会中断执行
-          </Text>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <WarningOutlined style={{ color: '#f59e0b', fontSize: '18px' }} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <Text strong style={{ color: '#1e40af', fontSize: '14px' }}>
+              遇到错误继续
+            </Text>
+            <Text
+              type="secondary"
+              style={{ fontSize: '12px', color: '#64748b' }}
+            >
+              启用后遇到错误不会中断执行
+            </Text>
+          </div>
         </div>
         <Switch
           onChange={onErrorJumpChange}
           defaultChecked={false}
           checkedChildren="开"
           unCheckedChildren="关"
+          style={{
+            background: '#cbd5e1',
+          }}
         />
       </div>
-      <Divider />
-      <Button type="primary" size={'large'} onClick={run}>
+      <Button
+        type="primary"
+        size="large"
+        onClick={run}
+        style={{
+          height: '48px',
+          borderRadius: '8px',
+          background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+          border: 'none',
+          boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
+          fontSize: '16px',
+          fontWeight: 600,
+          marginTop: '8px',
+        }}
+      >
         <Space>
-          <PlayCircleOutlined />
-          <span style={{ fontWeight: 500 }}>Run</span>
+          <PlayCircleOutlined style={{ fontSize: '18px' }} />
+          <span style={{ fontWeight: 600 }}>开始运行</span>
         </Space>
       </Button>
     </ProCard>

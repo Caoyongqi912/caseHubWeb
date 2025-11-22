@@ -1,11 +1,12 @@
 import { IModuleEnum } from '@/api';
 import {
   copyApiCase,
+  insertApiCase,
   pageInterApiCase,
   removeApiCase,
   setApiCase,
 } from '@/api/inter/interCase';
-import MyDrawer from '@/components/MyDrawer';
+import MyModal from '@/components/MyModal';
 import MyProTable from '@/components/Table/MyProTable';
 import ApiCaseBaseForm from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/ApiCaseBaseForm';
 import { IInterfaceAPICase } from '@/pages/Httpx/types';
@@ -16,7 +17,9 @@ import { useModel } from '@@/exports';
 import {
   CopyOutlined,
   DashOutlined,
+  DeleteOutlined,
   DeliveredProcedureOutlined,
+  PlusOutlined,
 } from '@ant-design/icons';
 import {
   ActionType,
@@ -52,12 +55,12 @@ const Index: FC<SelfProps> = ({
   const [currentCaseId, setCurrentCaseId] = useState<number>();
   const [openModal, setOpenModal] = useState(false);
   const [form] = Form.useForm();
+  const [caseForm] = Form.useForm();
   const { initialState } = useModel('@@initialState');
   const projects = initialState?.projects || [];
   const [moduleEnum, setModuleEnum] = useState<IModuleEnum[]>([]);
 
   const [copyProjectId, setCopyProjectId] = useState<number>();
-  const [openCaseDetail, setOpenCaseDetail] = useState(false);
   // 根据当前项目ID获取环境和用例部分
   useEffect(() => {
     if (copyProjectId) {
@@ -68,6 +71,15 @@ const Index: FC<SelfProps> = ({
       ).then();
     }
   }, [copyProjectId]);
+
+  useEffect(() => {
+    if (currentProjectId && currentModuleId) {
+      caseForm.setFieldsValue({
+        project_id: currentProjectId,
+        module_id: currentModuleId,
+      });
+    }
+  }, [currentModuleId, currentProjectId]);
 
   useEffect(() => {
     actionRef.current?.reload();
@@ -98,6 +110,26 @@ const Index: FC<SelfProps> = ({
       title: '名称',
       dataIndex: 'title',
       key: 'title',
+      render: (text, record) => (
+        <MyModal
+          form={caseForm}
+          title={record.title}
+          onFinish={saveBaseInfo}
+          trigger={
+            <a
+              type={'primary'}
+              onClick={() => {
+                caseForm.setFieldsValue(record);
+                setCurrentCaseId(record.id);
+              }}
+            >
+              {text}
+            </a>
+          }
+        >
+          <ApiCaseBaseForm />
+        </MyModal>
+      ),
     },
     {
       title: '步骤数量',
@@ -144,19 +176,8 @@ const Index: FC<SelfProps> = ({
       valueType: 'option',
       key: 'option',
       fixed: 'right',
-      render: (text, record, _) => {
+      render: (_, record) => {
         return [
-          <a
-            onClick={() => {
-              // history.push(
-              //   `/interface/caseApi/detail/caseApiId=${record.id}&projectId=${record.project_id}&moduleId=${record.module_id}`,
-              // );
-              setCurrentCaseId(record.id);
-              setOpenCaseDetail(true);
-            }}
-          >
-            详情
-          </a>,
           <a
             onClick={() => {
               history.push(
@@ -195,6 +216,7 @@ const Index: FC<SelfProps> = ({
                 },
                 {
                   key: '2',
+                  icon: <DeleteOutlined />,
                   label: (
                     <Popconfirm
                       title={'确认删除？'}
@@ -228,24 +250,30 @@ const Index: FC<SelfProps> = ({
     },
   ];
 
+  const saveBaseInfo = async (values: IInterfaceAPICase) => {
+    if (currentCaseId) {
+      await setApiCase({
+        ...values,
+        id: currentCaseId,
+      }).then(async ({ code, msg }) => {
+        if (code === 0) {
+          await message.success(msg);
+          actionRef.current?.reload();
+        }
+      });
+    } else {
+      await insertApiCase(values).then(async ({ code }) => {
+        if (code === 0) {
+          message.success('添加成功');
+          actionRef.current?.reload();
+        }
+      });
+    }
+    return true;
+  };
+
   return (
     <>
-      <MyDrawer
-        name={''}
-        width={'20%'}
-        open={openCaseDetail}
-        setOpen={setOpenCaseDetail}
-      >
-        <ApiCaseBaseForm
-          case_id={currentCaseId}
-          currentProjectId={currentProjectId}
-          currentModuleId={currentModuleId}
-          callback={() => {
-            setOpenCaseDetail(false);
-            actionRef.current?.reload();
-          }}
-        />
-      </MyDrawer>
       <Modal
         open={openModal}
         onOk={async () => {
@@ -299,15 +327,21 @@ const Index: FC<SelfProps> = ({
         columns={columns}
         request={fetchInterfaceCase}
         toolBarRender={() => [
-          <Button
-            type={'primary'}
-            onClick={() => {
-              // history.push(`/interface/caseApi/detail/projectId=${currentProjectId}&moduleId=${currentModuleId}`);
-              setOpenCaseDetail(true);
-            }}
+          <MyModal
+            onFinish={saveBaseInfo}
+            trigger={
+              <Button
+                type={'primary'}
+                onClick={() => setCurrentCaseId(undefined)}
+              >
+                <PlusOutlined />
+                添加任务用例
+              </Button>
+            }
+            form={caseForm}
           >
-            添加
-          </Button>,
+            <ApiCaseBaseForm />
+          </MyModal>,
         ]}
       />
     </>

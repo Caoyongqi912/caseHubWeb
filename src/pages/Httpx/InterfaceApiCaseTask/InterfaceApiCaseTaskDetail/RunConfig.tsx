@@ -1,20 +1,9 @@
 import { IEnv } from '@/api';
 import { queryEnvBy } from '@/api/base';
-import {
-  EnvironmentOutlined,
-  PlayCircleOutlined,
-  RocketOutlined,
-} from '@ant-design/icons';
+import { EnvironmentOutlined, RocketOutlined } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
-import {
-  Button,
-  Checkbox,
-  CheckboxProps,
-  Select,
-  Space,
-  Typography,
-} from 'antd';
-import { FC, useEffect, useState } from 'react';
+import { Checkbox, CheckboxProps, Select, Typography } from 'antd';
+import React, { FC, useEffect, useState } from 'react';
 
 const { Text } = Typography;
 
@@ -24,7 +13,7 @@ interface SelfProps {
   currentProjectId?: string;
   onEnvChange: (value: number) => void;
   setRunningOption: (values: string[]) => void;
-  run: () => Promise<any>;
+  runArea: React.ReactElement;
 }
 
 const plainOptions = ['API', 'CASE'];
@@ -33,7 +22,7 @@ const RunConfig: FC<SelfProps> = ({
   currentProjectId,
   setRunningOption,
   onEnvChange,
-  run,
+  runArea,
 }) => {
   const [apiEnvs, setApiEnvs] = useState<{ value: number; label: string }[]>(
     [],
@@ -199,25 +188,7 @@ const RunConfig: FC<SelfProps> = ({
       </div>
 
       {/* 运行按钮 */}
-      <Button
-        type="primary"
-        size="large"
-        onClick={run}
-        style={{
-          height: '48px',
-          borderRadius: '8px',
-          background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
-          border: 'none',
-          boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
-          fontSize: '16px',
-          fontWeight: 600,
-        }}
-      >
-        <Space>
-          <PlayCircleOutlined style={{ fontSize: '18px' }} />
-          <span style={{ fontWeight: 600 }}>开始运行</span>
-        </Space>
-      </Button>
+      {runArea}
     </ProCard>
   );
 };
