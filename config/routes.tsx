@@ -269,6 +269,12 @@ export default [
         hideInMenu: true,
       },
       {
+        path: '/interface/interApi/scheduler',
+        name: '定时任务',
+        component: '@/pages/Httpx/Scheduler',
+      },
+
+      {
         path: '/interface/interApi/record',
         name: '接口录制',
         component: '@/pages/Httpx/InterfaceApiRecord',

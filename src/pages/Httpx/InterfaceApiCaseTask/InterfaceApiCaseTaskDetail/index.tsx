@@ -3,6 +3,7 @@ import MyTabs from '@/components/MyTabs';
 import AssociationApis from '@/pages/Httpx/InterfaceApiCaseTask/InterfaceApiCaseTaskDetail/AssociationApis';
 import AssociationCases from '@/pages/Httpx/InterfaceApiCaseTask/InterfaceApiCaseTaskDetail/AssociationCases';
 import RunConfig from '@/pages/Httpx/InterfaceApiCaseTask/InterfaceApiCaseTaskDetail/RunConfig';
+import InterfaceApiTaskResultTable from '@/pages/Httpx/InterfaceApiTaskResult/InterfaceApiTaskResultTable';
 import { useParams } from '@@/exports';
 import { PlayCircleOutlined } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
@@ -92,6 +93,11 @@ const Index = () => {
         />
       ),
     },
+    {
+      key: '3',
+      label: '执行历史',
+      children: <InterfaceApiTaskResultTable apiCaseTaskId={taskId} />,
+    },
   ];
 
   const RUN = (
@@ -152,14 +158,6 @@ const Index = () => {
 
           <FloatButton.BackTop />
         </ProCard>
-        {/*<ProCard*/}
-        {/*  title={'调试历史'}*/}
-        {/*  headerBordered*/}
-        {/*  boxShadow*/}
-        {/*  style={{ marginTop: 20 }}*/}
-        {/*>*/}
-        {/*  <InterfaceApiTaskResultTable apiCaseTaskId={taskId} />*/}
-        {/*</ProCard>*/}
       </RcResizeObserver>
     </>
   );
