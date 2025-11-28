@@ -13,6 +13,7 @@ import CaseContentCollapsible from '@/pages/Httpx/InterfaceApiCase/InterfaceApiC
 import InterfaceApiCaseVars from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/InterfaceApiCaseVars';
 import RunConfig from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/RunConfig';
 import InterfaceApiCaseResultDrawer from '@/pages/Httpx/InterfaceApiCaseResult/InterfaceApiCaseResultDrawer';
+import InterfaceApiCaseResultTable from '@/pages/Httpx/InterfaceApiCaseResult/InterfaceApiCaseResultTable';
 import InterfaceCaseChoiceApiTable from '@/pages/Httpx/InterfaceApiCaseResult/InterfaceCaseChoiceApiTable';
 import { IInterfaceAPICase, IInterfaceCaseContent } from '@/pages/Httpx/types';
 import { useParams } from '@@/exports';
@@ -47,7 +48,7 @@ interface Self {
 }
 
 const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
-  const { caseApiId } = useParams<{
+  const { caseApiId, projectId, moduleId } = useParams<{
     caseApiId: string;
     projectId: string;
     moduleId: string;
@@ -77,9 +78,9 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
     debounce(({ width }) => {
       console.log('=====', width);
       const breakpoints = [
-        { max: 768, size: '80%' }, // 平板及以下
-        { max: 1024, size: '85%' }, // 小笔记本
-        { max: 1440, size: '90%' }, // 普通显示器
+        { max: 768, size: '70%' }, // 平板及以下
+        { max: 1030, size: '75%' }, // 小笔记本
+        { max: 1440, size: '80%' }, // 普通显示器
         { max: 1920, size: '90%' }, // 1K显示器
         { max: 2560, size: '90%' }, // 2K显示器
         { max: Infinity, size: '95%' }, // 4K+显示器
@@ -91,6 +92,12 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
     }, 100),
     [],
   );
+  useEffect(() => {
+    if (projectId && moduleId) {
+      setCurrentProjectId(parseInt(projectId));
+      setCurrentModuleId(parseInt(moduleId));
+    }
+  }, [projectId, moduleId]);
   // drawer 页
   useEffect(() => {
     if (!interfaceCase) return;
@@ -307,12 +314,12 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
   const APIStepItems: TabsProps['items'] = [
     {
       key: '1',
-      label: 'Vars',
+      label: '前置变量',
       children: <InterfaceApiCaseVars currentCaseId={caseApiId} />,
     },
     {
       key: '2',
-      label: `STEP (${caseContentsStepLength})`,
+      label: `步骤 (${caseContentsStepLength})`,
       children: (
         <>
           {caseContentElement.length === 0 ? (
@@ -323,6 +330,22 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
               setItems={setCaseContentElement}
               orderFetch={onDragEnd}
             />
+          )}
+        </>
+      ),
+    },
+    {
+      key: 'his',
+      label: '执行历史',
+      children: (
+        <>
+          {caseApiId ? (
+            <InterfaceApiCaseResultTable
+              apiCaseId={caseApiId}
+              reload={reloadResult}
+            />
+          ) : (
+            <Empty />
           )}
         </>
       ),
@@ -355,7 +378,7 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
 
       <MyDrawer open={choiceOpen} setOpen={setChoiceOpen}>
         <InterfaceCaseChoiceApiTable
-          projectId={currentProjectId}
+          projectId={parseInt(projectId!)}
           currentCaseApiId={caseApiId}
           refresh={refresh}
         />
@@ -368,7 +391,7 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
           style={{ height: '100%', boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)' }}
         >
           <Splitter.Panel resizable={false} size={defaultSize} max="100%">
-            <ProCard extra={<ApisCardExtra />}>
+            <ProCard bodyStyle={{ padding: 2 }} extra={<ApisCardExtra />}>
               <Tabs
                 defaultActiveKey={'2'}
                 defaultValue={'2'}
@@ -391,12 +414,7 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
           )}
         </Splitter>
       </ProCard>
-      {/*{caseApiId ? (*/}
-      {/*  <InterfaceApiCaseResultTable*/}
-      {/*    apiCaseId={caseApiId}*/}
-      {/*    reload={reloadResult}*/}
-      {/*  />*/}
-      {/*) : null}*/}
+
       <FloatButton.BackTop />
     </RcResizeObserver>
   );

@@ -77,7 +77,7 @@ const WaitProCard: FC<Props> = (props) => {
   return (
     <ProCard
       bordered
-      collapsible
+      collapsible={false}
       hoverable
       defaultCollapsed
       onMouseEnter={() => {
@@ -96,7 +96,6 @@ const WaitProCard: FC<Props> = (props) => {
           caseId={caseId}
         />
       }
-      collapsibleIconRender={({ collapsed }) => null}
       title={
         <Space>
           <UnorderedListOutlined

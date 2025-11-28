@@ -154,6 +154,8 @@ export interface ITryResponseInfo extends IBaseField {
   result?: 'SUCCESS' | 'ERROR';
   extracts: IExtract[];
   asserts: any;
+  request_info: IObjGet;
+  startTime: string;
 }
 
 export interface IInterfaceCaseResult extends IBaseField {
@@ -284,4 +286,29 @@ export interface IInterfaceResultByCase {
   result?: 'SUCCESS' | 'ERROR';
   extracts: IExtract[];
   asserts: any;
+}
+
+export interface ICaseContentResult extends IBaseField {
+  content_type: number;
+  interface_case_result_id: number;
+  interface_task_result_id: number | null;
+  content_id: number;
+  content_name: string;
+  content_desc?: string;
+  content_step: number | null;
+  content_target_result_id: null | number;
+  script_extracts: null;
+  content_asserts: IObjGet | null;
+  wait_time: number | null;
+  content_condition: {
+    key: any;
+    operator: number;
+    value: any;
+  } | null;
+  start_time: string;
+  use_time: string | number | null;
+  starter_id: number;
+  starter_name: string;
+  content_result: boolean;
+  data?: ITryResponseInfo[];
 }

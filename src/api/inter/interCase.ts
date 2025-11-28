@@ -1,12 +1,12 @@
 import { IObjGet, IPage, IResponse, ISearch } from '@/api';
 import {
+  ICaseContentResult,
   IInterfaceAPI,
   IInterfaceAPICase,
   IInterfaceCaseCondition,
   IInterfaceCaseContent,
   IInterfaceCaseContentAssert,
   IInterfaceCaseResult,
-  IInterfaceResultByCase,
   ITryResponseInfo,
   IVariable,
 } from '@/pages/Httpx/types';
@@ -549,7 +549,7 @@ export const caseAPIResultsByCase = async (
   },
   opt?: IObjGet,
 ) => {
-  return request<IResponse<IInterfaceResultByCase[]>>(
+  return request<IResponse<ICaseContentResult[]>>(
     `/api/interface/result/queryByCaseResultId`,
     {
       method: 'GET',

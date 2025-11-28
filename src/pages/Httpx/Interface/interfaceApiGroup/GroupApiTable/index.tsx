@@ -1,10 +1,12 @@
 import { IModuleEnum } from '@/api';
 import {
+  insertInterfaceGroup,
   pageInterfaceGroup,
   removeInterfaceGroup,
   updateInterfaceGroup,
 } from '@/api/inter/interGroup';
 import MyDrawer from '@/components/MyDrawer';
+import MyModal from '@/components/MyModal';
 import MyProTable from '@/components/Table/MyProTable';
 import GroupApiDetail from '@/pages/Httpx/Interface/interfaceApiGroup/GroupApiDetail';
 import GroupBaseInfo from '@/pages/Httpx/Interface/interfaceApiGroup/GroupBaseInfo';
@@ -16,6 +18,7 @@ import {
   DashOutlined,
   DeleteOutlined,
   DeliveredProcedureOutlined,
+  PlusOutlined,
 } from '@ant-design/icons';
 import {
   ActionType,
@@ -49,9 +52,9 @@ const Index: FC<SelfProps> = ({
 }) => {
   const actionRef = useRef<ActionType>(); //Table action 的引用，便于自定义触发
   const [currentGroupId, setCurrentGroupId] = useState<number>();
-  const [groupDetail, setGroupDetail] = useState<boolean>(false);
   const [openModal, setOpenModal] = useState(false);
-  const [form] = Form.useForm();
+  const [moveForm] = Form.useForm();
+  const [groupForm] = Form.useForm<IInterfaceGroup>();
   const { initialState } = useModel('@@initialState');
   const projects = initialState?.projects || [];
   const [moduleEnum, setModuleEnum] = useState<IModuleEnum[]>([]);
@@ -69,6 +72,25 @@ const Index: FC<SelfProps> = ({
     actionRef.current?.reload();
   }, [currentModuleId, currentProjectId]);
 
+  const saveBaseInfo = async (values: IInterfaceGroup) => {
+    if (currentGroupId) {
+      const { code, msg } = await updateInterfaceGroup({
+        ...values,
+        id: currentGroupId,
+      });
+      if (code === 0) {
+        actionRef.current?.reload();
+        message.success(msg);
+      }
+    } else {
+      const { code, msg } = await insertInterfaceGroup(values);
+      if (code === 0) {
+        actionRef.current?.reload();
+        message.success(msg);
+      }
+    }
+    return true;
+  };
   // 使用useCallback优化请求函数
   const fetchInterfaceGroup = useCallback(
     async (params: any) => {
@@ -94,6 +116,7 @@ const Index: FC<SelfProps> = ({
       dataIndex: 'uid',
       key: 'uid',
       copyable: true,
+      width: '10%',
       render: (_, record) => {
         return <Tag color={'blue'}>{record.uid}</Tag>;
       },
@@ -102,6 +125,25 @@ const Index: FC<SelfProps> = ({
       title: '组名',
       dataIndex: 'name',
       key: 'name',
+      render: (text, record) => (
+        <MyModal
+          form={groupForm}
+          title={record.name}
+          onFinish={saveBaseInfo}
+          trigger={
+            <a
+              onClick={() => {
+                groupForm.setFieldsValue(record);
+                setCurrentGroupId(record.id);
+              }}
+            >
+              {text}
+            </a>
+          }
+        >
+          <GroupBaseInfo />
+        </MyModal>
+      ),
     },
     {
       title: '接口数',
@@ -129,38 +171,14 @@ const Index: FC<SelfProps> = ({
           <a
             onClick={() => {
               setCurrentGroupId(record.id);
-              setGroupDetail(true);
-            }}
-          >
-            详情
-          </a>,
-          <a
-            onClick={() => {
-              setCurrentGroupId(record.id);
               setOpenGroupAssociation(true);
             }}
-            // onClick={() => {
-            //   history.push(
-            //     `/interface/group/detail/groupId=${record.id}&projectId=${record.project_id}&moduleId=${record.module_id}`,
-            //   );
-            // }}
           >
             关联API
           </a>,
           <Dropdown
             menu={{
               items: [
-                // {
-                //   key: '1',
-                //   label: '复制',
-                //   icon: <CopyOutlined />,
-                //   onClick: async () => {
-                //     const { code } = await copyInterfaceGroup(record.id);
-                //     if (code === 0) {
-                //       actionRef.current?.reload();
-                //     }
-                //   },
-                // },
                 {
                   key: '3',
                   label: '移动至',
@@ -170,7 +188,6 @@ const Index: FC<SelfProps> = ({
                     setOpenModal(true);
                   },
                 },
-
                 {
                   type: 'divider',
                 },
@@ -209,26 +226,9 @@ const Index: FC<SelfProps> = ({
   return (
     <>
       <MyDrawer
-        name={''}
-        open={groupDetail}
-        setOpen={setGroupDetail}
-        width={'15%'}
-      >
-        <GroupBaseInfo
-          groupId={currentGroupId}
-          currentProjectId={currentProjectId}
-          currentModuleId={currentModuleId}
-          callback={() => {
-            setGroupDetail(false);
-            actionRef.current?.reload();
-          }}
-        />
-      </MyDrawer>
-      <MyDrawer
-        name={''}
         open={openGroupAssociation}
         setOpen={setOpenGroupAssociation}
-        width={'50%'}
+        width={'70%'}
       >
         <GroupApiDetail groupId={currentGroupId} projectId={currentProjectId} />
       </MyDrawer>
@@ -236,7 +236,7 @@ const Index: FC<SelfProps> = ({
       <Modal
         open={openModal}
         onOk={async () => {
-          const values = await form.validateFields();
+          const values = await moveForm.validateFields();
           const { code, msg } = await updateInterfaceGroup({
             id: currentGroupId,
             ...values,
@@ -244,14 +244,14 @@ const Index: FC<SelfProps> = ({
           if (code === 0) {
             message.success(msg);
             actionRef.current?.reload();
-            form.resetFields();
+            moveForm.resetFields();
             setOpenModal(false);
           }
         }}
         onCancel={() => setOpenModal(false)}
         title={'移动'}
       >
-        <ProForm submitter={false} form={form}>
+        <ProForm submitter={false} form={moveForm}>
           <ProFormSelect
             width={'md'}
             options={projects}
@@ -282,18 +282,26 @@ const Index: FC<SelfProps> = ({
         persistenceKey={perKey}
         columns={columns}
         rowKey={'id'}
-        x={1500}
+        x={1200}
         actionRef={actionRef}
         request={fetchInterfaceGroup}
         toolBarRender={() => [
-          <Button
-            type={'primary'}
-            onClick={() => {
-              setGroupDetail(true);
-            }}
+          <MyModal
+            form={groupForm}
+            onFinish={saveBaseInfo}
+            trigger={
+              <Button
+                hidden={currentModuleId === undefined}
+                type={'primary'}
+                onClick={() => setCurrentGroupId(undefined)}
+              >
+                <PlusOutlined />
+                添加
+              </Button>
+            }
           >
-            添加
-          </Button>,
+            <GroupBaseInfo />
+          </MyModal>,
         ]}
       />
     </>

@@ -323,6 +323,7 @@ const Index: FC<SelfProps> = ({
         request={fetchInterface}
         toolBarRender={() => [
           <Button
+            hidden={currentModuleId === undefined}
             type={'primary'}
             onClick={() => {
               window.open(

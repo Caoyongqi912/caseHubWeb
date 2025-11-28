@@ -5,10 +5,7 @@ import GroupProCard from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/
 import ScriptProCard from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/ScriptProCard';
 import WaitProCard from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/WaitProCard';
 import { IInterfaceCaseContent } from '@/pages/Httpx/types';
-import { Typography } from 'antd';
 import { FC } from 'react';
-
-const { Text } = Typography;
 
 const CaseContentType = {
   API: 1,

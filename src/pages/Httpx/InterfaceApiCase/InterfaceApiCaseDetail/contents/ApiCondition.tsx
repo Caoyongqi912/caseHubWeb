@@ -92,11 +92,10 @@ const ApiCondition: FC<SelfProps> = ({
   }, [caseContent]);
 
   const handleDragSortEnd = async (
-    beforeIndex: number,
-    afterIndex: number,
+    _: number,
+    __: number,
     newDataSource: IInterfaceAPI[],
   ) => {
-    console.log('排序后的数据', newDataSource);
     setConditionAPI(newDataSource);
     const reorderIds: number[] = newDataSource.map((item) => item.id);
     await reorderAssociationAPI({
@@ -197,7 +196,7 @@ const ApiCondition: FC<SelfProps> = ({
     },
   ];
 
-  const onValuesChange = (changedValues: any, allValues: any) => {
+  const onValuesChange = (_: any, allValues: any) => {
     clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(async () => {
       const { code, data } = await updateConditionContentInfo({

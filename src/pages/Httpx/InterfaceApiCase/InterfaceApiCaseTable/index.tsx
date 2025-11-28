@@ -323,7 +323,7 @@ const Index: FC<SelfProps> = ({
         key={perKey}
         rowKey={'id'}
         actionRef={actionRef}
-        x={1500}
+        x={1200}
         columns={columns}
         request={fetchInterfaceCase}
         toolBarRender={() => [
@@ -331,6 +331,7 @@ const Index: FC<SelfProps> = ({
             onFinish={saveBaseInfo}
             trigger={
               <Button
+                hidden={currentModuleId === undefined}
                 type={'primary'}
                 onClick={() => setCurrentCaseId(undefined)}
               >

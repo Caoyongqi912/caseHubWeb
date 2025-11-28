@@ -30,7 +30,6 @@ import {
 } from '@ant-design/pro-components';
 import {
   Button,
-  Divider,
   Dropdown,
   Form,
   message,
@@ -62,7 +61,6 @@ const Index: FC<SelfProps> = ({
   const [moduleEnum, setModuleEnum] = useState<IModuleEnum[]>([]);
   const [copyProjectId, setCopyProjectId] = useState<number>();
   const [taskForm] = Form.useForm<IInterfaceAPITask>();
-  const [detailTitle, setDetailTitle] = useState<string>('添加任务基本信息');
 
   useEffect(() => {
     actionRef.current?.reload();
@@ -119,7 +117,7 @@ const Index: FC<SelfProps> = ({
       }
     } else {
       //新增
-      const { code, data } = await insertApiTask(values);
+      const { code } = await insertApiTask(values);
       if (code === 0) {
         // history.push(`/interface/task/detail/taskId=${data.id}`);
         message.success('添加成功');
@@ -289,7 +287,6 @@ const Index: FC<SelfProps> = ({
                         }
                       }}
                     >
-                      <Divider type={'vertical'} />
                       <a>删除</a>
                     </Popconfirm>
                   ),
@@ -365,10 +362,11 @@ const Index: FC<SelfProps> = ({
         toolBarRender={() => [
           <MyModal
             form={taskForm}
-            title={detailTitle}
+            title={'添加任务'}
             onFinish={saveTaskBase}
             trigger={
               <Button
+                hidden={currentModuleId === undefined}
                 type={'primary'}
                 onClick={() => setCurrentTaskId(undefined)}
               >

@@ -2,7 +2,7 @@ import AceCodeEditor from '@/components/CodeEditor/AceCodeEditor';
 import MyTabs from '@/components/MyTabs';
 import RequestHeaders from '@/pages/Httpx/InterfaceApiResponse/RequestHeaders';
 import { ProCard } from '@ant-design/pro-components';
-import { Space, Tag } from 'antd';
+import { Empty, Space, Tag } from 'antd';
 import { FC } from 'react';
 
 interface Props {
@@ -14,7 +14,7 @@ const RequestInfo: FC<Props> = ({ method, interfaceApiInfo }) => {
   const renderResponseBody = (json: any) => {
     console.log('===', json);
     if (!json) {
-      return null;
+      return <Empty />;
     }
     if (typeof json === 'object') {
       return (
@@ -41,6 +41,7 @@ const RequestInfo: FC<Props> = ({ method, interfaceApiInfo }) => {
       </ProCard>
       <ProCard>
         <MyTabs
+          size={'small'}
           defaultActiveKey={'1'}
           items={[
             {

@@ -8,7 +8,7 @@ import MyProTable from '@/components/Table/MyProTable';
 import InterfaceApiCaseResultDrawer from '@/pages/Httpx/InterfaceApiCaseResult/InterfaceApiCaseResultDrawer';
 import { IInterfaceCaseResult } from '@/pages/Httpx/types';
 import { pageData } from '@/utils/somefunc';
-import { ActionType, ProCard, ProColumns } from '@ant-design/pro-components';
+import { ActionType, ProColumns } from '@ant-design/pro-components';
 import { Button, message, Space, Tag } from 'antd';
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
 
@@ -114,6 +114,8 @@ const InterfaceApiCaseResultTable: FC<SelfProps> = (props) => {
     {
       title: '操作',
       valueType: 'option',
+      fixed: 'right',
+      width: '12%',
       render: (_, record) => (
         <>
           {record.status === 'OVER' ? (
@@ -171,28 +173,22 @@ const InterfaceApiCaseResultTable: FC<SelfProps> = (props) => {
   );
   return (
     <>
-      <MyDrawer name={''} width={'80%'} open={open} setOpen={setOpen}>
+      <MyDrawer width={'80%'} open={open} setOpen={setOpen}>
         <InterfaceApiCaseResultDrawer
           currentCaseResultId={currentCaseResultId}
         />
       </MyDrawer>
-      <ProCard
-        title={taskResultId ? '' : '调试历史'}
-        bordered={true}
-        hoverable={true}
-        style={{ marginTop: taskResultId ? 0 : 200, height: 'auto' }}
-      >
-        <MyProTable
-          toolBarRender={() => [toolBar]}
-          rowKey={'uid'}
-          dataSource={dataSource}
-          actionRef={actionRef}
-          request={fetchResults}
-          search={false}
-          columns={columns}
-          x={1000}
-        />
-      </ProCard>
+
+      <MyProTable
+        toolBarRender={() => [toolBar]}
+        rowKey={'uid'}
+        dataSource={dataSource}
+        actionRef={actionRef}
+        request={fetchResults}
+        search={false}
+        columns={columns}
+        x={1000}
+      />
     </>
   );
 };

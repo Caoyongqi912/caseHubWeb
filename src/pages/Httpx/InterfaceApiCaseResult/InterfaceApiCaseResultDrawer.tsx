@@ -1,8 +1,8 @@
 import { caseAPIResultDetail, runApiCaseIo } from '@/api/inter/interCase';
 import AceCodeEditor from '@/components/CodeEditor/AceCodeEditor';
 import MyTabs from '@/components/MyTabs';
+import CaseResult from '@/pages/Httpx/InterfaceApiCaseResult/CaseResult';
 import InterfaceApiCaseResultBaseInfo from '@/pages/Httpx/InterfaceApiCaseResult/InterfaceApiCaseResultBaseInfo';
-import InterfaceApiResultResponses from '@/pages/Httpx/InterfaceApiCaseResult/InterfaceApiResultResponses';
 import { IInterfaceCaseResult } from '@/pages/Httpx/types';
 import { useModel } from '@@/exports';
 import {
@@ -18,8 +18,8 @@ import io, { Socket } from 'socket.io-client';
 interface SelfProps {
   openStatus?: boolean;
   caseApiId?: string;
-  env_id: number;
-  error_stop: boolean;
+  env_id?: number;
+  error_stop?: boolean;
   currentCaseResultId?: string | number;
 }
 
@@ -67,8 +67,8 @@ const InterfaceApiCaseResultDrawer: FC<SelfProps> = ({
         if (caseApiId) {
           runApiCaseIo({
             case_id: caseApiId,
-            env_id: env_id,
-            error_stop: error_stop,
+            env_id: env_id!,
+            error_stop: error_stop!,
           }).then();
         }
       });
@@ -159,7 +159,7 @@ const InterfaceApiCaseResultDrawer: FC<SelfProps> = ({
       key: '3',
       disabled: tabDisabled,
       icon: <OrderedListOutlined />,
-      children: <InterfaceApiResultResponses caseResultId={caseResultId} />,
+      children: <CaseResult caseResultId={caseResultId} />,
     },
   ];
   return (

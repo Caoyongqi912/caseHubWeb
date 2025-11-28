@@ -173,7 +173,7 @@ const InterAssertList: FC<ISelfProps> = ({ form, readonly = false }) => {
           return {
             assert_switch: true,
             assert_text: undefined,
-            assert_opt: '==',
+            assert_opt: 0,
           };
         }}
         alwaysShowItemLabel

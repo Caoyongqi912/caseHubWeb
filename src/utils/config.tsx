@@ -51,6 +51,7 @@ export const CONFIG: IObjGet = {
     3: { text: 'BeforeScript' },
     4: { text: 'BeforeParams' },
     10: { text: 'BeforeSQL' },
+    11: { text: 'CaseStep' },
     5: { text: 'AfterScript' },
     6: { text: 'ResponseJsonExtract' },
     7: { text: 'ResponseHeadExtract' },

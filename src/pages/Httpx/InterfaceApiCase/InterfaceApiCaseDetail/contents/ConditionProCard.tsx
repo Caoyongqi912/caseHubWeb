@@ -1,7 +1,6 @@
 import ApiCondition from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/ApiCondition';
 import CardExtraOption from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/CardExtraOption';
 import { IInterfaceCaseContent } from '@/pages/Httpx/types';
-import { CONFIG } from '@/utils/config';
 import {
   DownOutlined,
   RightOutlined,
@@ -28,7 +27,6 @@ const ConditionProCard: FC<Props> = (props) => {
   const [conditionValue, setConditionValue] = useState<string>();
   const [conditionOperator, setConditionOperator] = useState<string>();
 
-  const { InterfaceCaseContentType } = CONFIG;
   useEffect(() => {
     if (conditionKey) setConditionKey(conditionKey);
     if (conditionOperator) setConditionOperator(conditionOperator);
@@ -64,7 +62,6 @@ const ConditionProCard: FC<Props> = (props) => {
             <Tag color={'green-inverse'}>STEP_{step}</Tag>
             <Tag color={'purple-inverse'}>IF</Tag>
             <>{collapsed ? <RightOutlined /> : <DownOutlined />}</>
-
             <Text type={'warning'}> {conditionKey}</Text>
             <Text strong> {conditionOperator}</Text>
             <Text type={'warning'}> {conditionValue}</Text>

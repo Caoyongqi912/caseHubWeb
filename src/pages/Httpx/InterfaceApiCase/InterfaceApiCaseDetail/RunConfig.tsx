@@ -78,7 +78,7 @@ const RunConfig: FC<Props> = ({
               margin: 0,
             }}
           >
-            运行环境
+            运行方式
           </Text>
         </div>
         <Radio.Group

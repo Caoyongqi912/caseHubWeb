@@ -36,9 +36,6 @@ const InterfaceCaseChoiceApiTable: FC<SelfProps> = ({
   condition_id,
 }) => {
   const actionRef = useRef<ActionType>(); //Table action 的引用，便于自定义触发
-  const [selectProjectId, setSelectProjectId] = useState<number | undefined>(
-    projectId,
-  );
   const [projectEnumMap, setProjectEnumMap] = useState<IObjGet>({});
   const [moduleEnum, setModuleEnum] = useState<IModuleEnum[]>([]);
 
@@ -46,35 +43,36 @@ const InterfaceCaseChoiceApiTable: FC<SelfProps> = ({
 
   // 查询所有project 设置枚举
   useEffect(() => {
-    queryProjectEnum(setProjectEnumMap).then();
-  }, []);
-  useEffect(() => {
-    if (selectProjectId) {
-      fetchModulesEnum(selectProjectId, ModuleEnum.API, setModuleEnum).then();
-    }
-  }, [selectProjectId]);
+    if (!projectId) return;
+    queryProjectEnum(setProjectEnumMap).then(async () => {
+      await fetchModulesEnum(projectId, ModuleEnum.API, setModuleEnum).then();
+    });
+  }, [projectId]);
 
-  const fetchInterface = useCallback(async (params: any, sort: any) => {
-    const searchData = {
-      ...params,
-      //只查询公共api
-      project_id: projectId,
-      module_type: ModuleEnum.API,
-      is_common: 1,
-      sort: sort,
-    };
-    const { code, data } = await pageInterApi(searchData);
-    return pageData(code, data);
-  }, []);
+  const fetchInterface = useCallback(
+    async (params: any, sort: any) => {
+      const searchData = {
+        ...params,
+        //只查询公共api
+        project_id: projectId,
+        module_type: ModuleEnum.API,
+        is_common: 1,
+        sort: sort,
+      };
+      const { code, data } = await pageInterApi(searchData);
+      return pageData(code, data);
+    },
+    [projectId],
+  );
 
   const columns: ProColumns<IInterfaceAPI>[] = [
     {
       title: '项目',
       dataIndex: 'project_id',
       hideInTable: true,
+      hideInSearch: true,
       valueType: 'select',
       valueEnum: projectEnumMap,
-      initialValue: selectProjectId?.toString(),
       fieldProps: {
         disabled: true,
       },
