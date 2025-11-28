@@ -97,7 +97,7 @@ const GroupInterfaceTable: FC<SelfProps> = (props) => {
         columns={columns}
         search={false}
         rowKey={'id'}
-        x={1000}
+        x={800}
         actionRef={actionRef}
         request={fetchInterface}
       />

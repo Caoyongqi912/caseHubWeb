@@ -1,7 +1,11 @@
 import { updateCaseContent } from '@/api/inter/interCase';
 import CardExtraOption from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/CardExtraOption';
 import { IInterfaceCaseContent } from '@/pages/Httpx/types';
-import { EditOutlined, UnorderedListOutlined } from '@ant-design/icons';
+import {
+  EditOutlined,
+  FieldTimeOutlined,
+  UnorderedListOutlined,
+} from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
 import { InputNumber, Space, Tag, Typography } from 'antd';
 import { FC, useEffect, useState } from 'react';
@@ -102,7 +106,7 @@ const WaitProCard: FC<Props> = (props) => {
             style={{ color: '#c3cad4', marginRight: 20 }}
           />
           <Tag color={'green-inverse'}>STEP_{step}</Tag>
-          <Tag color={'orange-inverse'}>WAIT</Tag>
+          <Tag color={'orange-inverse'} icon={<FieldTimeOutlined />} />
           {WAIT()}
         </Space>
       }

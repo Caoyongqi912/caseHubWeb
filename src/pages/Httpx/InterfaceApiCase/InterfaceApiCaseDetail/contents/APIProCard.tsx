@@ -2,7 +2,7 @@ import MyDrawer from '@/components/MyDrawer';
 import InterfaceApiDetail from '@/pages/Httpx/Interface/InterfaceApiDetail';
 import CardExtraOption from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/CardExtraOption';
 import { IInterfaceCaseContent } from '@/pages/Httpx/types';
-import { UnorderedListOutlined } from '@ant-design/icons';
+import { ApiOutlined, UnorderedListOutlined } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
 import { Space, Tag, Typography } from 'antd';
 import { BaseType } from 'antd/es/typography/Base';
@@ -44,7 +44,7 @@ const ApiProCard: FC<Props> = (props) => {
       </MyDrawer>
       <ProCard
         bordered
-        collapsible
+        collapsible={false}
         hoverable
         defaultCollapsed
         onMouseEnter={() => {
@@ -59,7 +59,7 @@ const ApiProCard: FC<Props> = (props) => {
               style={{ color: '#c3cad4', marginRight: 20 }}
             />
             <Tag color={'green-inverse'}>STEP_{step}</Tag>
-            <Tag color={'gold-inverse'}>API</Tag>
+            <Tag color={'gold-inverse'} icon={<ApiOutlined />}></Tag>
             {caseContent.is_common_api === 1 ? (
               <Tag color={'#059669'}>共</Tag>
             ) : (
@@ -73,9 +73,7 @@ const ApiProCard: FC<Props> = (props) => {
                 {caseContent.content_desc}
               </Text>
             )}
-            <Text strong style={{ marginLeft: 20 }}>
-              {caseContent.content_name}
-            </Text>
+            <Text strong>{caseContent.content_name}</Text>
           </Space>
         }
         collapsibleIconRender={({ collapsed }) => {

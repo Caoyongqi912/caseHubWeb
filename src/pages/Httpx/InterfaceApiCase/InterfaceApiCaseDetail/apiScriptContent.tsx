@@ -15,7 +15,7 @@ const ApiScriptContent: FC<SelfProps> = ({ script_text, isSave, onChange }) => {
       <AceCodeEditor
         value={script_text}
         onChange={onChange}
-        height={'30vh'}
+        height={'20vh'}
         _mode={'python'}
       />
     </ProCard>

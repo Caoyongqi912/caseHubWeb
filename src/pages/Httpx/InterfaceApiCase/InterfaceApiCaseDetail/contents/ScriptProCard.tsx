@@ -3,9 +3,8 @@ import ApiScriptContent from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDet
 import CardExtraOption from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/CardExtraOption';
 import { IInterfaceCaseContent } from '@/pages/Httpx/types';
 import {
-  DownOutlined,
   EditOutlined,
-  RightOutlined,
+  PythonOutlined,
   UnorderedListOutlined,
 } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
@@ -128,15 +127,14 @@ const ScriptProCard: FC<Props> = (props) => {
           caseId={caseId}
         />
       }
-      collapsibleIconRender={({ collapsed }) => {
+      collapsibleIconRender={({}) => {
         return (
           <Space>
             <UnorderedListOutlined
               style={{ color: '#c3cad4', marginRight: 20 }}
             />
             <Tag color={'green-inverse'}>STEP_{step}</Tag>
-            <Tag color={'geekblue-inverse'}>SCRIPT</Tag>
-            <>{collapsed ? <RightOutlined /> : <DownOutlined />}</>
+            <Tag color={'geekblue-inverse'} icon={<PythonOutlined />} />
             <div style={{ marginLeft: 10 }}>{SCRIPT()}</div>
           </Space>
         );

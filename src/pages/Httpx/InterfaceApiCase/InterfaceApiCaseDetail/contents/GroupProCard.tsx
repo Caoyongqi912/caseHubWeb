@@ -1,12 +1,7 @@
 import GroupInterfaceTable from '@/pages/Httpx/Interface/interfaceApiGroup/GroupInterfaceTable';
 import CardExtraOption from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/CardExtraOption';
 import { IInterfaceCaseContent } from '@/pages/Httpx/types';
-import { CONFIG } from '@/utils/config';
-import {
-  DownOutlined,
-  RightOutlined,
-  UnorderedListOutlined,
-} from '@ant-design/icons';
+import { GroupOutlined, UnorderedListOutlined } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
 import { Space, Tag, Typography } from 'antd';
 import { FC, useState } from 'react';
@@ -23,7 +18,6 @@ interface Props {
 const GroupProCard: FC<Props> = (props) => {
   const { step, caseId, caseContent, callback } = props;
   const [showOption, setShowOption] = useState(false);
-  const { InterfaceCaseContentType } = CONFIG;
 
   return (
     <ProCard
@@ -31,6 +25,7 @@ const GroupProCard: FC<Props> = (props) => {
       collapsible
       hoverable
       defaultCollapsed
+      bodyStyle={{ padding: 0 }}
       onMouseEnter={() => {
         setShowOption(true);
       }}
@@ -45,17 +40,16 @@ const GroupProCard: FC<Props> = (props) => {
           caseId={caseId}
         />
       }
-      collapsibleIconRender={({ collapsed }) => {
+      collapsibleIconRender={({}) => {
         return (
           <Space>
             <UnorderedListOutlined
               style={{ color: '#c3cad4', marginRight: 20 }}
             />
             <Tag color={'green-inverse'}>STEP_{step}</Tag>
-            <Tag color={'blue-inverse'}>GROUP</Tag>
-            <>{collapsed ? <RightOutlined /> : <DownOutlined />}</>
-
+            <Tag color={'blue-inverse'} icon={<GroupOutlined />} />
             <Text strong>{caseContent.content_name}</Text>
+            <Text type={'secondary'}>{caseContent.content_desc}</Text>
           </Space>
         );
       }}

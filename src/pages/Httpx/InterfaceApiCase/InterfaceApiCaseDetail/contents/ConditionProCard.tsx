@@ -1,11 +1,7 @@
 import ApiCondition from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/ApiCondition';
 import CardExtraOption from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/CardExtraOption';
 import { IInterfaceCaseContent } from '@/pages/Httpx/types';
-import {
-  DownOutlined,
-  RightOutlined,
-  UnorderedListOutlined,
-} from '@ant-design/icons';
+import { UnorderedListOutlined } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
 import { Space, Tag, Typography } from 'antd';
 import { FC, useEffect, useState } from 'react';
@@ -38,6 +34,7 @@ const ConditionProCard: FC<Props> = (props) => {
       bordered
       collapsible
       hoverable
+      bodyStyle={{ padding: 0 }}
       defaultCollapsed
       onMouseEnter={() => {
         setShowOption(true);
@@ -53,7 +50,7 @@ const ConditionProCard: FC<Props> = (props) => {
           caseId={caseId}
         />
       }
-      collapsibleIconRender={({ collapsed }) => {
+      collapsibleIconRender={({}) => {
         return (
           <Space>
             <UnorderedListOutlined
@@ -61,7 +58,6 @@ const ConditionProCard: FC<Props> = (props) => {
             />
             <Tag color={'green-inverse'}>STEP_{step}</Tag>
             <Tag color={'purple-inverse'}>IF</Tag>
-            <>{collapsed ? <RightOutlined /> : <DownOutlined />}</>
             <Text type={'warning'}> {conditionKey}</Text>
             <Text strong> {conditionOperator}</Text>
             <Text type={'warning'}> {conditionValue}</Text>

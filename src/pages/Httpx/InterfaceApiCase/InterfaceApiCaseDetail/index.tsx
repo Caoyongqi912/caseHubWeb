@@ -8,6 +8,7 @@ import {
 } from '@/api/inter/interCase';
 import DnDDraggable from '@/components/DnDDraggable';
 import MyDrawer from '@/components/MyDrawer';
+import MyTabs from '@/components/MyTabs';
 import GroupApiChoiceTable from '@/pages/Httpx/Interface/interfaceApiGroup/GroupApiChoiceTable';
 import CaseContentCollapsible from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/CaseContentCollapsible';
 import InterfaceApiCaseVars from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/InterfaceApiCaseVars';
@@ -34,7 +35,6 @@ import {
   FloatButton,
   message,
   Splitter,
-  Tabs,
   TabsProps,
 } from 'antd';
 import { RadioChangeEvent } from 'antd/lib/radio/interface';
@@ -73,12 +73,14 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
 
   const [defaultSize, setDefaultSize] = useState('80%');
 
+  const [activeKey, setActiveKey] = useState('2'); // 默认选中 b
+
   // 防抖处理，避免频繁重渲染
   const handleResize = useCallback(
     debounce(({ width }) => {
       console.log('=====', width);
       const breakpoints = [
-        { max: 768, size: '70%' }, // 平板及以下
+        { max: 768, size: '75%' }, // 平板及以下
         { max: 1030, size: '75%' }, // 小笔记本
         { max: 1440, size: '80%' }, // 普通显示器
         { max: 1920, size: '90%' }, // 1K显示器
@@ -163,6 +165,7 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
     }
     if (!caseApiId) return;
     if (runningStyle === 1) {
+      setActiveKey('3');
       await runApiCaseBack({
         env_id: runningEnvId,
         error_stop: errorJump,
@@ -335,7 +338,7 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
       ),
     },
     {
-      key: 'his',
+      key: '3',
       label: '执行历史',
       children: (
         <>
@@ -353,7 +356,7 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
   ];
 
   return (
-    <RcResizeObserver onResize={handleResize}>
+    <>
       <MyDrawer
         name={'测试结果'}
         width={'80%'}
@@ -383,40 +386,41 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
           refresh={refresh}
         />
       </MyDrawer>
-      <ProCard
-        style={{ height: '100%' }}
-        bodyStyle={{ height: '100%', padding: '10px', minHeight: '100vh' }}
-      >
-        <Splitter
-          style={{ height: '100%', boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)' }}
+      <RcResizeObserver onResize={handleResize}>
+        <ProCard
+          style={{ height: '100%' }}
+          bodyStyle={{ height: '100%', padding: '10px', minHeight: '100vh' }}
         >
-          <Splitter.Panel resizable={false} size={defaultSize} max="100%">
-            <ProCard bodyStyle={{ padding: 2 }} extra={<ApisCardExtra />}>
-              <Tabs
-                defaultActiveKey={'2'}
-                defaultValue={'2'}
-                size={'large'}
-                type={'card'}
-                items={APIStepItems}
-              />
-            </ProCard>
-          </Splitter.Panel>
-          {!hiddenRunButton && (
-            <Splitter.Panel resizable={false}>
-              <RunConfig
-                onMenuClick={onMenuClick}
-                run={debugCase}
-                onEnvChange={onEnvChange}
-                onErrorJumpChange={onErrorJumpChange}
-                currentProjectId={currentProjectId}
-              />
+          <Splitter
+            style={{ height: '100%', boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)' }}
+          >
+            <Splitter.Panel resizable={false} size={defaultSize} max="100%">
+              <ProCard bodyStyle={{ padding: 2 }} extra={<ApisCardExtra />}>
+                <MyTabs
+                  defaultActiveKey={activeKey}
+                  onChangeKey={setActiveKey}
+                  activeKey={activeKey}
+                  items={APIStepItems}
+                />
+              </ProCard>
             </Splitter.Panel>
-          )}
-        </Splitter>
-      </ProCard>
+            {!hiddenRunButton && (
+              <Splitter.Panel resizable={false}>
+                <RunConfig
+                  onMenuClick={onMenuClick}
+                  run={debugCase}
+                  onEnvChange={onEnvChange}
+                  onErrorJumpChange={onErrorJumpChange}
+                  currentProjectId={currentProjectId}
+                />
+              </Splitter.Panel>
+            )}
+          </Splitter>
+        </ProCard>
 
-      <FloatButton.BackTop />
-    </RcResizeObserver>
+        <FloatButton.BackTop />
+      </RcResizeObserver>
+    </>
   );
 };
 

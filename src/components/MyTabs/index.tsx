@@ -3,6 +3,7 @@ import React, { FC } from 'react';
 
 interface IProps {
   defaultActiveKey: string;
+  activeKey?: string;
   tabBarExtraContent?: React.ReactNode;
   items: any[];
   tabPosition?: 'top' | 'left';
@@ -17,6 +18,7 @@ const Index: FC<IProps> = ({
   tabPosition = 'top',
   size = 'large',
   items,
+  activeKey,
   tabBarExtraContent,
   title,
   onChangeKey,
@@ -30,6 +32,7 @@ const Index: FC<IProps> = ({
       onChange={(key: string) => {
         onChangeKey?.(key);
       }}
+      activeKey={activeKey}
       tabPosition={tabPosition}
       defaultActiveKey={defaultActiveKey}
       items={items}

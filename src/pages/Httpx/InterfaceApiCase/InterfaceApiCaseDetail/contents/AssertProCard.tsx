@@ -7,9 +7,8 @@ import { AssertOption } from '@/pages/Httpx/componets/assertEnum';
 import CardExtraOption from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/CardExtraOption';
 import { IInterfaceCaseContent } from '@/pages/Httpx/types';
 import {
-  DownOutlined,
   EditOutlined,
-  RightOutlined,
+  QuestionOutlined,
   UnorderedListOutlined,
 } from '@ant-design/icons';
 import {
@@ -149,9 +148,7 @@ const AssertProCard: FC<Props> = (props) => {
               style={{ color: '#c3cad4', marginRight: 20 }}
             />
             <Tag color={'green-inverse'}>STEP_{step}</Tag>
-            <Tag color={'red-inverse'}>Assert</Tag>
-
-            <>{collapsed ? <RightOutlined /> : <DownOutlined />}</>
+            <Tag color={'red-inverse'} icon={<QuestionOutlined />} />
             {Assert()}
           </Space>
         );
