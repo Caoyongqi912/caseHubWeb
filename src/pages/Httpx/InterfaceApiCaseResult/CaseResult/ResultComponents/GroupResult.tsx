@@ -1,5 +1,10 @@
 import APIResult from '@/pages/Httpx/InterfaceApiCaseResult/CaseResult/ResultComponents/APIResult';
 import { ICaseContentResult } from '@/pages/Httpx/types';
+import {
+  CheckCircleTwoTone,
+  CloseCircleTwoTone,
+  GroupOutlined,
+} from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
 import { Space, Tag, Typography } from 'antd';
 import { FC } from 'react';
@@ -12,10 +17,6 @@ interface Props {
 }
 
 const GroupResult: FC<Props> = ({ result, index }) => {
-  const setDesc = (text?: string) => {
-    return text && text?.length > 8 ? text?.slice(0, 8) + '...' : text;
-  };
-
   return (
     <ProCard
       bordered
@@ -26,11 +27,15 @@ const GroupResult: FC<Props> = ({ result, index }) => {
       title={
         <Space>
           <Tag color={'green-inverse'}>STEP_{result.content_step}</Tag>
-          <Tag color={'blue-inverse'}>GROUP</Tag>
-          <Tag color={!result.content_result ? '#f50' : '#87d068'}>
+          <Tag color={'blue-inverse'} icon={<GroupOutlined />} />
+          {result.content_result ? (
+            <CheckCircleTwoTone twoToneColor="#52c41a" />
+          ) : (
+            <CloseCircleTwoTone twoToneColor={'#c20000'} />
+          )}
+          <Text type={'secondary'} style={{ marginLeft: 20 }}>
             {result.content_name}
-          </Tag>
-          <Text type={'secondary'}>{setDesc(result.content_desc)}</Text>
+          </Text>
         </Space>
       }
       headerBordered

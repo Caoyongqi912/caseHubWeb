@@ -1,5 +1,6 @@
 import APIResult from '@/pages/Httpx/InterfaceApiCaseResult/CaseResult/ResultComponents/APIResult';
 import { ICaseContentResult } from '@/pages/Httpx/types';
+import { CheckCircleTwoTone, CloseCircleTwoTone } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
 import { Space, Tag, Typography } from 'antd';
 import { FC } from 'react';
@@ -34,12 +35,17 @@ const ConditionResult: FC<Props> = ({ result }) => {
         <Space>
           <Tag color={'green-inverse'}>STEP_{result.content_step}</Tag>
           <Tag color={'purple-inverse'}>IF</Tag>
+          {result.content_result ? (
+            <CheckCircleTwoTone twoToneColor="#52c41a" />
+          ) : (
+            <CloseCircleTwoTone twoToneColor={'#c20000'} />
+          )}
           {content_condition && (
-            <>
+            <div style={{ marginLeft: 20 }}>
               <Text type={'warning'}> {content_condition.key}</Text>
               <Text strong> {OperatorOption[content_condition.operator]}</Text>
               <Text type={'warning'}> {content_condition.value}</Text>
-            </>
+            </div>
           )}
         </Space>
       }

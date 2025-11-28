@@ -1,6 +1,7 @@
 import ResponseExtractColumns from '@/pages/Httpx/InterfaceApiResponse/ResponseExtract';
 import RespProTable from '@/pages/Httpx/InterfaceApiResponse/RespProTable';
 import { ICaseContentResult } from '@/pages/Httpx/types';
+import { CheckCircleTwoTone, PythonOutlined } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
 import { Space, Tag, Typography } from 'antd';
 import { FC } from 'react';
@@ -21,8 +22,11 @@ const ScriptResult: FC<Props> = ({ result }) => {
       title={
         <Space>
           <Tag color={'green-inverse'}>STEP_{result.content_step}</Tag>
-          <Tag color={'geekblue-inverse'}>SCRIPT</Tag>
-          <Text type={'secondary'}>{result.content_name}</Text>
+          <Tag color={'geekblue-inverse'} icon={<PythonOutlined />} />
+          <CheckCircleTwoTone twoToneColor="#52c41a" />
+          <Text type={'secondary'} style={{ marginLeft: 20 }}>
+            {result.content_name}
+          </Text>
         </Space>
       }
       headerBordered

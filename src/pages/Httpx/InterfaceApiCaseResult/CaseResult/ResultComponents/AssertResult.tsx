@@ -1,4 +1,9 @@
 import { ICaseContentResult } from '@/pages/Httpx/types';
+import {
+  CheckCircleTwoTone,
+  CloseCircleTwoTone,
+  QuestionOutlined,
+} from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
 import { Space, Tag, Typography } from 'antd';
 import { FC } from 'react';
@@ -20,13 +25,34 @@ const AssertResult: FC<Props> = ({ result }) => {
       title={
         <Space>
           <Tag color={'green-inverse'}>STEP_{result.content_step}</Tag>
-          <Tag color={'red-inverse'}>Assert</Tag>
-          <Text type={'secondary'}>{result.content_name}</Text>
+          <Tag color={'red-inverse'} icon={<QuestionOutlined />} />
+          {result.content_result ? (
+            <CheckCircleTwoTone twoToneColor="#52c41a" />
+          ) : (
+            <CloseCircleTwoTone twoToneColor={'#c20000'} />
+          )}
+          <Text type={'secondary'} style={{ marginLeft: 20 }}>
+            {result.content_name}
+          </Text>
           {content_asserts && (
-            <>
-              <Text type={'warning'}> {content_asserts.expect}</Text>
-              <Text type={'warning'}> {content_asserts.actual}</Text>
-            </>
+            <Space style={{ marginLeft: 20 }}>
+              <Text type={'secondary'}>
+                预期{' '}
+                <Text type={'warning'} style={{ marginLeft: 20 }}>
+                  {' '}
+                  {content_asserts.expect}
+                </Text>{' '}
+              </Text>
+              <Text type={'secondary'} style={{ marginLeft: 20 }}>
+                实际{' '}
+                <Text type={'warning'} style={{ marginLeft: 20 }}>
+                  {' '}
+                  {content_asserts.actual}
+                </Text>{' '}
+              </Text>
+
+              {/*<Text type={'warning'}>实际 {content_asserts.actual}</Text>*/}
+            </Space>
           )}
         </Space>
       }

@@ -39,6 +39,9 @@ const InterfaceApiCaseResultBaseInfo: FC<SelfProps> = ({ caseResultInfo }) => {
       <ProDescriptions.Item valueType="text" span={2} label={'执行人'}>
         {caseResultInfo?.starterName}
       </ProDescriptions.Item>
+      <ProDescriptions.Item valueType="text" span={2} label={'运行环境'}>
+        {caseResultInfo?.running_env_name}
+      </ProDescriptions.Item>
       <ProDescriptions.Item valueType="text" label={'执行开始时间'}>
         {caseResultInfo?.startTime}
       </ProDescriptions.Item>

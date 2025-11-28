@@ -7,6 +7,11 @@ import ResponseExtractColumns from '@/pages/Httpx/InterfaceApiResponse/ResponseE
 import RespProTable from '@/pages/Httpx/InterfaceApiResponse/RespProTable';
 import { ICaseContentResult, ITryResponseInfo } from '@/pages/Httpx/types';
 import { CONFIG } from '@/utils/config';
+import {
+  ApiOutlined,
+  CheckCircleTwoTone,
+  CloseCircleTwoTone,
+} from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
 import { Space, Tag, Typography } from 'antd';
 import { FC } from 'react';
@@ -201,11 +206,15 @@ const ApiResult: FC<Props> = ({ result, prefix }) => {
               title={
                 <Space>
                   {stepTag(index)}
-                  <Tag color={'gold-inverse'}>API</Tag>
-                  <Tag color={!result.content_result ? '#f50' : '#87d068'}>
+                  <Tag color={'gold-inverse'} icon={<ApiOutlined />} />
+                  {item.result === 'SUCCESS' ? (
+                    <CheckCircleTwoTone twoToneColor="#52c41a" />
+                  ) : (
+                    <CloseCircleTwoTone twoToneColor={'#c20000'} />
+                  )}
+                  <Text type={'secondary'} style={{ marginLeft: 20 }}>
                     {item.interfaceName}
-                  </Tag>
-                  <Text type={'secondary'}>{setDesc(item.request_method)}</Text>
+                  </Text>
                 </Space>
               }
               headerBordered

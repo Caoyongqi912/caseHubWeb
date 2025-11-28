@@ -175,6 +175,9 @@ export interface IInterfaceCaseResult extends IBaseField {
   interface_task_result_Id?: number;
   result?: 'SUCCESS' | 'ERROR';
   status: 'RUNNING' | 'OVER' | 'ERROR';
+
+  running_env_id: number;
+  running_env_name: string;
 }
 
 export interface IInterfaceTaskResult extends IBaseField {
