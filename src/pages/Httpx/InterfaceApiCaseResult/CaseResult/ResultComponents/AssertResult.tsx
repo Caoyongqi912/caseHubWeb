@@ -5,8 +5,9 @@ import {
   QuestionOutlined,
 } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
-import { Space, Tag, Typography } from 'antd';
+import { Space, Tag, Tooltip, Typography } from 'antd';
 import { FC } from 'react';
+
 const { Text } = Typography;
 
 interface Props {
@@ -25,7 +26,9 @@ const AssertResult: FC<Props> = ({ result }) => {
       title={
         <Space>
           <Tag color={'green-inverse'}>STEP_{result.content_step}</Tag>
-          <Tag color={'red-inverse'} icon={<QuestionOutlined />} />
+          <Tooltip title={'断言'}>
+            <Tag color={'red-inverse'} icon={<QuestionOutlined />} />
+          </Tooltip>
           {result.content_result ? (
             <CheckCircleTwoTone twoToneColor="#52c41a" />
           ) : (
@@ -37,11 +40,10 @@ const AssertResult: FC<Props> = ({ result }) => {
           {content_asserts && (
             <Space style={{ marginLeft: 20 }}>
               <Text type={'secondary'}>
-                预期{' '}
+                预期
                 <Text type={'warning'} style={{ marginLeft: 20 }}>
-                  {' '}
                   {content_asserts.expect}
-                </Text>{' '}
+                </Text>
               </Text>
               <Text type={'secondary'} style={{ marginLeft: 20 }}>
                 实际{' '}

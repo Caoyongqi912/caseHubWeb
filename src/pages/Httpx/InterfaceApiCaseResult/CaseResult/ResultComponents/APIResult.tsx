@@ -13,7 +13,7 @@ import {
   CloseCircleTwoTone,
 } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
-import { Space, Tag, Typography } from 'antd';
+import { Space, Tag, Tooltip, Typography } from 'antd';
 import { FC } from 'react';
 
 const { Text } = Typography;
@@ -201,22 +201,23 @@ const ApiResult: FC<Props> = ({ result, prefix }) => {
               bordered
               style={{ borderRadius: '5px', marginTop: 5 }}
               collapsibleIconRender={({}) => {
-                return null;
+                return (
+                  <Space>
+                    {stepTag(index)}
+                    <Tooltip title={'接口'}>
+                      <Tag color={'gold-inverse'} icon={<ApiOutlined />} />
+                    </Tooltip>
+                    {item.result === 'SUCCESS' ? (
+                      <CheckCircleTwoTone twoToneColor="#52c41a" />
+                    ) : (
+                      <CloseCircleTwoTone twoToneColor={'#c20000'} />
+                    )}
+                    <Text type={'secondary'} style={{ marginLeft: 20 }}>
+                      {item.interfaceName}
+                    </Text>
+                  </Space>
+                );
               }}
-              title={
-                <Space>
-                  {stepTag(index)}
-                  <Tag color={'gold-inverse'} icon={<ApiOutlined />} />
-                  {item.result === 'SUCCESS' ? (
-                    <CheckCircleTwoTone twoToneColor="#52c41a" />
-                  ) : (
-                    <CloseCircleTwoTone twoToneColor={'#c20000'} />
-                  )}
-                  <Text type={'secondary'} style={{ marginLeft: 20 }}>
-                    {item.interfaceName}
-                  </Text>
-                </Space>
-              }
               headerBordered
               collapsible
               defaultCollapsed

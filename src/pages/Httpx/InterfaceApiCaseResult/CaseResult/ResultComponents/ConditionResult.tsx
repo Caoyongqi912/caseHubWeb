@@ -2,7 +2,7 @@ import APIResult from '@/pages/Httpx/InterfaceApiCaseResult/CaseResult/ResultCom
 import { ICaseContentResult } from '@/pages/Httpx/types';
 import { CheckCircleTwoTone, CloseCircleTwoTone } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
-import { Space, Tag, Typography } from 'antd';
+import { Space, Tag, Tooltip, Typography } from 'antd';
 import { FC } from 'react';
 
 const { Text } = Typography;
@@ -10,6 +10,7 @@ const { Text } = Typography;
 interface Props {
   result: ICaseContentResult;
 }
+
 const OperatorOption: { [key: number]: string } = {
   0: '等于',
   1: '不等于',
@@ -29,26 +30,30 @@ const ConditionResult: FC<Props> = ({ result }) => {
       bordered
       style={{ borderRadius: '5px', marginTop: 5 }}
       collapsibleIconRender={({}) => {
-        return null;
+        return (
+          <Space>
+            <Tag color={'green-inverse'}>STEP_{result.content_step}</Tag>
+            <Tooltip title={'条件组'}>
+              <Tag color={'purple-inverse'}>IF</Tag>
+            </Tooltip>
+            {result.content_result ? (
+              <CheckCircleTwoTone twoToneColor="#52c41a" />
+            ) : (
+              <CloseCircleTwoTone twoToneColor={'#c20000'} />
+            )}
+            {content_condition && (
+              <div style={{ marginLeft: 20 }}>
+                <Text type={'warning'}> {content_condition.key}</Text>
+                <Text strong>
+                  {' '}
+                  {OperatorOption[content_condition.operator]}
+                </Text>
+                <Text type={'warning'}> {content_condition.value}</Text>
+              </div>
+            )}
+          </Space>
+        );
       }}
-      title={
-        <Space>
-          <Tag color={'green-inverse'}>STEP_{result.content_step}</Tag>
-          <Tag color={'purple-inverse'}>IF</Tag>
-          {result.content_result ? (
-            <CheckCircleTwoTone twoToneColor="#52c41a" />
-          ) : (
-            <CloseCircleTwoTone twoToneColor={'#c20000'} />
-          )}
-          {content_condition && (
-            <div style={{ marginLeft: 20 }}>
-              <Text type={'warning'}> {content_condition.key}</Text>
-              <Text strong> {OperatorOption[content_condition.operator]}</Text>
-              <Text type={'warning'}> {content_condition.value}</Text>
-            </div>
-          )}
-        </Space>
-      }
       headerBordered
       collapsible
       defaultCollapsed

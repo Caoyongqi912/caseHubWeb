@@ -7,12 +7,14 @@ import WaitResult from '@/pages/Httpx/InterfaceApiCaseResult/CaseResult/ResultCo
 import { ICaseContentResult } from '@/pages/Httpx/types';
 import { CaseContentType } from '@/utils/config';
 import { ProCard } from '@ant-design/pro-components';
+import { Empty } from 'antd';
 import { FC, useEffect, useState } from 'react';
 import ConditionResult from './ResultComponents/ConditionResult';
 
 interface Props {
   caseResultId?: number | string;
 }
+
 const Index: FC<Props> = ({ caseResultId }) => {
   const [stepContentResult, setStepContentResult] =
     useState<ICaseContentResult[]>();
@@ -33,14 +35,14 @@ const Index: FC<Props> = ({ caseResultId }) => {
   }, [caseResultId]);
 
   return (
-    <ProCard loading={stepContentResult?.length === 0}>
-      {stepContentResult &&
-        stepContentResult.map((item, index) => {
+    <ProCard>
+      {stepContentResult && stepContentResult.length > 0 ? (
+        stepContentResult.map((item) => {
           switch (item.content_type) {
             case CaseContentType.API:
               return <APIResult result={item} prefix={'STEP'} />;
             case CaseContentType.GROUP:
-              return <GroupResult result={item} index={index} />;
+              return <GroupResult result={item} />;
             case CaseContentType.CONDITION:
               return <ConditionResult result={item} />;
             case CaseContentType.WAIT:
@@ -50,7 +52,10 @@ const Index: FC<Props> = ({ caseResultId }) => {
             case CaseContentType.ASSERT:
               return <AssertResult result={item} />;
           }
-        })}
+        })
+      ) : (
+        <Empty />
+      )}
     </ProCard>
   );
 };

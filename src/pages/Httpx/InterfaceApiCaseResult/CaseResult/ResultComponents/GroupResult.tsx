@@ -6,38 +6,38 @@ import {
   GroupOutlined,
 } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
-import { Space, Tag, Typography } from 'antd';
+import { Space, Tag, Tooltip, Typography } from 'antd';
 import { FC } from 'react';
 
 const { Text } = Typography;
 
 interface Props {
   result: ICaseContentResult;
-  index: number;
 }
 
-const GroupResult: FC<Props> = ({ result, index }) => {
+const GroupResult: FC<Props> = ({ result }) => {
   return (
     <ProCard
       bordered
       style={{ borderRadius: '5px', marginTop: 5 }}
       collapsibleIconRender={({}) => {
-        return null;
+        return (
+          <Space>
+            <Tag color={'green-inverse'}>STEP_{result.content_step}</Tag>
+            <Tooltip title={'接口组'}>
+              <Tag color={'blue-inverse'} icon={<GroupOutlined />} />
+            </Tooltip>
+            {result.content_result ? (
+              <CheckCircleTwoTone twoToneColor="#52c41a" />
+            ) : (
+              <CloseCircleTwoTone twoToneColor={'#c20000'} />
+            )}
+            <Text type={'secondary'} style={{ marginLeft: 20 }}>
+              {result.content_name}
+            </Text>
+          </Space>
+        );
       }}
-      title={
-        <Space>
-          <Tag color={'green-inverse'}>STEP_{result.content_step}</Tag>
-          <Tag color={'blue-inverse'} icon={<GroupOutlined />} />
-          {result.content_result ? (
-            <CheckCircleTwoTone twoToneColor="#52c41a" />
-          ) : (
-            <CloseCircleTwoTone twoToneColor={'#c20000'} />
-          )}
-          <Text type={'secondary'} style={{ marginLeft: 20 }}>
-            {result.content_name}
-          </Text>
-        </Space>
-      }
       headerBordered
       collapsible
       defaultCollapsed

@@ -1,8 +1,9 @@
 import { ICaseContentResult } from '@/pages/Httpx/types';
 import { CheckCircleTwoTone, FieldTimeOutlined } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
-import { Space, Tag, Typography } from 'antd';
+import { Space, Tag, Tooltip, Typography } from 'antd';
 import { FC } from 'react';
+
 const { Text } = Typography;
 
 interface Props {
@@ -19,7 +20,9 @@ const WaitResult: FC<Props> = ({ result }) => {
       title={
         <Space>
           <Tag color={'green-inverse'}>STEP_{result.content_step}</Tag>
-          <Tag color={'orange-inverse'} icon={<FieldTimeOutlined />} />
+          <Tooltip title={'等待'}>
+            <Tag color={'orange-inverse'} icon={<FieldTimeOutlined />} />
+          </Tooltip>
           <CheckCircleTwoTone twoToneColor="#52c41a" />
           <Text type={'secondary'} style={{ marginLeft: 20 }}>
             Sleep {result.wait_time} s
