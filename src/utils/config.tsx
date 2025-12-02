@@ -21,6 +21,7 @@ export const ModuleEnum = {
   UI_STEP_GROUP: 7,
 
   CASE: 8,
+  JOB: 9,
 };
 
 export const CONFIG: IObjGet = {

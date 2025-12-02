@@ -5,10 +5,12 @@ import InterfaceApiResultTable from '@/pages/Httpx/InterfaceApiTaskResult/Interf
 import { IInterfaceTaskResult } from '@/pages/Httpx/types';
 import { Pie } from '@ant-design/charts';
 import {
+  ApiOutlined,
   CheckCircleTwoTone,
   CloseCircleTwoTone,
   FrownTwoTone,
   LikeTwoTone,
+  SlidersOutlined,
   SmileTwoTone,
 } from '@ant-design/icons';
 import { ProCard, StatisticCard } from '@ant-design/pro-components';
@@ -56,6 +58,8 @@ const InterfaceApiTaskResultDetail: FC = () => {
     label: {
       type: 'outer',
     },
+    color: ['#52c41a', '#ff4d4f'], // 成功-绿色，失败-红色
+
     interactions: [
       {
         type: 'element-active',
@@ -65,13 +69,15 @@ const InterfaceApiTaskResultDetail: FC = () => {
 
   const TabsItem = [
     {
-      label: '用例结果',
+      label: '业务流用例结果',
       key: '1',
+      icon: <SlidersOutlined />,
       children: <InterfaceApiCaseResultTable taskResultId={resultId} />,
     },
     {
-      label: '接口结果',
+      label: '单接口用例结果',
       key: '2',
+      icon: <ApiOutlined />,
       children: <InterfaceApiResultTable taskResultId={resultId} />,
     },
   ];
@@ -142,6 +148,11 @@ const InterfaceApiTaskResultDetail: FC = () => {
                   }
                 >
                   {interfaceTaskResultInfo?.status}
+                </Tag>
+              </DescriptionsItem>
+              <DescriptionsItem label="运行环境">
+                <Tag color={'orange'}>
+                  {interfaceTaskResultInfo?.running_env_name}
                 </Tag>
               </DescriptionsItem>
               <DescriptionsItem label="执行人">

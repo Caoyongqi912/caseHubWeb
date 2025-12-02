@@ -18,7 +18,7 @@ import React, { FC, useCallback, useEffect, useRef, useState } from 'react';
 
 interface SelfProps {
   projectId?: number;
-  currentCaseApiId?: string;
+  currentCaseApiId?: number;
   currentGroupId?: number;
   currentTaskId?: string;
   currentStepId?: number;

@@ -26,10 +26,6 @@ interface Props {
 const ApiResult: FC<Props> = ({ result, prefix }) => {
   const { API_STATUS } = CONFIG;
 
-  const setDesc = (text?: string) => {
-    return text && text?.length > 8 ? text?.slice(0, 8) + '...' : text;
-  };
-
   const renderResponseBody = (item: any) => {
     const { response_txt } = item;
     try {

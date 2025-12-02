@@ -199,6 +199,8 @@ export interface IInterfaceTaskResult extends IBaseField {
   result?: 'SUCCESS' | 'FAIL';
   progress: number;
   status: 'RUNNING' | 'OVER';
+  running_env_id?: number;
+  running_env_name?: string;
 }
 
 interface IBase {

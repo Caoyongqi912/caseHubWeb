@@ -17,7 +17,7 @@ import io, { Socket } from 'socket.io-client';
 
 interface SelfProps {
   openStatus?: boolean;
-  caseApiId?: string;
+  caseApiId?: number;
   env_id?: number;
   error_stop?: boolean;
   currentCaseResultId?: string | number;

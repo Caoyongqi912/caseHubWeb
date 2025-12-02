@@ -634,7 +634,7 @@ export const removeVars = async (data: { uid: string }, options?: IObjGet) => {
  * @param data
  * @param options
  */
-export const queryVarsByCaseId = async (data: string, options?: IObjGet) => {
+export const queryVarsByCaseId = async (data: number, options?: IObjGet) => {
   return request<IResponse<IUIVars[]>>('/api/interface/case/vars/query', {
     method: 'POST',
     data: { case_id: data },

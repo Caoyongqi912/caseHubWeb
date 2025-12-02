@@ -19,7 +19,7 @@ import React, { FC, useCallback, useRef, useState } from 'react';
 const { Text } = Typography;
 
 interface ISelfProps {
-  currentCaseId?: string;
+  currentCaseId?: number;
 }
 
 const InterfaceApiCaseVars: FC<ISelfProps> = ({ currentCaseId }) => {

@@ -7,7 +7,7 @@ import WaitResult from '@/pages/Httpx/InterfaceApiCaseResult/CaseResult/ResultCo
 import { ICaseContentResult } from '@/pages/Httpx/types';
 import { CaseContentType } from '@/utils/config';
 import { ProCard } from '@ant-design/pro-components';
-import { Empty } from 'antd';
+import { Button, Empty } from 'antd';
 import { FC, useEffect, useState } from 'react';
 import ConditionResult from './ResultComponents/ConditionResult';
 
@@ -16,26 +16,48 @@ interface Props {
 }
 
 const Index: FC<Props> = ({ caseResultId }) => {
+  const [failOnly, setFailOnly] = useState(false);
   const [stepContentResult, setStepContentResult] =
     useState<ICaseContentResult[]>();
+  const [originalData, setOriginalData] = useState<ICaseContentResult[]>([]); // 保存原始数据
+
+  // 根据 failOnly 状态过滤数据
+  useEffect(() => {
+    if (originalData.length === 0) return;
+
+    if (failOnly) {
+      setStepContentResult(originalData.filter((item) => !item.content_result));
+    } else {
+      setStepContentResult([...originalData]);
+    }
+  }, [failOnly, originalData]);
+
   useEffect(() => {
     if (caseResultId) {
       caseAPIResultsByCase({ caseResultId: caseResultId }).then(
         ({ code, data }) => {
           if (code === 0) {
             console.log(data);
+            setOriginalData(data); // 保存原始数据
             setStepContentResult(data);
           }
         },
       );
     }
     return () => {
+      setOriginalData([]);
       setStepContentResult([]);
     };
   }, [caseResultId]);
 
   return (
-    <ProCard>
+    <ProCard
+      extra={
+        <Button type={'primary'} onClick={() => setFailOnly(!failOnly)}>
+          {failOnly ? '查看全部' : '只看失败'}
+        </Button>
+      }
+    >
       {stepContentResult && stepContentResult.length > 0 ? (
         stepContentResult.map((item) => {
           switch (item.content_type) {

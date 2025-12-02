@@ -56,7 +56,7 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
   const [caseContentElement, setCaseContentElement] = useState<any[]>([]);
   const [currentProjectId, setCurrentProjectId] = useState<number>();
   const [currentModuleId, setCurrentModuleId] = useState<number>();
-
+  const [currentCaseId, setCurrentCaseId] = useState<number>();
   const [caseContents, setCaseContents] = useState<IInterfaceCaseContent[]>([]);
   const [caseContentsStepLength, setCaseContentsStepLength] =
     useState<number>(0);
@@ -103,6 +103,7 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
   // drawer 页
   useEffect(() => {
     if (!interfaceCase) return;
+    setCurrentCaseId(interfaceCase.id);
     setCurrentModuleId(interfaceCase.module_id);
     setCurrentProjectId(interfaceCase.project_id);
     queryCaseContentSteps(interfaceCase.id).then();
@@ -110,6 +111,7 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
 
   useEffect(() => {
     if (!caseApiId) return;
+    setCurrentCaseId(parseInt(caseApiId));
     queryCaseContentSteps(caseApiId).then();
   }, [editCase, caseApiId]);
 
@@ -127,7 +129,7 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
             collapsible={true}
             callback={refresh}
             caseContent={item}
-            caseId={parseInt(caseApiId!)}
+            caseId={currentCaseId!}
           />
         ),
       }));
@@ -163,13 +165,13 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
       message.error('请选择运行环境');
       return;
     }
-    if (!caseApiId) return;
+    if (!currentCaseId) return;
     if (runningStyle === 1) {
       setActiveKey('3');
       await runApiCaseBack({
         env_id: runningEnvId,
         error_stop: errorJump,
-        case_id: caseApiId,
+        case_id: currentCaseId,
       }).then(async ({ code }) => {
         if (code === 0) {
           setReloadResult(reloadResult + 1);
@@ -190,10 +192,10 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
   };
   const onDragEnd = (reorderedUIContents: any[]) => {
     setCaseContentElement(reorderedUIContents);
-    if (caseApiId) {
+    if (currentCaseId) {
       const reorderData = reorderedUIContents.map((item) => item.api_Id);
       reorderCaseContents({
-        case_id: caseApiId,
+        case_id: currentCaseId,
         content_step_order: reorderData,
       }).then(async ({ code }) => {
         if (code === 0) {
@@ -230,9 +232,9 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
               label: '添加API',
               icon: <ApiOutlined style={{ color: 'orange' }} />,
               onClick: async () => {
-                if (caseApiId && currentProjectId && currentModuleId) {
+                if (currentCaseId && currentProjectId && currentModuleId) {
                   const { code } = await add_empty_api({
-                    case_id: parseInt(caseApiId),
+                    case_id: currentCaseId,
                     project_id: currentProjectId,
                     module_id: currentModuleId,
                   });
@@ -247,9 +249,9 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
               label: '添加条件',
               icon: <BranchesOutlined style={{ color: 'orange' }} />,
               onClick: async () => {
-                if (caseApiId) {
+                if (currentCaseId) {
                   const { code } = await initAPICondition({
-                    interface_case_id: parseInt(caseApiId),
+                    interface_case_id: currentCaseId,
                   });
                   if (code === 0) {
                     await refresh();
@@ -262,9 +264,9 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
               label: '等待',
               icon: <FieldTimeOutlined style={{ color: 'orange' }} />,
               onClick: async () => {
-                if (caseApiId) {
+                if (currentCaseId) {
                   const { code } = await addCaseContent({
-                    case_id: parseInt(caseApiId),
+                    case_id: currentCaseId,
                     content_type: 6,
                   });
                   if (code === 0) {
@@ -278,9 +280,9 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
               label: '添加脚本',
               icon: <PythonOutlined style={{ color: 'orange' }} />,
               onClick: async () => {
-                if (caseApiId) {
+                if (currentCaseId) {
                   const { code } = await addCaseContent({
-                    case_id: parseInt(caseApiId),
+                    case_id: currentCaseId,
                     content_type: 4,
                   });
                   if (code === 0) {
@@ -294,9 +296,9 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
               label: '添加断言',
               icon: <AimOutlined style={{ color: 'orange' }} />,
               onClick: async () => {
-                if (caseApiId) {
+                if (currentCaseId) {
                   const { code } = await addCaseContent({
-                    case_id: parseInt(caseApiId),
+                    case_id: currentCaseId,
                     content_type: 8,
                   });
                   if (code === 0) {
@@ -318,7 +320,7 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
     {
       key: '1',
       label: '前置变量',
-      children: <InterfaceApiCaseVars currentCaseId={caseApiId} />,
+      children: <InterfaceApiCaseVars currentCaseId={currentCaseId} />,
     },
     {
       key: '2',
@@ -342,9 +344,9 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
       label: '执行历史',
       children: (
         <>
-          {caseApiId ? (
+          {currentCaseId ? (
             <InterfaceApiCaseResultTable
-              apiCaseId={caseApiId}
+              apiCaseId={currentCaseId}
               reload={reloadResult}
             />
           ) : (
@@ -365,7 +367,7 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
       >
         <InterfaceApiCaseResultDrawer
           openStatus={runOpen}
-          caseApiId={caseApiId!}
+          caseApiId={currentCaseId!}
           error_stop={errorJump}
           env_id={runningEnvId!}
         />
@@ -375,14 +377,14 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
         <GroupApiChoiceTable
           projectId={currentProjectId}
           refresh={refresh}
-          currentCaseId={caseApiId!}
+          currentCaseId={currentCaseId!}
         />
       </MyDrawer>
 
       <MyDrawer open={choiceOpen} setOpen={setChoiceOpen}>
         <InterfaceCaseChoiceApiTable
           projectId={parseInt(projectId!)}
-          currentCaseApiId={caseApiId}
+          currentCaseApiId={currentCaseId}
           refresh={refresh}
         />
       </MyDrawer>
@@ -395,7 +397,13 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
             style={{ height: '100%', boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)' }}
           >
             <Splitter.Panel resizable={false} size={defaultSize} max="100%">
-              <ProCard bodyStyle={{ padding: 2 }} extra={<ApisCardExtra />}>
+              <ProCard
+                bodyStyle={{
+                  padding: 2,
+                  borderRadius: '12px',
+                }}
+                extra={<ApisCardExtra />}
+              >
                 <MyTabs
                   defaultActiveKey={activeKey}
                   onChangeKey={setActiveKey}

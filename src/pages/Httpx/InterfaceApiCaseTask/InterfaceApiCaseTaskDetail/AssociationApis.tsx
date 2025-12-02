@@ -14,7 +14,7 @@ import {
   DragSortTable,
   ProColumns,
 } from '@ant-design/pro-components';
-import { Button, Divider, message, Popconfirm, Tag } from 'antd';
+import { Button, Divider, message, Popconfirm, Tag, Typography } from 'antd';
 import { FC, useCallback, useRef, useState } from 'react';
 
 interface IAssociationApisProps {
@@ -22,15 +22,19 @@ interface IAssociationApisProps {
   currentTaskId?: string;
 }
 
+const { Text } = Typography;
+
 const AssociationApis: FC<IAssociationApisProps> = ({
   currentTaskId,
   currentProjectId,
 }) => {
   const actionRef = useRef<ActionType>();
   const [choiceApiOpen, setChoiceApiOpen] = useState<boolean>(false);
+  const [apiLength, setApiLength] = useState(0);
   const queryApisByTask = useCallback(async () => {
     if (currentTaskId) {
       const { code, data } = await queryAssociationApisByTaskId(currentTaskId);
+      setApiLength(data.length);
       return queryData(code, data);
     }
   }, [currentTaskId]);
@@ -156,6 +160,9 @@ const AssociationApis: FC<IAssociationApisProps> = ({
         <InterfaceApiDetail interfaceId={currentAPIDetail?.id} />
       </MyDrawer>
       <DragSortTable
+        title={() => {
+          return <Text type={'secondary'}>已关联接口：{apiLength}</Text>;
+        }}
         toolBarRender={() => [
           <Button type={'primary'} onClick={() => setChoiceApiOpen(true)}>
             Choice Apis

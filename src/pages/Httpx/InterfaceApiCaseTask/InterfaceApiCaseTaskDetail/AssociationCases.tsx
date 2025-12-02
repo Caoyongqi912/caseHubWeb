@@ -14,8 +14,10 @@ import {
   DragSortTable,
   ProColumns,
 } from '@ant-design/pro-components';
-import { Button, Divider, message, Popconfirm, Tag } from 'antd';
+import { Button, Divider, message, Popconfirm, Tag, Typography } from 'antd';
 import { FC, useCallback, useRef, useState } from 'react';
+
+const { Text } = Typography;
 
 interface IInterfaceApiCaseTaskDetailProps {
   currentTaskId?: string;
@@ -30,11 +32,13 @@ const AssociationCases: FC<IInterfaceApiCaseTaskDetailProps> = ({
   const [choiceApiCaseOpen, setChoiceApiCaseOpen] = useState<boolean>(false);
   const [caseDetailDrawerOpen, setCaseDetailDrawerOpen] = useState(false);
   const [currentCase, setCurrentCase] = useState<IInterfaceAPICase>();
+  const [caseLength, setCaseLength] = useState(0);
   const queryCasesByTask = useCallback(async () => {
     if (currentTaskId) {
       const { code, data } = await queryAssociationCasesByTaskId({
         taskId: currentTaskId,
       });
+      setCaseLength(data.length);
       return queryData(code, data);
     }
   }, [currentTaskId]);
@@ -165,6 +169,7 @@ const AssociationCases: FC<IInterfaceApiCaseTaskDetailProps> = ({
         name={currentCase?.title || ''}
         open={caseDetailDrawerOpen}
         setOpen={setCaseDetailDrawerOpen}
+        width={'80%'}
       >
         <InterfaceApiCaseDetail
           interfaceCase={currentCase}
@@ -172,6 +177,9 @@ const AssociationCases: FC<IInterfaceApiCaseTaskDetailProps> = ({
         />
       </MyDrawer>
       <DragSortTable
+        title={() => {
+          return <Text type={'secondary'}>已关联业务流：{caseLength}</Text>;
+        }}
         toolBarRender={() => [
           <Button type={'primary'} onClick={() => setChoiceApiCaseOpen(true)}>
             Choice Cases

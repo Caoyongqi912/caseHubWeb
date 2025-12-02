@@ -1,4 +1,5 @@
 import AceCodeEditor from '@/components/CodeEditor/AceCodeEditor';
+import MyTabs from '@/components/MyTabs';
 import AssertColumns from '@/pages/Httpx/componets/AssertColumns';
 import RequestHeaders from '@/pages/Httpx/InterfaceApiResponse/RequestHeaders';
 import RequestInfo from '@/pages/Httpx/InterfaceApiResponse/RequestInfo';
@@ -7,7 +8,7 @@ import RespProTable from '@/pages/Httpx/InterfaceApiResponse/RespProTable';
 import { IInterfaceResultByCase } from '@/pages/Httpx/types';
 import { CONFIG } from '@/utils/config';
 import { ProCard } from '@ant-design/pro-components';
-import { Space, Tabs, Tag, Typography } from 'antd';
+import { Space, Tag, Typography } from 'antd';
 import { FC, useState } from 'react';
 
 const { Text } = Typography;
@@ -251,42 +252,58 @@ const InterfaceApiResponseDetail: FC<SelfProps> = ({ responses }) => {
               collapsible
               defaultCollapsed
             >
-              <Tabs
-                activeKey={activeKeys[index]}
-                onChange={(key) => {
-                  const newActiveKeys = [...activeKeys];
-                  newActiveKeys[index] = key;
-                  setActiveKeys(newActiveKeys);
-                }}
-              >
-                <Tabs.TabPane tab={TabTitle('请求头')} key={'1'}>
-                  <RequestHeaders header={item.request_head} />
-                </Tabs.TabPane>
-                <Tabs.TabPane tab={TabTitle('响应头')} key={'2'}>
-                  <RequestHeaders header={item.response_head} />
-                </Tabs.TabPane>
-                <Tabs.TabPane tab={TabTitle('响应体')} key={'3'}>
-                  {renderResponseBody(item)}
-                </Tabs.TabPane>
-                <Tabs.TabPane tab={TabTitle('变量与响应参数提取')} key={'4'}>
-                  <RespProTable
-                    columns={ResponseExtractColumns}
-                    dataSource={item.extracts}
-                  />
-                </Tabs.TabPane>
-                <Tabs.TabPane tab={TabTitle('断言')} key={'5'}>
-                  <RespProTable
-                    columns={AssertColumns}
-                    dataSource={item.asserts}
-                  />
-                </Tabs.TabPane>
-                <Tabs.TabPane tab={TabTitle('实际请求')} key={'6'}>
-                  <RequestInfo
-                    method={item.request_method}
-                    interfaceApiInfo={item.request_info}
-                  />
-                </Tabs.TabPane>
-              </Tabs>
+              <MyTabs
+                type={'line'}
+                defaultActiveKey={'3'}
+                items={[
+                  {
+                    key: '1',
+                    label: TabTitle('请求头'),
+                    children: <RequestHeaders header={item.request_head} />,
+                  },
+                  {
+                    key: '2',
+                    label: TabTitle('响应头'),
+                    children: <RequestHeaders header={item.response_head} />,
+                  },
+                  {
+                    key: '3',
+                    label: TabTitle('响应体'),
+                    children: renderResponseBody(item),
+                  },
+                  {
+                    key: '4',
+                    label: TabTitle('变量提取'),
+                    children: (
+                      <RespProTable
+                        columns={ResponseExtractColumns}
+                        dataSource={item.extracts}
+                      />
+                    ),
+                  },
+                  {
+                    key: '5',
+                    label: TabTitle('接口断言'),
+                    children: (
+                      <RespProTable
+                        columns={AssertColumns}
+                        dataSource={item.asserts}
+                      />
+                    ),
+                  },
+                  {
+                    key: '6',
+                    label: TabTitle('实际请求'),
+                    children: (
+                      <RequestInfo
+                        method={item.request_method}
+                        interfaceApiInfo={item.request_info}
+                      />
+                    ),
+                  },
+                ]}
+                size={'small'}
+              />
             </ProCard>
           );
         }

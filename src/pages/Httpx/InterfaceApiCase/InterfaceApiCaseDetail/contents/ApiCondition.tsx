@@ -297,14 +297,14 @@ const ApiCondition: FC<SelfProps> = ({
         <GroupApiChoiceTable
           projectId={projectId}
           refresh={refresh}
-          currentCaseId={case_id.toString()}
+          currentCaseId={case_id}
           condition_api_id={caseContent.id}
         />
       </MyDrawer>
       <MyDrawer name={''} open={choiceOpen} setOpen={setChoiceOpen}>
         <InterfaceCaseChoiceApiTable
           projectId={projectId}
-          currentCaseApiId={case_id.toString()}
+          currentCaseApiId={case_id}
           condition_id={caseContent.target_id}
           refresh={refresh}
         />

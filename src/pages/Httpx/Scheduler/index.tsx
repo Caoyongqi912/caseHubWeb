@@ -1,42 +1,54 @@
-import MyProTable from '@/components/Table/MyProTable';
-import ConfigForm from '@/pages/Httpx/Scheduler/ConfigForm';
-import { PlusOutlined } from '@ant-design/icons';
-import { ModalForm } from '@ant-design/pro-components';
-import { Button } from 'antd';
+import LeftComponents from '@/components/LeftComponents';
+import SchedulerTable from '@/pages/Httpx/Scheduler/SchedulerTable';
+import { ModuleEnum } from '@/utils/config';
+import { ProCard } from '@ant-design/pro-components';
+import { Splitter } from 'antd';
 import { useState } from 'react';
 
 const Index = () => {
-  const [modalVisit, setModalVisit] = useState(false);
+  const [currentModuleId, setCurrentModuleId] = useState<number>();
+  const [currentProjectId, setCurrentProjectId] = useState<number>();
+  const PerKey = 'InterfaceTaskScheduler';
 
-  const columns = [{}];
+  const onProjectChange = (projectId: number | undefined) => {
+    setCurrentProjectId(projectId);
+  };
+
+  const onModuleChange = (moduleId: number) => {
+    setCurrentModuleId(moduleId);
+  };
   return (
-    <div>
-      <ModalForm
-        title="Create New Form"
-        open={modalVisit}
-        onFinish={async () => {
-          return true;
-        }}
-        onOpenChange={setModalVisit}
+    <>
+      <ProCard
+        bordered={true}
+        style={{ height: '100vh' }}
+        bodyStyle={{ height: 'auto', padding: 0 }}
       >
-        <ConfigForm />
-      </ModalForm>
-      <MyProTable
-        columns={columns}
-        rowKey={'id'}
-        toolBarRender={() => [
-          <Button
-            type="primary"
-            onClick={() => {
-              setModalVisit(true);
-            }}
+        <Splitter>
+          <Splitter.Panel
+            collapsible={true}
+            defaultSize="15%"
+            min="10%"
+            max="30%"
+            style={{ height: '100vh' }}
           >
-            <PlusOutlined />
-            Show Modal
-          </Button>,
-        ]}
-      />
-    </div>
+            <LeftComponents
+              moduleType={ModuleEnum.JOB}
+              onProjectChange={onProjectChange}
+              onModuleChange={onModuleChange}
+              currentProjectId={currentProjectId}
+            />
+          </Splitter.Panel>
+          <Splitter.Panel>
+            <SchedulerTable
+              perKey={PerKey}
+              currentModuleId={currentModuleId}
+              currentProjectId={currentProjectId}
+            />
+          </Splitter.Panel>
+        </Splitter>
+      </ProCard>
+    </>
   );
 };
 

@@ -146,6 +146,12 @@ const Index: FC<SelfProps> = ({
       ),
     },
     {
+      title: '描述',
+      dataIndex: 'description',
+      key: 'description',
+      ellipsis: true,
+    },
+    {
       title: '接口数',
       dataIndex: 'api_num',
       key: 'api_num',
@@ -174,7 +180,7 @@ const Index: FC<SelfProps> = ({
               setOpenGroupAssociation(true);
             }}
           >
-            关联API
+            关联详情
           </a>,
           <Dropdown
             menu={{
@@ -228,7 +234,7 @@ const Index: FC<SelfProps> = ({
       <MyDrawer
         open={openGroupAssociation}
         setOpen={setOpenGroupAssociation}
-        width={'70%'}
+        width={'80%'}
       >
         <GroupApiDetail groupId={currentGroupId} projectId={currentProjectId} />
       </MyDrawer>

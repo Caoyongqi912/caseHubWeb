@@ -1,5 +1,4 @@
 import { pageInterApiResult } from '@/api/inter/interCase';
-import MyDrawer from '@/components/MyDrawer';
 import MyProTable from '@/components/Table/MyProTable';
 import InterfaceApiResponseDetail from '@/pages/Httpx/InterfaceApiResponse/InterfaceApiResponseDetail';
 import { ITryResponseInfo } from '@/pages/Httpx/types';
@@ -14,18 +13,19 @@ interface SelfProps {
 
 const InterfaceApiResultTable: FC<SelfProps> = ({ taskResultId }) => {
   const actionRef = useRef<ActionType>(); //Table action 的引用，便于自定义触发
-  const [open, setOpen] = useState(false);
-  const [responseInfo, setResponseInfo] = useState<ITryResponseInfo[]>();
-  const [dataSource, setDataSource] = useState<any[]>([]);
+  const [originDataSource, setOriginDataSource] = useState<any[]>([]);
+  const [failDataSource, setFailDataSource] = useState<any[]>([]);
   const [failOnly, setFailOnly] = useState(false);
 
   useEffect(() => {
     if (failOnly) {
-      setDataSource(dataSource.filter((item) => item.result === 'ERROR'));
+      setOriginDataSource(
+        failDataSource.filter((item) => item.result === 'ERROR'),
+      );
     } else {
-      actionRef.current?.reload();
+      setOriginDataSource([...failDataSource]);
     }
-  }, [failOnly]);
+  }, [failOnly, failDataSource]);
 
   const fetchResults = useCallback(
     async (params: any, sort: any) => {
@@ -36,7 +36,8 @@ const InterfaceApiResultTable: FC<SelfProps> = ({ taskResultId }) => {
         sort: sort,
       };
       const { code, data } = await pageInterApiResult(searchData);
-      setDataSource(data.items);
+      setOriginDataSource(data.items);
+      setFailDataSource(data.items);
       return pageData(code, data);
     },
     [taskResultId],
@@ -60,6 +61,13 @@ const InterfaceApiResultTable: FC<SelfProps> = ({ taskResultId }) => {
         </Tag>
       ),
     },
+    {
+      title: '运行时间',
+      dataIndex: 'startTime',
+      valueType: 'dateTime',
+      sorter: true,
+      render: (_, record) => <Tag color={'blue'}>{record.startTime}</Tag>,
+    },
 
     {
       title: '执行人',
@@ -70,33 +78,24 @@ const InterfaceApiResultTable: FC<SelfProps> = ({ taskResultId }) => {
     {
       title: '操作',
       valueType: 'option',
-      render: (_, record) => (
-        <>
-          <a
-            onClick={() => {
-              setResponseInfo([record]);
-              setOpen(true);
-            }}
-          >
-            详情
-          </a>
-        </>
-      ),
+      render: (_, record) => <></>,
     },
   ];
+
+  const expandedRowRender = (record: ITryResponseInfo) => {
+    return <InterfaceApiResponseDetail responses={[record]} />;
+  };
   return (
     <ProCard bordered={false} bodyStyle={{ padding: 0 }}>
-      <MyDrawer name={''} open={open} setOpen={setOpen}>
-        <InterfaceApiResponseDetail responses={responseInfo} />
-      </MyDrawer>
       <MyProTable
         toolBarRender={() => [
           <Button type={'primary'} onClick={() => setFailOnly(!failOnly)}>
-            只看失败
+            {failOnly ? '查看全部' : '只看失败'}
           </Button>,
         ]}
         rowKey={'uid'}
-        dataSource={dataSource}
+        expandable={{ expandedRowRender }}
+        dataSource={originDataSource}
         actionRef={actionRef}
         request={fetchResults}
         search={false}

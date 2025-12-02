@@ -17,7 +17,7 @@ import React, { FC, useCallback, useEffect, useRef, useState } from 'react';
 
 interface SelfProps {
   projectId?: number;
-  currentCaseId: string;
+  currentCaseId: number;
   condition_api_id?: number;
   refresh?: () => void;
 }
