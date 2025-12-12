@@ -1,4 +1,4 @@
-import { IBaseField } from '@/api';
+import { IBaseField, IObjGet } from '@/api';
 
 export interface IDBConfig extends IBaseField {
   db_name: string;
@@ -16,4 +16,26 @@ export interface IPushConfig extends IBaseField {
   push_type: number;
   push_desc: string;
   push_value: string;
+}
+
+export interface IJob extends IBaseField {
+  job_name: string;
+  job_type: number;
+  job_env_id: number;
+  job_env_name: string;
+  job_task_id_list: string[];
+  job_trigger_type: number;
+  job_execute_strategy: number;
+  job_execute_time?: string;
+  job_execute_interval?: number;
+  job_execute_cron?: string;
+  job_max_retry_count: number;
+  job_retry_interval: number;
+  job_notify_id?: number;
+  next_run_time?: string;
+  job_kwargs?: IObjGet[];
+  job_notify_on?: number[];
+  job_notify_type: number;
+  module_id: number;
+  project_id: number;
 }

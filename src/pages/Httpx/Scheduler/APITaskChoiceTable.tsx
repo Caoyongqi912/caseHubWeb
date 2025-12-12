@@ -70,7 +70,7 @@ const ApiTaskChoiceTable: FC<IProps> = ({ setJobs, currentProjectId }) => {
   }, []);
   const rowSelection: TableRowSelection<IInterfaceAPI> = {
     selectedRowKeys,
-    type: 'radio',
+    type: 'checkbox',
     onChange: (newSelectedRowKeys: React.Key[]) => {
       setSelectedRowKeys(newSelectedRowKeys);
       setJobs(newSelectedRowKeys);
@@ -86,7 +86,7 @@ const ApiTaskChoiceTable: FC<IProps> = ({ setJobs, currentProjectId }) => {
       actionRef={actionRef}
       rowSelection={rowSelection}
       columns={taskColumns}
-      rowKey={'id'}
+      rowKey={'uid'}
       request={fetchPageTasks}
     />
   );
