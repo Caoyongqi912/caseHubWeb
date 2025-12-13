@@ -1,4 +1,5 @@
 import { IBaseField, IObjGet } from '@/api';
+import { IInterfaceAPITask } from '@/pages/Httpx/types';
 
 export interface IDBConfig extends IBaseField {
   db_name: string;
@@ -24,6 +25,7 @@ export interface IJob extends IBaseField {
   job_env_id: number;
   job_env_name: string;
   job_task_id_list: string[];
+  job_task_list?: IInterfaceAPITask[];
   job_trigger_type: number;
   job_execute_strategy: number;
   job_execute_time?: string;

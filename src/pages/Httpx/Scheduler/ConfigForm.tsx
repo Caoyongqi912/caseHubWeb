@@ -116,7 +116,7 @@ const ConfigForm: FC<SelfProps> = (props) => {
   return (
     <StepsForm formMapRef={formMapRef} onFinish={onFinishOrUpdate}>
       <StepsForm.StepForm name="step0" title="基础信息">
-        <ProCard bodyStyle={{ padding: 0 }}>
+        <ProCard>
           <ProFormText
             width="lg"
             label="任务名称"

@@ -11,8 +11,8 @@ export function clearToken() {
 }
 
 export const setThem = (t: string) => {
-  return localStorage.setItem('theme', t);
+  return localStorage.setItem('app-theme', t);
 };
 export const getThem = () => {
-  return localStorage.getItem('theme');
+  return localStorage.getItem('app-theme');
 };
