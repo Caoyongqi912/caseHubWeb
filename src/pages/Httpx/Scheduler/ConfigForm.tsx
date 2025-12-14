@@ -22,6 +22,7 @@ import { message } from 'antd';
 import moment from 'moment';
 import React, { FC, useEffect, useRef, useState } from 'react';
 
+import { queryPushConfig } from '@/api/base/pushConfig';
 import JobTasksList from '@/pages/Httpx/Scheduler/JobTasksList';
 
 interface SelfProps {
@@ -43,11 +44,26 @@ const ConfigForm: FC<SelfProps> = (props) => {
   const [apiEnvs, setApiEnvs] = useState<{ value: number; label: string }[]>(
     [],
   );
+  const [pushOptions, setPushOptions] = useState<
+    { value: number; label: string }[]
+  >([]);
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [showChoiceTable, setShowChoiceTable] = useState<boolean>(true);
   const formMapRef = useRef<React.MutableRefObject<ProFormInstance<IJob>>[]>(
     [],
   );
+
+  useEffect(() => {
+    queryPushConfig().then(async ({ code, data }) => {
+      if (code === 0 && data.length > 0) {
+        setPushOptions(
+          data.map((item) => {
+            return { label: item.push_name, value: item.id };
+          }),
+        );
+      }
+    });
+  }, []);
 
   useEffect(() => {
     if (!currentJob) return;
@@ -84,7 +100,6 @@ const ConfigForm: FC<SelfProps> = (props) => {
   };
 
   const onFinishOrUpdate = async (values: IJob) => {
-    console.log(values);
     //更新
     if (currentJob) {
       const { code, data, msg } = await update_aps_job({
@@ -94,6 +109,7 @@ const ConfigForm: FC<SelfProps> = (props) => {
       if (code === 0) {
         callback();
         message.success(msg);
+        setSelectedRowKeys([]);
         formMapRef.current[0].current?.resetFields();
         return Promise.resolve(true);
       }
@@ -107,6 +123,7 @@ const ConfigForm: FC<SelfProps> = (props) => {
         if (code === 0) {
           callback();
           message.success(msg);
+          setSelectedRowKeys([]);
           formMapRef.current[0].current?.resetFields();
           return Promise.resolve(true);
         }
@@ -390,12 +407,16 @@ const ConfigForm: FC<SelfProps> = (props) => {
                   <ProFormSelect
                     name="job_notify_id"
                     label="通知方式"
-                    options={[
-                      { label: '邮件通知', value: 1 },
-                      { label: '企业微信', value: 2 },
-                      { label: '钉钉', value: 3 },
-                    ]}
+                    options={pushOptions}
+                    onChange={(value) => {
+                      formMapRef.current[3].current?.setFieldsValue({
+                        job_notify_name: pushOptions.find(
+                          (item) => item.value === value,
+                        )?.label,
+                      });
+                    }}
                   />
+                  <ProFormText name={'job_notify_name'} hidden={true} />
                   <ProFormSelect
                     name="job_notify_on"
                     label="通知时机"

@@ -1,7 +1,10 @@
 import { page_aps_job, remove_aps_job } from '@/api/base/aps';
+import MyDrawer from '@/components/MyDrawer';
 import MyProTable from '@/components/Table/MyProTable';
+import InterfaceApiTaskResultTable from '@/pages/Httpx/InterfaceApiTaskResult/InterfaceApiTaskResultTable';
 import ConfigForm from '@/pages/Httpx/Scheduler/ConfigForm';
 import JobParams from '@/pages/Httpx/Scheduler/TableField/JobParams';
+import Notify from '@/pages/Httpx/Scheduler/TableField/Notify';
 import TasksFiled from '@/pages/Httpx/Scheduler/TableField/TasksFiled';
 import TriggerType from '@/pages/Httpx/Scheduler/TableField/TriggerType';
 import { IJob } from '@/pages/Project/types';
@@ -10,7 +13,7 @@ import { pageData } from '@/utils/somefunc';
 import { PlusOutlined } from '@ant-design/icons';
 import { ActionType, ModalForm, ProColumns } from '@ant-design/pro-components';
 import { Button, Space, Tag } from 'antd';
-import { FC, useCallback, useEffect, useRef, useState } from 'react';
+import React, { FC, useCallback, useEffect, useRef, useState } from 'react';
 
 interface SelfProps {
   currentProjectId?: number;
@@ -23,6 +26,8 @@ const SchedulerTable: FC<SelfProps> = (props) => {
   const { currentProjectId, currentModuleId, perKey } = props;
   const [modalVisit, setModalVisit] = useState(false);
   const [currentJob, setCurrentJob] = useState<IJob>();
+  const [expandedRowKeys, setExpandedRowKeys] = useState<React.Key[]>([]);
+  const [openTaskHistory, setOpenTaskHistory] = useState(false);
   const columns: ProColumns<IJob>[] = [
     {
       title: '任务ID',
@@ -58,33 +63,51 @@ const SchedulerTable: FC<SelfProps> = (props) => {
       ),
     },
     {
+      title: '环境',
+      dataIndex: 'job_env_name',
+      search: false,
+      width: '8%',
+      render: (_, record) => <Tag color={'blue'}>{record.job_env_name}</Tag>,
+    },
+    {
       title: '执行信息',
       dataIndex: 'job_trigger_type',
       search: false,
       width: '20%',
-      render: (_, record) => <TriggerType record={record} />,
+      render: (_, record) => (
+        <TriggerType record={record} callback={reloadTable} />
+      ),
     },
+
     {
       title: '参数',
       dataIndex: 'job_kwargs',
       search: false,
-      width: '20%',
+      width: '15%',
       render: (text, record) => <JobParams text={text} record={record} />,
+    },
+    {
+      title: '通知',
+      dataIndex: 'job_notify_on',
+      width: '18%',
+      search: false,
+      render: (_, record) => {
+        return <Notify record={record} />;
+      },
     },
     {
       title: '创建人',
       dataIndex: 'creatorName',
       width: '10%',
-      render: (text, record) => (
-        <Tag color={'geekblue'}>{record.creatorName}</Tag>
-      ),
+      render: (_, record) => <Tag color={'geekblue'}>{record.creatorName}</Tag>,
     },
     {
       title: '操作',
-      dataIndex: 'option',
+      valueType: 'option',
+      key: 'option',
       width: '10%',
       fixed: 'right',
-      render: (text, record) => (
+      render: (_, record) => (
         <Space>
           <a
             type="primary"
@@ -95,10 +118,17 @@ const SchedulerTable: FC<SelfProps> = (props) => {
           >
             编辑
           </a>
-
+          <a
+            onClick={() => {
+              setCurrentJob(record);
+              setOpenTaskHistory(true);
+            }}
+          >
+            执行历史
+          </a>
           <a
             onClick={async () => {
-              const { code, data } = await remove_aps_job({
+              const { code } = await remove_aps_job({
                 job_id: record.uid,
               });
               if (code === 0) {
@@ -119,6 +149,7 @@ const SchedulerTable: FC<SelfProps> = (props) => {
 
   const reloadTable = () => {
     actionRef.current?.reload();
+    setExpandedRowKeys([]);
     setModalVisit(false);
   };
 
@@ -133,11 +164,22 @@ const SchedulerTable: FC<SelfProps> = (props) => {
     },
     [currentModuleId],
   );
+
+  const handleExpand = (expanded: boolean, record: IJob) => {
+    if (expanded) {
+      setExpandedRowKeys([record.uid]);
+    } else {
+      setExpandedRowKeys([]);
+    }
+  };
+
   return (
     <div>
+      <MyDrawer open={openTaskHistory} setOpen={setOpenTaskHistory}>
+        <InterfaceApiTaskResultTable job={currentJob} />
+      </MyDrawer>
       <ModalForm
         size={'small'}
-        title="Create New Form"
         open={modalVisit}
         submitter={false}
         onFinish={async () => {
@@ -154,17 +196,24 @@ const SchedulerTable: FC<SelfProps> = (props) => {
       </ModalForm>
       <MyProTable
         expandable={{
+          expandedRowKeys,
           columnTitle: '关联任务',
-          expandRowByClick: true,
           columnWidth: '4%',
-          expandedRowRender: (record) => {
+          onExpand: handleExpand,
+          expandedRowRender: (record: IJob) => {
             return <TasksFiled job_uid={record.uid} />;
           },
         }}
+        x={1200}
         persistenceKey={perKey}
         actionRef={actionRef}
         columns={columns}
-        rowKey={'id'}
+        pagination={{
+          defaultPageSize: 5,
+          showQuickJumper: true,
+          showSizeChanger: true,
+        }}
+        rowKey={'uid'}
         request={fetchJobData}
         toolBarRender={() => [
           <Button

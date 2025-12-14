@@ -34,10 +34,12 @@ export interface IJob extends IBaseField {
   job_max_retry_count: number;
   job_retry_interval: number;
   job_notify_id?: number;
+  job_notify_name?: string;
   next_run_time?: string;
   job_kwargs?: IObjGet[];
   job_notify_on?: number[];
   job_notify_type: number;
   module_id: number;
   project_id: number;
+  job_enabled: boolean;
 }

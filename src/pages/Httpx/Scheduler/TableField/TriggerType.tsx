@@ -1,3 +1,4 @@
+import { switch_job } from '@/api/base/aps';
 import { IJob } from '@/pages/Project/types';
 import {
   CalendarOutlined,
@@ -6,24 +7,21 @@ import {
   SyncOutlined,
 } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
-import { Space, Tag, Tooltip, Typography } from 'antd';
+import { Space, Statistic, Switch, Tag, Tooltip, Typography } from 'antd';
 import { FC } from 'react';
-const { Text } = Typography;
 
-interface Props {
-  record: IJob;
-}
+const { Text, Paragraph } = Typography;
+const { Countdown } = Statistic;
 
 // 常量配置
-const TRIGGER_CONFIG: any = {
+const TRIGGER_CONFIG: Record<number, any> = {
   1: {
     label: '单次执行',
     getContent: (record: IJob) => record.job_execute_time,
     getFormattedContent: (record: IJob) => record.job_execute_time,
     icon: <ClockCircleOutlined />,
-    primaryColor: '#1890ff',
-    secondaryColor: '#e6f7ff',
-    tertiaryColor: '#91d5ff',
+    color: 'blue',
+    status: 'processing',
     tooltip: '任务将在指定时间执行一次',
   },
   2: {
@@ -31,9 +29,8 @@ const TRIGGER_CONFIG: any = {
     getContent: (record: IJob) => record.job_execute_cron,
     getFormattedContent: (record: IJob) => record.job_execute_cron,
     icon: <SyncOutlined />,
-    primaryColor: '#52c41a',
-    secondaryColor: '#f6ffed',
-    tertiaryColor: '#b7eb8f',
+    color: 'green',
+    status: 'success',
     tooltip: '任务将按照Cron表达式周期执行',
   },
   3: {
@@ -42,183 +39,195 @@ const TRIGGER_CONFIG: any = {
     getFormattedContent: (record: IJob) =>
       `${record.job_execute_interval} 小时`,
     icon: <FieldTimeOutlined />,
-    primaryColor: '#fa8c16',
-    secondaryColor: '#fff7e6',
-    tertiaryColor: '#ffd591',
+    color: 'orange',
+    status: 'warning',
     tooltip: '任务将按照固定频率执行',
   },
 };
 
-const TriggerType: FC<Props> = ({ record }) => {
+const TriggerType: FC<{
+  record: IJob;
+  callback: () => void;
+}> = ({ record, callback }) => {
   const triggerType = record.job_trigger_type;
-
   const config = TRIGGER_CONFIG[triggerType] || TRIGGER_CONFIG[1];
+
   // 格式化下次执行时间
   const formatNextRunTime = (time: string) => {
-    if (!time) return '暂无';
+    if (!time) return { display: '暂无计划', isFuture: false };
+
     const date = new Date(time);
     const now = new Date();
-    // @ts-ignore
-    const diffHours = Math.abs(date - now) / (1000 * 60 * 60);
+    const diffMs = date.getTime() - now.getTime();
+    const diffHours = Math.abs(diffMs) / (1000 * 60 * 60);
 
-    if (diffHours < 1) {
-      return `${Math.round(diffHours * 60)}分钟后`;
-    } else if (diffHours < 24) {
-      return `${Math.round(diffHours)}小时后`;
+    if (diffMs > 0) {
+      // 未来时间
+      if (diffHours < 1) {
+        return {
+          display: `${Math.round(diffHours * 60)}分钟后`,
+          isFuture: true,
+          date,
+        };
+      } else if (diffHours < 24) {
+        return {
+          display: `${Math.round(diffHours)}小时后`,
+          isFuture: true,
+          date,
+        };
+      } else {
+        return {
+          display: date.toLocaleDateString(),
+          isFuture: true,
+          date,
+        };
+      }
     } else {
-      return date.toLocaleDateString();
+      // 过去时间
+      return {
+        display: '已过期',
+        isFuture: false,
+        date,
+      };
     }
   };
 
+  const nextRunInfo = formatNextRunTime(record.next_run_time || '');
+
   return (
-    <Tooltip title={config.tooltip}>
+    <ProCard
+      size="small"
+      style={{
+        borderRadius: '8px',
+      }}
+      bodyStyle={{
+        padding: '12px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '12px',
+      }}
+    >
+      {/* 触发器类型 */}
+      <Space
+        align="center"
+        style={{ width: '100%', justifyContent: 'space-between' }}
+      >
+        <Tooltip title={config.tooltip}>
+          <Tag
+            color={config.color}
+            icon={config.icon}
+            style={{
+              margin: 0,
+              borderRadius: '4px',
+              fontWeight: 500,
+              fontSize: '12px',
+            }}
+          >
+            {config.label}
+          </Tag>
+        </Tooltip>
+        <Switch
+          size={'small'}
+          value={record.job_enabled}
+          onChange={async (checked) => {
+            const { code } = await switch_job({
+              job_id: record.uid,
+              enable: checked,
+            });
+            if (code === 0) {
+              callback();
+            }
+            // return await setTaskAuto(checked, record.id);
+          }}
+        />
+      </Space>
+
+      {/* 触发器详情 */}
+      <ProCard size="small" bordered bodyStyle={{ padding: '8px' }}>
+        <Paragraph
+          style={{
+            margin: 0,
+            fontFamily: triggerType === 2 ? 'monospace' : 'inherit',
+            textAlign: 'center',
+          }}
+          ellipsis={{
+            rows: 2,
+            tooltip: config.getFormattedContent(record),
+          }}
+        >
+          {config.getFormattedContent(record)}
+        </Paragraph>
+      </ProCard>
+
+      {/* 下次执行时间 */}
       <ProCard
         size="small"
-        bodyStyle={{
-          padding: '12px',
-          borderRadius: '8px',
-          backgroundColor: config.secondaryColor,
-          border: `1px solid ${config.primaryColor}20`,
-        }}
-        style={{
-          border: 'none',
-          boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-        }}
-      >
-        <Space direction="vertical" size={12} style={{ width: '100%' }}>
-          {/* 触发器类型和信息 */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: '8px',
-            }}
-          >
-            <div style={{ flex: 1 }}>
-              <div
+        title={
+          <Space align="center">
+            <CalendarOutlined />
+            <Text type="secondary" style={{ fontSize: '11px' }}>
+              下次执行
+            </Text>
+          </Space>
+        }
+        extra={
+          record.next_run_time &&
+          nextRunInfo.isFuture && (
+            <Tooltip title="精确时间">
+              <Tag
+                color={config.color}
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  marginBottom: '4px',
-                }}
-              >
-                <Tag
-                  color={config.primaryColor}
-                  style={{
-                    margin: 0,
-                    borderRadius: '4px',
-                    fontWeight: 500,
-                    fontSize: '12px',
-                  }}
-                >
-                  {config.label}
-                </Tag>
-              </div>
-
-              <Text
-                style={{
-                  display: 'block',
-                  fontSize: '12px',
-                  fontFamily: triggerType === 2 ? 'monospace' : 'inherit',
-                  color: '#333',
-                  backgroundColor: 'white',
-                  padding: '6px 8px',
-                  borderRadius: '4px',
-                  border: `1px solid ${config.primaryColor}30`,
-                  lineHeight: '1.4',
-                }}
-              >
-                {config.getFormattedContent(record)}
-              </Text>
-            </div>
-          </div>
-
-          {/* 下次执行时间 - 作为独立区域显示 */}
-          <div
-            style={{
-              padding: '8px',
-              backgroundColor: 'white',
-              borderRadius: '6px',
-              border: '1px solid #f0f0f0',
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                marginBottom: '4px',
-              }}
-            >
-              <CalendarOutlined
-                style={{
-                  color: config.primaryColor,
-                  marginRight: '6px',
-                  fontSize: '12px',
-                }}
-              />
-              <Text
-                type="secondary"
-                style={{
-                  fontSize: '11px',
-                  fontWeight: 500,
-                }}
-              >
-                下次执行
-              </Text>
-            </div>
-
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
-            >
-              <Text
-                strong
-                style={{
-                  fontSize: '12px',
-                  color: record.next_run_time ? config.primaryColor : '#999',
-                }}
-              >
-                {record.next_run_time
-                  ? formatNextRunTime(record.next_run_time)
-                  : '暂无计划'}
-              </Text>
-
-              {record.next_run_time && (
-                <Tag
-                  color={config.primaryColor}
-                  style={{
-                    margin: 0,
-                    fontSize: '11px',
-                    padding: '1px 6px',
-                    borderRadius: '10px',
-                  }}
-                >
-                  {new Date(record.next_run_time).toLocaleTimeString([], {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </Tag>
-              )}
-            </div>
-
-            {record.next_run_time && (
-              <div
-                style={{
+                  margin: 0,
                   fontSize: '10px',
-                  color: '#999',
-                  marginTop: '2px',
+                  padding: '0 6px',
+                  borderRadius: '10px',
                 }}
               >
-                {new Date(record.next_run_time).toLocaleDateString()}
-              </div>
-            )}
-          </div>
+                {nextRunInfo.date?.toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </Tag>
+            </Tooltip>
+          )
+        }
+        bordered
+        bodyStyle={{ padding: '8px' }}
+      >
+        <Space direction="vertical" size={4} style={{ width: '100%' }}>
+          <Text
+            strong
+            style={{
+              fontSize: '12px',
+              textAlign: 'center',
+              display: 'block',
+            }}
+          >
+            {nextRunInfo.display}
+          </Text>
+
+          {record.next_run_time && nextRunInfo.isFuture && nextRunInfo.date && (
+            <Countdown
+              title="倒计时"
+              value={nextRunInfo.date.getTime()}
+              format="HH:mm:ss"
+              valueStyle={{
+                fontSize: '10px',
+              }}
+            />
+          )}
+
+          {record.next_run_time && (
+            <Text
+              type="secondary"
+              style={{ fontSize: '10px', textAlign: 'center' }}
+            >
+              {nextRunInfo.date?.toLocaleDateString()}
+            </Text>
+          )}
         </Space>
       </ProCard>
-    </Tooltip>
+    </ProCard>
   );
 };
 

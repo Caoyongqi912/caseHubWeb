@@ -69,3 +69,19 @@ export const query_tasks_by_job = async (data: string, opt?: IObjGet) => {
     ...opt,
   });
 };
+
+/**
+ * switch_job
+ * @param data
+ * @param opt
+ */
+export const switch_job = async (
+  data: { job_id: string; enable: boolean },
+  opt?: IObjGet,
+) => {
+  return request<IResponse<any[]>>('/api/aps/job/switch', {
+    method: 'GET',
+    params: data,
+    ...opt,
+  });
+};

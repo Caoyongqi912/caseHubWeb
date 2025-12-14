@@ -21,7 +21,7 @@ const Index = () => {
     <>
       <ProCard
         bordered={true}
-        style={{ height: '100vh' }}
+        style={{ height: 'auto' }}
         bodyStyle={{ height: 'auto', padding: 0 }}
       >
         <Splitter>
@@ -30,7 +30,7 @@ const Index = () => {
             defaultSize="15%"
             min="10%"
             max="30%"
-            style={{ height: '100vh' }}
+            style={{ height: 'auto' }}
           >
             <LeftComponents
               moduleType={ModuleEnum.JOB}

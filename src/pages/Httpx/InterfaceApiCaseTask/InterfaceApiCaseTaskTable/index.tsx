@@ -36,7 +36,6 @@ import {
   Modal,
   Popconfirm,
   Space,
-  Switch,
   Tag,
 } from 'antd';
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
@@ -189,21 +188,6 @@ const Index: FC<SelfProps> = ({
       },
     },
     {
-      title: '自动执行',
-      dataIndex: 'is_auto',
-      key: 'is_auto',
-      hideInSearch: true,
-      valueType: 'switch',
-      render: (_, record) => (
-        <Switch
-          value={record.is_auto}
-          onChange={async (checked) => {
-            return await setTaskAuto(checked, record.id);
-          }}
-        />
-      ),
-    },
-    {
       title: '优先级',
       dataIndex: 'level',
       valueType: 'select',
@@ -227,13 +211,6 @@ const Index: FC<SelfProps> = ({
       fixed: 'right',
       render: (__, record, _) => {
         return [
-          // <a
-          //   onClick={() => {
-          //     history.push(`/interface/task/detail/taskId=${record.id}`);
-          //   }}
-          // >
-          //   信息
-          // </a>,
           <a
             onClick={async () => {
               const { code, data } = await getNextTaskRunTime(record.uid);

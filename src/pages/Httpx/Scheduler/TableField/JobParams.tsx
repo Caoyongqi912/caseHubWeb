@@ -1,9 +1,11 @@
+import AceCodeEditor from '@/components/CodeEditor/AceCodeEditor';
 import { IJob } from '@/pages/Project/types';
-import { EyeOutlined } from '@ant-design/icons';
-import { ProCard } from '@ant-design/pro-components';
-import { message, Modal, Typography } from 'antd';
-import { FC, ReactNode } from 'react';
-const { Text } = Typography;
+import { EyeOutlined, SettingOutlined } from '@ant-design/icons';
+import { ProCard, ProDescriptions } from '@ant-design/pro-components';
+import { List, Modal, Space, Tag, Tooltip, Typography } from 'antd';
+import { FC, ReactNode, useState } from 'react';
+
+const { Text, Paragraph } = Typography;
 
 interface Props {
   text: ReactNode;
@@ -11,394 +13,304 @@ interface Props {
 }
 
 const JobParams: FC<Props> = ({ text, record }) => {
-  // 处理参数数据
-  const renderParams = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // 解析参数数据
+  const parseParams = () => {
     try {
-      // 尝试解析参数
       let params = text;
 
-      // 如果已经是字符串，尝试解析JSON
       if (typeof params === 'string') {
         params = JSON.parse(params);
       }
 
-      // 如果是数组且格式为 [{key:xx, value:xx}, ...]
-      if (Array.isArray(params) && params.length > 0) {
-        return (
-          <div
-            style={{
-              maxHeight: '120px',
-              overflowY: 'auto',
-              paddingRight: '4px',
-            }}
-          >
-            {params.map((item, index) => {
-              // 处理 {key:xx, value:xx} 格式
-              if (item && typeof item === 'object') {
-                // 如果有明确的 key 和 value 字段
-                if (item.key !== undefined && item.value !== undefined) {
-                  return (
-                    <div
-                      key={index}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        marginBottom: '6px',
-                        fontSize: '12px',
-                        padding: '4px',
-                        backgroundColor: index % 2 === 0 ? 'white' : '#fafafa',
-                        borderRadius: '4px',
-                      }}
-                    >
-                      <span
-                        style={{
-                          color: '#722ed1',
-                          minWidth: '70px',
-                          padding: '2px 6px',
-                          backgroundColor: '#f9f0ff',
-                          borderRadius: '3px',
-                          fontSize: '11px',
-                          fontWeight: '500',
-                          marginRight: '8px',
-                          textAlign: 'center',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
-                        title={String(item.key)}
-                      >
-                        {String(item.key).length > 8
-                          ? `${String(item.key).substring(0, 8)}...`
-                          : String(item.key)}
-                      </span>
-                      <span
-                        style={{
-                          flex: 1,
-                          color: '#333',
-                          padding: '2px 8px',
-                          backgroundColor: '#f0f5ff',
-                          borderRadius: '3px',
-                          fontSize: '11px',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
-                        title={String(item.value)}
-                      >
-                        {String(item.value)}
-                      </span>
-                    </div>
-                  );
-                }
-                // 如果是普通对象，显示所有键值对
-                else {
-                  return (
-                    <div key={index} style={{ marginBottom: '8px' }}>
-                      <div
-                        style={{
-                          fontSize: '10px',
-                          color: '#8c8c8c',
-                          marginBottom: '2px',
-                          paddingLeft: '4px',
-                        }}
-                      >
-                        参数组 {index + 1}
-                      </div>
-                      {Object.entries(item).map(([key, value]) => (
-                        <div
-                          key={key}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            marginBottom: '4px',
-                            fontSize: '12px',
-                            padding: '3px 6px',
-                            backgroundColor: '#fafafa',
-                            borderRadius: '3px',
-                          }}
-                        >
-                          <span
-                            style={{
-                              color: '#666',
-                              minWidth: '50px',
-                              paddingRight: '6px',
-                              fontSize: '11px',
-                            }}
-                          >
-                            {key}:
-                          </span>
-                          <span
-                            style={{
-                              flex: 1,
-                              color: '#333',
-                              fontSize: '11px',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                            }}
-                            title={String(value)}
-                          >
-                            {String(value)}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  );
-                }
-              }
-
-              // 如果不是对象，直接显示
-              return (
-                <div
-                  key={index}
-                  style={{
-                    marginBottom: '4px',
-                    padding: '4px 8px',
-                    backgroundColor: '#f6f6f6',
-                    borderRadius: '4px',
-                    fontSize: '11px',
-                  }}
-                >
-                  {String(item)}
-                </div>
-              );
-            })}
-          </div>
-        );
-      }
-
-      // 如果是单个对象
-      if (params && typeof params === 'object' && !Array.isArray(params)) {
-        const entries = Object.entries(params);
-        if (entries.length === 0) {
-          return null;
-        }
-
-        return (
-          <div
-            style={{
-              maxHeight: '120px',
-              overflowY: 'auto',
-              paddingRight: '4px',
-            }}
-          >
-            {entries.map(([key, value], index) => (
-              <div
-                key={key}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  marginBottom: '6px',
-                  fontSize: '12px',
-                  padding: '4px',
-                  backgroundColor: index % 2 === 0 ? 'white' : '#fafafa',
-                  borderRadius: '4px',
-                }}
-              >
-                <span
-                  style={{
-                    color: '#722ed1',
-                    minWidth: '70px',
-                    padding: '2px 6px',
-                    backgroundColor: '#f9f0ff',
-                    borderRadius: '3px',
-                    fontSize: '11px',
-                    fontWeight: '500',
-                    marginRight: '8px',
-                    textAlign: 'center',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}
-                  title={String(key)}
-                >
-                  {String(key).length > 8
-                    ? `${String(key).substring(0, 8)}...`
-                    : String(key)}
-                </span>
-                <span
-                  style={{
-                    flex: 1,
-                    color: '#333',
-                    padding: '2px 8px',
-                    backgroundColor: '#f0f5ff',
-                    borderRadius: '3px',
-                    fontSize: '11px',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}
-                  title={String(value)}
-                >
-                  {String(value)}
-                </span>
-              </div>
-            ))}
-          </div>
-        );
-      }
-
-      // 空值情况
-      return null;
+      return params;
     } catch (error) {
-      return (
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '12px',
-          }}
-        >
-          <Text type={'secondary'}>无参数</Text>
-        </div>
-      );
+      return null;
     }
   };
+
+  const params = parseParams();
 
   // 获取参数数量
   const getParamCount = () => {
-    try {
-      const params = typeof text === 'string' ? JSON.parse(text) : text;
+    if (!params) return '0 个参数';
 
-      if (Array.isArray(params)) {
-        // 如果是 [{key:xx, value:xx}, ...] 格式
-        if (params.length > 0 && params[0] && params[0].key !== undefined) {
-          return `${params.length} 个参数`;
-        }
-        // 如果是普通数组
-        return `${params.length} 个项`;
-      } else if (params && typeof params === 'object') {
-        return `${Object.keys(params).length} 个参数`;
-      }
-      return '0 个参数';
-    } catch {
-      return '参数信息';
+    if (Array.isArray(params)) {
+      return `${params.length} 个参数`;
+    } else if (typeof params === 'object') {
+      return `${Object.keys(params).length} 个参数`;
     }
+
+    return '0 个参数';
   };
 
-  const paramsContent = renderParams();
+  // 渲染参数内容
+  const renderParamsContent = () => {
+    if (!params) {
+      return (
+        <Space
+          direction="vertical"
+          align="center"
+          style={{ width: '100%', padding: '16px' }}
+        >
+          <SettingOutlined style={{ fontSize: '24px' }} />
+          <Text type="secondary">无参数配置</Text>
+        </Space>
+      );
+    }
+
+    // 数组参数格式 [{key: xx, value: xx}, ...]
+    if (Array.isArray(params) && params.length > 0) {
+      return (
+        <List
+          size="small"
+          dataSource={params}
+          renderItem={(item, index) => {
+            if (item && typeof item === 'object') {
+              // 键值对格式
+              if (item.key !== undefined && item.value !== undefined) {
+                return (
+                  <List.Item
+                    style={{
+                      padding: '8px 0',
+                      borderRadius: '4px',
+                    }}
+                  >
+                    <Space align="start" style={{ width: '100%' }}>
+                      <Tooltip title={String(item.key)}>
+                        <Tag
+                          color="purple"
+                          style={{ margin: 0, maxWidth: '80px' }}
+                        >
+                          <Paragraph
+                            ellipsis={{ rows: 1 }}
+                            style={{ margin: 0, fontSize: '11px' }}
+                          >
+                            {String(item.key)}
+                          </Paragraph>
+                        </Tag>
+                      </Tooltip>
+                      <Tooltip title={String(item.value)}>
+                        <Paragraph
+                          ellipsis={{ rows: 1 }}
+                          style={{
+                            flex: 1,
+                            margin: 0,
+                            fontSize: '11px',
+                            padding: '4px 8px',
+                            borderRadius: '4px',
+                          }}
+                        >
+                          {String(item.value)}
+                        </Paragraph>
+                      </Tooltip>
+                    </Space>
+                  </List.Item>
+                );
+              }
+
+              // 普通对象格式
+              return (
+                <ProCard
+                  key={index}
+                  size="small"
+                  title={`参数组 ${index + 1}`}
+                  headerBordered
+                  style={{ marginBottom: '8px' }}
+                >
+                  <ProDescriptions
+                    column={1}
+                    size="small"
+                    dataSource={item}
+                    columns={Object.keys(item).map((key) => ({
+                      title: key,
+                      dataIndex: key,
+                      render: (value) => (
+                        <Tooltip title={String(value)}>
+                          <Paragraph
+                            ellipsis={{ rows: 1 }}
+                            style={{ margin: 0, fontSize: '11px' }}
+                          >
+                            {String(value)}
+                          </Paragraph>
+                        </Tooltip>
+                      ),
+                    }))}
+                  />
+                </ProCard>
+              );
+            }
+
+            // 非对象格式
+            return (
+              <List.Item style={{ padding: '4px 0' }}>
+                <Paragraph
+                  ellipsis={{ rows: 1 }}
+                  style={{
+                    margin: 0,
+                    fontSize: '11px',
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    width: '100%',
+                  }}
+                >
+                  {String(item)}
+                </Paragraph>
+              </List.Item>
+            );
+          }}
+        />
+      );
+    }
+
+    // 对象参数格式
+    if (params && typeof params === 'object' && !Array.isArray(params)) {
+      const entries = Object.entries(params);
+      if (entries.length === 0) return null;
+
+      return (
+        <List
+          size="small"
+          dataSource={entries}
+          renderItem={([key, value], index) => (
+            <List.Item
+              style={{
+                padding: '8px 0',
+                backgroundColor: index % 2 === 0 ? 'transparent' : '#fafafa',
+                borderRadius: '4px',
+              }}
+            >
+              <Space align="start" style={{ width: '100%' }}>
+                <Tooltip title={String(key)}>
+                  <Tag color="blue" style={{ margin: 0, maxWidth: '80px' }}>
+                    <Paragraph
+                      ellipsis={{ rows: 1 }}
+                      style={{ margin: 0, fontSize: '11px' }}
+                    >
+                      {String(key)}
+                    </Paragraph>
+                  </Tag>
+                </Tooltip>
+                <Tooltip title={String(value)}>
+                  <Paragraph
+                    ellipsis={{ rows: 1 }}
+                    style={{
+                      flex: 1,
+                      margin: 0,
+                      fontSize: '11px',
+                      backgroundColor: '#f0f5ff',
+                      padding: '4px 8px',
+                      borderRadius: '4px',
+                    }}
+                  >
+                    {String(value)}
+                  </Paragraph>
+                </Tooltip>
+              </Space>
+            </List.Item>
+          )}
+        />
+      );
+    }
+
+    return null;
+  };
+
+  if (!params) {
+    return (
+      <ProCard
+        size="small"
+        layout="center"
+        bordered
+        style={{
+          borderRadius: '8px',
+        }}
+        bodyStyle={{ padding: '16px' }}
+      >
+        <Space direction="vertical" align="center" size={8}>
+          <SettingOutlined style={{ fontSize: '20px' }} />
+          <Text type="secondary">无参数配置</Text>
+        </Space>
+      </ProCard>
+    );
+  }
 
   return (
     <>
-      {!paramsContent ? (
+      <Modal
+        title={'参数详情'}
+        open={isModalOpen}
+        onCancel={() => setIsModalOpen(false)}
+        onOk={() => setIsModalOpen(false)}
+      >
         <ProCard
+          bordered
+          headerBordered
           size="small"
-          bodyStyle={{
-            padding: '16px',
-            textAlign: 'center',
-            backgroundColor: '#fafafa',
-            borderRadius: '8px',
-          }}
-          style={{
-            border: 'none',
-            boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-          }}
+          style={{ marginTop: '16px' }}
         >
-          <div style={{ color: '#bfbfbf', fontSize: '12px' }}>无参数配置</div>
+          {' '}
+          <AceCodeEditor
+            readonly={true}
+            _mode={'json'}
+            value={JSON.stringify(
+              typeof text === 'string' ? JSON.parse(text) : text,
+              null,
+              2,
+            )}
+          />
         </ProCard>
-      ) : (
-        <ProCard
-          size="small"
-          bodyStyle={{
-            padding: '12px',
-            backgroundColor: '#fafafa',
-            borderRadius: '8px',
-            maxHeight: '200px',
-            overflow: 'hidden',
-          }}
+      </Modal>
+      <ProCard
+        size="small"
+        style={{
+          borderRadius: '8px',
+        }}
+        bodyStyle={{
+          padding: '12px',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
+        {/* 标题区域 */}
+        <Space
+          align="center"
           style={{
-            border: 'none',
-            boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+            width: '100%',
           }}
         >
-          {/* 标题区域 */}
-          <div
+          <SettingOutlined style={{ fontSize: '14px', color: '#722ed1' }} />
+          <Text type="secondary" style={{ fontSize: '11px' }}>
+            {getParamCount()}
+          </Text>
+        </Space>
+        {/* 参数内容 */}
+        <div style={{ flex: 1, overflowY: 'auto', marginBottom: '12px' }}>
+          {renderParamsContent()}
+        </div>
+        {/* 查看更多按钮 */}
+        {record.job_kwargs !== null && (
+          <Space
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              marginBottom: '10px',
-              paddingBottom: '8px',
-              borderBottom: '1px solid #f0f0f0',
+              width: '100%',
+              justifyContent: 'center',
             }}
           >
-            <div style={{ flex: 1 }}>
-              <div
-                style={{
-                  fontSize: '11px',
-                  color: '#8c8c8c',
-                }}
-              >
-                {getParamCount()}
-              </div>
-            </div>
-          </div>
-
-          {/* 参数内容区域 */}
-          <div
-            style={{
-              marginBottom: '8px',
-            }}
-          >
-            {paramsContent}
-          </div>
-
-          {/* 查看更多按钮 */}
-          {record.job_kwargs !== null && (
-            <div
-              style={{
-                textAlign: 'center',
-                paddingTop: '8px',
-                borderTop: '1px dashed #f0f0f0',
+            <a
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsModalOpen(true);
               }}
+              style={{ fontSize: '11px' }}
             >
-              <a
-                style={{
-                  fontSize: '11px',
-                  color: '#722ed1',
-                  textDecoration: 'none',
-                }}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-
-                  try {
-                    const params =
-                      typeof text === 'string' ? JSON.parse(text) : text;
-                    Modal.info({
-                      title: '参数详情',
-                      width: 600,
-                      icon: null,
-                      content: (
-                        <div style={{ maxHeight: '500px', overflow: 'auto' }}>
-                          <pre
-                            style={{
-                              backgroundColor: '#f6f8fa',
-                              padding: '20px',
-                              borderRadius: '8px',
-                              fontSize: '13px',
-                              lineHeight: '1.6',
-                            }}
-                          >
-                            {JSON.stringify(params, null, 2)}
-                          </pre>
-                        </div>
-                      ),
-                      okText: '关闭',
-                      okType: 'default',
-                    });
-                  } catch (error) {
-                    message.error('参数格式错误，无法查看详情').then();
-                  }
-                }}
-              >
-                <EyeOutlined style={{ marginRight: '4px', fontSize: '11px' }} />
-                查看完整参数
-              </a>
-            </div>
-          )}
-        </ProCard>
-      )}
+              <EyeOutlined style={{ marginRight: '4px', fontSize: '11px' }} />
+              查看完整参数
+            </a>
+          </Space>
+        )}
+      </ProCard>
     </>
   );
 };

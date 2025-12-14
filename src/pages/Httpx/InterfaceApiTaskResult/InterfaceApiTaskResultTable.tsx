@@ -7,6 +7,7 @@ import {
 import { queryProjectEnum } from '@/components/CommonFunc';
 import MyProTable from '@/components/Table/MyProTable';
 import { IInterfaceTaskResult } from '@/pages/Httpx/types';
+import { IJob } from '@/pages/Project/types';
 import { ModuleEnum } from '@/utils/config';
 import { fetchModulesEnum, pageData } from '@/utils/somefunc';
 import { ActionType, ProColumns } from '@ant-design/pro-components';
@@ -15,9 +16,10 @@ import { FC, useCallback, useEffect, useRef, useState } from 'react';
 
 interface SelfProps {
   apiCaseTaskId?: number | string;
+  job?: IJob;
 }
 
-const InterfaceApiTaskResultTable: FC<SelfProps> = ({ apiCaseTaskId }) => {
+const InterfaceApiTaskResultTable: FC<SelfProps> = ({ apiCaseTaskId, job }) => {
   const actionRef = useRef<ActionType>(); //Table action 的引用，便于自定义触发
   const [showSearch, setShowSearch] = useState(true);
   const [projectEnumMap, setProjectEnumMap] = useState<IObjGet>({});
@@ -31,6 +33,7 @@ const InterfaceApiTaskResultTable: FC<SelfProps> = ({ apiCaseTaskId }) => {
       queryProjectEnum(setProjectEnumMap).then();
     }
   }, [apiCaseTaskId]);
+
   useEffect(() => {
     if (selectProjectId) {
       fetchModulesEnum(
@@ -40,6 +43,7 @@ const InterfaceApiTaskResultTable: FC<SelfProps> = ({ apiCaseTaskId }) => {
       ).then();
     }
   }, [selectProjectId]);
+
   const fetchResults = useCallback(
     async (params: any, sort: any) => {
       const searchData = {
@@ -48,6 +52,10 @@ const InterfaceApiTaskResultTable: FC<SelfProps> = ({ apiCaseTaskId }) => {
         taskId: apiCaseTaskId,
         sort: { ...sort },
       };
+      if (job) {
+        searchData.startBy = 3;
+        searchData.taskUid = job.job_task_id_list;
+      }
       const { code, data } = await pageInterTaskResult(searchData);
       return pageData(code, data);
     },
@@ -126,7 +134,7 @@ const InterfaceApiTaskResultTable: FC<SelfProps> = ({ apiCaseTaskId }) => {
       key: 'runDay',
       valueType: 'dateRange',
       sorter: true,
-      render: (_, record) => <Tag color={'blue'}>{record.runDay}</Tag>,
+      render: (_, record) => <Tag color={'blue'}>{record.start_time}</Tag>,
     },
     {
       title: '用时',
@@ -215,7 +223,7 @@ const InterfaceApiTaskResultTable: FC<SelfProps> = ({ apiCaseTaskId }) => {
         toolBarRender={() => [RemoveAllButton]}
         pagination={{
           showQuickJumper: true,
-          defaultPageSize: 6,
+          defaultPageSize: job ? 10 : 6,
           showSizeChanger: true,
         }}
         columns={columns}

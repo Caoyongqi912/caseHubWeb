@@ -1,16 +1,37 @@
 import { query_tasks_by_job } from '@/api/base/aps';
 import { IInterfaceAPITask } from '@/pages/Httpx/types';
+import {
+  ApiOutlined,
+  CheckCircleFilled,
+  ClockCircleFilled,
+  ClockCircleOutlined,
+  CloseCircleFilled,
+  FileTextOutlined,
+  PauseCircleFilled,
+  PlayCircleFilled,
+  UserOutlined,
+} from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
-import { Empty, Spin, Tag, Typography } from 'antd';
+import {
+  Badge,
+  Divider,
+  Empty,
+  Space,
+  Spin,
+  Tag,
+  Tooltip,
+  Typography,
+} from 'antd';
 import { FC, useEffect, useState } from 'react';
 
 const { Text } = Typography;
 
 interface Props {
   job_uid: string;
+  refreshFlag?: number;
 }
 
-const TasksFiled: FC<Props> = ({ job_uid }) => {
+const TasksFiled: FC<Props> = ({ job_uid, refreshFlag }) => {
   const [jobTasks, setJobTasks] = useState<IInterfaceAPITask[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -32,21 +53,42 @@ const TasksFiled: FC<Props> = ({ job_uid }) => {
     };
 
     fetchTasks();
-  }, [job_uid]);
+  }, [job_uid, refreshFlag]);
 
-  // 状态颜色配置
+  // 状态配置
   const getStatusConfig = (status: string) => {
-    const config = {
-      WAIT: { color: '#fa8c16', label: '等待' },
-      RUNNING: { color: '#1890ff', label: '运行中' },
-      SUCCESS: { color: '#52c41a', label: '成功' },
-      FAILED: { color: '#f5222d', label: '失败' },
-      STOP: { color: '#d9d9d9', label: '停止' },
+    const config: Record<string, any> = {
+      WAIT: {
+        color: 'orange',
+        label: '等待',
+        icon: <ClockCircleFilled />,
+      },
+      RUNNING: {
+        color: 'blue',
+        label: '运行中',
+        icon: <PlayCircleFilled />,
+      },
+      SUCCESS: {
+        color: 'green',
+        label: '成功',
+        icon: <CheckCircleFilled />,
+      },
+      FAILED: {
+        color: 'red',
+        label: '失败',
+        icon: <CloseCircleFilled />,
+      },
+      STOP: {
+        color: 'gray',
+        label: '停止',
+        icon: <PauseCircleFilled />,
+      },
     };
     return (
-      config[status as keyof typeof config] || {
-        color: '#d9d9d9',
+      config[status] || {
+        color: 'default',
         label: status,
+        icon: <ClockCircleFilled />,
       }
     );
   };
@@ -54,19 +96,20 @@ const TasksFiled: FC<Props> = ({ job_uid }) => {
   if (loading) {
     return (
       <div style={{ textAlign: 'center', padding: '20px' }}>
-        <Spin tip="加载任务中..." />
+        <Spin tip="加载任务中..." size="small" />
       </div>
     );
   }
 
   if (!jobTasks || jobTasks.length === 0) {
     return (
-      <div style={{ padding: '12px' }}>
+      <ProCard style={{ padding: '16px' }}>
         <Empty
-          description="暂无任务数据"
+          description="暂无任务"
           image={Empty.PRESENTED_IMAGE_SIMPLE}
+          style={{ margin: 0 }}
         />
-      </div>
+      </ProCard>
     );
   }
 
@@ -82,67 +125,69 @@ const TasksFiled: FC<Props> = ({ job_uid }) => {
 
   return (
     <div style={{ padding: '4px' }}>
-      {/* 统计标题 - 更紧凑 */}
-      <div
+      {/* 紧凑统计头部 */}
+      <ProCard
+        size="small"
+        bordered
         style={{
-          marginBottom: '12px',
-          padding: '8px 12px',
-          backgroundColor: '#fafafa',
           borderRadius: '6px',
-          border: '1px solid #f0f0f0',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
+          marginBottom: '8px',
         }}
+        bodyStyle={{ padding: '8px 12px' }}
       >
-        <div>
-          <Text strong style={{ fontSize: '13px', color: '#262626' }}>
-            任务列表
-          </Text>
-          <Text
-            type="secondary"
-            style={{ fontSize: '11px', marginLeft: '8px' }}
-          >
-            共 {jobTasks.length} 个任务
-          </Text>
-        </div>
-        <div style={{ display: 'flex', gap: '16px' }}>
-          <div style={{ textAlign: 'center' }}>
-            <div
-              style={{ fontSize: '13px', fontWeight: '600', color: '#1890ff' }}
+        <Space style={{ width: '100%', justifyContent: 'space-between' }}>
+          <div>
+            <Text strong style={{ fontSize: '12px' }}>
+              任务列表
+            </Text>
+            <Text
+              type="secondary"
+              style={{ fontSize: '11px', marginLeft: '8px' }}
             >
-              {totalCases}
-            </div>
-            <div style={{ fontSize: '10px', color: '#8c8c8c' }}>总用例数</div>
+              {jobTasks.length} 个任务
+            </Text>
           </div>
-          <div style={{ textAlign: 'center' }}>
-            <div
-              style={{ fontSize: '13px', fontWeight: '600', color: '#722ed1' }}
-            >
-              {totalApis}
+          <Space size={16}>
+            <div style={{ textAlign: 'center' }}>
+              <div
+                style={{ fontSize: '12px', fontWeight: 600, color: '#1890ff' }}
+              >
+                {totalCases}
+              </div>
+              <div style={{ fontSize: '15px', color: '#8c8c8c' }}>用例</div>
             </div>
-            <div style={{ fontSize: '10px', color: '#8c8c8c' }}>总接口数</div>
-          </div>
-        </div>
-      </div>
+            <div style={{ textAlign: 'center' }}>
+              <div
+                style={{ fontSize: '12px', fontWeight: 600, color: '#722ed1' }}
+              >
+                {totalApis}
+              </div>
+              <div style={{ fontSize: '15px', color: '#8c8c8c' }}>接口</div>
+            </div>
+          </Space>
+        </Space>
+      </ProCard>
 
-      {/* 任务卡片列表 - 更紧凑 */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      {/* 紧凑任务列表 */}
+      <Space direction="vertical" size={6} style={{ width: '100%' }}>
         {jobTasks.map((task) => {
           const statusConfig = getStatusConfig(task.status);
           const totalCases = task.total_cases_num || 0;
           const totalApis = task.total_apis_num || 0;
-
           return (
             <ProCard
               key={task.id || task.uid}
               size="small"
+              bordered
               style={{
                 borderRadius: '6px',
-                border: '1px solid #f0f0f0',
-                margin: 0,
+                borderLeft: `3px solid var(--ant-color-${statusConfig.color}-6)`,
+                padding: 0,
               }}
-              bodyStyle={{ padding: '12px' }}
+              bodyStyle={{
+                padding: '8px 12px',
+                backgroundColor: statusConfig.bgColor,
+              }}
             >
               {/* 第一行：标题和状态 */}
               <div
@@ -150,21 +195,20 @@ const TasksFiled: FC<Props> = ({ job_uid }) => {
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'flex-start',
-                  marginBottom: '8px',
+                  marginBottom: '6px',
                 }}
               >
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <Text
                     strong
                     style={{
-                      fontSize: '13px',
-                      color: '#262626',
+                      fontSize: '12px',
                       display: 'block',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap',
                     }}
-                    title={task.title}
+                    ellipsis={{ tooltip: task.title }}
                   >
                     {task.title || '未命名任务'}
                   </Text>
@@ -172,174 +216,114 @@ const TasksFiled: FC<Props> = ({ job_uid }) => {
                     <Text
                       type="secondary"
                       style={{
-                        fontSize: '11px',
+                        fontSize: '15px',
                         display: 'block',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
                         marginTop: '2px',
                       }}
-                      title={task.desc}
+                      ellipsis={{ tooltip: task.desc }}
                     >
                       {task.desc}
                     </Text>
                   )}
                 </div>
-                <Tag
-                  style={{
-                    margin: 0,
-                    padding: '1px 6px',
-                    fontSize: '11px',
-                    borderRadius: '10px',
-                    backgroundColor: `${statusConfig.color}10`,
-                    color: statusConfig.color,
-                    border: `1px solid ${statusConfig.color}30`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    height: '20px',
-                  }}
-                >
-                  <div
-                    style={{
-                      width: '6px',
-                      height: '6px',
-                      borderRadius: '50%',
-                      backgroundColor: statusConfig.color,
-                      marginRight: '4px',
-                    }}
-                  />
-                  {statusConfig.label}
-                </Tag>
+                <Badge
+                  status={statusConfig.color as any}
+                  text={
+                    <Tag
+                      color={statusConfig.color}
+                      icon={statusConfig.icon}
+                      style={{
+                        margin: 0,
+                        fontSize: '15px',
+                        padding: '0 6px',
+                        height: '20px',
+                        lineHeight: '20px',
+                      }}
+                    >
+                      {statusConfig.label}
+                    </Tag>
+                  }
+                />
               </div>
 
-              {/* 第二行：数据指标 */}
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(3, 1fr)',
-                  gap: '8px',
-                  marginBottom: '8px',
-                }}
-              >
-                <div
-                  style={{
-                    padding: '6px',
-                    backgroundColor: '#f0f5ff',
-                    borderRadius: '4px',
-                    textAlign: 'center',
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: '12px',
-                      fontWeight: '600',
-                      color: '#1890ff',
-                    }}
-                  >
-                    {totalCases}
-                  </div>
-                  <div style={{ fontSize: '10px', color: '#8c8c8c' }}>
-                    用例数
-                  </div>
-                </div>
-
-                <div
-                  style={{
-                    padding: '6px',
-                    backgroundColor: '#f9f0ff',
-                    borderRadius: '4px',
-                    textAlign: 'center',
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: '12px',
-                      fontWeight: '600',
-                      color: '#722ed1',
-                    }}
-                  >
-                    {totalApis}
-                  </div>
-                  <div style={{ fontSize: '10px', color: '#8c8c8c' }}>
-                    接口数
-                  </div>
-                </div>
-
-                <div
-                  style={{
-                    padding: '6px',
-                    backgroundColor: '#f6ffed',
-                    borderRadius: '4px',
-                    textAlign: 'center',
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: '12px',
-                      fontWeight: '600',
-                      color: '#389e0d',
-                    }}
-                  >
-                    {totalCases + totalApis}
-                  </div>
-                  <div style={{ fontSize: '10px', color: '#8c8c8c' }}>总数</div>
-                </div>
-              </div>
-
-              {/* 第三行：创建信息 */}
+              {/* 第二行：数据指标和创建信息 */}
               <div
                 style={{
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
-                  fontSize: '10px',
-                  color: '#8c8c8c',
-                  paddingTop: '6px',
-                  borderTop: '1px solid #f0f0f0',
+                  fontSize: '11px',
                 }}
               >
-                <div
-                  style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <span style={{ marginRight: '2px' }}>👤</span>
-                    <span
-                      style={{
-                        maxWidth: '60px',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
-                      title={task.creatorName}
-                    >
-                      {task.creatorName || 'admin'}
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <span style={{ marginRight: '2px' }}>🕐</span>
-                    {task.create_time
-                      ? task.create_time.split(' ')[0].replace(/-/g, '/')
-                      : 'N/A'}
-                  </div>
-                </div>
-                <div
-                  style={{
-                    fontSize: '9px',
-                    color: '#bfbfbf',
-                    backgroundColor: '#f5f5f5',
-                    padding: '1px 6px',
-                    borderRadius: '10px',
-                    fontFamily: 'monospace',
-                  }}
-                  title={`ID: ${task.uid}`}
-                >
-                  {task.uid?.substring(0, 6) || 'N/A'}
-                </div>
+                <Space size={12}>
+                  <Tooltip title="用例数">
+                    <Space size={4}>
+                      <FileTextOutlined
+                        style={{ fontSize: '15px', color: '#1890ff' }}
+                      />
+                      <Text style={{ color: '#1890ff', fontWeight: 500 }}>
+                        {totalCases}
+                      </Text>
+                    </Space>
+                  </Tooltip>
+
+                  <Tooltip title="接口数">
+                    <Space size={4}>
+                      <ApiOutlined
+                        style={{ fontSize: '15px', color: '#722ed1' }}
+                      />
+                      <Text style={{ color: '#722ed1', fontWeight: 500 }}>
+                        {totalApis}
+                      </Text>
+                    </Space>
+                  </Tooltip>
+
+                  <Divider
+                    type="vertical"
+                    style={{ margin: 0, height: '12px' }}
+                  />
+
+                  <Tooltip title="创建人">
+                    <Space size={2}>
+                      <UserOutlined style={{ fontSize: '15px' }} />
+                      <Text type="secondary">
+                        {task.creatorName || 'admin'}
+                      </Text>
+                    </Space>
+                  </Tooltip>
+
+                  <Tooltip title="创建时间">
+                    <Space size={2}>
+                      <ClockCircleOutlined style={{ fontSize: '15px' }} />
+                      <Text type="secondary">
+                        {task.create_time
+                          ? task.create_time.split(' ')[0].replace(/-/g, '/')
+                          : 'N/A'}
+                      </Text>
+                    </Space>
+                  </Tooltip>
+                </Space>
+
+                <Tooltip title={`ID: ${task.uid}`}>
+                  <Text
+                    type="secondary"
+                    style={{
+                      fontFamily: 'monospace',
+                      padding: '1px 4px',
+                      borderRadius: '2px',
+                    }}
+                  >
+                    {task.uid}
+                  </Text>
+                </Tooltip>
               </div>
             </ProCard>
           );
         })}
-      </div>
+      </Space>
     </div>
   );
 };

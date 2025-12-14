@@ -59,7 +59,6 @@ const RunConfig: FC<SelfProps> = ({
       boxShadow
       style={{
         height: '100%',
-        background: 'linear-gradient(135deg, #fafbff 0%, #f5f7ff 100%)',
       }}
       bodyStyle={{
         padding: 20,
@@ -77,7 +76,6 @@ const RunConfig: FC<SelfProps> = ({
           gap: '16px',
           padding: '20px',
           borderRadius: '12px',
-          background: 'linear-gradient(135deg, #f8faff 0%, #f0f4ff 100%)',
           border: '1px solid #e1e8ff',
           boxShadow: '0 2px 12px rgba(59, 130, 246, 0.08)',
         }}
@@ -120,16 +118,13 @@ const RunConfig: FC<SelfProps> = ({
         style={{
           borderRadius: '12px',
           border: '1px solid #e1e8ff',
-          backgroundColor: '#fff',
-          boxShadow: '0 2px 12px rgba(59, 130, 246, 0.08)',
           overflow: 'hidden',
         }}
       >
         <div
           style={{
             padding: '16px 20px',
-            background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)',
-            borderBottom: '1px solid #bae6fd',
+            borderBottom: '1px solid',
           }}
         >
           <div
@@ -176,7 +171,6 @@ const RunConfig: FC<SelfProps> = ({
         <div
           style={{
             padding: '20px',
-            background: 'linear-gradient(135deg, #fafbff 0%, #f8faff 50%)',
           }}
         >
           <CheckboxGroup
@@ -186,6 +180,7 @@ const RunConfig: FC<SelfProps> = ({
           />
         </div>
       </div>
+
       {/* 运行按钮 */}
       {runArea}
     </ProCard>
