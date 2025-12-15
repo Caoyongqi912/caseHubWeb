@@ -31,7 +31,11 @@ const Index: FC<SelfProps> = (props) => {
 
   return (
     <ProCard
-      style={{ height: 'auto', width: '100%' }}
+      style={{
+        height: 'auto',
+        width: '100%',
+        borderRadius: '6px',
+      }}
       bodyStyle={{ padding: 5 }}
     >
       {projects.length > 0 ? (
@@ -40,7 +44,6 @@ const Index: FC<SelfProps> = (props) => {
             projects={projects}
             currentProjectId={currentProjectId}
             onProjectChange={onProjectChange}
-            onModuleChange={onModuleChange}
           />
           <ModuleTree
             moduleType={moduleType}

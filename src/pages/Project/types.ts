@@ -30,6 +30,7 @@ export interface IJob extends IBaseField {
   job_execute_strategy: number;
   job_execute_time?: string;
   job_execute_interval?: number;
+  job_execute_interval_unit: string;
   job_execute_cron?: string;
   job_max_retry_count: number;
   job_retry_interval: number;

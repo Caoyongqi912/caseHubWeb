@@ -5,14 +5,18 @@ import { FC } from 'react';
 interface Props {
   onFinish: (values: any) => Promise<any>;
   title?: string;
-  trigger: JSX.Element;
+  trigger?: JSX.Element;
   form: FormInstance<any>;
+  open?: boolean;
+  setOpen?: (open: boolean) => void;
 }
 
 const Index: FC<Props> = (props, context) => {
-  const { onFinish, trigger, form, title } = props;
+  const { onFinish, open, setOpen, trigger, form, title } = props;
   return (
     <ModalForm
+      open={open}
+      onOpenChange={setOpen}
       trigger={trigger}
       modalProps={{
         destroyOnClose: true,

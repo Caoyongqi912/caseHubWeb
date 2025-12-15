@@ -21,8 +21,12 @@ import {
   ExclamationCircleOutlined,
   MoreOutlined,
   PlusOutlined,
+  SearchOutlined,
 } from '@ant-design/icons';
+import { ProCard } from '@ant-design/pro-components';
 import {
+  Badge,
+  Button,
   Dropdown,
   Input,
   MenuProps,
@@ -75,6 +79,8 @@ const ModuleTree: FC<IProps> = (props) => {
   const [handleModule, setHandleModule] = useState<HandleAction>(
     Handle.AddRoot,
   );
+  const [hoverNodeKey, setHoverNodeKey] = useState<number | null>(null);
+
   const [expandedKeys, setExpandedKeys] = useState<React.Key[]>([]);
   const [searchValue, setSearchValue] = useState('');
   const [autoExpandParent, setAutoExpandParent] = useState(true);
@@ -207,20 +213,63 @@ const ModuleTree: FC<IProps> = (props) => {
   };
 
   const TreeTitleRender = (tree: any) => {
+    const isSelected = defaultSelectedKeys.includes(tree.key);
+    const isHovered = hoverNodeKey === tree.key;
+    const hasChildren = tree.children && tree.children.length > 0;
+    const isExpanded = expandedKeys.includes(tree.key);
     return (
       <div
-        style={{ width: '100%' }}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          width: '100%',
+          borderRadius: '8px',
+          transition: 'all 0.2s',
+          margin: '2px 0',
+        }}
+        onMouseEnter={() => setHoverNodeKey(tree.key)}
+        onMouseLeave={() => setHoverNodeKey(null)}
         onMouseOver={(event) => {
           event.preventDefault();
           setCurrentModule(tree);
         }}
         onClick={() => {
+          onModuleChange(tree.key);
+          setLocalStorageModule(moduleType, tree.key);
+          setCurrentModule(tree.data);
           setCurrentModule(tree);
         }}
       >
-        <Text type={'secondary'} strong>
-          {tree.title}
-        </Text>
+        <Space align="center" style={{ flex: 1 }}>
+          {/* 标题 */}
+          <div style={{ flex: 1 }}>
+            <Text
+              style={{
+                fontSize: '13px',
+                fontWeight: isSelected ? 600 : 500,
+                color: isSelected ? '#1890ff' : '#262626',
+              }}
+            >
+              {tree.title}
+            </Text>
+
+            {/* 统计信息 */}
+            {tree.count > 0 && (
+              <Badge
+                count={tree.count}
+                size="small"
+                style={{
+                  marginLeft: '8px',
+                  backgroundColor: '#f0f0f0',
+                  color: '#595959',
+                  fontSize: '10px',
+                }}
+              />
+            )}
+          </div>
+        </Space>
+
         {isAdmin && (
           <>
             {currentModule && currentModule.key === tree.key ? (
@@ -326,51 +375,124 @@ const ModuleTree: FC<IProps> = (props) => {
       />
 
       {modules.length > 0 ? (
-        <Space direction={'vertical'} size={'middle'} style={{ width: '100%' }}>
-          <Search
-            enterButton
-            variant={'filled'}
-            style={{ marginBottom: 8, marginTop: 12 }}
-            placeholder="模块查询"
-            width={'100%'}
-            suffix={
-              isAdmin && (
-                <Tooltip title={'点击可新建根模块。子模块需要在树上新建'}>
-                  <a
-                    onClick={() => {
-                      setHandleModule(Handle.AddRoot);
-                      setCurrentModule(null);
-                      setOpen(true);
-                    }}
-                  >
-                    <PlusOutlined style={{ color: 'black' }} />
-                  </a>
-                </Tooltip>
-              )
-            }
-            onChange={OnSearchChange}
-          />
-          <Tree
-            showLine
-            style={{ width: 'auto' }}
-            draggable={isAdmin} //admin 可拖动
-            blockNode //是否节点占据一行
-            onExpand={(newExpandedKeys: React.Key[]) => {
-              setExpandedKeys(newExpandedKeys);
-              setAutoExpandParent(false);
-            }}
-            onDrop={onDrop} //拖拽结束触发
-            expandedKeys={expandedKeys}
-            autoExpandParent={autoExpandParent}
-            defaultSelectedKeys={defaultSelectedKeys}
-            onSelect={(keys: React.Key[], info: any) => {
-              onModuleChange(info.node.key);
-              setLocalStorageModule(moduleType, info.node.key);
-            }}
-            treeData={TreeModule}
-            titleRender={TreeTitleRender}
-          />
-        </Space>
+        <div>
+          <Space
+            direction={'vertical'}
+            size={'middle'}
+            style={{ width: '100%' }}
+          >
+            {/* 搜索区域卡片 */}
+            <ProCard
+              size="small"
+              bordered
+              style={{
+                marginBottom: '16px',
+                borderRadius: '12px',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+              }}
+              bodyStyle={{ padding: '12px' }}
+            >
+              <Space direction="vertical" style={{ width: '100%' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}
+                >
+                  <Text strong style={{ fontSize: '14px', color: '#722ed1' }}>
+                    模块目录
+                  </Text>
+                  {isAdmin && (
+                    <Tooltip title="新建根模块">
+                      <Button
+                        type="primary"
+                        size="small"
+                        icon={<PlusOutlined />}
+                        onClick={() => {
+                          setHandleModule(Handle.AddRoot);
+                          setCurrentModule(null);
+                          setOpen(true);
+                        }}
+                        style={{
+                          borderRadius: '6px',
+                          padding: '0 8px',
+                          height: '28px',
+                          fontSize: '12px',
+                        }}
+                      >
+                        新建
+                      </Button>
+                    </Tooltip>
+                  )}
+                </div>
+
+                <Search
+                  placeholder="搜索模块..."
+                  prefix={<SearchOutlined style={{ color: '#8c8c8c' }} />}
+                  allowClear
+                  variant="filled"
+                  onChange={OnSearchChange}
+                  style={{ marginTop: '8px' }}
+                />
+              </Space>
+            </ProCard>
+            <ProCard
+              size="small"
+              style={{
+                borderRadius: '12px',
+              }}
+              bodyStyle={{
+                padding: '8px',
+                maxHeight: 'calc(100vh - 300px)',
+                overflowY: 'auto',
+              }}
+            >
+              <Tree
+                // showLine
+                showLine={{ showLeafIcon: false }}
+                showIcon={false}
+                style={{ width: 'auto' }}
+                draggable={isAdmin} //admin 可拖动
+                blockNode //是否节点占据一行
+                onExpand={(newExpandedKeys: React.Key[]) => {
+                  setExpandedKeys(newExpandedKeys);
+                  setAutoExpandParent(false);
+                }}
+                onDrop={onDrop} //拖拽结束触发
+                expandedKeys={expandedKeys}
+                autoExpandParent={autoExpandParent}
+                defaultSelectedKeys={defaultSelectedKeys}
+                onSelect={(keys: React.Key[], info: any) => {
+                  onModuleChange(info.node.key);
+                  setLocalStorageModule(moduleType, info.node.key);
+                }}
+                treeData={TreeModule}
+                titleRender={TreeTitleRender}
+              />
+              {/* 统计信息 */}
+              {modules.length > 0 && (
+                <div
+                  style={{
+                    marginTop: '12px',
+                    padding: '8px',
+                    borderTop: '1px solid #f0f0f0',
+                    fontSize: '11px',
+                    color: '#8c8c8c',
+                    textAlign: 'center',
+                  }}
+                >
+                  共 {modules.length} 个模块 •{' '}
+                  {
+                    modules.filter((m) => m.children && m.children.length > 0)
+                      .length
+                  }{' '}
+                  个文件夹
+                </div>
+              )}
+            </ProCard>
+          </Space>
+        </div>
       ) : (
         <>
           {isAdmin && (

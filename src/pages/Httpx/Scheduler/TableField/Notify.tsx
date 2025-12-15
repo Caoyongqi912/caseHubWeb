@@ -1,4 +1,7 @@
 import { IObjGet } from '@/api';
+import { update_aps_job } from '@/api/base/aps';
+import MyModal from '@/components/MyModal';
+import NotifyForm from '@/pages/Httpx/Scheduler/JobForm/NotifyForm';
 import { IJob } from '@/pages/Project/types';
 import {
   BellFilled,
@@ -9,16 +12,24 @@ import {
   PlayCircleOutlined,
 } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
-import { Space, Tag, Tooltip, Typography } from 'antd';
-import { FC } from 'react';
+import { Form, message, Space, Tag, Tooltip, Typography } from 'antd';
+import { FC, useEffect, useState } from 'react';
 
-const { Text } = Typography;
+const { Text, Link } = Typography;
 
 interface Props {
   record: IJob;
+  callback: () => void;
 }
 
-const Notify: FC<Props> = ({ record }) => {
+const Notify: FC<Props> = ({ record, callback }) => {
+  const [form] = Form.useForm();
+  const [open, setOpen] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
+  useEffect(() => {
+    if (!record) return;
+    form.setFieldsValue(record);
+  }, [record]);
   // 通知类型配置
   const notifyTypeConfig: IObjGet = {
     0: { label: '通知', color: 'success', icon: <BellFilled /> },
@@ -37,84 +48,150 @@ const Notify: FC<Props> = ({ record }) => {
   const notifyOnArray = Array.isArray(record.job_notify_on)
     ? record.job_notify_on
     : [];
-
+  const updateJobNotify = async (values: IJob) => {
+    const { code } = await update_aps_job({
+      ...values,
+      uid: record.uid,
+    });
+    if (code === 0) {
+      message.success('参数保存成功');
+      callback();
+    }
+    return true;
+  };
   return (
-    <ProCard
-      size="small"
-      layout="center"
-      style={{
-        borderRadius: '8px',
-      }}
-      bodyStyle={{
-        padding: '12px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '8px',
-      }}
-    >
-      {/* 通知名称和类型 */}
-      <Space align="center" style={{ width: '100%' }}>
-        <Tooltip title="推送通知">
-          <NotificationOutlined
-            style={{
-              color: '#722ed1',
-              fontSize: '14px',
-              marginRight: '8px',
-            }}
-          />
-        </Tooltip>
-        <Tag
-          color={typeConfig.color}
-          icon={typeConfig.icon}
-          style={{ margin: 0 }}
-        >
-          {typeConfig.label}
-        </Tag>
-        {record.job_notify_name && (
-          <Tag color={'blue'}>{record.job_notify_name}</Tag>
-        )}
-      </Space>
-
-      {/* 通知时机 */}
-      {notifyOnArray.length > 0 ? (
-        <Space direction="vertical" size={4} style={{ width: '100%' }}>
-          <Text type="secondary" style={{ fontSize: '10px' }}>
-            通知时机:
-          </Text>
-          <Space wrap size={[4, 4]}>
-            {notifyOnArray.map((onType) => {
-              const config = notifyOnConfig[onType];
-              if (!config) return null;
-              return (
-                <Tag
-                  key={onType}
-                  color={config.color}
-                  icon={config.icon}
-                  style={{
-                    margin: 0,
-                    fontSize: '10px',
-                    padding: '1px 6px',
-                  }}
-                >
-                  {config.label}
-                </Tag>
-              );
-            })}
+    <>
+      <ProCard
+        onMouseEnter={() => {
+          setShowEdit(true);
+        }}
+        onMouseLeave={() => {
+          setShowEdit(false);
+        }}
+        size="small"
+        layout="center"
+        style={{
+          borderRadius: '6px',
+        }}
+        bodyStyle={{
+          padding: '8px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px',
+        }}
+      >
+        {/* 通知名称和类型 */}
+        {record.job_notify_type === 0 && (
+          <Space align="center" style={{ width: '100%' }}>
+            <Tooltip title="推送通知">
+              <NotificationOutlined
+                style={{
+                  color: '#722ed1',
+                  fontSize: '14px',
+                  marginRight: '8px',
+                }}
+              />
+            </Tooltip>
+            <Tag
+              color={typeConfig.color}
+              icon={typeConfig.icon}
+              style={{ margin: 0 }}
+            >
+              {typeConfig.label}
+            </Tag>
+            {record.job_notify_name && (
+              <Tag color={'blue'}>{record.job_notify_name}</Tag>
+            )}
+            {showEdit && (
+              <Link
+                style={{
+                  fontSize: '12px',
+                  marginLeft: 'auto',
+                }}
+                onClick={(e) => {
+                  setOpen(true);
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+              >
+                修改
+              </Link>
+            )}
           </Space>
-        </Space>
-      ) : (
-        <Text
-          type="secondary"
-          style={{
-            fontSize: '11px',
-            textAlign: 'center',
-            fontStyle: 'italic',
+        )}
+
+        {/* 通知时机 */}
+        {notifyOnArray.length > 0 ? (
+          <Space direction="vertical" size={4} style={{ width: '100%' }}>
+            <Text type="secondary" style={{ fontSize: '10px' }}>
+              通知时机:
+            </Text>
+            <Space wrap size={[4, 4]}>
+              {notifyOnArray.map((onType) => {
+                const config = notifyOnConfig[onType];
+                if (!config) return null;
+                return (
+                  <Tag
+                    key={onType}
+                    color={config.color}
+                    style={{
+                      margin: 0,
+                      fontSize: '10px',
+                      padding: '1px 6px',
+                    }}
+                  >
+                    {config.label}
+                  </Tag>
+                );
+              })}
+            </Space>
+          </Space>
+        ) : (
+          <Space
+            direction="vertical"
+            align="center"
+            size={2}
+            style={{ width: '100%' }}
+          >
+            <Text
+              type="secondary"
+              style={{
+                fontSize: '11px',
+                textAlign: 'center',
+                fontStyle: 'italic',
+              }}
+            >
+              未配置通知时机
+            </Text>
+
+            <Link
+              style={{ fontSize: '12px' }}
+              onClick={(e) => {
+                setOpen(true);
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+            >
+              添加
+            </Link>
+          </Space>
+        )}
+      </ProCard>
+      <MyModal
+        onFinish={updateJobNotify}
+        setOpen={setOpen}
+        open={open}
+        form={form}
+      >
+        <NotifyForm
+          setNotifyName={(value) => {
+            form.setFieldsValue({
+              job_notify_name: value,
+            });
           }}
-        >
-          未配置通知时机
-        </Text>
-      )}
-    </ProCard>
+        />
+      </MyModal>
+    </>
   );
 };
 

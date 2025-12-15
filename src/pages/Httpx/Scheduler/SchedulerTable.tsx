@@ -2,7 +2,7 @@ import { page_aps_job, remove_aps_job } from '@/api/base/aps';
 import MyDrawer from '@/components/MyDrawer';
 import MyProTable from '@/components/Table/MyProTable';
 import InterfaceApiTaskResultTable from '@/pages/Httpx/InterfaceApiTaskResult/InterfaceApiTaskResultTable';
-import ConfigForm from '@/pages/Httpx/Scheduler/ConfigForm';
+import JobForm from '@/pages/Httpx/Scheduler/JobForm';
 import JobParams from '@/pages/Httpx/Scheduler/TableField/JobParams';
 import Notify from '@/pages/Httpx/Scheduler/TableField/Notify';
 import TasksFiled from '@/pages/Httpx/Scheduler/TableField/TasksFiled';
@@ -33,6 +33,7 @@ const SchedulerTable: FC<SelfProps> = (props) => {
       title: '任务ID',
       dataIndex: 'uid',
       copyable: true,
+      fixed: 'left',
       width: '10%',
       render: (_, record) => <Tag color={'blue-inverse'}>{record.uid}</Tag>,
     },
@@ -40,6 +41,7 @@ const SchedulerTable: FC<SelfProps> = (props) => {
       title: '任务名称',
       dataIndex: 'job_name',
       ellipsis: true,
+      fixed: 'left',
       width: '10%',
       render: (_, record) => (
         <Tag color={'blue-inverse'}>{record.job_name}</Tag>
@@ -72,8 +74,8 @@ const SchedulerTable: FC<SelfProps> = (props) => {
     {
       title: '执行信息',
       dataIndex: 'job_trigger_type',
-      search: false,
       width: '20%',
+      search: false,
       render: (_, record) => (
         <TriggerType record={record} callback={reloadTable} />
       ),
@@ -82,17 +84,20 @@ const SchedulerTable: FC<SelfProps> = (props) => {
     {
       title: '参数',
       dataIndex: 'job_kwargs',
+      width: '20%',
       search: false,
-      width: '15%',
-      render: (text, record) => <JobParams text={text} record={record} />,
+      render: (text, record) => (
+        <JobParams callback={reloadTable} text={text} record={record} />
+      ),
     },
     {
       title: '通知',
       dataIndex: 'job_notify_on',
-      width: '18%',
+      width: '20%',
+
       search: false,
       render: (_, record) => {
-        return <Notify record={record} />;
+        return <Notify record={record} callback={reloadTable} />;
       },
     },
     {
@@ -187,7 +192,7 @@ const SchedulerTable: FC<SelfProps> = (props) => {
         }}
         onOpenChange={setModalVisit}
       >
-        <ConfigForm
+        <JobForm
           currentJob={currentJob}
           callback={reloadTable}
           currentProjectId={currentProjectId}
@@ -196,6 +201,7 @@ const SchedulerTable: FC<SelfProps> = (props) => {
       </ModalForm>
       <MyProTable
         expandable={{
+          fixed: 'left',
           expandedRowKeys,
           columnTitle: '关联任务',
           columnWidth: '4%',
@@ -204,7 +210,7 @@ const SchedulerTable: FC<SelfProps> = (props) => {
             return <TasksFiled job_uid={record.uid} />;
           },
         }}
-        x={1200}
+        x={1500}
         persistenceKey={perKey}
         actionRef={actionRef}
         columns={columns}

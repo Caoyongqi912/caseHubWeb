@@ -1,316 +1,566 @@
+import { update_aps_job } from '@/api/base/aps';
 import AceCodeEditor from '@/components/CodeEditor/AceCodeEditor';
 import { IJob } from '@/pages/Project/types';
-import { EyeOutlined, SettingOutlined } from '@ant-design/icons';
-import { ProCard, ProDescriptions } from '@ant-design/pro-components';
-import { List, Modal, Space, Tag, Tooltip, Typography } from 'antd';
-import { FC, ReactNode, useState } from 'react';
+import { EditOutlined, EyeOutlined, SettingOutlined } from '@ant-design/icons';
+import { ProCard } from '@ant-design/pro-components';
+import {
+  Button,
+  Col,
+  message,
+  Modal,
+  Row,
+  Space,
+  Tag,
+  Tooltip,
+  Typography,
+} from 'antd';
+import { FC, ReactNode, useMemo, useRef, useState } from 'react';
 
-const { Text, Paragraph } = Typography;
+const { Text, Link } = Typography;
 
 interface Props {
   text: ReactNode;
   record: IJob;
+  callback: () => void;
 }
 
-const JobParams: FC<Props> = ({ text, record }) => {
+const JobParams: FC<Props> = ({ text, record, callback }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editable, setEditable] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editValue, setEditValue] = useState('');
+  const [showError, setShowError] = useState(false);
+  const timeoutRef = useRef<any>(null);
 
   // 解析参数数据
-  const parseParams = () => {
+  const params = useMemo(() => {
     try {
-      let params = text;
-
-      if (typeof params === 'string') {
-        params = JSON.parse(params);
+      let data = text;
+      if (typeof data === 'string' && data.trim()) {
+        data = JSON.parse(data);
       }
-
-      return params;
+      return data;
     } catch (error) {
       return null;
     }
-  };
+  }, [text]);
 
-  const params = parseParams();
-
-  // 获取参数数量
-  const getParamCount = () => {
-    if (!params) return '0 个参数';
-
-    if (Array.isArray(params)) {
-      return `${params.length} 个参数`;
-    } else if (typeof params === 'object') {
-      return `${Object.keys(params).length} 个参数`;
-    }
-
-    return '0 个参数';
-  };
-
-  // 渲染参数内容
-  const renderParamsContent = () => {
+  const getParamsInfo = useMemo(() => {
     if (!params) {
-      return (
-        <Space
-          direction="vertical"
-          align="center"
-          style={{ width: '100%', padding: '16px' }}
-        >
-          <SettingOutlined style={{ fontSize: '24px' }} />
-          <Text type="secondary">无参数配置</Text>
-        </Space>
-      );
+      return {
+        type: 'empty' as const,
+        count: 0,
+        hasMore: false,
+      };
     }
 
-    // 数组参数格式 [{key: xx, value: xx}, ...]
-    if (Array.isArray(params) && params.length > 0) {
-      return (
-        <List
-          size="small"
-          dataSource={params}
-          renderItem={(item, index) => {
-            if (item && typeof item === 'object') {
-              // 键值对格式
-              if (item.key !== undefined && item.value !== undefined) {
-                return (
-                  <List.Item
-                    style={{
-                      padding: '8px 0',
-                      borderRadius: '4px',
-                    }}
-                  >
-                    <Space align="start" style={{ width: '100%' }}>
-                      <Tooltip title={String(item.key)}>
-                        <Tag
-                          color="purple"
-                          style={{ margin: 0, maxWidth: '80px' }}
-                        >
-                          <Paragraph
-                            ellipsis={{ rows: 1 }}
-                            style={{ margin: 0, fontSize: '11px' }}
-                          >
-                            {String(item.key)}
-                          </Paragraph>
-                        </Tag>
-                      </Tooltip>
-                      <Tooltip title={String(item.value)}>
-                        <Paragraph
-                          ellipsis={{ rows: 1 }}
-                          style={{
-                            flex: 1,
-                            margin: 0,
-                            fontSize: '11px',
-                            padding: '4px 8px',
-                            borderRadius: '4px',
-                          }}
-                        >
-                          {String(item.value)}
-                        </Paragraph>
-                      </Tooltip>
-                    </Space>
-                  </List.Item>
-                );
-              }
+    // 判断类型和数量
+    const isArray = Array.isArray(params);
+    const totalCount = isArray ? params.length : Object.keys(params).length;
 
-              // 普通对象格式
-              return (
-                <ProCard
-                  key={index}
-                  size="small"
-                  title={`参数组 ${index + 1}`}
-                  headerBordered
-                  style={{ marginBottom: '8px' }}
-                >
-                  <ProDescriptions
-                    column={1}
-                    size="small"
-                    dataSource={item}
-                    columns={Object.keys(item).map((key) => ({
-                      title: key,
-                      dataIndex: key,
-                      render: (value) => (
-                        <Tooltip title={String(value)}>
-                          <Paragraph
-                            ellipsis={{ rows: 1 }}
-                            style={{ margin: 0, fontSize: '11px' }}
-                          >
-                            {String(value)}
-                          </Paragraph>
-                        </Tooltip>
-                      ),
-                    }))}
-                  />
-                </ProCard>
-              );
-            }
+    // 判断是否为键值对格式
+    let isKeyValue = false;
+    if (isArray && params.length > 0) {
+      const firstItem = params[0];
+      isKeyValue =
+        firstItem?.key !== undefined && firstItem?.value !== undefined;
+    }
 
-            // 非对象格式
-            return (
-              <List.Item style={{ padding: '4px 0' }}>
-                <Paragraph
-                  ellipsis={{ rows: 1 }}
-                  style={{
-                    margin: 0,
-                    fontSize: '11px',
-                    padding: '4px 8px',
-                    borderRadius: '4px',
-                    width: '100%',
-                  }}
-                >
-                  {String(item)}
-                </Paragraph>
-              </List.Item>
-            );
+    return {
+      type: isKeyValue ? 'keyValue' : isArray ? 'array' : 'object',
+      count: totalCount,
+      hasMore: totalCount > 3,
+      isKeyValue,
+      isObject: !isArray,
+    };
+  }, [params]);
+  // 获取参数数量
+  const paramCount = useMemo(() => {
+    if (!params) return '0 个参数';
+    if (Array.isArray(params)) return `${params.length} 个参数`;
+    if (typeof params === 'object')
+      return `${Object.keys(params).length} 个参数`;
+    return '0 个参数';
+  }, [params]);
+
+  // 格式化显示的文本（截断过长文本）
+  const formatText = (text: any, maxLength = 15) => {
+    const str = String(text);
+    if (str.length <= maxLength) return str;
+    return str.slice(0, maxLength) + '...';
+  };
+
+  // 获取前3行数据
+  const firstParams = useMemo(() => {
+    if (!params) return [];
+    if (Array.isArray(params)) {
+      return params.slice(0, 3);
+    }
+    if (typeof params === 'object') {
+      return Object.entries(params).slice(0, 3);
+    }
+    return [];
+  }, [params]);
+
+  // 是否有更多数据
+  const hasMoreData = useMemo(() => {
+    if (!params) return false;
+    if (Array.isArray(params)) return params.length > 3;
+    if (typeof params === 'object') return Object.keys(params).length > 3;
+    return false;
+  }, [params]);
+
+  // 渲染键值对项
+  const renderKeyValueItem = (item: any, index: number) => {
+    const keyText = formatText(item.key, 6);
+    const valueText = formatText(item.value, 12);
+
+    return (
+      <Row
+        key={index}
+        align="middle"
+        style={{
+          padding: '1px 0',
+          minHeight: '20px',
+          fontSize: '11px',
+          width: '100%',
+        }}
+      >
+        {/* Key列 - 固定宽度 */}
+        <Col
+          flex="80px"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            overflow: 'hidden',
           }}
-        />
-      );
-    }
-
-    // 对象参数格式
-    if (params && typeof params === 'object' && !Array.isArray(params)) {
-      const entries = Object.entries(params);
-      if (entries.length === 0) return null;
-
-      return (
-        <List
-          size="small"
-          dataSource={entries}
-          renderItem={([key, value], index) => (
-            <List.Item
+        >
+          <Tooltip title={item.key}>
+            <Tag
+              color="purple"
               style={{
-                padding: '8px 0',
-                backgroundColor: index % 2 === 0 ? 'transparent' : '#fafafa',
-                borderRadius: '4px',
+                margin: 0,
+                width: '100%',
+                fontSize: '10px',
+                height: '18px',
+                lineHeight: '16px',
+                padding: '0 4px',
+                overflow: 'hidden',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
-              <Space align="start" style={{ width: '100%' }}>
-                <Tooltip title={String(key)}>
-                  <Tag color="blue" style={{ margin: 0, maxWidth: '80px' }}>
-                    <Paragraph
-                      ellipsis={{ rows: 1 }}
-                      style={{ margin: 0, fontSize: '11px' }}
-                    >
-                      {String(key)}
-                    </Paragraph>
-                  </Tag>
-                </Tooltip>
-                <Tooltip title={String(value)}>
-                  <Paragraph
-                    ellipsis={{ rows: 1 }}
-                    style={{
-                      flex: 1,
-                      margin: 0,
-                      fontSize: '11px',
-                      backgroundColor: '#f0f5ff',
-                      padding: '4px 8px',
-                      borderRadius: '4px',
-                    }}
-                  >
-                    {String(value)}
-                  </Paragraph>
-                </Tooltip>
-              </Space>
-            </List.Item>
-          )}
-        />
-      );
-    }
+              <span
+                style={{
+                  display: 'inline-block',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  width: '100%',
+                  textAlign: 'center',
+                }}
+              >
+                {keyText}
+              </span>
+            </Tag>
+          </Tooltip>
+          <span
+            style={{
+              color: '#bfbfbf',
+              flexShrink: 0,
+            }}
+          >
+            :
+          </span>
+        </Col>
 
-    return null;
+        {/* Value列 - 自适应宽度 */}
+        <Col
+          flex="auto"
+          style={{
+            overflow: 'hidden',
+            paddingLeft: '4px',
+          }}
+        >
+          <Tooltip title={item.value}>
+            <Text
+              ellipsis={{ tooltip: item.value }}
+              style={{
+                display: 'block',
+                margin: 0,
+                fontSize: '11px',
+                lineHeight: '18px',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {valueText}
+            </Text>
+          </Tooltip>
+        </Col>
+      </Row>
+    );
   };
+  // 渲染对象键值对
+  const renderObjectItem = ([key, value]: [string, any], index: number) => {
+    const keyText = formatText(key, 12);
+    const valueText = formatText(value, 30);
 
-  if (!params) {
     return (
-      <ProCard
-        size="small"
-        layout="center"
-        bordered
+      <Row
+        key={index}
+        align="middle"
+        gutter={[4, 0]}
         style={{
-          borderRadius: '8px',
+          padding: '1px 0',
+          minHeight: '20px',
+          fontSize: '11px',
         }}
-        bodyStyle={{ padding: '16px' }}
       >
-        <Space direction="vertical" align="center" size={8}>
-          <SettingOutlined style={{ fontSize: '20px' }} />
-          <Text type="secondary">无参数配置</Text>
-        </Space>
+        <Col
+          flex="none"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            height: '18px',
+          }}
+        >
+          <Tooltip title={key}>
+            <Tag
+              color="blue"
+              style={{
+                margin: 0,
+                maxWidth: '80px',
+                fontSize: '10px',
+                height: '18px',
+                lineHeight: '16px',
+                padding: '0 4px',
+                overflow: 'hidden',
+                display: 'inline-flex',
+                alignItems: 'center',
+              }}
+            >
+              <span
+                style={{
+                  display: 'inline-block',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  maxWidth: '70px',
+                }}
+              >
+                {keyText}
+              </span>
+            </Tag>
+          </Tooltip>
+          <span
+            style={{
+              margin: '0 4px',
+              color: '#bfbfbf',
+              flexShrink: 0,
+            }}
+          >
+            :
+          </span>
+        </Col>
+        <Col flex="auto" style={{ overflow: 'hidden' }}>
+          <Tooltip title={value}>
+            <Text
+              ellipsis={{ tooltip: value }}
+              style={{
+                display: 'block',
+                margin: 0,
+                fontSize: '11px',
+                lineHeight: '18px',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {valueText}
+            </Text>
+          </Tooltip>
+        </Col>
+      </Row>
+    );
+  };
+  const renderSimpleItem = (item: any, index: number) => {
+    const text = formatText(item, 30);
+
+    return (
+      <div
+        key={index}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          padding: '1px 0',
+          minHeight: '20px',
+          fontSize: '11px',
+        }}
+      >
+        <Tooltip title={item}>
+          <Text
+            ellipsis={{ tooltip: item }}
+            style={{
+              margin: 0,
+              fontSize: '11px',
+              lineHeight: '18px',
+              paddingLeft: '20px', // 为了对齐，添加左边距
+              flex: 1,
+              wordBreak: 'break-all',
+            }}
+          >
+            {text}
+          </Text>
+        </Tooltip>
+      </div>
+    );
+  };
+  // 渲染前三行数据
+  const renderFirstThree = () => {
+    if (!firstParams.length) return null;
+    const { type } = getParamsInfo;
+
+    return (
+      <ProCard size={'small'}>
+        {firstParams.map((item, index) => {
+          console.log('=====', type);
+          switch (type) {
+            case 'keyValue':
+              return renderKeyValueItem(item, index);
+            case 'object':
+              return renderObjectItem(item as [string, any], index);
+            default:
+              return renderSimpleItem(item, index);
+          }
+        })}
+
+        {getParamsInfo.hasMore && (
+          <div
+            style={{
+              padding: '2px 0',
+              fontSize: '10px',
+              color: '#8c8c8c',
+              textAlign: 'center',
+            }}
+          >
+            ...还有{getParamsInfo.count - 3}个参数
+          </div>
+        )}
       </ProCard>
     );
-  }
+  };
+
+  // 处理保存编辑
+  const handleSaveEdit = async () => {
+    clearTimeout(timeoutRef.current);
+
+    try {
+      const parsedValue = JSON.parse(editValue);
+      // @ts-ignore
+      const { code } = await update_aps_job({
+        job_kwargs: parsedValue,
+        uid: record.uid,
+      });
+      if (code === 0) {
+        setIsEditMode(false);
+        setIsModalOpen(false);
+        setShowError(false);
+        message.success('参数保存成功');
+        callback();
+      }
+    } catch (error) {
+      setShowError(true);
+      timeoutRef.current = setTimeout(() => {
+        setShowError(false);
+      }, 3000);
+    }
+  };
 
   return (
     <>
-      <Modal
-        title={'参数详情'}
-        open={isModalOpen}
-        onCancel={() => setIsModalOpen(false)}
-        onOk={() => setIsModalOpen(false)}
-      >
+      {!params ? (
         <ProCard
-          bordered
-          headerBordered
           size="small"
-          style={{ marginTop: '16px' }}
-        >
-          {' '}
-          <AceCodeEditor
-            readonly={true}
-            _mode={'json'}
-            value={JSON.stringify(
-              typeof text === 'string' ? JSON.parse(text) : text,
-              null,
-              2,
-            )}
-          />
-        </ProCard>
-      </Modal>
-      <ProCard
-        size="small"
-        style={{
-          borderRadius: '8px',
-        }}
-        bodyStyle={{
-          padding: '12px',
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
-        {/* 标题区域 */}
-        <Space
-          align="center"
+          layout="center"
           style={{
-            width: '100%',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            height: '50px',
+          }}
+          bodyStyle={{
+            padding: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
-          <SettingOutlined style={{ fontSize: '14px', color: '#722ed1' }} />
-          <Text type="secondary" style={{ fontSize: '11px' }}>
-            {getParamCount()}
-          </Text>
-        </Space>
-        {/* 参数内容 */}
-        <div style={{ flex: 1, overflowY: 'auto', marginBottom: '12px' }}>
-          {renderParamsContent()}
-        </div>
-        {/* 查看更多按钮 */}
-        {record.job_kwargs !== null && (
-          <Space
-            style={{
-              width: '100%',
-              justifyContent: 'center',
-            }}
-          >
-            <a
+          <Space direction="vertical" align="center" size={2}>
+            <Text type="secondary" style={{ fontSize: '10px' }}>
+              无参数配置
+            </Text>
+            <Link
+              style={{ fontSize: '12px' }}
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 setIsModalOpen(true);
+                setEditable(true);
               }}
-              style={{ fontSize: '11px' }}
             >
-              <EyeOutlined style={{ marginRight: '4px', fontSize: '11px' }} />
-              查看完整参数
-            </a>
+              添加
+            </Link>
           </Space>
-        )}
-      </ProCard>
+        </ProCard>
+      ) : (
+        <>
+          {/* 参数展示卡片 */}
+          <ProCard
+            size={'small'}
+            split={'horizontal'}
+            style={{
+              padding: '3px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px',
+            }}
+          >
+            {/* 标题区域 */}
+            <Tag
+              icon={<SettingOutlined />}
+              color="#722ed1"
+              style={{
+                fontSize: '11px',
+                flex: 1,
+                fontWeight: 500,
+                marginBottom: '4px',
+              }}
+            >
+              {paramCount}
+            </Tag>
+            {/* 参数内容 */}
+            {renderFirstThree()}
+
+            {/* 查看更多按钮 */}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'center',
+                marginTop: '6px',
+              }}
+            >
+              <a
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsModalOpen(true);
+                  setEditable(true);
+                }}
+                style={{
+                  fontSize: '10px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '2px',
+                }}
+              >
+                <EyeOutlined style={{ fontSize: '10px' }} />
+                {hasMoreData ? '查看全部' : '查看详情'}
+                {editable && '/编辑'}
+              </a>
+            </div>
+          </ProCard>
+        </>
+      )}
+
+      {/* 模态框 */}
+      <>
+        <Modal
+          title={'参数详情'}
+          open={isModalOpen}
+          onCancel={() => {
+            setIsModalOpen(false);
+            setIsEditMode(false);
+            setShowError(false);
+          }}
+          footer={
+            isEditMode
+              ? [
+                  <Button
+                    key="cancel"
+                    onClick={() => {
+                      setIsEditMode(false);
+                      setShowError(false);
+                    }}
+                  >
+                    取消编辑
+                  </Button>,
+                  <Button key="save" type="primary" onClick={handleSaveEdit}>
+                    保存
+                  </Button>,
+                ]
+              : [
+                  <Button key="close" onClick={() => setIsModalOpen(false)}>
+                    关闭
+                  </Button>,
+                  <Button
+                    key="edit"
+                    type="primary"
+                    icon={<EditOutlined />}
+                    onClick={() => {
+                      setEditable(true);
+                      setEditValue(JSON.stringify(params, null, 2));
+                      setIsEditMode(true);
+                    }}
+                  >
+                    编辑
+                  </Button>,
+                ]
+          }
+          width={800}
+          destroyOnClose
+        >
+          <div style={{ marginTop: '12px' }}>
+            {showError ? (
+              <div
+                style={{
+                  color: '#ff4d4f',
+                  marginBottom: '8px',
+                  padding: '8px',
+                  backgroundColor: '#fff2f0',
+                  borderRadius: '4px',
+                  border: '1px solid #ffccc7',
+                  fontSize: '13px',
+                }}
+              >
+                JSON格式错误，请检查语法
+              </div>
+            ) : (
+              <Text type={'secondary'}>{`格式要求：[{key:xx,value:xx}]`} </Text>
+            )}
+            {isEditMode ? (
+              <AceCodeEditor
+                _mode="json"
+                value={editValue}
+                onChange={(value) => {
+                  setEditValue(value);
+                  setShowError(false);
+                }}
+                height="400px"
+              />
+            ) : (
+              <AceCodeEditor
+                readonly={true}
+                _mode="json"
+                value={JSON.stringify(params, null, 2)}
+                height="400px"
+              />
+            )}
+          </div>
+        </Modal>
+      </>
     </>
   );
 };
