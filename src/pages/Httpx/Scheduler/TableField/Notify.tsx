@@ -121,7 +121,7 @@ const Notify: FC<Props> = ({ record, callback }) => {
         )}
 
         {/* 通知时机 */}
-        {notifyOnArray.length > 0 ? (
+        {record.job_notify_type === 0 && notifyOnArray.length > 0 ? (
           <Space direction="vertical" size={4} style={{ width: '100%' }}>
             <Text type="secondary" style={{ fontSize: '10px' }}>
               通知时机:
@@ -161,7 +161,7 @@ const Notify: FC<Props> = ({ record, callback }) => {
                 fontStyle: 'italic',
               }}
             >
-              未配置通知时机
+              未配置通知
             </Text>
 
             <Link

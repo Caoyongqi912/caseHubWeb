@@ -4,9 +4,10 @@ import InterfaceApiTable from '@/pages/Httpx/Interface/InterfaceApiTable';
 import InterfaceApiTableNoModule from '@/pages/Httpx/Interface/InterfaceApiTableNoModule';
 import InterfaceApiUpload from '@/pages/Httpx/Interface/InterfaceApiUpload';
 import { ModuleEnum } from '@/utils/config';
+import { getSplitter, setSplitter } from '@/utils/token';
 import { ProCard } from '@ant-design/pro-components';
 import { Splitter, TabsProps } from 'antd';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const Index = () => {
   const [currentModuleId, setCurrentModuleId] = useState<number>();
@@ -14,6 +15,8 @@ const Index = () => {
   const PerKey = 'InterfaceApi';
   const PerKeyNoPart = 'InterfaceApiNoPart';
   const PerGroupKey = 'InterfaceGroupApi';
+  const PerKeySplitter = 'InterfaceApi:Splitter';
+  const [sizes, setSizes] = useState<(number | string)[]>(['20%', '80%']);
 
   const TabItems: TabsProps['items'] = [
     {
@@ -64,35 +67,42 @@ const Index = () => {
     setCurrentModuleId(moduleId);
   };
 
+  useEffect(() => {
+    const data = getSplitter(PerKeySplitter);
+    if (data) {
+      setSizes([data.left, data.right]);
+    }
+  }, []);
   return (
     <ProCard
-      bordered={true}
       style={{ height: 'auto' }}
-      bodyStyle={{ height: 'auto', padding: 0 }}
+      bodyStyle={{
+        height: 'auto',
+        minHeight: '100vh',
+        padding: '16px',
+      }}
     >
-      <Splitter layout="horizontal">
+      <Splitter
+        onResize={(sizes: number[]) => {
+          setSizes(sizes);
+          setSplitter(PerKeySplitter, sizes[0], sizes[1]);
+        }}
+        style={{ boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)' }}
+        layout="horizontal"
+      >
         <Splitter.Panel
           collapsible={true}
-          defaultSize="15%"
-          min="10%"
-          max="30%"
-          style={{ height: '100vh' }}
+          size={sizes[0]}
+          style={{ height: 'auto' }}
         >
-          <Splitter layout="vertical">
-            <Splitter.Panel>
-              <LeftComponents
-                moduleType={ModuleEnum.API}
-                currentProjectId={currentProjectId}
-                onProjectChange={onProjectChange}
-                onModuleChange={onModuleChange}
-              />
-            </Splitter.Panel>
-            <Splitter.Panel>
-              <ProCard title="视图"></ProCard>
-            </Splitter.Panel>
-          </Splitter>
+          <LeftComponents
+            moduleType={ModuleEnum.API}
+            currentProjectId={currentProjectId}
+            onProjectChange={onProjectChange}
+            onModuleChange={onModuleChange}
+          />
         </Splitter.Panel>
-        <Splitter.Panel>
+        <Splitter.Panel size={sizes[1]} min={'60%'}>
           <ProCard
             bodyStyle={{ padding: 0 }}
             tabs={{

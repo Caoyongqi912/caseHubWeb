@@ -189,7 +189,7 @@ const TriggerType: FC<{
 
           <Space align="center" size={4}>
             <Text type="secondary" style={{ fontSize: '10px' }}>
-              {record.job_enabled ? '已启用' : '已禁用'}
+              {record.job_enabled ? '运行中' : '已停止'}
             </Text>
             <Switch
               size="small"
