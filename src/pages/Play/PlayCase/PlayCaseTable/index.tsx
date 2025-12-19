@@ -1,16 +1,20 @@
 import {
+  addPlayCaseBasicInfo,
   copyPlayCase,
+  editPlayCaseBaseInfo,
   pagePlayCase,
   removePlayCase,
 } from '@/api/play/playCase';
+import MyModal from '@/components/MyModal';
 import MyProTable from '@/components/Table/MyProTable';
 import { IUICase } from '@/pages/Play/componets/uiTypes';
+import PlayBaseForm from '@/pages/Play/PlayCase/PlayCaseDetail/PlayBaseForm';
 import { CONFIG, ModuleEnum } from '@/utils/config';
 import { pageData } from '@/utils/somefunc';
 import { history, useModel } from '@@/exports';
 import { ActionType, ProColumns } from '@ant-design/pro-components';
-import { Button, message, Popconfirm, Tag } from 'antd';
-import { FC, useCallback, useEffect, useRef } from 'react';
+import { Button, Form, message, Popconfirm, Tag } from 'antd';
+import { FC, useCallback, useEffect, useRef, useState } from 'react';
 
 interface SelfProps {
   currentProjectId?: number;
@@ -23,11 +27,21 @@ const Index: FC<SelfProps> = ({
   currentProjectId,
   perKey,
 }) => {
+  const [caseForm] = Form.useForm<IUICase>();
   const { initialState } = useModel('@@initialState');
   const actionRef = useRef<ActionType>(); //Table action 的引用，便于自定义触发
-
+  const [currentPlay, setCurrentPlay] = useState<IUICase>();
+  const [modalName, setModalName] = useState('新增用例');
   useEffect(() => {
     actionRef.current?.reload();
+  }, [currentModuleId, currentProjectId]);
+  useEffect(() => {
+    if (currentProjectId && currentModuleId) {
+      caseForm.setFieldsValue({
+        project_id: currentProjectId,
+        module_id: currentModuleId,
+      });
+    }
   }, [currentModuleId, currentProjectId]);
 
   const fetchUICase = useCallback(
@@ -44,6 +58,28 @@ const Index: FC<SelfProps> = ({
     },
     [currentModuleId, currentProjectId],
   );
+
+  const saveOrUpdateCaseBase = async (values: IUICase) => {
+    if (currentPlay) {
+      editPlayCaseBaseInfo({
+        ...values,
+        id: currentPlay.id,
+      }).then(async ({ code, msg }) => {
+        if (code === 0) {
+          message.success(msg);
+          actionRef.current?.reload();
+        }
+      });
+    } else {
+      addPlayCaseBasicInfo(values).then(async ({ code, data, msg }) => {
+        if (code === 0) {
+          message.success(msg);
+          actionRef.current?.reload();
+        }
+      });
+    }
+    return true;
+  };
 
   const columns: ProColumns<IUICase>[] = [
     {
@@ -63,6 +99,26 @@ const Index: FC<SelfProps> = ({
       sorter: true,
       fixed: 'left',
       key: 'title',
+      render: (text, record) => {
+        return (
+          <MyModal
+            onFinish={saveOrUpdateCaseBase}
+            trigger={
+              <a
+                onClick={() => {
+                  caseForm.setFieldsValue(record);
+                  setCurrentPlay(record);
+                }}
+              >
+                {text}
+              </a>
+            }
+            form={caseForm}
+          >
+            <PlayBaseForm />
+          </MyModal>
+        );
+      },
     },
     {
       title: 'level',
@@ -173,14 +229,26 @@ const Index: FC<SelfProps> = ({
   ];
 
   const AddCaseButton = (
-    <Button
-      type={'primary'}
-      onClick={() => {
-        window.open('/ui/addCase');
-      }}
-    >
-      添加用例
-    </Button>
+    <>
+      <MyModal
+        title={modalName}
+        form={caseForm}
+        onFinish={saveOrUpdateCaseBase}
+        trigger={
+          <Button
+            hidden={currentModuleId === undefined}
+            type={'primary'}
+            onClick={() => {
+              setCurrentPlay(undefined);
+            }}
+          >
+            添加用例
+          </Button>
+        }
+      >
+        <PlayBaseForm />
+      </MyModal>
+    </>
   );
   return (
     <MyProTable
