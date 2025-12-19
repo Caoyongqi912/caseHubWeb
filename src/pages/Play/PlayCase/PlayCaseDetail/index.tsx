@@ -15,7 +15,6 @@ import MyDrawer from '@/components/MyDrawer';
 import MyTabs from '@/components/MyTabs';
 import { IUICase, IUICaseSteps } from '@/pages/Play/componets/uiTypes';
 import CollapsibleUIStepCard from '@/pages/Play/PlayCase/PlayCaseDetail/CollapsibleUIStepCard';
-import PlayBaseForm from '@/pages/Play/PlayCase/PlayCaseDetail/PlayBaseForm';
 import PlayCaseVars from '@/pages/Play/PlayCase/PlayCaseDetail/PlayCaseVars';
 import PlayCommonChoiceTable from '@/pages/Play/PlayCase/PlayCaseDetail/PlayCommonChoiceTable';
 import PlayGroupChoiceTable from '@/pages/Play/PlayCase/PlayCaseDetail/PlayGroupChoiceTable';
@@ -26,7 +25,7 @@ import { ModuleEnum } from '@/utils/config';
 import { fetchModulesEnum } from '@/utils/somefunc';
 import { useParams } from '@@/exports';
 import { ArrowRightOutlined, PlayCircleOutlined } from '@ant-design/icons';
-import { ProCard, ProForm } from '@ant-design/pro-components';
+import { ProCard } from '@ant-design/pro-components';
 import {
   Button,
   Divider,
@@ -288,12 +287,6 @@ const Index = () => {
               orderFetch={onDragEnd}
             />
           ) : (
-            // <MyDraggable
-            //   disabled={draggableDisabled}
-            //   items={uiStepsContent}
-            //   setItems={setUIStepsContent}
-            //   dragEndFunc={onDragEnd}
-            // />
             <Empty description={'暂无数据'} />
           )}
         </ProCard>
@@ -345,19 +338,19 @@ const Index = () => {
       <MyDrawer name={'UI Case Logs'} open={runOpen} setOpen={setRunOpen}>
         <PlayCaseResultDetail caseId={caseId} openStatus={runOpen} />
       </MyDrawer>
-      <ProCard extra={<CaseButtonExtra currentStatus={currentMode} />}>
-        <ProForm
-          disabled={currentMode === 1}
-          layout={'horizontal'}
-          submitter={false}
-          form={form}
-        >
-          <PlayBaseForm
-            setCurrentProjectId={setCurrentProjectId}
-            moduleEnum={moduleEnum}
-          />
-        </ProForm>
-      </ProCard>
+      {/*<ProCard extra={<CaseButtonExtra currentStatus={currentMode} />}>*/}
+      {/*  <ProForm*/}
+      {/*    disabled={currentMode === 1}*/}
+      {/*    layout={'horizontal'}*/}
+      {/*    submitter={false}*/}
+      {/*    form={form}*/}
+      {/*  >*/}
+      {/*    <PlayBaseForm*/}
+      {/*      setCurrentProjectId={setCurrentProjectId}*/}
+      {/*      moduleEnum={moduleEnum}*/}
+      {/*    />*/}
+      {/*  </ProForm>*/}
+      {/*</ProCard>*/}
       <ProCard extra={<AddStepExtra />}>
         <MyTabs defaultActiveKey={'2'} items={CornItems} />
       </ProCard>

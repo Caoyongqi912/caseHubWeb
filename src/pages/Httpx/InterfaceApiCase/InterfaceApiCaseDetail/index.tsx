@@ -83,7 +83,7 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
         { max: 768, size: '75%' }, // 平板及以下
         { max: 1030, size: '75%' }, // 小笔记本
         { max: 1440, size: '80%' }, // 普通显示器
-        { max: 1920, size: '90%' }, // 1K显示器
+        { max: 1920, size: '85%' }, // 1K显示器
         { max: 2560, size: '90%' }, // 2K显示器
         { max: Infinity, size: '95%' }, // 4K+显示器
       ];

@@ -6,6 +6,7 @@ import {
   ClockCircleFilled,
   ClockCircleOutlined,
   CloseCircleFilled,
+  DeleteOutlined,
   FileTextOutlined,
   PauseCircleFilled,
   PlayCircleFilled,
@@ -34,7 +35,7 @@ interface Props {
 const TasksFiled: FC<Props> = ({ job_uid, refreshFlag }) => {
   const [jobTasks, setJobTasks] = useState<IInterfaceAPITask[]>([]);
   const [loading, setLoading] = useState(false);
-
+  const [showEditor, setShowEditor] = useState(false);
   useEffect(() => {
     if (!job_uid) return;
 
@@ -179,10 +180,10 @@ const TasksFiled: FC<Props> = ({ job_uid, refreshFlag }) => {
               key={task.id || task.uid}
               size="small"
               bordered
+              onMouseEnter={() => setShowEditor(true)}
+              onMouseLeave={() => setShowEditor(false)}
               style={{
                 borderRadius: '6px',
-                borderLeft: `3px solid var(--ant-color-${statusConfig.color}-6)`,
-                padding: 0,
               }}
               bodyStyle={{
                 padding: '8px 12px',
@@ -198,11 +199,11 @@ const TasksFiled: FC<Props> = ({ job_uid, refreshFlag }) => {
                   marginBottom: '6px',
                 }}
               >
-                <div style={{ flex: 1, minWidth: 0 }}>
+                <Space>
                   <Text
                     strong
                     style={{
-                      fontSize: '12px',
+                      fontSize: '16px',
                       display: 'block',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
@@ -212,23 +213,15 @@ const TasksFiled: FC<Props> = ({ job_uid, refreshFlag }) => {
                   >
                     {task.title || '未命名任务'}
                   </Text>
-                  {task.desc && (
-                    <Text
-                      type="secondary"
-                      style={{
-                        fontSize: '15px',
-                        display: 'block',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        marginTop: '2px',
+                  {showEditor && (
+                    <DeleteOutlined
+                      style={{ color: statusConfig.color }}
+                      onClick={() => {
+                        console.log(task);
                       }}
-                      ellipsis={{ tooltip: task.desc }}
-                    >
-                      {task.desc}
-                    </Text>
+                    />
                   )}
-                </div>
+                </Space>
                 <Badge
                   status={statusConfig.color as any}
                   text={

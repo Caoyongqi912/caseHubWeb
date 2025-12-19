@@ -384,11 +384,12 @@ const ModuleTree: FC<IProps> = (props) => {
             {/* 搜索区域卡片 */}
             <ProCard
               size="small"
-              bordered
               style={{
                 marginBottom: '16px',
                 borderRadius: '12px',
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+                borderLeft: `4px solid #1890ff`,
+                borderBottom: `1px solid #1890ff`,
+                // boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
               }}
               bodyStyle={{ padding: '12px' }}
             >
@@ -406,7 +407,7 @@ const ModuleTree: FC<IProps> = (props) => {
                   {isAdmin && (
                     <Tooltip title="新建根模块">
                       <Button
-                        type="primary"
+                        type="link"
                         size="small"
                         icon={<PlusOutlined />}
                         onClick={() => {

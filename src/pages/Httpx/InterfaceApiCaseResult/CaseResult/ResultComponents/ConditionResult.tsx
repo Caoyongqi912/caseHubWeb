@@ -39,17 +39,22 @@ const ConditionResult: FC<Props> = ({ result }) => {
             {result.content_result ? (
               <CheckCircleTwoTone twoToneColor="#52c41a" />
             ) : (
-              <CloseCircleTwoTone twoToneColor={'#c20000'} />
+              <CloseCircleTwoTone twoToneColor={'#fca760'} />
             )}
             {content_condition && (
-              <div style={{ marginLeft: 20 }}>
-                <Text type={'warning'}> {content_condition.key}</Text>
-                <Text strong>
-                  {' '}
+              <Space style={{ marginLeft: 20 }}>
+                <Text strong> {content_condition.key}</Text>
+                <Text
+                  style={{
+                    color: result.content_condition?.condition_result
+                      ? '#52c41a'
+                      : '#FCA760FF',
+                  }}
+                >
                   {OperatorOption[content_condition.operator]}
                 </Text>
-                <Text type={'warning'}> {content_condition.value}</Text>
-              </div>
+                <Text strong> {content_condition.value}</Text>
+              </Space>
             )}
           </Space>
         );

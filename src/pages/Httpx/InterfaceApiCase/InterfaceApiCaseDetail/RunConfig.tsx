@@ -5,6 +5,7 @@ import {
   MessageOutlined,
   PlayCircleOutlined,
   RobotOutlined,
+  SettingFilled,
   WarningOutlined,
 } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
@@ -68,80 +69,85 @@ const RunConfig: FC<Props> = ({
     >
       {/* 运行方式选择 */}
       <>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <EnvironmentOutlined style={{ color: '#3b82f6' }} />
-          <Text
-            strong
-            style={{
-              fontSize: '16px',
-              color: '#1e40af',
-              margin: 0,
-            }}
-          >
-            运行方式
-          </Text>
-        </div>
-        <Radio.Group
-          defaultValue={1}
-          onChange={onMenuClick}
-          options={[
-            {
-              label: (
-                <Flex gap="small" justify="center" align="center" vertical>
-                  <RobotOutlined style={{ fontSize: 18 }} />
-                  后台执行
-                </Flex>
-              ),
-              value: 1,
-            },
-            {
-              label: (
-                <Flex gap="small" justify="center" align="center" vertical>
-                  <MessageOutlined style={{ fontSize: 18 }} />
-                  实时日志
-                </Flex>
-              ),
-              value: 2,
-            },
-          ]}
-        />
+        <ProCard
+          bordered
+          style={{
+            display: 'flex',
+            // alignItems: 'center',
+            gap: '8px',
+            borderRadius: '8px',
+            border: '1px solid #e1e8ff',
+          }}
+        >
+          <Space style={{ marginBottom: 20 }}>
+            <SettingFilled style={{ color: '#3b82f6' }} />
+            <Text strong style={{ fontSize: '14px', margin: 0 }}>
+              运行方式
+            </Text>
+          </Space>
+          <Radio.Group
+            defaultValue={1}
+            onChange={onMenuClick}
+            options={[
+              {
+                label: (
+                  // @ts-ignore
+                  <Flex gap="small" justify="center" align="center" horizontal>
+                    <RobotOutlined style={{ fontSize: 18 }} />
+                    后台执行
+                  </Flex>
+                ),
+                value: 1,
+              },
+              {
+                label: (
+                  // @ts-ignore
+                  <Flex gap="small" justify="center" align="center" horizontal>
+                    <MessageOutlined style={{ fontSize: 18 }} />
+                    实时日志
+                  </Flex>
+                ),
+                value: 2,
+              },
+            ]}
+          />
+        </ProCard>
       </>
 
       {/* 运行环境选择 */}
-      <div
+      <ProCard
         style={{
           display: 'flex',
           flexDirection: 'column',
           gap: '12px',
-          padding: '16px',
           borderRadius: '8px',
-          background: 'linear-gradient(135deg, #f8faff 0%, #f0f4ff 100%)',
           border: '1px solid #e1e8ff',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <EnvironmentOutlined style={{ color: '#3b82f6', fontSize: '16px' }} />
-          <Text
-            strong
-            style={{ fontSize: '14px', color: '#1e40af', margin: 0 }}
-          >
-            运行环境
-          </Text>
-        </div>
-        <Select
-          placeholder="请选择运行环境"
-          style={{
-            width: '100%',
-            borderRadius: '6px',
-          }}
-          options={apiEnvs}
-          onChange={onEnvChange}
-          allowClear
-          showSearch
-          optionFilterProp="label"
-          size="middle"
-        />
-      </div>
+        <Space direction={'vertical'}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <EnvironmentOutlined
+              style={{ color: '#3b82f6', fontSize: '16px' }}
+            />
+            <Text strong style={{ fontSize: '14px', margin: 0 }}>
+              运行环境
+            </Text>
+          </div>
+          <Select
+            placeholder="请选择运行环境"
+            style={{
+              width: '100%',
+              borderRadius: '6px',
+            }}
+            options={apiEnvs}
+            onChange={onEnvChange}
+            allowClear
+            showSearch
+            optionFilterProp="label"
+            size="middle"
+          />
+        </Space>
+      </ProCard>
       {/* 错误处理设置 */}
       <div
         style={{
@@ -150,15 +156,13 @@ const RunConfig: FC<Props> = ({
           alignItems: 'center',
           padding: '16px',
           borderRadius: '8px',
-          background: 'linear-gradient(135deg, #f8faff 0%, #f0f4ff 100%)',
           border: '1px solid #e1e8ff',
-          boxShadow: '0 1px 4px rgba(59, 130, 246, 0.08)',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <WarningOutlined style={{ color: '#f59e0b', fontSize: '18px' }} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <Text strong style={{ color: '#1e40af', fontSize: '14px' }}>
+            <Text strong style={{ fontSize: '14px' }}>
               遇到错误继续
             </Text>
             <Text

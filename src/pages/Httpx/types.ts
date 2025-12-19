@@ -309,6 +309,7 @@ export interface ICaseContentResult extends IBaseField {
     key: any;
     operator: number;
     value: any;
+    condition_result?: boolean;
   } | null;
   start_time: string;
   use_time: string | number | null;

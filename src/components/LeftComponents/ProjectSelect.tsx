@@ -86,13 +86,15 @@ const ProjectSelect: FC<IProps> = ({
   if (currentProject) {
     return (
       <ProCard
-        bordered={true}
+        // bordered={true}
         size="small"
         style={{
+          width: '100%',
           marginBottom: 5,
           borderRadius: 12,
           borderLeft: `4px solid #1890ff`,
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+          borderBottom: `1px solid #1890ff`,
+          // boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
         }}
         bodyStyle={{ padding: '16px' }}
       >
