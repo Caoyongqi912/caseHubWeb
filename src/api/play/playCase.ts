@@ -302,6 +302,7 @@ export const associationStepInterApi = async (
     stepId: number;
     apiId: number;
     interface_a_or_b: number;
+    interface_fail_stop: number;
   },
   options?: IObjGet,
 ) => {

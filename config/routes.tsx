@@ -150,7 +150,7 @@ export default [
         component: '@/pages/Play/PlayCase/PlayCaseDetail',
       },
       {
-        path: '/ui/case/detail/caseId=:caseId',
+        path: '/ui/case/detail/caseId=:caseId&projectId=:projectId&moduleId=:moduleId',
         name: '用例详情',
         hideInMenu: true,
         component: '@/pages/Play/PlayCase/PlayCaseDetail',

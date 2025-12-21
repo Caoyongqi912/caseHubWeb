@@ -67,7 +67,7 @@ export const queryEnvByProjectId = async (
 };
 
 export const queryEnvByProjectIdFormApi = async (
-  projectId: number,
+  projectId: number | string,
   setter: React.Dispatch<
     React.SetStateAction<{ label: string; value: number | null }[]>
   >,

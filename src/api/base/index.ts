@@ -229,7 +229,7 @@ export const queryEnvBy = async (envInfo: IEnv, options?: IObjGet) => {
  * @param options
  */
 export const queryTreeModuleByProject = async (
-  projectId: number,
+  projectId: number | string,
   moduleType: number,
   options?: IObjGet,
 ) => {

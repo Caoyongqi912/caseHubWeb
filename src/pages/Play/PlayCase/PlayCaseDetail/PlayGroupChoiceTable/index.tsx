@@ -14,7 +14,7 @@ import { TableRowSelection } from 'antd/es/table/interface';
 import React, { FC, useEffect, useState } from 'react';
 
 interface ISelfProps {
-  projectId?: number;
+  projectId?: string;
   caseId?: string;
   callBackFunc: () => void;
 }
@@ -22,7 +22,7 @@ interface ISelfProps {
 const Index: FC<ISelfProps> = (props) => {
   const { projectId, caseId, callBackFunc } = props;
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
-  const [selectProjectId, setSelectProjectId] = useState<number | undefined>(
+  const [selectProjectId, setSelectProjectId] = useState<string | undefined>(
     projectId,
   );
   const [projectEnumMap, setProjectEnumMap] = useState<IObjGet>({});

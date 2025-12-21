@@ -1,8 +1,5 @@
 import { IModuleEnum } from '@/api';
 import {
-  addPlayCaseBasicInfo,
-  editPlayCaseBaseInfo,
-  playCaseDetailById,
   queryPlayCaseVars,
   queryPlayStepByCaseId,
   reorderCaseStep,
@@ -13,7 +10,7 @@ import DnDDraggable from '@/components/DnDDraggable';
 import { DraggableItem } from '@/components/DnDDraggable/type';
 import MyDrawer from '@/components/MyDrawer';
 import MyTabs from '@/components/MyTabs';
-import { IUICase, IUICaseSteps } from '@/pages/Play/componets/uiTypes';
+import { IUICaseSteps } from '@/pages/Play/componets/uiTypes';
 import CollapsibleUIStepCard from '@/pages/Play/PlayCase/PlayCaseDetail/CollapsibleUIStepCard';
 import PlayCaseVars from '@/pages/Play/PlayCase/PlayCaseDetail/PlayCaseVars';
 import PlayCommonChoiceTable from '@/pages/Play/PlayCase/PlayCaseDetail/PlayCommonChoiceTable';
@@ -24,28 +21,21 @@ import PlayStepDetail from '@/pages/Play/PlayStep/PlayStepDetail';
 import { ModuleEnum } from '@/utils/config';
 import { fetchModulesEnum } from '@/utils/somefunc';
 import { useParams } from '@@/exports';
-import { ArrowRightOutlined, PlayCircleOutlined } from '@ant-design/icons';
-import { ProCard } from '@ant-design/pro-components';
 import {
-  Button,
-  Divider,
-  Dropdown,
-  Empty,
-  FloatButton,
-  Form,
-  MenuProps,
-  message,
-} from 'antd';
-import { FC, useEffect, useState } from 'react';
-import { history } from 'umi';
+  ArrowRightOutlined,
+  SelectOutlined,
+  UngroupOutlined,
+} from '@ant-design/icons';
+import { ProCard } from '@ant-design/pro-components';
+import { Dropdown, Empty, FloatButton, MenuProps, message } from 'antd';
+import { useEffect, useState } from 'react';
 
 const Index = () => {
-  const { caseId } = useParams<{ caseId: string }>();
-  const [form] = Form.useForm<IUICase>();
-  // 1详情 2新增 3 修改
-  const [currentMode, setCurrentMode] = useState(1);
-  const [currentProjectId, setCurrentProjectId] = useState<number>();
-  const [currentModuleId, setCurrentModuleId] = useState<number>();
+  const { caseId, projectId, moduleId } = useParams<{
+    caseId: string;
+    projectId: string;
+    moduleId: string;
+  }>();
 
   const [envs, setEnvs] = useState<{ label: string; value: number | null }[]>(
     [],
@@ -62,21 +52,13 @@ const Index = () => {
   const [runOpen, setRunOpen] = useState(false);
   const [varsNum, setVarsNum] = useState(0);
   const [draggableDisabled, setDraggableDisabled] = useState(false);
-  /**
-   * 如果是caseId 传递 这个证明是case 详情页
-   */
+
   useEffect(() => {
     if (caseId) {
       Promise.all([
-        playCaseDetailById(caseId), // 获取 case 详情
         queryPlayStepByCaseId(caseId), // 获取步骤数据
         queryPlayCaseVars(caseId),
-      ]).then(([detail, steps, vars]) => {
-        if (detail.code === 0) {
-          form.setFieldsValue(detail.data);
-          setCurrentProjectId(detail.data.project_id);
-          setCurrentModuleId(detail.data.module_id);
-        }
+      ]).then(([steps, vars]) => {
         if (steps.code === 0 && steps) {
           setUISteps(steps.data);
         }
@@ -84,20 +66,18 @@ const Index = () => {
           setVarsNum(vars.data.length);
         }
       });
-    } else {
-      setCurrentMode(2);
     }
   }, [refresh, caseId]);
 
   useEffect(() => {
-    if (currentProjectId) {
+    if (projectId) {
       // 获取模块枚举和环境数据
       Promise.all([
-        fetchModulesEnum(currentProjectId, ModuleEnum.UI_CASE, setModuleEnum),
-        queryEnvByProjectIdFormApi(currentProjectId, setEnvs, true),
+        fetchModulesEnum(projectId, ModuleEnum.UI_CASE, setModuleEnum),
+        queryEnvByProjectIdFormApi(projectId, setEnvs, true),
       ]).then();
     }
-  }, [currentProjectId]);
+  }, [projectId]);
 
   //set case steps content
   useEffect(() => {
@@ -111,7 +91,7 @@ const Index = () => {
               step={index + 1}
               envs={envs}
               caseId={caseId!}
-              currentProjectId={currentProjectId}
+              currentProjectId={projectId}
               callBackFunc={handelRefresh}
               collapsible={true} // 默认折叠
               uiStepInfo={item}
@@ -134,25 +114,6 @@ const Index = () => {
     setRefresh(refresh + 1);
     setOpenAddStepDrawer(false);
     setOpenChoiceStepDrawer(false);
-  };
-  const SaveOrUpdateCaseInfo = async () => {
-    const values = form.getFieldsValue(true);
-    console.log(values);
-    if (caseId) {
-      editPlayCaseBaseInfo(values).then(async ({ code, msg }) => {
-        if (code === 0) {
-          message.success(msg);
-          setCurrentMode(1);
-        }
-      });
-    } else {
-      addPlayCaseBasicInfo(values).then(async ({ code, data, msg }) => {
-        if (code === 0) {
-          message.success(msg);
-          history.push(`/ui/case/detail/caseId=${data.id}`);
-        }
-      });
-    }
   };
 
   const onMenuClick: MenuProps['onClick'] = (e) => {
@@ -181,50 +142,7 @@ const Index = () => {
       icon: <ArrowRightOutlined />,
     },
   ];
-  const CaseButtonExtra: FC<{ currentStatus: number }> = ({
-    currentStatus,
-  }) => {
-    switch (currentStatus) {
-      case 1:
-        return (
-          <div style={{ display: 'flex' }}>
-            <Dropdown.Button
-              menu={{ items, onClick: onMenuClick }}
-              icon={<PlayCircleOutlined />}
-            >
-              Run By
-            </Dropdown.Button>
-            <Divider type={'vertical'} />
-            <Button
-              type={'primary'}
-              style={{ marginLeft: 10 }}
-              onClick={() => setCurrentMode(3)}
-            >
-              Edit
-            </Button>
-          </div>
-        );
-      case 2:
-        return (
-          <Button onClick={SaveOrUpdateCaseInfo} type={'primary'}>
-            Save
-          </Button>
-        );
-      case 3:
-        return (
-          <>
-            <Button onClick={SaveOrUpdateCaseInfo} type={'primary'}>
-              Save
-            </Button>
-            <Button style={{ marginLeft: 5 }} onClick={() => setCurrentMode(1)}>
-              Cancel
-            </Button>
-          </>
-        );
-      default:
-        return null;
-    }
-  };
+
   const AddStepExtra = () => {
     const AddUIStep = () => {
       setOpenAddStepDrawer(true);
@@ -233,28 +151,36 @@ const Index = () => {
     };
     return (
       <>
-        {caseId && (
-          <>
-            <Button
-              type={'primary'}
-              onClick={() => setOpenChoiceGroupStepDrawer(true)}
-            >
-              Choice Group Step
-            </Button>
-            <Divider type={'vertical'} />
-
-            <Button
-              type={'primary'}
-              onClick={() => setOpenChoiceStepDrawer(true)}
-            >
-              Choice Common Step
-            </Button>
-            <Divider type={'vertical'} />
-            <Button type={'primary'} onClick={AddUIStep}>
-              Add Self Step
-            </Button>
-          </>
-        )}
+        <Dropdown.Button
+          type={'primary'}
+          menu={{
+            items: [
+              {
+                key: 'choice_group',
+                label: '选择公共组',
+                icon: <UngroupOutlined style={{ color: 'blue' }} />,
+                onClick: () => setOpenChoiceGroupStepDrawer(true),
+              },
+              {
+                key: 'choice_group',
+                label: '选择公共步骤',
+                icon: <SelectOutlined style={{ color: 'blue' }} />,
+                onClick: () => setOpenChoiceStepDrawer(true),
+              },
+              {
+                type: 'divider',
+              },
+              {
+                key: 'choice_group',
+                label: '添加私有步骤',
+                icon: <UngroupOutlined style={{ color: 'blue' }} />,
+                onClick: AddUIStep,
+              },
+            ],
+          }}
+        >
+          添加
+        </Dropdown.Button>
       </>
     );
   };
@@ -264,7 +190,7 @@ const Index = () => {
       key: '1',
       label: (
         <span>
-          Vars (<span style={{ color: 'green' }}>{varsNum}</span>)
+          变量 (<span style={{ color: 'green' }}>{varsNum}</span>)
         </span>
       ),
 
@@ -274,8 +200,7 @@ const Index = () => {
       key: '2',
       label: (
         <span>
-          Steps (<span style={{ color: 'green' }}>{uiStepsContent.length}</span>
-          )
+          步骤 (<span style={{ color: 'green' }}>{uiStepsContent.length}</span>)
         </span>
       ),
       children: (
@@ -292,6 +217,11 @@ const Index = () => {
         </ProCard>
       ),
     },
+    {
+      key: '3',
+      label: '调试历史',
+      children: <PlayCaseResultTable caseId={parseInt(caseId)} />,
+    },
   ];
 
   return (
@@ -307,30 +237,30 @@ const Index = () => {
             callBack={handelRefresh}
             caseId={parseInt(caseId)}
             isCommonStep={false}
-            caseProjectId={currentProjectId}
-            caseModuleId={currentModuleId}
+            caseProjectId={projectId}
+            caseModuleId={moduleId}
           />
         )}
       </MyDrawer>
       <MyDrawer
-        name={'Choice Common Step'}
+        name={'关联公共步骤'}
         open={openChoiceStepDrawer}
         setOpen={setOpenChoiceStepDrawer}
       >
         <PlayCommonChoiceTable
-          projectId={currentProjectId}
+          projectId={projectId}
           caseId={caseId}
           callBackFunc={handelRefresh}
         />
       </MyDrawer>
 
       <MyDrawer
-        name={'Choice Group Step'}
+        name={'关联公共步骤组'}
         open={openChoiceGroupStepDrawer}
         setOpen={setOpenChoiceGroupStepDrawer}
       >
         <PlayGroupChoiceTable
-          projectId={currentProjectId}
+          projectId={projectId}
           caseId={caseId}
           callBackFunc={handelRefresh}
         />
@@ -338,23 +268,9 @@ const Index = () => {
       <MyDrawer name={'UI Case Logs'} open={runOpen} setOpen={setRunOpen}>
         <PlayCaseResultDetail caseId={caseId} openStatus={runOpen} />
       </MyDrawer>
-      {/*<ProCard extra={<CaseButtonExtra currentStatus={currentMode} />}>*/}
-      {/*  <ProForm*/}
-      {/*    disabled={currentMode === 1}*/}
-      {/*    layout={'horizontal'}*/}
-      {/*    submitter={false}*/}
-      {/*    form={form}*/}
-      {/*  >*/}
-      {/*    <PlayBaseForm*/}
-      {/*      setCurrentProjectId={setCurrentProjectId}*/}
-      {/*      moduleEnum={moduleEnum}*/}
-      {/*    />*/}
-      {/*  </ProForm>*/}
-      {/*</ProCard>*/}
-      <ProCard extra={<AddStepExtra />}>
+      <ProCard extra={<AddStepExtra />} bodyStyle={{ minHeight: '100hv' }}>
         <MyTabs defaultActiveKey={'2'} items={CornItems} />
       </ProCard>
-      {caseId ? <PlayCaseResultTable caseId={parseInt(caseId)} /> : null}
       <FloatButton.BackTop />
     </ProCard>
   );

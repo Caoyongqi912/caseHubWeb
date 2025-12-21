@@ -21,7 +21,7 @@ interface SelfProps {
   currentCaseApiId?: number;
   currentGroupId?: number;
   currentTaskId?: string;
-  currentStepId?: number;
+  currentStepId?: number; //playStep choise
   condition_id?: number;
   refresh?: (value?: number[]) => void;
 }

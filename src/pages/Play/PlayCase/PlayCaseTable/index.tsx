@@ -11,7 +11,7 @@ import { IUICase } from '@/pages/Play/componets/uiTypes';
 import PlayBaseForm from '@/pages/Play/PlayCase/PlayCaseDetail/PlayBaseForm';
 import { CONFIG, ModuleEnum } from '@/utils/config';
 import { pageData } from '@/utils/somefunc';
-import { history, useModel } from '@@/exports';
+import { useModel } from '@@/exports';
 import { ActionType, ProColumns } from '@ant-design/pro-components';
 import { Button, Form, message, Popconfirm, Tag } from 'antd';
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
@@ -183,7 +183,9 @@ const Index: FC<SelfProps> = ({
           rel="noopener noreferrer"
           key="view"
           onClick={() => {
-            history.push(`/ui/case/detail/caseId=${record.id}`);
+            window.open(
+              `/ui/case/detail/caseId=${record.id}&projectId=${record.project_id}&moduleId=${record.module_id}`,
+            );
           }}
         >
           详情
@@ -195,7 +197,6 @@ const Index: FC<SelfProps> = ({
               caseId: record.id,
             });
             if (code === 0) {
-              window.open(`/ui/case/detail/caseId=${data.id}`);
               message.success(msg);
             }
           }}

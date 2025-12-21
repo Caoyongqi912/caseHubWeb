@@ -86,8 +86,8 @@ export interface IUICaseSteps {
   method: string;
 
   interface_id?: number;
-  interface_a_or_b: number | null;
-  interface_fail_stop: number | null;
+  interface_a_or_b: number;
+  interface_fail_stop: number;
 
   db_id?: number;
   sql_script?: string;

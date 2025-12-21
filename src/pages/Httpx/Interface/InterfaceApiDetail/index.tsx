@@ -323,7 +323,7 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
       >
         <InterDoc />
       </MyDrawer>
-      <ProCard bodyStyle={{ padding: 0 }}>
+      <ProCard bordered hoverable style={{ borderRadius: 12 }}>
         <ProForm form={interApiForm} submitter={false}>
           <ApiBaseForm />
           <ProCard>

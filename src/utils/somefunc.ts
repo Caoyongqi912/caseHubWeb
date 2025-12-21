@@ -54,7 +54,7 @@ export const data2LabelValue = (data: any) => {
  * @param setModuleEnum
  */
 export const fetchModulesEnum = async (
-  projectId: number,
+  projectId: number | string,
   module_Type: number,
   setModuleEnum: React.Dispatch<React.SetStateAction<IModuleEnum[]>>,
 ) => {
