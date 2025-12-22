@@ -85,14 +85,11 @@ const Index: FC<SelfProps> = ({
   useEffect(() => {
     //查看详情
     if (stepInfo) {
-      setMode(1);
       stepForm.setFieldsValue(stepInfo);
       setCurrentProjectId(stepInfo.project_id);
       setCurrentMethod(
         methods.find((item: any) => item.value === stepInfo.method),
       );
-    } else {
-      setMode(2);
     }
   }, [stepInfo]);
 
@@ -175,50 +172,19 @@ const Index: FC<SelfProps> = ({
       callBack();
     }
   };
-  const DetailExtra: FC<{ currentMode: number }> = ({ currentMode }) => {
-    if (!readOnly) {
-      switch (currentMode) {
-        case 1:
-          return (
-            <Button type={'primary'} onClick={() => setMode(2)}>
-              Edit
-            </Button>
-          );
-        case 2:
-          return (
-            <>
-              <Button
-                type={'primary'}
-                onClick={() => {
-                  if (stepInfo) {
-                    setMode(1);
-                  } else {
-                    callBack();
-                  }
-                }}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={save_updateStep}
-                style={{ marginLeft: 10 }}
-                type={'primary'}
-              >
-                Save
-              </Button>
-            </>
-          );
-        default:
-          return null;
-      }
-    }
-    return null;
-  };
 
   return (
-    <ProCard extra={<DetailExtra currentMode={mode} />}>
+    <ProCard
+      extra={
+        !readOnly && (
+          <Button onClick={save_updateStep} type={'primary'}>
+            保存
+          </Button>
+        )
+      }
+    >
       <ProForm
-        disabled={mode === 1}
+        disabled={readOnly}
         layout={'vertical'}
         form={stepForm}
         submitter={false}

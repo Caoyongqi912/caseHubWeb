@@ -1,11 +1,9 @@
-import { IModuleEnum } from '@/api';
 import {
   queryPlayCaseVars,
   queryPlayStepByCaseId,
   reorderCaseStep,
 } from '@/api/play/playCase';
 import { executePlayCaseByBack } from '@/api/play/result';
-import { queryEnvByProjectIdFormApi } from '@/components/CommonFunc';
 import DnDDraggable from '@/components/DnDDraggable';
 import { DraggableItem } from '@/components/DnDDraggable/type';
 import MyDrawer from '@/components/MyDrawer';
@@ -15,20 +13,22 @@ import CollapsibleUIStepCard from '@/pages/Play/PlayCase/PlayCaseDetail/Collapsi
 import PlayCaseVars from '@/pages/Play/PlayCase/PlayCaseDetail/PlayCaseVars';
 import PlayCommonChoiceTable from '@/pages/Play/PlayCase/PlayCaseDetail/PlayCommonChoiceTable';
 import PlayGroupChoiceTable from '@/pages/Play/PlayCase/PlayCaseDetail/PlayGroupChoiceTable';
+import RunConfig from '@/pages/Play/PlayCase/PlayCaseDetail/RunConfig';
 import PlayCaseResultDetail from '@/pages/Play/PlayResult/PlayCaseResultDetail';
 import PlayCaseResultTable from '@/pages/Play/PlayResult/PlayCaseResultTable';
-import PlayStepDetail from '@/pages/Play/PlayStep/PlayStepDetail';
-import { ModuleEnum } from '@/utils/config';
-import { fetchModulesEnum } from '@/utils/somefunc';
+import PlayStepInfo from '@/pages/Play/PlayStep/PlayStepInfo';
 import { useParams } from '@@/exports';
 import {
-  ArrowRightOutlined,
+  EditOutlined,
   SelectOutlined,
   UngroupOutlined,
 } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
-import { Dropdown, Empty, FloatButton, MenuProps, message } from 'antd';
-import { useEffect, useState } from 'react';
+import { Dropdown, Empty, FloatButton, message, Splitter } from 'antd';
+import { RadioChangeEvent } from 'antd/lib/radio/interface';
+import { debounce } from 'lodash';
+import RcResizeObserver from 'rc-resize-observer';
+import { useCallback, useEffect, useState } from 'react';
 
 const Index = () => {
   const { caseId, projectId, moduleId } = useParams<{
@@ -37,10 +37,6 @@ const Index = () => {
     moduleId: string;
   }>();
 
-  const [envs, setEnvs] = useState<{ label: string; value: number | null }[]>(
-    [],
-  );
-  const [moduleEnum, setModuleEnum] = useState<IModuleEnum[]>([]);
   const [uiStepsContent, setUIStepsContent] = useState<DraggableItem[]>([]);
   const [uiSteps, setUISteps] = useState<IUICaseSteps[]>([]);
   const [stepIndex, setStepIndex] = useState<number>(0);
@@ -51,8 +47,9 @@ const Index = () => {
   const [refresh, setRefresh] = useState<number>(0);
   const [runOpen, setRunOpen] = useState(false);
   const [varsNum, setVarsNum] = useState(0);
-  const [draggableDisabled, setDraggableDisabled] = useState(false);
-
+  const [defaultSize, setDefaultSize] = useState('80%');
+  const [errorJump, setErrorJump] = useState<boolean>(false);
+  const [runningStyle, setRunningStyle] = useState<number>(1);
   useEffect(() => {
     if (caseId) {
       Promise.all([
@@ -69,16 +66,6 @@ const Index = () => {
     }
   }, [refresh, caseId]);
 
-  useEffect(() => {
-    if (projectId) {
-      // 获取模块枚举和环境数据
-      Promise.all([
-        fetchModulesEnum(projectId, ModuleEnum.UI_CASE, setModuleEnum),
-        queryEnvByProjectIdFormApi(projectId, setEnvs, true),
-      ]).then();
-    }
-  }, [projectId]);
-
   //set case steps content
   useEffect(() => {
     if (uiSteps && uiSteps.length > 0) {
@@ -89,19 +76,20 @@ const Index = () => {
           content: (
             <CollapsibleUIStepCard
               step={index + 1}
-              envs={envs}
               caseId={caseId!}
               currentProjectId={projectId}
               callBackFunc={handelRefresh}
-              collapsible={true} // 默认折叠
               uiStepInfo={item}
             />
           ),
         })),
       );
     }
-  }, [refresh, uiSteps, envs]);
+  }, [refresh, uiSteps]);
 
+  const onErrorJumpChange = (value: boolean) => {
+    setErrorJump(value);
+  };
   const onDragEnd = async (reorderedUIContents: any[]) => {
     if (caseId) {
       const reorderData = reorderedUIContents.map((item) => item.step_id);
@@ -116,32 +104,10 @@ const Index = () => {
     setOpenChoiceStepDrawer(false);
   };
 
-  const onMenuClick: MenuProps['onClick'] = (e) => {
-    const { key } = e;
-    if (caseId) {
-      if (key === '1') {
-        executePlayCaseByBack({ caseId: caseId }).then(async ({ code }) => {
-          if (code === 0) {
-            message.success('后台运行中。。');
-          }
-        });
-      } else {
-        setRunOpen(true);
-      }
-    }
+  const onMenuClick = (e: RadioChangeEvent) => {
+    const { value } = e.target;
+    setRunningStyle(value);
   };
-  const items = [
-    {
-      key: '1',
-      label: '后台运行',
-      icon: <ArrowRightOutlined />,
-    },
-    {
-      key: '2',
-      label: '实时日志运行',
-      icon: <ArrowRightOutlined />,
-    },
-  ];
 
   const AddStepExtra = () => {
     const AddUIStep = () => {
@@ -162,7 +128,7 @@ const Index = () => {
                 onClick: () => setOpenChoiceGroupStepDrawer(true),
               },
               {
-                key: 'choice_group',
+                key: 'choice_step',
                 label: '选择公共步骤',
                 icon: <SelectOutlined style={{ color: 'blue' }} />,
                 onClick: () => setOpenChoiceStepDrawer(true),
@@ -171,9 +137,9 @@ const Index = () => {
                 type: 'divider',
               },
               {
-                key: 'choice_group',
+                key: 'add_step',
                 label: '添加私有步骤',
-                icon: <UngroupOutlined style={{ color: 'blue' }} />,
+                icon: <EditOutlined style={{ color: 'blue' }} />,
                 onClick: AddUIStep,
               },
             ],
@@ -220,59 +186,115 @@ const Index = () => {
     {
       key: '3',
       label: '调试历史',
-      children: <PlayCaseResultTable caseId={parseInt(caseId)} />,
+      children: <PlayCaseResultTable caseId={parseInt(caseId!)} />,
     },
   ];
 
-  return (
-    <ProCard split={'horizontal'}>
-      <MyDrawer
-        name={'Add Self Step'}
-        width={'auto'}
-        open={openAddStepDrawer}
-        setOpen={setOpenAddStepDrawer}
-      >
-        {caseId && (
-          <PlayStepDetail
-            callBack={handelRefresh}
-            caseId={parseInt(caseId)}
-            isCommonStep={false}
-            caseProjectId={projectId}
-            caseModuleId={moduleId}
-          />
-        )}
-      </MyDrawer>
-      <MyDrawer
-        name={'关联公共步骤'}
-        open={openChoiceStepDrawer}
-        setOpen={setOpenChoiceStepDrawer}
-      >
-        <PlayCommonChoiceTable
-          projectId={projectId}
-          caseId={caseId}
-          callBackFunc={handelRefresh}
-        />
-      </MyDrawer>
+  const handleResize = useCallback(
+    debounce(({ width }) => {
+      const breakpoints = [
+        { max: 768, size: '75%' }, // 平板及以下
+        { max: 1030, size: '75%' }, // 小笔记本
+        { max: 1440, size: '80%' }, // 普通显示器
+        { max: 1920, size: '85%' }, // 1K显示器
+        { max: 2560, size: '90%' }, // 2K显示器
+        { max: Infinity, size: '95%' }, // 4K+显示器
+      ];
+      const breakpoint = breakpoints.find((bp) => width <= bp.max);
+      setDefaultSize(breakpoint?.size || '80%');
+    }, 100),
+    [],
+  );
 
-      <MyDrawer
-        name={'关联公共步骤组'}
-        open={openChoiceGroupStepDrawer}
-        setOpen={setOpenChoiceGroupStepDrawer}
-      >
-        <PlayGroupChoiceTable
-          projectId={projectId}
-          caseId={caseId}
-          callBackFunc={handelRefresh}
-        />
-      </MyDrawer>
-      <MyDrawer name={'UI Case Logs'} open={runOpen} setOpen={setRunOpen}>
-        <PlayCaseResultDetail caseId={caseId} openStatus={runOpen} />
-      </MyDrawer>
-      <ProCard extra={<AddStepExtra />} bodyStyle={{ minHeight: '100hv' }}>
-        <MyTabs defaultActiveKey={'2'} items={CornItems} />
-      </ProCard>
+  const runCase = async () => {
+    if (!caseId) return;
+    if (runningStyle === 1) {
+      executePlayCaseByBack({ caseId: caseId, error_stop: errorJump }).then(
+        async ({ code }) => {
+          if (code === 0) {
+            message.success('后台运行中。。');
+          }
+        },
+      );
+    } else {
+      setRunOpen(true);
+    }
+  };
+  return (
+    <>
+      <RcResizeObserver onResize={handleResize}>
+        <ProCard
+          style={{ height: '100%' }}
+          bodyStyle={{ height: '100%', padding: '10px', minHeight: '100vh' }}
+        >
+          <Splitter
+            style={{ height: '100%', boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)' }}
+          >
+            <Splitter.Panel resizable={false} size={defaultSize} max="100%">
+              <ProCard
+                extra={<AddStepExtra />}
+                bodyStyle={{ minHeight: '100hv' }}
+              >
+                <MyTabs defaultActiveKey={'2'} items={CornItems} />
+              </ProCard>
+            </Splitter.Panel>
+            <Splitter.Panel>
+              <RunConfig
+                onMenuClick={onMenuClick}
+                run={runCase}
+                onErrorJumpChange={onErrorJumpChange}
+              />
+            </Splitter.Panel>
+          </Splitter>
+        </ProCard>
+      </RcResizeObserver>
       <FloatButton.BackTop />
-    </ProCard>
+      <>
+        <MyDrawer
+          name={'添加私有步骤'}
+          width={'auto'}
+          open={openAddStepDrawer}
+          setOpen={setOpenAddStepDrawer}
+        >
+          {caseId && (
+            <PlayStepInfo
+              readonly={false}
+              currentProjectId={parseInt(projectId!)}
+              currentModuleId={parseInt(moduleId!)}
+              callback={handelRefresh}
+              is_common_step={false}
+              play_case_id={caseId}
+            />
+          )}
+        </MyDrawer>
+        <MyDrawer
+          name={'关联公共步骤'}
+          open={openChoiceStepDrawer}
+          setOpen={setOpenChoiceStepDrawer}
+        >
+          <PlayCommonChoiceTable
+            projectId={projectId}
+            caseId={caseId}
+            callBackFunc={handelRefresh}
+          />
+        </MyDrawer>
+
+        <MyDrawer
+          name={'关联公共步骤组'}
+          open={openChoiceGroupStepDrawer}
+          setOpen={setOpenChoiceGroupStepDrawer}
+        >
+          <PlayGroupChoiceTable
+            projectId={projectId}
+            caseId={caseId}
+            callBackFunc={handelRefresh}
+          />
+        </MyDrawer>
+        <MyDrawer name={'UI Case Logs'} open={runOpen} setOpen={setRunOpen}>
+          <PlayCaseResultDetail caseId={caseId} openStatus={runOpen} />
+        </MyDrawer>
+      </>
+    </>
   );
 };
 

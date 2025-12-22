@@ -146,10 +146,11 @@ export const choiceAddUIStepWithCopy = async (
 export const executeCaseByIO = async (
   data: {
     caseId: string;
+    error_stop: boolean;
   },
   options?: IObjGet,
 ) => {
-  return request<IResponse<null>>('/api/ui/case/execute/io', {
+  return request<IResponse<null>>('/api/play/case/execute_io', {
     method: 'POST',
     data: data,
     ...(options || {}),

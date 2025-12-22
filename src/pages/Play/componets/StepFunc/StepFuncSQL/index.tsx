@@ -14,7 +14,6 @@ const { Paragraph, Text } = Typography;
 interface Self {
   currentProjectId: number;
   subStepInfo: IUICaseSteps;
-  envs?: { label: string; value: number | null }[];
   callback: () => void;
 }
 

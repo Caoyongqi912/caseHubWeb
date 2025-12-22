@@ -2,14 +2,16 @@ import { copyCaseStep, removePlayStep } from '@/api/play/playCase';
 import MyDrawer from '@/components/MyDrawer';
 import StepFunc from '@/pages/Play/componets/StepFunc';
 import { IUICaseSteps } from '@/pages/Play/componets/uiTypes';
-import PlayStepDetail from '@/pages/Play/PlayStep/PlayStepDetail';
 import PlayGroupStepsTable from '@/pages/Play/PlayStep/PlayStepGroup/PlayGroupStepsTable';
+import PlayStepInfo from '@/pages/Play/PlayStep/PlayStepInfo';
+import { useModel } from '@@/exports';
 import {
   ApiFilled,
   ConsoleSqlOutlined,
   CopyFilled,
   DeleteOutlined,
   EditOutlined,
+  QuestionOutlined,
   UnorderedListOutlined,
 } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
@@ -30,17 +32,15 @@ interface ISelfProps {
   caseId: string;
   currentProjectId?: string;
   uiStepInfo?: IUICaseSteps;
-  collapsible?: boolean;
   callBackFunc: () => void;
-  envs?: any[];
   step: number;
 }
 
 const Index: FC<ISelfProps> = (props) => {
-  const { caseId, uiStepInfo, callBackFunc, currentProjectId, envs, step } =
-    props;
+  const { caseId, uiStepInfo, callBackFunc, currentProjectId, step } = props;
   const [openStepDetailDrawer, setOpenStepDetailDrawer] = useState(false);
   const [showOption, setShowOption] = useState(false);
+  const { initialState } = useModel('@@initialState');
 
   const copyUIStep = async () => {
     copyCaseStep({
@@ -68,36 +68,38 @@ const Index: FC<ISelfProps> = (props) => {
       {showOption && (
         <>
           <Space>
-            {uiStepInfo?.condition ? <Tag color={'green'}>IF</Tag> : null}
-            {uiStepInfo?.interface_id ? (
+            {uiStepInfo?.condition && (
+              <Tag color={'green'} icon={<QuestionOutlined />}>
+                IF
+              </Tag>
+            )}
+            {uiStepInfo?.interface_id && (
               <Tag color={'green'}>
                 <Space>
                   <ApiFilled />
                   {uiStepInfo.interface_a_or_b === 1 ? '前' : '后'}
                 </Space>
               </Tag>
-            ) : null}
-            {uiStepInfo?.db_id ? (
+            )}
+            {uiStepInfo?.db_id && (
               <Tag color={'green'}>
                 <Space>
                   <ConsoleSqlOutlined />
                   {uiStepInfo.db_a_or_b === 1 ? '前' : '后'}
                 </Space>
               </Tag>
-            ) : null}
-
+            )}
             <Tooltip title={'复制步骤到底步、如果是公共复制、将复制成私有'}>
               <Button
+                icon={<CopyFilled />}
                 color={'primary'}
                 variant="filled"
                 disabled={uiStepInfo?.is_group}
                 onClick={copyUIStep}
               >
-                <CopyFilled />
-                COPY
+                复制
               </Button>
             </Tooltip>
-
             <Button
               icon={<EditOutlined />}
               color={'primary'}
@@ -107,7 +109,7 @@ const Index: FC<ISelfProps> = (props) => {
                 setOpenStepDetailDrawer(true);
               }}
             >
-              DETAIL
+              详情
             </Button>
             <Popconfirm
               title={'确认删除？'}
@@ -117,12 +119,12 @@ const Index: FC<ISelfProps> = (props) => {
               onConfirm={removeUIStep}
             >
               <Button
+                icon={<DeleteOutlined />}
                 color={'danger'}
                 variant={'filled'}
                 style={{ marginRight: 10 }}
               >
-                <DeleteOutlined />
-                DEL
+                移除
               </Button>
             </Popconfirm>
           </Space>
@@ -152,7 +154,7 @@ const Index: FC<ISelfProps> = (props) => {
               />
               <Tag color={'green-inverse'}>STEP_{step}</Tag>
               {uiStepInfo?.is_group ? (
-                <Tag color={'blue-inverse'}>组</Tag>
+                <Tag color={'orange-inverse'}>组</Tag>
               ) : (
                 <>
                   {uiStepInfo?.is_common_step ? (
@@ -178,28 +180,30 @@ const Index: FC<ISelfProps> = (props) => {
             />
           ) : (
             <StepFunc
-              currentProjectId={currentProjectId!}
+              currentProjectId={parseInt(currentProjectId!)}
               subStepInfo={uiStepInfo!}
-              envs={envs}
               callback={callBackFunc}
             />
           )}
         </ProCard>
       </ProCard>
       <MyDrawer
-        name={'Step Detail'}
+        name={'步骤详情'}
         width={'auto'}
         open={openStepDetailDrawer}
         setOpen={setOpenStepDetailDrawer}
       >
-        <PlayStepDetail
-          caseId={parseInt(caseId)}
+        <PlayStepInfo
+          readonly={
+            !initialState?.currentUser?.isAdmin ||
+            initialState.currentUser?.id !== uiStepInfo?.creator
+          }
+          is_common_step={uiStepInfo?.is_common_step}
           stepInfo={uiStepInfo}
-          callBack={() => {
+          callback={() => {
             setOpenStepDetailDrawer(false);
             callBackFunc();
           }}
-          readOnly={uiStepInfo?.is_common_step}
         />
       </MyDrawer>
     </>

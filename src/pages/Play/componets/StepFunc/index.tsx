@@ -14,7 +14,6 @@ import { FC } from 'react';
 interface Self {
   currentProjectId: number;
   subStepInfo: IUICaseSteps;
-  envs?: { label: string; value: number | null }[];
   callback: () => void;
 }
 

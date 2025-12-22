@@ -5,17 +5,22 @@ import {
   queryPlayMethods,
   removePlayStep,
 } from '@/api/play/playCase';
-import { queryEnvByProjectIdFormApi } from '@/components/CommonFunc';
 import MyDrawer from '@/components/MyDrawer';
 import MyProTable from '@/components/Table/MyProTable';
 import PlayCaseStepAss from '@/pages/Play/componets/PlayCaseStepAss';
 import StepFunc from '@/pages/Play/componets/StepFunc';
 import { IUICaseSteps } from '@/pages/Play/componets/uiTypes';
-import PlayStepDetail from '@/pages/Play/PlayStep/PlayStepDetail';
+import PlayStepInfo from '@/pages/Play/PlayStep/PlayStepInfo';
 import { ModuleEnum } from '@/utils/config';
 import { pageData } from '@/utils/somefunc';
-import { PlusOutlined } from '@ant-design/icons';
-import { ActionType, ProCard } from '@ant-design/pro-components';
+import { useModel } from '@@/exports';
+import {
+  ApiFilled,
+  ConsoleSqlOutlined,
+  PlusOutlined,
+  QuestionOutlined,
+} from '@ant-design/icons';
+import { ActionType } from '@ant-design/pro-components';
 import { ProColumns } from '@ant-design/pro-table/lib/typing';
 import { Button, message, Popconfirm, Space, Tag, Tooltip } from 'antd';
 import { FC, useEffect, useRef, useState } from 'react';
@@ -31,21 +36,16 @@ const Index: FC<SelfProps> = ({
   currentProjectId,
   perKey,
 }) => {
+  const { initialState } = useModel('@@initialState');
   const actionRef = useRef<ActionType>(); //Table action 的引用，便于自定义触发
   const [methodEnum, setMethodEnum] = useState<IObjGet>();
   const [addStepOpen, setAddStepOpen] = useState(false);
   const [stepDetailOpen, setStepDetailOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState<IUICaseSteps>();
   const [dataOpen, setDataOpen] = useState<boolean>(false);
-  const [envs, setEnvs] = useState<{ label: string; value: number | null }[]>(
-    [],
-  );
 
   useEffect(() => {
     actionRef.current?.reload();
-    if (currentProjectId) {
-      queryEnvByProjectIdFormApi(currentProjectId, setEnvs, true).then();
-    }
   }, [currentModuleId, currentProjectId]);
 
   useEffect(() => {
@@ -106,7 +106,7 @@ const Index: FC<SelfProps> = ({
 
   const columns: ProColumns<IUICaseSteps>[] = [
     {
-      title: 'uid',
+      title: 'ID',
       dataIndex: 'uid',
       width: '10%',
       copyable: true,
@@ -118,55 +118,21 @@ const Index: FC<SelfProps> = ({
       title: '名称',
       valueType: 'text',
       dataIndex: 'name',
-      copyable: true,
       render: (_, record) => <Tag color={'blue'}>{record.name}</Tag>,
     },
     {
       title: '描述',
-      valueType: 'text',
       dataIndex: 'description',
-      ellipsis: true,
+      valueType: 'textarea',
       search: false,
+      ellipsis: true,
     },
-
     {
       title: '方法',
       dataIndex: 'method',
       valueEnum: { ...methodEnum },
       valueType: 'select',
       render: (text) => <Tag color={'blue'}>{text}</Tag>,
-    },
-    {
-      title: 'API',
-      dataIndex: 'interface_id',
-      valueType: 'text',
-      render: (_, record) => {
-        if (record.interface_id) {
-          return (
-            <a
-              onClick={() =>
-                window.open(
-                  `/interface/interApi/detail/interId=${record.interface_id}`,
-                )
-              }
-            >
-              {record.interface_id}
-            </a>
-          );
-        }
-        return '-';
-      },
-    },
-    {
-      title: 'DB',
-      dataIndex: 'db_id',
-      valueType: 'text',
-      render: (_, record) => {
-        if (record.db_id) {
-          return <Tag>DB</Tag>;
-        }
-        return '-';
-      },
     },
     {
       title: '创建人',
@@ -176,11 +142,45 @@ const Index: FC<SelfProps> = ({
       render: (text) => <Tag color={'blue'}>{text}</Tag>,
     },
     {
+      title: '其他',
+      valueType: 'text',
+      search: false,
+      width: '20%',
+      render: (_, record) => {
+        return (
+          <Space>
+            {record.condition && (
+              <Tag color={'green'} icon={<QuestionOutlined />}>
+                IF
+              </Tag>
+            )}
+            {record.interface_id && (
+              <Tag color={'green'}>
+                <Space>
+                  <ApiFilled />
+                  {record.interface_a_or_b === 1 ? '前' : '后'}
+                </Space>
+              </Tag>
+            )}
+            {record.db_id && (
+              <Tag color={'green'}>
+                <Space>
+                  <ConsoleSqlOutlined />
+                  {record.db_a_or_b === 1 ? '前' : '后'}
+                </Space>
+              </Tag>
+            )}
+          </Space>
+        );
+      },
+    },
+
+    {
       title: 'opt',
       valueType: 'option',
       fixed: 'right',
       render: (_, record, __, ___) => (
-        <Space>
+        <Space size={'small'}>
           <a
             key={'detail'}
             onClick={() => {
@@ -218,6 +218,7 @@ const Index: FC<SelfProps> = ({
   const addStepButton = (
     <Button
       type={'primary'}
+      hidden={!currentModuleId}
       onClick={async () => {
         setAddStepOpen(true);
       }}
@@ -236,23 +237,28 @@ const Index: FC<SelfProps> = ({
       <StepFunc
         currentProjectId={currentProjectId!}
         subStepInfo={record!}
-        envs={envs}
         callback={reload}
       />
     );
   };
+
   return (
-    <ProCard split={'horizontal'}>
+    <>
       <MyDrawer
         name={'步骤详情'}
         width={'auto'}
         open={stepDetailOpen}
         setOpen={setStepDetailOpen}
       >
-        <PlayStepDetail
+        {/*// 管理 创建人可编辑*/}
+        <PlayStepInfo
           stepInfo={currentStep}
-          callBack={closeDrawer}
-          isCommonStep={true}
+          is_common_step={true}
+          callback={closeDrawer}
+          readonly={
+            !initialState?.currentUser?.isAdmin ||
+            initialState.currentUser?.id !== currentStep?.creator
+          }
         />
       </MyDrawer>
       <MyDrawer name={'关联用例'} open={dataOpen} setOpen={setDataOpen}>
@@ -264,7 +270,13 @@ const Index: FC<SelfProps> = ({
         open={addStepOpen}
         setOpen={setAddStepOpen}
       >
-        <PlayStepDetail callBack={closeDrawer} isCommonStep={true} />
+        <PlayStepInfo
+          currentProjectId={currentProjectId}
+          readonly={false}
+          callback={closeDrawer}
+          is_common_step={true}
+          currentModuleId={currentModuleId}
+        />
       </MyDrawer>
       <MyProTable
         persistenceKey={perKey}
@@ -279,7 +291,7 @@ const Index: FC<SelfProps> = ({
         toolBarRender={() => [addStepButton]}
         request={fetchCommonStepPage}
       />
-    </ProCard>
+    </>
   );
 };
 export default Index;

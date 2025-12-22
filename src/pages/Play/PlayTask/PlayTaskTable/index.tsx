@@ -1,19 +1,22 @@
 import { setSwitch } from '@/api/base';
 import {
-  getPlayTaskJobNextRunTime,
   handelExecutePlayTask,
+  insertPlayTask,
   pagePlayTask,
   removePlayTaskById,
+  updatePlayTask,
 } from '@/api/play/playTask';
+import MyModal from '@/components/MyModal';
 import MyProTable from '@/components/Table/MyProTable';
 import { IUITask } from '@/pages/Play/componets/uiTypes';
+import PlayTaskBasicInfoForm from '@/pages/Play/PlayTask/PlayTaskDetail/PlayTaskBasicInfoForm';
 import { CONFIG, ModuleEnum } from '@/utils/config';
 import { pageData } from '@/utils/somefunc';
 import { history } from '@@/core/history';
 import { useModel } from '@@/exports';
 import { ActionType, ProColumns } from '@ant-design/pro-components';
-import { Button, Divider, message, Popconfirm, Switch, Tag } from 'antd';
-import { FC, useCallback, useEffect, useRef } from 'react';
+import { Button, Divider, Form, message, Popconfirm, Tag } from 'antd';
+import { FC, useCallback, useEffect, useRef, useState } from 'react';
 
 interface SelfProps {
   currentProjectId?: number;
@@ -25,6 +28,22 @@ const Index: FC<SelfProps> = (props) => {
   const { currentProjectId, currentModuleId, perKey } = props;
   const actionRef = useRef<ActionType>(); //Table action 的引用，便于自定义触发
   const { initialState } = useModel('@@initialState');
+  const [form] = Form.useForm();
+  const [currentTaskId, setCurrentTaskId] = useState<number>();
+
+  useEffect(() => {
+    actionRef.current?.reload();
+  }, [currentModuleId, currentProjectId]);
+
+  useEffect(() => {
+    actionRef.current?.reload();
+    if (currentProjectId && currentModuleId) {
+      form.setFieldsValue({
+        project_id: currentProjectId,
+        module_id: currentModuleId,
+      });
+    }
+  }, [currentModuleId, currentProjectId]);
 
   const fetchPageUITaskTable = useCallback(
     async (params: any, sort: any) => {
@@ -38,9 +57,6 @@ const Index: FC<SelfProps> = (props) => {
     },
     [currentProjectId, currentModuleId],
   );
-  useEffect(() => {
-    actionRef.current?.reload();
-  }, [currentModuleId, currentProjectId]);
 
   const setTaskSwitch = async (uid: string, flag: boolean) => {
     const { code } = await setSwitch({ tag: 'UI', uid: uid, switch: flag });
@@ -67,22 +83,25 @@ const Index: FC<SelfProps> = (props) => {
       title: '任务名称',
       dataIndex: 'title',
       key: 'title',
-    },
-
-    {
-      title: '是否启动',
-      dataIndex: 'switch',
-      hideInSearch: true,
-      render: (_, record) => {
+      render: (_: any, record: IUITask) => {
         return (
-          <Switch
-            checkedChildren="ON"
-            unCheckedChildren="OFF"
-            onClick={async (checked) => {
-              await setTaskSwitch(record.uid, checked);
-            }}
-            value={record.switch}
-          />
+          <MyModal
+            onFinish={saveTask}
+            form={form}
+            trigger={
+              <a
+                type={'primary'}
+                onClick={() => {
+                  form.setFieldsValue(record);
+                  setCurrentTaskId(record.id);
+                }}
+              >
+                {record.title}
+              </a>
+            }
+          >
+            <PlayTaskBasicInfoForm />
+          </MyModal>
         );
       },
     },
@@ -131,7 +150,6 @@ const Index: FC<SelfProps> = (props) => {
       sorter: true,
       search: false,
     },
-
     {
       title: '操作',
       valueType: 'option',
@@ -159,22 +177,7 @@ const Index: FC<SelfProps> = (props) => {
                 }
               }}
             >
-              手动执行
-            </a>
-            <Divider type={'vertical'} />
-            <a
-              onClick={async () => {
-                const { code, data, msg } = await getPlayTaskJobNextRunTime({
-                  jobId: record.uid,
-                });
-                if (code === 0) {
-                  message.success(data);
-                } else {
-                  message.error(msg);
-                }
-              }}
-            >
-              下次执行时间
+              执行
             </a>
             {initialState?.currentUser?.id === record.creator ||
             initialState?.currentUser?.isAdmin ? (
@@ -197,15 +200,44 @@ const Index: FC<SelfProps> = (props) => {
       },
     },
   ];
+
+  const saveTask = async (values: IUITask) => {
+    if (currentTaskId) {
+      const { code, msg } = await updatePlayTask({
+        ...values,
+        id: currentTaskId,
+      });
+      if (code === 0) {
+        message.success(msg);
+        actionRef.current?.reload();
+      }
+    } else {
+      const { code, data } = await insertPlayTask(values);
+      if (code === 0) {
+        message.success('添加成功');
+        actionRef.current?.reload();
+      }
+    }
+    return true;
+  };
+
   const AddTaskButton = (
-    <Button
-      type={'primary'}
-      onClick={() => {
-        history.push(`/ui/addTask`);
-      }}
+    <MyModal
+      onFinish={saveTask}
+      form={form}
+      trigger={
+        <Button
+          type={'primary'}
+          onClick={() => {
+            setCurrentTaskId(undefined);
+          }}
+        >
+          添加任务
+        </Button>
+      }
     >
-      添加任务
-    </Button>
+      <PlayTaskBasicInfoForm />
+    </MyModal>
   );
   return (
     <MyProTable
