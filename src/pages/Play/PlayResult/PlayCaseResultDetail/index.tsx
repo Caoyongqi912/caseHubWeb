@@ -20,11 +20,12 @@ import io, { Socket } from 'socket.io-client';
 interface SelfProps {
   openStatus?: boolean;
   caseId?: string;
+  error_stop?: boolean;
   resultId?: string;
 }
 
 const Index: FC<SelfProps> = (props) => {
-  const { openStatus, caseId, resultId } = props;
+  const { openStatus, caseId, error_stop = true, resultId } = props;
   const { initialState } = useModel('@@initialState');
   const [logMessage, setLogMessage] = useState<string[]>([]);
   const [caseResultId, setCaseResultId] = useState<string>();
@@ -50,7 +51,7 @@ const Index: FC<SelfProps> = (props) => {
       socket.on('connect', () => {
         console.log('connect socket');
         if (caseId) {
-          executeCaseByIO({ caseId: caseId }).then();
+          executeCaseByIO({ caseId: caseId, error_stop: error_stop }).then();
         }
       });
 

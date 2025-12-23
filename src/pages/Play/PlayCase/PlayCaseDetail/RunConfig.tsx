@@ -54,12 +54,7 @@ const RunConfig: FC<{
                 {
                   label: (
                     // @ts-ignore
-                    <Flex
-                      gap="small"
-                      justify="center"
-                      align="center"
-                      horizontal
-                    >
+                    <Flex gap="small" justify="center" align="center">
                       <RobotOutlined style={{ fontSize: 18 }} />
                       后台执行
                     </Flex>
@@ -69,12 +64,7 @@ const RunConfig: FC<{
                 {
                   label: (
                     // @ts-ignore
-                    <Flex
-                      gap="small"
-                      justify="center"
-                      align="center"
-                      horizontal
-                    >
+                    <Flex gap="small" justify="center" align="center">
                       <MessageOutlined style={{ fontSize: 18 }} />
                       实时日志
                     </Flex>
@@ -118,9 +108,6 @@ const RunConfig: FC<{
             defaultChecked={false}
             checkedChildren="开"
             unCheckedChildren="关"
-            style={{
-              background: '#cbd5e1',
-            }}
           />
         </div>
         <Button

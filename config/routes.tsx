@@ -87,7 +87,6 @@ export default [
     path: '/cases',
     name: '测试用例',
     icon: 'BuildFilled',
-    access: 'isAdmin',
     routes: [
       {
         path: '/cases/caseHub',
@@ -151,6 +150,12 @@ export default [
       },
       {
         path: '/ui/case/detail/caseId=:caseId&projectId=:projectId&moduleId=:moduleId',
+        name: '用例详情',
+        hideInMenu: true,
+        component: '@/pages/Play/PlayCase/PlayCaseDetail',
+      },
+      {
+        path: '/ui/case/detail/caseId=:caseId',
         name: '用例详情',
         hideInMenu: true,
         component: '@/pages/Play/PlayCase/PlayCaseDetail',

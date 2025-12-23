@@ -48,7 +48,7 @@ const Index = () => {
   const [runOpen, setRunOpen] = useState(false);
   const [varsNum, setVarsNum] = useState(0);
   const [defaultSize, setDefaultSize] = useState('80%');
-  const [errorJump, setErrorJump] = useState<boolean>(false);
+  const [errorStop, setErrorStop] = useState<boolean>(true);
   const [runningStyle, setRunningStyle] = useState<number>(1);
   useEffect(() => {
     if (caseId) {
@@ -88,7 +88,7 @@ const Index = () => {
   }, [refresh, uiSteps]);
 
   const onErrorJumpChange = (value: boolean) => {
-    setErrorJump(value);
+    setErrorStop(value);
   };
   const onDragEnd = async (reorderedUIContents: any[]) => {
     if (caseId) {
@@ -209,7 +209,7 @@ const Index = () => {
   const runCase = async () => {
     if (!caseId) return;
     if (runningStyle === 1) {
-      executePlayCaseByBack({ caseId: caseId, error_stop: errorJump }).then(
+      executePlayCaseByBack({ caseId: caseId, error_stop: errorStop }).then(
         async ({ code }) => {
           if (code === 0) {
             message.success('后台运行中。。');
@@ -291,7 +291,11 @@ const Index = () => {
           />
         </MyDrawer>
         <MyDrawer name={'UI Case Logs'} open={runOpen} setOpen={setRunOpen}>
-          <PlayCaseResultDetail caseId={caseId} openStatus={runOpen} />
+          <PlayCaseResultDetail
+            caseId={caseId}
+            openStatus={runOpen}
+            error_stop={errorStop}
+          />
         </MyDrawer>
       </>
     </>

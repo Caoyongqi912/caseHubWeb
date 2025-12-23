@@ -1,4 +1,3 @@
-import { setSwitch } from '@/api/base';
 import {
   handelExecutePlayTask,
   insertPlayTask,
@@ -58,31 +57,21 @@ const Index: FC<SelfProps> = (props) => {
     [currentProjectId, currentModuleId],
   );
 
-  const setTaskSwitch = async (uid: string, flag: boolean) => {
-    const { code } = await setSwitch({ tag: 'UI', uid: uid, switch: flag });
-    if (code === 0) {
-      if (flag) {
-        message.success('已重启任务');
-      } else {
-        message.success('已暂停任务');
-      }
-    }
-    actionRef.current?.reload();
-  };
-
   const columns: ProColumns<IUITask>[] = [
     {
       title: '任务编号',
       dataIndex: 'uid',
       key: 'uid',
       fixed: 'left',
-      width: '10%',
+      width: '12%',
       copyable: true,
     },
     {
       title: '任务名称',
       dataIndex: 'title',
       key: 'title',
+      width: '15%',
+
       render: (_: any, record: IUITask) => {
         return (
           <MyModal

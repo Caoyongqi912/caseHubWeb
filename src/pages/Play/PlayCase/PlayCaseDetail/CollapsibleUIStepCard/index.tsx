@@ -64,73 +64,74 @@ const Index: FC<ISelfProps> = (props) => {
   };
 
   const ExtraArea = (
-    <>
+    <Space>
+      <>
+        {uiStepInfo?.condition && (
+          <Tag color={'green'} icon={<QuestionOutlined />}>
+            IF
+          </Tag>
+        )}
+        {uiStepInfo?.interface_id && (
+          <Tag color={'green'}>
+            <Space>
+              <ApiFilled />
+              {uiStepInfo.interface_a_or_b === 1 ? '前' : '后'}
+            </Space>
+          </Tag>
+        )}
+        {uiStepInfo?.db_id && (
+          <Tag color={'green'}>
+            <Space>
+              <ConsoleSqlOutlined />
+              {uiStepInfo.db_a_or_b === 1 ? '前' : '后'}
+            </Space>
+          </Tag>
+        )}
+      </>
+
       {showOption && (
         <>
-          <Space>
-            {uiStepInfo?.condition && (
-              <Tag color={'green'} icon={<QuestionOutlined />}>
-                IF
-              </Tag>
-            )}
-            {uiStepInfo?.interface_id && (
-              <Tag color={'green'}>
-                <Space>
-                  <ApiFilled />
-                  {uiStepInfo.interface_a_or_b === 1 ? '前' : '后'}
-                </Space>
-              </Tag>
-            )}
-            {uiStepInfo?.db_id && (
-              <Tag color={'green'}>
-                <Space>
-                  <ConsoleSqlOutlined />
-                  {uiStepInfo.db_a_or_b === 1 ? '前' : '后'}
-                </Space>
-              </Tag>
-            )}
-            <Tooltip title={'复制步骤到底步、如果是公共复制、将复制成私有'}>
-              <Button
-                icon={<CopyFilled />}
-                color={'primary'}
-                variant="filled"
-                disabled={uiStepInfo?.is_group}
-                onClick={copyUIStep}
-              >
-                复制
-              </Button>
-            </Tooltip>
+          <Tooltip title={'复制步骤到底步、如果是公共复制、将复制成私有'}>
             <Button
-              icon={<EditOutlined />}
+              icon={<CopyFilled />}
               color={'primary'}
               variant="filled"
-              disabled={uiStepInfo?.is_group}
-              onClick={() => {
-                setOpenStepDetailDrawer(true);
-              }}
+              hidden={uiStepInfo?.is_group}
+              onClick={copyUIStep}
             >
-              详情
+              复制
             </Button>
-            <Popconfirm
-              title={'确认删除？'}
-              description={'非公共步骤会彻底删除'}
-              okText={'确认'}
-              cancelText={'点错了'}
-              onConfirm={removeUIStep}
+          </Tooltip>
+          <Button
+            icon={<EditOutlined />}
+            color={'primary'}
+            variant="filled"
+            hidden={uiStepInfo?.is_group}
+            onClick={() => {
+              setOpenStepDetailDrawer(true);
+            }}
+          >
+            详情
+          </Button>
+          <Popconfirm
+            title={'确认删除？'}
+            description={'非公共步骤会彻底删除'}
+            okText={'确认'}
+            cancelText={'点错了'}
+            onConfirm={removeUIStep}
+          >
+            <Button
+              icon={<DeleteOutlined />}
+              color={'danger'}
+              variant={'filled'}
+              style={{ marginRight: 10 }}
             >
-              <Button
-                icon={<DeleteOutlined />}
-                color={'danger'}
-                variant={'filled'}
-                style={{ marginRight: 10 }}
-              >
-                移除
-              </Button>
-            </Popconfirm>
-          </Space>
+              移除
+            </Button>
+          </Popconfirm>
         </>
       )}
-    </>
+    </Space>
   );
 
   return (
