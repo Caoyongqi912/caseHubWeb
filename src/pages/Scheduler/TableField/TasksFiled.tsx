@@ -1,5 +1,6 @@
 import { query_tasks_by_job } from '@/api/base/aps';
 import { IInterfaceAPITask } from '@/pages/Httpx/types';
+import { IUITask } from '@/pages/Play/componets/uiTypes';
 import {
   ApiOutlined,
   CheckCircleFilled,
@@ -29,11 +30,12 @@ const { Text } = Typography;
 
 interface Props {
   job_uid: string;
+  type: number;
   refreshFlag?: number;
 }
 
-const TasksFiled: FC<Props> = ({ job_uid, refreshFlag }) => {
-  const [jobTasks, setJobTasks] = useState<IInterfaceAPITask[]>([]);
+const TasksFiled: FC<Props> = ({ job_uid, type, refreshFlag }) => {
+  const [jobTasks, setJobTasks] = useState<IInterfaceAPITask[] | IUITask[]>([]);
   const [loading, setLoading] = useState(false);
   const [showEditor, setShowEditor] = useState(false);
   useEffect(() => {
@@ -116,7 +118,8 @@ const TasksFiled: FC<Props> = ({ job_uid, refreshFlag }) => {
 
   // 计算统计
   const totalCases = jobTasks.reduce(
-    (sum, task) => sum + (task.total_cases_num || 0),
+    (sum, task) =>
+      sum + (type === 1 ? task.total_cases_num : task.play_case_num || 0),
     0,
   );
   const totalApis = jobTasks.reduce(
@@ -157,14 +160,20 @@ const TasksFiled: FC<Props> = ({ job_uid, refreshFlag }) => {
               </div>
               <div style={{ fontSize: '15px', color: '#8c8c8c' }}>用例</div>
             </div>
-            <div style={{ textAlign: 'center' }}>
-              <div
-                style={{ fontSize: '12px', fontWeight: 600, color: '#722ed1' }}
-              >
-                {totalApis}
+            {type === 1 && (
+              <div style={{ textAlign: 'center' }}>
+                <div
+                  style={{
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    color: '#722ed1',
+                  }}
+                >
+                  {totalApis}
+                </div>
+                <div style={{ fontSize: '15px', color: '#8c8c8c' }}>接口</div>
               </div>
-              <div style={{ fontSize: '15px', color: '#8c8c8c' }}>接口</div>
-            </div>
+            )}
           </Space>
         </Space>
       </ProCard>
@@ -173,7 +182,14 @@ const TasksFiled: FC<Props> = ({ job_uid, refreshFlag }) => {
       <Space direction="vertical" size={6} style={{ width: '100%' }}>
         {jobTasks.map((task) => {
           const statusConfig = getStatusConfig(task.status);
-          const totalCases = task.total_cases_num || 0;
+          const totalCases = () => {
+            if (type === 1) {
+              return task.total_cases_num || 0;
+            } else {
+              return task.play_case_num || 0;
+            }
+          };
+          // const totalCases = type === 1 ? task.total_cases_num : task.play_case_num || 0;
           const totalApis = task.total_apis_num || 0;
           return (
             <ProCard
@@ -262,17 +278,18 @@ const TasksFiled: FC<Props> = ({ job_uid, refreshFlag }) => {
                       </Text>
                     </Space>
                   </Tooltip>
-
-                  <Tooltip title="接口数">
-                    <Space size={4}>
-                      <ApiOutlined
-                        style={{ fontSize: '15px', color: '#722ed1' }}
-                      />
-                      <Text style={{ color: '#722ed1', fontWeight: 500 }}>
-                        {totalApis}
-                      </Text>
-                    </Space>
-                  </Tooltip>
+                  {type === 1 && (
+                    <Tooltip title="接口数">
+                      <Space size={4}>
+                        <ApiOutlined
+                          style={{ fontSize: '15px', color: '#722ed1' }}
+                        />
+                        <Text style={{ color: '#722ed1', fontWeight: 500 }}>
+                          {totalApis}
+                        </Text>
+                      </Space>
+                    </Tooltip>
+                  )}
 
                   <Divider
                     type="vertical"

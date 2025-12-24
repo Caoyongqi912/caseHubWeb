@@ -2,12 +2,13 @@ import { page_aps_job, remove_aps_job } from '@/api/base/aps';
 import MyDrawer from '@/components/MyDrawer';
 import MyProTable from '@/components/Table/MyProTable';
 import InterfaceApiTaskResultTable from '@/pages/Httpx/InterfaceApiTaskResult/InterfaceApiTaskResultTable';
-import JobForm from '@/pages/Httpx/Scheduler/JobForm';
-import JobParams from '@/pages/Httpx/Scheduler/TableField/JobParams';
-import Notify from '@/pages/Httpx/Scheduler/TableField/Notify';
-import TasksFiled from '@/pages/Httpx/Scheduler/TableField/TasksFiled';
-import TriggerType from '@/pages/Httpx/Scheduler/TableField/TriggerType';
+import PlayTaskResultTable from '@/pages/Play/PlayResult/PlayTaskResultTable';
 import { IJob } from '@/pages/Project/types';
+import JobForm from '@/pages/Scheduler/JobForm';
+import JobParams from '@/pages/Scheduler/TableField/JobParams';
+import Notify from '@/pages/Scheduler/TableField/Notify';
+import TasksFiled from '@/pages/Scheduler/TableField/TasksFiled';
+import TriggerType from '@/pages/Scheduler/TableField/TriggerType';
 import { ModuleEnum } from '@/utils/config';
 import { pageData } from '@/utils/somefunc';
 import { PlusOutlined } from '@ant-design/icons';
@@ -69,7 +70,13 @@ const SchedulerTable: FC<SelfProps> = (props) => {
       dataIndex: 'job_env_name',
       search: false,
       width: '8%',
-      render: (_, record) => <Tag color={'blue'}>{record.job_env_name}</Tag>,
+      render: (_, record) => {
+        if (record.job_env_name) {
+          return <Tag color={'blue'}>{record.job_env_name}</Tag>;
+        } else {
+          return <Tag color={'blue'}>无</Tag>;
+        }
+      },
     },
     {
       title: '执行信息',
@@ -181,7 +188,11 @@ const SchedulerTable: FC<SelfProps> = (props) => {
   return (
     <div>
       <MyDrawer open={openTaskHistory} setOpen={setOpenTaskHistory}>
-        <InterfaceApiTaskResultTable job={currentJob} />
+        {currentJob?.job_type === 1 ? (
+          <InterfaceApiTaskResultTable job={currentJob} />
+        ) : (
+          <PlayTaskResultTable job={currentJob} />
+        )}
       </MyDrawer>
       <ModalForm
         size={'small'}
@@ -207,7 +218,7 @@ const SchedulerTable: FC<SelfProps> = (props) => {
           columnWidth: '4%',
           onExpand: handleExpand,
           expandedRowRender: (record: IJob) => {
-            return <TasksFiled job_uid={record.uid} />;
+            return <TasksFiled job_uid={record.uid} type={record.job_type} />;
           },
         }}
         x={1500}

@@ -273,11 +273,6 @@ export default [
           '@/pages/Httpx/InterfaceApiCaseTask/InterfaceApiCaseTaskDetail',
         hideInMenu: true,
       },
-      {
-        path: '/interface/interApi/scheduler',
-        name: '定时任务',
-        component: '@/pages/Httpx/Scheduler',
-      },
 
       {
         path: '/interface/interApi/record',
@@ -302,6 +297,12 @@ export default [
       },
       { component: '@/pages/404' },
     ],
+  },
+  {
+    path: '/scheduler',
+    name: '定时任务',
+    icon: 'ClockCircleOutlined',
+    component: '@/pages/Scheduler',
   },
   {
     name: '调试工具',

@@ -1,5 +1,5 @@
 import LeftComponents from '@/components/LeftComponents';
-import SchedulerTable from '@/pages/Httpx/Scheduler/SchedulerTable';
+import SchedulerTable from '@/pages/Scheduler/SchedulerTable';
 import { ModuleEnum } from '@/utils/config';
 import { getSplitter, setSplitter } from '@/utils/token';
 import { ProCard } from '@ant-design/pro-components';

@@ -1,13 +1,14 @@
 import { pagePlayGroupSteps } from '@/api/play/playCase';
 import MyProTable from '@/components/Table/MyProTable';
-import { IUICaseSteps } from '@/pages/Play/componets/uiTypes';
+import { IUIGroupStep } from '@/pages/Play/componets/uiTypes';
 import PlayStepGroupModalForm from '@/pages/Play/PlayStep/PlayStepGroup/PlayStepGroupModalForm';
 import { ModuleEnum } from '@/utils/config';
 import { pageData } from '@/utils/somefunc';
+import { PlusOutlined } from '@ant-design/icons';
 import { ActionType } from '@ant-design/pro-components';
 import { ProColumns } from '@ant-design/pro-table/lib/typing';
-import { Divider, Popconfirm, Tag } from 'antd';
-import { FC, useEffect, useRef } from 'react';
+import { Button, Divider, Popconfirm, Tag } from 'antd';
+import { FC, useEffect, useRef, useState } from 'react';
 
 interface SelfProps {
   currentProjectId?: number;
@@ -18,7 +19,7 @@ interface SelfProps {
 const PlayStepGroupTable: FC<SelfProps> = (props) => {
   const { currentProjectId, currentModuleId, perKey } = props;
   const actionRef = useRef<ActionType>(); //Table action 的引用，便于自定义触发
-
+  const [currentGroup, setCurrentGroup] = useState<IUIGroupStep>();
   const reload = () => {
     actionRef.current?.reload();
   };
@@ -37,7 +38,7 @@ const PlayStepGroupTable: FC<SelfProps> = (props) => {
     return pageData(code, data);
   };
 
-  const columns: ProColumns<IUICaseSteps>[] = [
+  const columns: ProColumns<IUIGroupStep>[] = [
     {
       title: 'uid',
       dataIndex: 'uid',
@@ -52,7 +53,25 @@ const PlayStepGroupTable: FC<SelfProps> = (props) => {
       valueType: 'text',
       dataIndex: 'name',
       copyable: true,
-      render: (_, record) => <Tag color={'blue'}>{record.name}</Tag>,
+      render: (_, record) => {
+        return (
+          <PlayStepGroupModalForm
+            trigger={
+              <a
+                onClick={() => {
+                  setCurrentGroup(record);
+                }}
+              >
+                {record.name}
+              </a>
+            }
+            currentProjectId={record.project_id}
+            currentModuleId={record.module_id}
+            callBack={reload}
+            current={record}
+          />
+        );
+      },
     },
     {
       title: '描述',
@@ -119,6 +138,18 @@ const PlayStepGroupTable: FC<SelfProps> = (props) => {
       columns={columns}
       toolBarRender={() => [
         <PlayStepGroupModalForm
+          trigger={
+            <Button
+              type="primary"
+              hidden={currentModuleId === undefined}
+              onClick={() => {
+                setCurrentGroup(undefined);
+              }}
+            >
+              <PlusOutlined />
+              添加步骤组
+            </Button>
+          }
           currentProjectId={currentProjectId}
           currentModuleId={currentModuleId}
           callBack={reload}

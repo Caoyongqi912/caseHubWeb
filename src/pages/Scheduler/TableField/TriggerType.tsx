@@ -1,8 +1,8 @@
 import { IObjGet } from '@/api';
 import { switch_job, update_aps_job } from '@/api/base/aps';
 import MyModal from '@/components/MyModal';
-import TriggerTypeForm from '@/pages/Httpx/Scheduler/JobForm/TriggerTypeForm';
 import { IJob } from '@/pages/Project/types';
+import TriggerTypeForm from '@/pages/Scheduler/JobForm/TriggerTypeForm';
 import {
   CalendarOutlined,
   ClockCircleOutlined,

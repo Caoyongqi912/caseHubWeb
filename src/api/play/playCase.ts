@@ -563,6 +563,27 @@ export const insertPlayGroupSteps = async (
   });
 };
 
+export const getPlayGroup = async (
+  values: string | number,
+  options?: IObjGet,
+) => {
+  return request<IResponse<IUIGroupStep>>('/api/play/stepGroup/detail', {
+    method: 'GET',
+    params: { groupId: values },
+    ...(options || {}),
+  });
+};
+export const updatePlayGroupSteps = async (
+  values: IUIGroupStep,
+  options?: IObjGet,
+) => {
+  return request<IResponse<null>>('/api/play/stepGroup/update', {
+    method: 'POST',
+    data: values,
+    ...(options || {}),
+  });
+};
+
 export const insertPlayGroupSubSteps = async (
   values: IUIGroupStep,
   options?: IObjGet,

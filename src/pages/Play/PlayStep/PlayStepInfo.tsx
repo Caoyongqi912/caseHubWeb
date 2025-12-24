@@ -1,5 +1,6 @@
 import { IResponse } from '@/api';
 import {
+  insertPlayGroupSubSteps,
   insertPlayStep,
   queryPlayMethods,
   updatePlayStep,
@@ -25,12 +26,14 @@ interface Self {
   callback?: () => void;
   is_common_step?: boolean;
   play_case_id?: string;
+  play_group_id?: number;
 }
 
 const PlayStepInfo: FC<Self> = (props) => {
   const {
     currentProjectId,
     play_case_id,
+    play_group_id,
     is_common_step,
     callback,
     readonly,
@@ -59,6 +62,22 @@ const PlayStepInfo: FC<Self> = (props) => {
       });
     }
   }, [currentProjectId, currentModuleId]);
+  useEffect(() => {
+    if (play_group_id) {
+      console.log('===play_group_id', play_group_id);
+      stepForm.setFieldsValue({
+        group_id: play_group_id,
+      });
+    }
+    if (play_case_id) {
+      console.log('==play_case_id=g', play_group_id);
+
+      stepForm.setFieldsValue({
+        caseId: play_case_id,
+      });
+    }
+  }, [play_group_id, play_case_id]);
+
   useEffect(() => {
     if (!stepInfo) return;
     stepForm.setFieldsValue(stepInfo);
@@ -91,8 +110,12 @@ const PlayStepInfo: FC<Self> = (props) => {
     } else {
       if (play_case_id) {
         values.caseId = play_case_id;
+        insertPlayStep(values).then(onFetchFinish);
       }
-      insertPlayStep(values).then(onFetchFinish);
+      if (play_group_id) {
+        values.group_id = play_group_id;
+        insertPlayGroupSubSteps(values).then(onFetchFinish);
+      }
     }
   };
   return (

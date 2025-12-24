@@ -7,6 +7,7 @@ import {
 import { queryProjectEnum } from '@/components/CommonFunc';
 import MyProTable from '@/components/Table/MyProTable';
 import { IPlayTaskResult } from '@/pages/Play/componets/uiTypes';
+import { IJob } from '@/pages/Project/types';
 import { CONFIG, ModuleEnum } from '@/utils/config';
 import { fetchModulesEnum, pageData } from '@/utils/somefunc';
 import { history } from '@@/core/history';
@@ -17,9 +18,10 @@ import { FC, useCallback, useEffect, useRef, useState } from 'react';
 
 interface SelfProps {
   taskId?: string;
+  job?: IJob;
 }
 
-const PlayTaskResultTable: FC<SelfProps> = ({ taskId }) => {
+const PlayTaskResultTable: FC<SelfProps> = ({ taskId, job }) => {
   const actionRef = useRef<ActionType>(); //Table action 的引用，便于自定义触发
   const [selectProjectId, setSelectProjectId] = useState<number>();
   const [showSearch, setShowSearch] = useState(true);
@@ -51,6 +53,10 @@ const PlayTaskResultTable: FC<SelfProps> = ({ taskId }) => {
         module_type: ModuleEnum.UI_TASK,
         task_id: taskId,
       };
+      if (job) {
+        newParams.startBy = 3;
+        newParams.taskUid = job.job_task_id_list;
+      }
       const { code, data } = await pagePlayTaskResult(newParams);
       return pageData(code, data);
     },

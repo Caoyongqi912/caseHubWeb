@@ -2,19 +2,28 @@ import { copySubSteps, removeSubSteps } from '@/api/play/playCase';
 import MyDrawer from '@/components/MyDrawer';
 import StepFunc from '@/pages/Play/componets/StepFunc';
 import { IUICaseSteps } from '@/pages/Play/componets/uiTypes';
-import PlayStepDetail from '@/pages/Play/PlayStep/PlayStepDetail';
+import PlayStepInfo from '@/pages/Play/PlayStep/PlayStepInfo';
+import { useModel } from '@@/exports';
 import {
   ApiFilled,
+  ConsoleSqlOutlined,
   CopyFilled,
   DeleteOutlined,
-  DownOutlined,
   EditOutlined,
-  RightOutlined,
+  QuestionOutlined,
   UnorderedListOutlined,
 } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
-import { Button, message, Popconfirm, Space, Tag, Typography } from 'antd';
-import { FC, useState } from 'react';
+import {
+  Button,
+  message,
+  Popconfirm,
+  Space,
+  Tag,
+  Tooltip,
+  Typography,
+} from 'antd';
+import { FC, useEffect, useState } from 'react';
 
 const { Text } = Typography;
 
@@ -22,24 +31,20 @@ interface ISelfProps {
   groupId: number;
   currentProjectId?: number;
   subStepInfo?: IUICaseSteps;
-  collapsible?: boolean;
   callBackFunc: () => void;
   step: number;
-  envs?: { label: string; value: number | null }[];
 }
 
 const PlayStepGroupCollapsible: FC<ISelfProps> = (props) => {
-  const {
-    step,
-    envs,
-    currentProjectId,
-    callBackFunc,
-    collapsible,
-    groupId,
-    subStepInfo,
-  } = props;
+  const { step, callBackFunc, groupId, currentProjectId, subStepInfo } = props;
   const [openStepDetailDrawer, setOpenStepDetailDrawer] = useState(false);
+  const [showOption, setShowOption] = useState(false);
+  const { initialState } = useModel('@@initialState');
 
+  useEffect(() => {
+    console.log(!initialState?.currentUser?.isAdmin);
+    console.log(initialState?.currentUser?.id !== subStepInfo?.creator);
+  }, []);
   const copyUIStep = async () => {
     copySubSteps({ stepId: subStepInfo?.id! }).then(async ({ code }) => {
       if (code === 0) {
@@ -57,101 +62,140 @@ const PlayStepGroupCollapsible: FC<ISelfProps> = (props) => {
     }
   };
 
-  const CardExtra = (
-    <>
-      <Space>
-        {subStepInfo?.interface_id ? (
+  const ExtraArea = (
+    <Space>
+      <>
+        {subStepInfo?.condition && (
+          <Tag color={'green'} icon={<QuestionOutlined />}>
+            IF
+          </Tag>
+        )}
+        {subStepInfo?.interface_id && (
           <Tag color={'green'}>
-            <ApiFilled />
-            {subStepInfo.interface_a_or_b === 1 ? '前' : '后'}
+            <Space>
+              <ApiFilled />
+              {subStepInfo.interface_a_or_b === 1 ? '前' : '后'}
+            </Space>
           </Tag>
-        ) : null}
-        <Button color={'primary'} variant="filled" onClick={copyUIStep}>
-          <CopyFilled />
-          COPY
-        </Button>
-        <Button
-          icon={<EditOutlined />}
-          color={'primary'}
-          variant="filled"
-          onClick={() => {
-            setOpenStepDetailDrawer(true);
-          }}
-        >
-          DETAIL
-        </Button>
-        <Popconfirm
-          title={'确认删除？'}
-          description={'非公共步骤会彻底删除'}
-          okText={'确认'}
-          cancelText={'点错了'}
-          onConfirm={removeUIStep}
-        >
-          <Button
-            color={'danger'}
-            variant={'filled'}
-            style={{ marginRight: 10 }}
-          >
-            <DeleteOutlined />
-            DEL
-          </Button>
-        </Popconfirm>
-      </Space>
-    </>
-  );
-  return (
-    <ProCard
-      extra={CardExtra}
-      collapsibleIconRender={({ collapsed }) => (
+        )}
+        {subStepInfo?.db_id && (
+          <Tag color={'green'}>
+            <Space>
+              <ConsoleSqlOutlined />
+              {subStepInfo.db_a_or_b === 1 ? '前' : '后'}
+            </Space>
+          </Tag>
+        )}
+      </>
+
+      {showOption && (
         <>
-          <UnorderedListOutlined style={{ color: '#c3cad4', marginLeft: 10 }} />{' '}
-          {collapsed ? <RightOutlined /> : <DownOutlined />}
-          <Tag color={'green-inverse'} style={{ marginLeft: 4 }}>
-            Step_{step}
-          </Tag>
+          <Tooltip title={'复制步骤到底步、如果是公共复制、将复制成私有'}>
+            <Button
+              icon={<CopyFilled />}
+              color={'primary'}
+              variant="filled"
+              hidden={subStepInfo?.is_group}
+              onClick={copyUIStep}
+            >
+              复制
+            </Button>
+          </Tooltip>
+          <Button
+            icon={<EditOutlined />}
+            color={'primary'}
+            variant="filled"
+            hidden={subStepInfo?.is_group}
+            onClick={() => {
+              setOpenStepDetailDrawer(true);
+            }}
+          >
+            详情
+          </Button>
+          <Popconfirm
+            title={'确认删除？'}
+            description={'非公共步骤会彻底删除'}
+            okText={'确认'}
+            cancelText={'点错了'}
+            onConfirm={removeUIStep}
+          >
+            <Button
+              icon={<DeleteOutlined />}
+              color={'danger'}
+              variant={'filled'}
+              style={{ marginRight: 10 }}
+            >
+              移除
+            </Button>
+          </Popconfirm>
         </>
       )}
-      hoverable
-      collapsible={true}
-      ghost={true}
-      style={{ borderRadius: '5px', marginTop: 10 }}
-      defaultCollapsed={collapsible}
-      subTitle={
-        <Space>
-          <Text type={'secondary'}>{subStepInfo?.description}</Text>
-        </Space>
-      }
-      title={
-        <>
-          <Tag color={'#108ee9'} style={{ marginLeft: 4 }}>
-            {subStepInfo?.name}
-          </Tag>
-        </>
-      }
-    >
+    </Space>
+  );
+  return (
+    <>
+      <ProCard
+        bordered
+        defaultCollapsed
+        extra={ExtraArea}
+        onMouseEnter={() => {
+          setShowOption(true);
+        }}
+        onMouseLeave={() => {
+          setShowOption(false);
+        }}
+        collapsibleIconRender={() => (
+          <Space>
+            <UnorderedListOutlined
+              style={{ color: '#c3cad4', marginLeft: 20 }}
+            />
+            <Tag color={'green-inverse'}>STEP_{step}</Tag>
+          </Space>
+        )}
+        hoverable
+        collapsible={true}
+        ghost={true}
+        style={{ borderRadius: '5px', marginTop: 10 }}
+        subTitle={
+          <Space>
+            <Text type={'secondary'}>{subStepInfo?.description}</Text>
+          </Space>
+        }
+        title={
+          <>
+            <Tag color={'#108ee9'} style={{ marginLeft: 4 }}>
+              {subStepInfo?.name}
+            </Tag>
+          </>
+        }
+      >
+        {' '}
+        <StepFunc
+          currentProjectId={currentProjectId!}
+          subStepInfo={subStepInfo!}
+          callback={callBackFunc}
+        />
+      </ProCard>
       <MyDrawer
         name={'Step Detail'}
         width={'auto'}
         open={openStepDetailDrawer}
         setOpen={setOpenStepDetailDrawer}
       >
-        <PlayStepDetail
-          groupId={groupId}
-          stepInfo={subStepInfo}
-          isCommonStep={false}
-          callBack={() => {
-            setOpenStepDetailDrawer(false);
-            callBackFunc();
-          }}
-        />
+        {groupId && (
+          <PlayStepInfo
+            readonly={false}
+            is_common_step={false}
+            stepInfo={subStepInfo}
+            callback={() => {
+              setOpenStepDetailDrawer(false);
+              callBackFunc();
+            }}
+            play_group_id={groupId}
+          />
+        )}
       </MyDrawer>
-      <StepFunc
-        currentProjectId={currentProjectId!}
-        subStepInfo={subStepInfo!}
-        envs={envs}
-        callback={callBackFunc}
-      />
-    </ProCard>
+    </>
   );
 };
 
