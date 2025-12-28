@@ -334,6 +334,11 @@ export default [
         name: 'Jsonpath',
         component: '@/pages/Httpx/componets/JsonPathTool.tsx',
       },
+      {
+        path: '/debugger/sse',
+        name: 'SSE',
+        component: '@/pages/DebuggerPage/SSE',
+      },
     ],
   },
   {
