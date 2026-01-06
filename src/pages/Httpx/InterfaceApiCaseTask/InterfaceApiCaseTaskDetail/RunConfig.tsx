@@ -56,7 +56,6 @@ const RunConfig: FC<SelfProps> = ({
   };
   return (
     <ProCard
-      boxShadow
       style={{
         height: '100%',
       }}
@@ -66,6 +65,7 @@ const RunConfig: FC<SelfProps> = ({
         flexDirection: 'column',
         gap: '20px',
         borderRadius: '12px',
+        overflow: 'hidden',
       }}
     >
       {/* 运行环境卡片 */}

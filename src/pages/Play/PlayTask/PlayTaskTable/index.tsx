@@ -7,6 +7,7 @@ import {
 } from '@/api/play/playTask';
 import MyModal from '@/components/MyModal';
 import MyProTable from '@/components/Table/MyProTable';
+import UserSelect from '@/components/Table/UserSelect';
 import { IUITask } from '@/pages/Play/componets/uiTypes';
 import PlayTaskBasicInfoForm from '@/pages/Play/PlayTask/PlayTaskDetail/PlayTaskBasicInfoForm';
 import { CONFIG, ModuleEnum } from '@/utils/config';
@@ -129,8 +130,12 @@ const Index: FC<SelfProps> = (props) => {
     },
     {
       title: '创建人',
-      dataIndex: 'creatorName',
-      render: (text) => <Tag>{text}</Tag>,
+      dataIndex: 'creator',
+      valueType: 'select',
+      renderFormItem: () => {
+        return <UserSelect />;
+      },
+      render: (_, record) => <Tag>{record.creatorName}</Tag>,
     },
     {
       title: '创建时间',

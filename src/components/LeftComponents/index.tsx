@@ -35,6 +35,7 @@ const Index: FC<SelfProps> = (props) => {
         height: 'auto',
         width: '100%',
         borderRadius: '6px',
+        whiteSpace: 'nowrap',
       }}
       bodyStyle={{ padding: 5 }}
     >

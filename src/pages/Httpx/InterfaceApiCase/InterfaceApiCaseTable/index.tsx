@@ -1,4 +1,5 @@
 import { IModuleEnum } from '@/api';
+import { searchUser } from '@/api/base';
 import {
   copyApiCase,
   insertApiCase,
@@ -8,6 +9,7 @@ import {
 } from '@/api/inter/interCase';
 import MyModal from '@/components/MyModal';
 import MyProTable from '@/components/Table/MyProTable';
+import UserSelect from '@/components/Table/UserSelect';
 import ApiCaseBaseForm from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/ApiCaseBaseForm';
 import { IInterfaceAPICase } from '@/pages/Httpx/types';
 import { CONFIG, ModuleEnum } from '@/utils/config';
@@ -16,9 +18,9 @@ import { history } from '@@/core/history';
 import { useModel } from '@@/exports';
 import {
   CopyOutlined,
-  DashOutlined,
   DeleteOutlined,
   DeliveredProcedureOutlined,
+  MoreOutlined,
   PlusOutlined,
 } from '@ant-design/icons';
 import {
@@ -98,6 +100,19 @@ const Index: FC<SelfProps> = ({
     },
     [currentModuleId],
   );
+
+  const queryUser: any = async (value: any) => {
+    const { keyWords } = value;
+    if (keyWords) {
+      const { code, data } = await searchUser({ username: keyWords });
+      if (code === 0) {
+        return data.map((item) => ({
+          label: item.username,
+          value: item.id,
+        }));
+      }
+    }
+  };
   const columns: ProColumns<IInterfaceAPICase>[] = [
     {
       title: '业务编号',
@@ -105,31 +120,13 @@ const Index: FC<SelfProps> = ({
       key: 'uid',
       width: '10%',
       copyable: true,
+      fixed: 'left',
     },
     {
       title: '名称',
       dataIndex: 'title',
       key: 'title',
-      render: (text, record) => (
-        <MyModal
-          form={caseForm}
-          title={record.title}
-          onFinish={saveBaseInfo}
-          trigger={
-            <a
-              type={'primary'}
-              onClick={() => {
-                caseForm.setFieldsValue(record);
-                setCurrentCaseId(record.id);
-              }}
-            >
-              {text}
-            </a>
-          }
-        >
-          <ApiCaseBaseForm />
-        </MyModal>
-      ),
+      ellipsis: true,
     },
     {
       title: '步骤数量',
@@ -159,7 +156,11 @@ const Index: FC<SelfProps> = ({
     },
     {
       title: '创建人',
-      dataIndex: 'creatorName',
+      dataIndex: 'creator',
+      valueType: 'select',
+      renderFormItem: () => {
+        return <UserSelect />;
+      },
       render: (_, record) => {
         return <Tag>{record.creatorName}</Tag>;
       },
@@ -175,6 +176,7 @@ const Index: FC<SelfProps> = ({
       title: '操作',
       valueType: 'option',
       key: 'option',
+      width: '10%',
       fixed: 'right',
       render: (_, record) => {
         return [
@@ -185,7 +187,7 @@ const Index: FC<SelfProps> = ({
               );
             }}
           >
-            关联步骤
+            详情
           </a>,
           <Dropdown
             menu={{
@@ -241,7 +243,8 @@ const Index: FC<SelfProps> = ({
           >
             <a onClick={(e) => e.preventDefault()}>
               <Space>
-                <DashOutlined />
+                <MoreOutlined />
+                {/*<DashOutlined />*/}
               </Space>
             </a>
           </Dropdown>,
@@ -251,24 +254,15 @@ const Index: FC<SelfProps> = ({
   ];
 
   const saveBaseInfo = async (values: IInterfaceAPICase) => {
-    if (currentCaseId) {
-      await setApiCase({
-        ...values,
-        id: currentCaseId,
-      }).then(async ({ code, msg }) => {
-        if (code === 0) {
-          await message.success(msg);
-          actionRef.current?.reload();
-        }
-      });
-    } else {
-      await insertApiCase(values).then(async ({ code }) => {
-        if (code === 0) {
-          message.success('添加成功');
-          actionRef.current?.reload();
-        }
-      });
-    }
+    await insertApiCase(values).then(async ({ code, data }) => {
+      if (code === 0) {
+        message.success('添加成功');
+        actionRef.current?.reload();
+        history.push(
+          `/interface/caseApi/detail/caseApiId=${data.id}&projectId=${data.project_id}&moduleId=${data.module_id}`,
+        );
+      }
+    });
     return true;
   };
 

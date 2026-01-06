@@ -7,6 +7,7 @@ import {
 } from '@/api/play/playCase';
 import MyModal from '@/components/MyModal';
 import MyProTable from '@/components/Table/MyProTable';
+import UserSelect from '@/components/Table/UserSelect';
 import { IUICase } from '@/pages/Play/componets/uiTypes';
 import PlayBaseForm from '@/pages/Play/PlayCase/PlayCaseDetail/PlayBaseForm';
 import { CONFIG, ModuleEnum } from '@/utils/config';
@@ -159,8 +160,11 @@ const Index: FC<SelfProps> = ({
     },
     {
       title: 'creator',
-      dataIndex: 'creatorName',
-      key: 'creatorName',
+      dataIndex: 'creator',
+      valueType: 'select',
+      renderFormItem: () => {
+        return <UserSelect />;
+      },
       render: (text) => <Tag>{text}</Tag>,
     },
     {

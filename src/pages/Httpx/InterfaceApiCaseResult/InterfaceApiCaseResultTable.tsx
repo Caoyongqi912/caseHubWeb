@@ -5,6 +5,7 @@ import {
 } from '@/api/inter/interCase';
 import MyDrawer from '@/components/MyDrawer';
 import MyProTable from '@/components/Table/MyProTable';
+import UserSelect from '@/components/Table/UserSelect';
 import InterfaceApiCaseResultDrawer from '@/pages/Httpx/InterfaceApiCaseResult/InterfaceApiCaseResultDrawer';
 import { IInterfaceCaseResult } from '@/pages/Httpx/types';
 import { pageData } from '@/utils/somefunc';
@@ -107,8 +108,12 @@ const InterfaceApiCaseResultTable: FC<SelfProps> = (props) => {
     },
     {
       title: '执行人',
-      dataIndex: 'starterName',
+      dataIndex: 'starterId',
       key: 'starterId',
+      valueType: 'select',
+      renderFormItem: () => {
+        return <UserSelect />;
+      },
       render: (_, record) => <Tag color={'blue'}>{record.starterName}</Tag>,
     },
     {

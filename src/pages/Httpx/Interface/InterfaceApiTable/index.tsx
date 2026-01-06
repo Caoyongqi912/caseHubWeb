@@ -8,6 +8,7 @@ import {
   updateInterApiById,
 } from '@/api/inter';
 import MyProTable from '@/components/Table/MyProTable';
+import UserSelect from '@/components/Table/UserSelect';
 import { IInterfaceAPI } from '@/pages/Httpx/types';
 import { CONFIG, ModuleEnum } from '@/utils/config';
 import { fetchModulesEnum, pageData } from '@/utils/somefunc';
@@ -158,8 +159,12 @@ const Index: FC<SelfProps> = ({
     },
     {
       title: '创建人',
-      dataIndex: 'creatorName',
-      key: 'creatorName',
+      dataIndex: 'creator',
+      key: 'creator',
+      valueType: 'select',
+      renderFormItem: () => {
+        return <UserSelect />;
+      },
       render: (_, record) => {
         return <Tag color={'orange'}>{record.creatorName}</Tag>;
       },

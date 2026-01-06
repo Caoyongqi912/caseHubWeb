@@ -53,7 +53,6 @@ const RunConfig: FC<Props> = ({
   }, [currentProjectId]);
   return (
     <ProCard
-      boxShadow
       style={{
         height: '100%',
         width: '100%',

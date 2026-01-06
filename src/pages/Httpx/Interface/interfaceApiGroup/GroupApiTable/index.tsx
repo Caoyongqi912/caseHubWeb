@@ -8,6 +8,7 @@ import {
 import MyDrawer from '@/components/MyDrawer';
 import MyModal from '@/components/MyModal';
 import MyProTable from '@/components/Table/MyProTable';
+import UserSelect from '@/components/Table/UserSelect';
 import GroupApiDetail from '@/pages/Httpx/Interface/interfaceApiGroup/GroupApiDetail';
 import GroupBaseInfo from '@/pages/Httpx/Interface/interfaceApiGroup/GroupBaseInfo';
 import { IInterfaceGroup } from '@/pages/Httpx/types';
@@ -161,7 +162,12 @@ const Index: FC<SelfProps> = ({
     },
     {
       title: '创建人',
-      dataIndex: 'creatorName',
+      dataIndex: 'creator',
+      key: 'creator',
+      valueType: 'select',
+      renderFormItem: () => {
+        return <UserSelect />;
+      },
       render: (_, record) => {
         return <Tag color={'orange'}>{record.creatorName}</Tag>;
       },

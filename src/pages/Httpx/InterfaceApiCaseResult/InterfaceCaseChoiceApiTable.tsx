@@ -8,6 +8,7 @@ import { addInterfaceGroupApis } from '@/api/inter/interGroup';
 import { associationApisByTaskId } from '@/api/inter/interTask';
 import { queryProjectEnum } from '@/components/CommonFunc';
 import MyProTable from '@/components/Table/MyProTable';
+import UserSelect from '@/components/Table/UserSelect';
 import { IInterfaceAPI } from '@/pages/Httpx/types';
 import { CONFIG, ModuleEnum } from '@/utils/config';
 import { fetchModulesEnum, pageData } from '@/utils/somefunc';
@@ -122,7 +123,11 @@ const InterfaceCaseChoiceApiTable: FC<SelfProps> = ({
     },
     {
       title: '创建人',
-      dataIndex: 'creatorName',
+      dataIndex: 'creator',
+      valueType: 'select',
+      renderFormItem: () => {
+        return <UserSelect />;
+      },
       render: (_, record) => {
         return <Tag>{record.creatorName}</Tag>;
       },

@@ -94,16 +94,15 @@ const InterfaceApiTaskResultTable: FC<SelfProps> = ({ apiCaseTaskId, job }) => {
     {
       title: '任务结果ID',
       dataIndex: 'uid',
-      width: '8%',
+      width: '10%',
       fixed: 'left',
       render: (_, record) => <Tag color={'blue'}>{record.uid}</Tag>,
     },
     {
       title: '任务名',
       dataIndex: 'taskName',
-      render: (_, record) => <Tag color={'blue'}>{record.taskName}</Tag>,
+      ellipsis: true,
     },
-
     {
       title: '测试结果',
       dataIndex: 'result',
@@ -122,6 +121,7 @@ const InterfaceApiTaskResultTable: FC<SelfProps> = ({ apiCaseTaskId, job }) => {
       hideInSearch: true,
       hideInTable: showSearch,
       dataIndex: 'progress',
+      width: '15%',
       valueType: (item) => ({
         type: 'progress',
         status: item.status !== 'OVER' ? 'active' : 'success',
@@ -134,14 +134,16 @@ const InterfaceApiTaskResultTable: FC<SelfProps> = ({ apiCaseTaskId, job }) => {
       key: 'runDay',
       valueType: 'dateRange',
       sorter: true,
+      width: '15%',
+
       render: (_, record) => <Tag color={'blue'}>{record.start_time}</Tag>,
     },
     {
       title: '用时',
       dataIndex: 'totalUseTime',
       key: 'totalUseTime',
+      valueType: 'time',
       hideInSearch: true,
-      render: (_, record) => <Tag color={'blue'}>{record.totalUseTime}</Tag>,
     },
     {
       title: '执行人',
@@ -203,7 +205,7 @@ const InterfaceApiTaskResultTable: FC<SelfProps> = ({ apiCaseTaskId, job }) => {
   };
   const RemoveAllButton = (
     <>
-      {showSearch ? (
+      {!showSearch ? (
         <Button type={'primary'} onClick={removeTaskResults}>
           Remove All
         </Button>
@@ -212,24 +214,22 @@ const InterfaceApiTaskResultTable: FC<SelfProps> = ({ apiCaseTaskId, job }) => {
   );
 
   return (
-    <>
-      <MyProTable
-        // @ts-ignore
-        polling={apiCaseTaskId ? false : 2}
-        rowKey={'uid'}
-        actionRef={actionRef}
-        request={fetchResults}
-        search={showSearch}
-        toolBarRender={() => [RemoveAllButton]}
-        pagination={{
-          showQuickJumper: true,
-          defaultPageSize: job ? 10 : 6,
-          showSizeChanger: true,
-        }}
-        columns={columns}
-        x={1500}
-      />
-    </>
+    <MyProTable
+      // @ts-ignore
+      polling={apiCaseTaskId ? false : 2}
+      rowKey={'uid'}
+      actionRef={actionRef}
+      request={fetchResults}
+      search={showSearch}
+      toolBarRender={() => [RemoveAllButton]}
+      pagination={{
+        showQuickJumper: true,
+        defaultPageSize: job ? 10 : 6,
+        showSizeChanger: true,
+      }}
+      x={1000}
+      columns={columns}
+    />
   );
 };
 

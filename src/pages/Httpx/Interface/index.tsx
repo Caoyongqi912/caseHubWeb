@@ -16,12 +16,12 @@ const Index = () => {
   const PerKeyNoPart = 'InterfaceApiNoPart';
   const PerGroupKey = 'InterfaceGroupApi';
   const PerKeySplitter = 'InterfaceApi:Splitter';
-  const [sizes, setSizes] = useState<(number | string)[]>(['20%', '80%']);
+  const [sizes, setSizes] = useState<(number | string)[]>(['25%', '75%']);
 
   const TabItems: TabsProps['items'] = [
     {
       key: 'api',
-      label: 'Common API',
+      label: '单接口用例',
       children: (
         <InterfaceApiTable
           currentProjectId={currentProjectId}
@@ -77,9 +77,10 @@ const Index = () => {
     <ProCard
       style={{ height: 'auto' }}
       bodyStyle={{
-        height: 'auto',
-        minHeight: '100vh',
-        padding: '16px',
+        height: '100%',
+        minHeight: '90vh',
+        padding: 0,
+        overflow: 'hidden',
       }}
     >
       <Splitter
@@ -87,13 +88,16 @@ const Index = () => {
           setSizes(sizes);
           setSplitter(PerKeySplitter, sizes[0], sizes[1]);
         }}
-        style={{ boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)' }}
+        style={{ width: '100%', height: '100%' }}
         layout="horizontal"
       >
         <Splitter.Panel
+          resizable={true}
           collapsible={true}
-          size={sizes[0]}
           style={{ height: 'auto' }}
+          size={sizes[0]}
+          min={'0%'}
+          max={'30%'}
         >
           <LeftComponents
             moduleType={ModuleEnum.API}
@@ -102,7 +106,11 @@ const Index = () => {
             onModuleChange={onModuleChange}
           />
         </Splitter.Panel>
-        <Splitter.Panel size={sizes[1]} min={'60%'}>
+        <Splitter.Panel
+          resizable={true}
+          size={sizes[1]}
+          style={{ overflow: 'auto' }}
+        >
           <ProCard
             bodyStyle={{ padding: 0 }}
             tabs={{

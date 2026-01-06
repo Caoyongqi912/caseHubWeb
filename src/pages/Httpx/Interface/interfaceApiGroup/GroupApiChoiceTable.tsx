@@ -6,6 +6,7 @@ import {
 import { pageInterfaceGroup } from '@/api/inter/interGroup';
 import { queryProjectEnum } from '@/components/CommonFunc';
 import MyProTable from '@/components/Table/MyProTable';
+import UserSelect from '@/components/Table/UserSelect';
 import { IInterfaceGroup } from '@/pages/Httpx/types';
 import { IUICase } from '@/pages/Play/componets/uiTypes';
 import { ModuleEnum } from '@/utils/config';
@@ -102,7 +103,12 @@ const GroupApiChoiceTable: FC<SelfProps> = (props) => {
     },
     {
       title: '创建人',
-      dataIndex: 'creatorName',
+      dataIndex: 'creator',
+      key: 'creator',
+      valueType: 'select',
+      renderFormItem: () => {
+        return <UserSelect />;
+      },
       render: (_, record) => {
         return <Tag>{record.creatorName}</Tag>;
       },

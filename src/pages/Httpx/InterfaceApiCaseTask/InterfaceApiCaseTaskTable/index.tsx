@@ -1,14 +1,13 @@
 import { IModuleEnum } from '@/api';
 import {
-  getNextTaskRunTime,
   insertApiTask,
   pageApiTask,
   removeApiTaskBaseInfo,
-  setApiTaskAuto,
   updateApiTaskBaseInfo,
 } from '@/api/inter/interTask';
 import MyModal from '@/components/MyModal';
 import MyProTable from '@/components/Table/MyProTable';
+import UserSelect from '@/components/Table/UserSelect';
 import InterfaceTaskBaseForm from '@/pages/Httpx/InterfaceApiCaseTask/InterfaceApiCaseTaskDetail/InterfaceTaskBaseForm';
 import { IInterfaceAPITask } from '@/pages/Httpx/types';
 import { CONFIG, ModuleEnum } from '@/utils/config';
@@ -95,33 +94,12 @@ const Index: FC<SelfProps> = ({
     [currentModuleId],
   );
 
-  const setTaskAuto = async (auto: boolean, taskId: number) => {
-    const { code } = await setApiTaskAuto({ is_auto: auto, taskId: taskId });
-    if (code === 0) {
-      message.success(auto ? '已开启任务' : '已暂暂停任务');
-      actionRef.current?.reload();
-    }
-  };
-
   const saveTaskBase = async (values: IInterfaceAPITask) => {
-    if (currentTaskId) {
-      //回显
-      const { code, msg } = await updateApiTaskBaseInfo({
-        ...values,
-        id: currentTaskId,
-      });
-      if (code === 0) {
-        message.success(msg);
-        actionRef.current?.reload();
-      }
-    } else {
-      //新增
-      const { code } = await insertApiTask(values);
-      if (code === 0) {
-        // history.push(`/interface/task/detail/taskId=${data.id}`);
-        message.success('添加成功');
-        actionRef.current?.reload();
-      }
+    const { code, data } = await insertApiTask(values);
+    if (code === 0) {
+      history.push(`/interface/task/detail/taskId=${data.id}`);
+      message.success('添加成功');
+      actionRef.current?.reload();
     }
     return true;
   };
@@ -139,26 +117,7 @@ const Index: FC<SelfProps> = ({
       title: '名称',
       dataIndex: 'title',
       key: 'title',
-      render: (text, record) => (
-        <MyModal
-          form={taskForm}
-          title={record.title}
-          onFinish={saveTaskBase}
-          trigger={
-            <a
-              type={'primary'}
-              onClick={() => {
-                taskForm.setFieldsValue(record);
-                setCurrentTaskId(record.id);
-              }}
-            >
-              {text}
-            </a>
-          }
-        >
-          <InterfaceTaskBaseForm />
-        </MyModal>
-      ),
+      ellipsis: true,
     },
     {
       title: '业务用例数',
@@ -199,7 +158,11 @@ const Index: FC<SelfProps> = ({
 
     {
       title: '创建人',
-      dataIndex: 'creatorName',
+      dataIndex: 'creator',
+      valueType: 'select',
+      renderFormItem: () => {
+        return <UserSelect />;
+      },
       render: (_, record) => {
         return <Tag>{record.creatorName}</Tag>;
       },
@@ -208,19 +171,10 @@ const Index: FC<SelfProps> = ({
       title: '操作',
       valueType: 'option',
       key: 'option',
+      width: '6%',
       fixed: 'right',
       render: (__, record, _) => {
         return [
-          <a
-            onClick={async () => {
-              const { code, data } = await getNextTaskRunTime(record.uid);
-              if (code === 0) {
-                message.success(data);
-              }
-            }}
-          >
-            下次运行时间
-          </a>,
           <a
             onClick={() => {
               history.push(
@@ -228,7 +182,7 @@ const Index: FC<SelfProps> = ({
               );
             }}
           >
-            关联详情
+            详情
           </a>,
           <Dropdown
             menu={{

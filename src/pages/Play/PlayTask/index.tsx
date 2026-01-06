@@ -38,7 +38,7 @@ const Index = () => {
             onProjectChange={onProjectChange}
           />
         </Splitter.Panel>
-        <Splitter.Panel>
+        <Splitter.Panel style={{ overflow: 'auto' }}>
           <PlayTaskTable
             perKey={PerKey}
             currentProjectId={currentProjectId}

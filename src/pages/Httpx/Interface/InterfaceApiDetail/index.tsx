@@ -44,7 +44,7 @@ import {
   TabsProps,
   Tooltip,
 } from 'antd';
-import { FC, useEffect, useState } from 'react';
+import { FC, useEffect, useRef, useState } from 'react';
 import { history, useParams } from 'umi';
 
 interface SelfProps {
@@ -58,6 +58,8 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
     projectId: string;
     moduleId: string;
   }>();
+  const responseRef = useRef<any>(null);
+  const containerRef = useRef<any>(null);
   const [interApiForm] = Form.useForm<IInterfaceAPI>();
   // 1详情 2新增 3 修改
   const [currentMode, setCurrentMode] = useState(1);
@@ -170,13 +172,34 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
     }
   };
 
+  // 滚动到底部的函数
+  const scrollToResponse = () => {
+    if (responseRef.current) {
+      responseRef.current.scrollIntoView({
+        behavior: 'smooth', // 平滑滚动
+        block: 'start', // 滚动到顶部对齐
+      });
+    } else {
+      // 如果response还没有渲染，滚动到容器底部
+      if (containerRef.current) {
+        containerRef.current.scrollTo({
+          top: containerRef.current.scrollHeight,
+          behavior: 'smooth',
+        });
+      }
+    }
+  };
+
   /**
    * 接口 try
    * @constructor
    */
   const TryClick = async (e: any) => {
-    console.log('=====', e.key);
     setTryLoading(true);
+    // 请求完成后滚动到响应区域
+    setTimeout(() => {
+      scrollToResponse();
+    }, 100); // 延迟确保DOM已更新
     const interfaceId = interId || currentInterAPIId;
     if (!interfaceId) {
       setTryLoading(false);
@@ -317,21 +340,36 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
     <>
       <MyDrawer
         name={'API Doc'}
-        width={'40%'}
+        width={'60%'}
         open={openDoc}
         setOpen={setOpenDoc}
       >
         <InterDoc />
       </MyDrawer>
-      <ProCard bordered hoverable style={{ borderRadius: 12 }}>
+      <ProCard
+        ref={containerRef}
+        bordered
+        hoverable
+        style={{
+          borderRadius: 16,
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
+          overflow: 'hidden',
+        }}
+      >
         <ProForm form={interApiForm} submitter={false}>
           <ApiBaseForm />
-          <ProCard>
+          <ProCard
+            style={{
+              marginTop: 16,
+              borderRadius: 12,
+              overflow: 'hidden',
+            }}
+          >
             <MyTabs
               defaultActiveKey={'2'}
               items={TabItems}
               tabBarExtraContent={
-                <Space>
+                <Space size="middle" style={{ paddingRight: 8 }}>
                   <DetailExtra currentMode={currentMode} />
                   <Dropdown.Button
                     type={'primary'}
@@ -342,33 +380,30 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
                     <SendOutlined />
                     Try
                   </Dropdown.Button>
-
-                  {/*<Button*/}
-                  {/*  size={'middle'}*/}
-                  {/*  loading={tryLoading}*/}
-                  {/*  type={'primary'}*/}
-                  {/*  color={'danger'}*/}
-                  {/*  disabled={currentMode !== 1}*/}
-                  {/*  onClick={TryClick}*/}
-                  {/*>*/}
-                  {/*  <SendOutlined />*/}
-                  {/*  Try*/}
-                  {/*</Button>*/}
                 </Space>
               }
             />
           </ProCard>
         </ProForm>
-        <Spin tip={'接口请求中。。'} size={'large'} spinning={tryLoading}>
-          {responseInfo && (
-            <InterfaceApiResponseDetail responses={responseInfo} />
-          )}
-        </Spin>
+        <div ref={responseRef}>
+          <Spin tip={'接口请求中...'} size="large" spinning={tryLoading}>
+            {responseInfo && (
+              <InterfaceApiResponseDetail responses={responseInfo} />
+            )}
+          </Spin>
+        </div>
         <FloatButton
-          icon={<QuestionCircleOutlined />}
+          icon={<QuestionCircleOutlined style={{ fontSize: 18 }} />}
           type="primary"
+          tooltip="查看文档"
           onClick={() => setOpenDoc(true)}
-          style={{ insetInlineEnd: 24 }}
+          style={{
+            right: 32,
+            bottom: 32,
+            width: 52,
+            height: 52,
+            boxShadow: '0 4px 12px rgba(22, 119, 255, 0.3)',
+          }}
         />
       </ProCard>
     </>

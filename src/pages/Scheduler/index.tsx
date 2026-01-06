@@ -55,7 +55,11 @@ const Index = () => {
               currentProjectId={currentProjectId}
             />
           </Splitter.Panel>
-          <Splitter.Panel size={sizes[1]} min={'60%'}>
+          <Splitter.Panel
+            size={sizes[1]}
+            min={'60%'}
+            style={{ overflow: 'auto' }}
+          >
             <SchedulerTable
               perKey={PerKey}
               currentModuleId={currentModuleId}

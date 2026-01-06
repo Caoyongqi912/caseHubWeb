@@ -1,5 +1,5 @@
 import titleName from '@/components/TitleName';
-import { ProCard, ProTable } from '@ant-design/pro-components';
+import { ProTable } from '@ant-design/pro-components';
 import { SearchConfig } from '@ant-design/pro-table/es/components/Form/FormRender';
 import { OptionsFunctionType } from '@ant-design/pro-table/es/components/ToolBar';
 import type { ActionType, ProColumns } from '@ant-design/pro-table/lib/typing';
@@ -66,15 +66,20 @@ const MyProTable: FC<SelfProps> = (props) => {
     showHiddenNum: true,
   };
   return (
-    <ProCard style={{ height: height }}>
+    <>
       <ProTable
-        bordered
         {...otherProps}
+        style={{ width: '100%' }}
+        tableStyle={{
+          width: '100%',
+          minWidth: 'auto', // 防止最小宽度过大
+        }}
+        bordered
         form={form}
         dataSource={dataSource}
         columns={columns}
         actionRef={actionRef}
-        // cardBordered
+        cardBordered
         scroll={{ x: x }}
         request={request}
         editable={{
@@ -103,7 +108,7 @@ const MyProTable: FC<SelfProps> = (props) => {
         headerTitle={headerTitle ? titleName(headerTitle) : null}
         toolBarRender={toolBarRender}
       />
-    </ProCard>
+    </>
   );
 };
 

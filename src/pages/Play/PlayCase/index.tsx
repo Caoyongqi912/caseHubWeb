@@ -21,8 +21,12 @@ const Index = () => {
   return (
     <ProCard
       bordered={true}
-      style={{ height: '100vh' }}
-      bodyStyle={{ height: 'auto', padding: 0 }}
+      style={{ height: '100vh', width: '100%' }}
+      bodyStyle={{
+        height: '100%',
+        padding: 0,
+        overflow: 'hidden',
+      }}
     >
       <Splitter>
         <Splitter.Panel

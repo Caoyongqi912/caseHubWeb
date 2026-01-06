@@ -1,15 +1,18 @@
 import {
   addCaseContent,
   add_empty_api,
+  baseInfoApiCase,
   initAPICondition,
   queryContentsByCaseId,
   reorderCaseContents,
   runApiCaseBack,
+  setApiCase,
 } from '@/api/inter/interCase';
 import DnDDraggable from '@/components/DnDDraggable';
 import MyDrawer from '@/components/MyDrawer';
 import MyTabs from '@/components/MyTabs';
 import GroupApiChoiceTable from '@/pages/Httpx/Interface/interfaceApiGroup/GroupApiChoiceTable';
+import ApiCaseBaseForm from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/ApiCaseBaseForm';
 import CaseContentCollapsible from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/CaseContentCollapsible';
 import InterfaceApiCaseVars from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/InterfaceApiCaseVars';
 import RunConfig from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/RunConfig';
@@ -28,11 +31,13 @@ import {
   SelectOutlined,
   UngroupOutlined,
 } from '@ant-design/icons';
-import { ProCard } from '@ant-design/pro-components';
+import { ProCard, ProForm } from '@ant-design/pro-components';
 import {
+  Button,
   Dropdown,
   Empty,
   FloatButton,
+  Form,
   message,
   Splitter,
   TabsProps,
@@ -53,6 +58,7 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
     projectId: string;
     moduleId: string;
   }>();
+  const [form] = Form.useForm<IInterfaceAPICase>();
   const [caseContentElement, setCaseContentElement] = useState<any[]>([]);
   const [currentProjectId, setCurrentProjectId] = useState<number>();
   const [currentModuleId, setCurrentModuleId] = useState<number>();
@@ -111,6 +117,11 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
 
   useEffect(() => {
     if (!caseApiId) return;
+    baseInfoApiCase(caseApiId).then(async ({ code, data }) => {
+      if (code === 0) {
+        form.setFieldsValue(data);
+      }
+    });
     setCurrentCaseId(parseInt(caseApiId));
     queryCaseContentSteps(caseApiId).then();
   }, [editCase, caseApiId]);
@@ -206,6 +217,19 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
     }
   };
 
+  const updateBaseInfo = async () => {
+    if (caseApiId) {
+      const values = await form.validateFields();
+      await setApiCase({
+        ...values,
+        id: parseInt(caseApiId),
+      }).then(async ({ code, msg }) => {
+        if (code === 0) {
+          await message.success(msg);
+        }
+      });
+    }
+  };
   const ApisCardExtra = () => {
     return (
       <Dropdown.Button
@@ -317,6 +341,23 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
   };
 
   const APIStepItems: TabsProps['items'] = [
+    {
+      key: '0',
+      label: '基本信息',
+      children: (
+        <ProCard
+          extra={
+            <Button onClick={updateBaseInfo} type={'primary'}>
+              保存
+            </Button>
+          }
+        >
+          <ProForm form={form} submitter={false}>
+            <ApiCaseBaseForm />
+          </ProForm>
+        </ProCard>
+      ),
+    },
     {
       key: '1',
       label: '前置变量',

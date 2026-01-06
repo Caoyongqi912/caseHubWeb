@@ -30,9 +30,10 @@ const Index = () => {
     <ProCard
       style={{ height: 'auto' }}
       bodyStyle={{
-        height: 'auto',
-        minHeight: '100vh',
-        padding: '16px',
+        height: '100%',
+        minHeight: '90vh',
+        padding: 0,
+        overflow: 'hidden',
       }}
     >
       <Splitter
@@ -54,7 +55,11 @@ const Index = () => {
             onModuleChange={onModuleChange}
           />
         </Splitter.Panel>
-        <Splitter.Panel size={sizes[1]} min={'60%'}>
+        <Splitter.Panel
+          size={sizes[1]}
+          min={'60%'}
+          style={{ overflow: 'auto' }}
+        >
           <InterfaceApiCaseTaskTable
             currentModuleId={currentModuleId}
             currentProjectId={currentProjectId}
