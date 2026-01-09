@@ -129,6 +129,16 @@ export const queryProject = async (options?: IObjGet) => {
 /**
  * 添加项目
  */
+export const start_sse_task = async (options?: IObjGet) => {
+  return request<any>('/api/project/start-task', {
+    method: 'POST',
+    ...(options || {}),
+  });
+};
+
+/**
+ * 添加项目
+ */
 export const newProject = async (data?: IProject, options?: IObjGet) => {
   return request<IResponse<any>>('/api/project/insert', {
     method: 'POST',
