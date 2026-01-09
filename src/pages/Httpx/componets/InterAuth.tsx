@@ -11,6 +11,7 @@ import { FC } from 'react';
 
 interface IProps {
   form: FormInstance<IInterfaceAPI>;
+  currentMode: number;
 }
 
 const AuthTarget = {
@@ -29,12 +30,23 @@ const AuthTypeOption = [
   { value: 5, label: 'JWT Bearer' },
 ];
 
-const InterAuth: FC<IProps> = ({ form }) => {
+const InterAuth: FC<IProps> = ({ form, currentMode }) => {
   const KVAuth = (
     <>
-      <ProFormText name={['auth', 'key']} label={'Key'} width={'lg'} />
-      <ProFormText name={['auth', 'value']} label={'Value'} width={'lg'} />
+      <ProFormText
+        disabled={currentMode === 1}
+        name={['auth', 'key']}
+        label={'Key'}
+        width={'lg'}
+      />
+      <ProFormText
+        disabled={currentMode === 1}
+        name={['auth', 'value']}
+        label={'Value'}
+        width={'lg'}
+      />
       <ProFormSelect
+        disabled={currentMode === 1}
         name={['auth', 'target']}
         width={'lg'}
         label={'添加位置'}
@@ -45,27 +57,37 @@ const InterAuth: FC<IProps> = ({ form }) => {
       />
     </>
   );
+
   const BasicAuth = (
     <>
       <ProFormText
+        disabled={currentMode === 1}
         name={['auth', 'username']}
         width={'lg'}
         label={'Username'}
       />
       <ProFormText
+        disabled={currentMode === 1}
         name={['auth', 'password']}
         width={'lg'}
         label={'Password'}
       />
     </>
   );
+
   const BearerAuth = (
-    <ProFormText name={['auth', 'token']} width={'lg'} label={'token'} />
+    <ProFormText
+      disabled={currentMode === 1}
+      name={['auth', 'token']}
+      width={'lg'}
+      label={'token'}
+    />
   );
 
   const JWTAuth = (
     <>
       <ProFormSelect
+        disabled={currentMode === 1}
         name={['auth', 'target']}
         width={'lg'}
         label={'添加位置'}
@@ -75,6 +97,7 @@ const InterAuth: FC<IProps> = ({ form }) => {
         ]}
       />
       <ProFormSelect
+        disabled={currentMode === 1}
         name={['auth', 'algorithm']}
         width={'lg'}
         label={'Algorithm'}
@@ -84,28 +107,41 @@ const InterAuth: FC<IProps> = ({ form }) => {
           { value: 'HS512', label: 'HS512' },
         ]}
       />
-      <ProFormText name={['auth', 'secret']} width={'lg'} label={'Secret'} />
+      <ProFormText
+        disabled={currentMode === 1}
+        name={['auth', 'secret']}
+        width={'lg'}
+        label={'Secret'}
+      />
     </>
   );
+
   return (
     <ProCard layout={'center'}>
       <Space direction={'vertical'}>
-        <ProForm.Group>
+        <ProForm.Group disabled={currentMode === 1}>
           <ProFormSelect
+            disabled={currentMode === 1}
             name={'auth_type'}
             width={'lg'}
             label={'类型'}
             options={AuthTypeOption}
             required
-            initialValue={1}
+            onChange={() => {
+              form.resetFields(['auth']);
+            }}
           />
         </ProForm.Group>
-        <ProForm.Group>
+        <ProForm.Group disabled={currentMode === 1}>
           <ProFormDependency name={['auth_type']}>
             {({ auth_type }) => {
-              console.log(auth_type);
-              console.log(typeof auth_type);
-              switch (auth_type) {
+              console.log('auth_type:', auth_type, 'type:', typeof auth_type);
+
+              // 确保处理各种可能的类型
+              const authType =
+                typeof auth_type === 'string' ? parseInt(auth_type) : auth_type;
+
+              switch (authType) {
                 case AuthTarget.NoAuth:
                   return null;
                 case AuthTarget.KVAuth:

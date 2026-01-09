@@ -249,8 +249,8 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
       key: '7',
       label: '认证',
       icon: <KeyOutlined />,
-      disabled: true,
-      children: <InterAuth form={interApiForm} />,
+      // disabled: true,
+      children: <InterAuth form={interApiForm} currentMode={currentMode} />,
     },
     {
       key: '3',

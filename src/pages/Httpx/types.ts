@@ -74,6 +74,8 @@ export interface IInterfaceAPI extends IBaseField {
   params: IParams[] | [];
   body: any;
   raw_type: 'json' | 'text';
+  auth_type: number;
+  auth: any;
   data: any;
   files: any;
   asserts: IAsserts[];
