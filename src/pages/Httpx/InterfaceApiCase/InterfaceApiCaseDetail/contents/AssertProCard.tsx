@@ -1,8 +1,4 @@
-import {
-  detailContentAssert,
-  updateCaseContent,
-  updateContentAssert,
-} from '@/api/inter/interCase';
+import { updateCaseContent } from '@/api/inter/interCase';
 import { AssertOption } from '@/pages/Httpx/componets/assertEnum';
 import CardExtraOption from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/CardExtraOption';
 import { IInterfaceCaseContent } from '@/pages/Httpx/types';
@@ -14,11 +10,13 @@ import {
 import {
   ProCard,
   ProForm,
+  ProFormGroup,
+  ProFormList,
   ProFormSelect,
   ProFormText,
 } from '@ant-design/pro-components';
-import { Form, Input, Space, Tag, Typography } from 'antd';
-import { FC, useEffect, useRef, useState } from 'react';
+import { Form, Input, message, Space, Tag, Typography } from 'antd';
+import { FC, useEffect, useState } from 'react';
 
 const { Text } = Typography;
 
@@ -30,28 +28,22 @@ interface Props {
 }
 
 const AssertProCard: FC<Props> = (props) => {
-  const timeoutRef = useRef<any>(null);
-
   const [form] = Form.useForm();
   const { step, caseId, caseContent, callback } = props;
   const [showOption, setShowOption] = useState(false);
   const [showEditIcon, setShowEditIcon] = useState(false);
   const [showAssertInput, setShowAssertInput] = useState(true);
   const [assertName, setAssertName] = useState<string>();
-  const [editingIndex, setEditingIndex] = useState<number | null>(0); // 当前正在编辑的行索引
-  const [showTools, setShowTools] = useState(false);
 
   useEffect(() => {
-    const { content_name, target_id } = caseContent;
+    const { content_name } = caseContent;
     if (content_name) {
       setAssertName(content_name);
       setShowAssertInput(false);
     }
-    detailContentAssert(target_id).then(async ({ code, data }) => {
-      if (code === 0) {
-        form.setFieldsValue(data);
-      }
-    });
+    if (caseContent.api_assert_list) {
+      form.setFieldsValue({ api_assert_list: caseContent.api_assert_list });
+    }
   }, [caseContent]);
 
   const updateContentTitle = async (value: string | undefined) => {
@@ -88,6 +80,7 @@ const AssertProCard: FC<Props> = (props) => {
       return (
         <Input
           style={{ width: '100%' }}
+          // @ts-ignore
           variant={'underlined'}
           onChange={(e) => {
             e.stopPropagation();
@@ -103,22 +96,6 @@ const AssertProCard: FC<Props> = (props) => {
     }
   };
 
-  const onValuesChange = async (changedValues: any, allValues: any) => {
-    console.log('changedValues', changedValues);
-    console.log('allValues', allValues);
-
-    clearTimeout(timeoutRef.current);
-
-    timeoutRef.current = setTimeout(async () => {
-      const { code, data } = await updateContentAssert({
-        id: caseContent.target_id,
-        ...allValues,
-      });
-      if (code === 0) {
-        form.setFieldsValue(data);
-      }
-    }, 2000);
-  };
   return (
     <ProCard
       bordered
@@ -141,7 +118,7 @@ const AssertProCard: FC<Props> = (props) => {
           caseId={caseId}
         />
       }
-      collapsibleIconRender={({ collapsed }) => {
+      collapsibleIconRender={({}) => {
         return (
           <Space>
             <UnorderedListOutlined
@@ -155,27 +132,45 @@ const AssertProCard: FC<Props> = (props) => {
       }}
     >
       <ProCard bodyStyle={{ padding: 20 }} layout={'center'}>
-        <ProForm form={form} onValuesChange={onValuesChange} submitter={false}>
-          <ProForm.Group>
-            <ProFormText
-              width={'lg'}
-              name={'assert_key'}
-              placeholder={'请输入断言变量 不需要{{}}'}
-              required
-            />
-            <ProFormSelect
-              width={'sm'}
-              name={'assert_type'}
-              options={AssertOption}
-              required
-            />
-            <ProFormText
-              width={'lg'}
-              name={'assert_value'}
-              placeholder={'请输入断言值 不需要{{}}'}
-              required
-            />
-          </ProForm.Group>
+        <ProForm
+          form={form}
+          onFinish={async (values) => {
+            console.log(values);
+            const { code, data } = await updateCaseContent({
+              id: caseContent.id,
+              ...values,
+            });
+            if (code === 0) {
+              form.setFieldsValue(data);
+              message.success('保存成功');
+            }
+          }}
+        >
+          <ProFormList name={'api_assert_list'}>
+            <ProFormGroup>
+              <ProFormText
+                width={'lg'}
+                name={'assert_key'}
+                placeholder={'请输入断言变量 不需要{{}}'}
+                required
+                rules={[{ required: true, message: '请输入变量' }]}
+              />
+              <ProFormSelect
+                width={'sm'}
+                name={'assert_type'}
+                options={AssertOption}
+                required
+                rules={[{ required: true, message: '请选择条件' }]}
+              />
+              <ProFormText
+                width={'lg'}
+                name={'assert_value'}
+                rules={[{ required: true, message: '请输入对比值' }]}
+                placeholder={'请输入断言值 不需要{{}}'}
+                required
+              />
+            </ProFormGroup>
+          </ProFormList>
         </ProForm>
       </ProCard>
     </ProCard>

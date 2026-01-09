@@ -45,10 +45,10 @@ export interface IInterfaceCaseContent {
   enable?: boolean;
   api_wait_time?: number;
   api_script_text?: string;
+  api_assert_list?: IInterfaceCaseContentAssert[];
 }
 
 export interface IInterfaceCaseContentAssert {
-  id: number;
   assert_key: string;
   assert_option: number;
   assert_value: string;

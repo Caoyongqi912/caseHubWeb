@@ -6,7 +6,7 @@ import InterHeader from '@/pages/Httpx/componets/InterHeader';
 import InterParam from '@/pages/Httpx/componets/InterParam';
 import { IInterfaceAPI } from '@/pages/Httpx/types';
 import { CONFIG } from '@/utils/config';
-import { CodeOutlined } from '@ant-design/icons';
+import { CodeOutlined, GlobalOutlined, LinkOutlined } from '@ant-design/icons';
 import {
   ProCard,
   ProForm,
@@ -15,26 +15,17 @@ import {
   ProFormTextArea,
 } from '@ant-design/pro-components';
 import { Button, FormInstance, Modal, Space, TabsProps } from 'antd';
-import React, { Dispatch, FC, useEffect, useState } from 'react';
+import { FC, useEffect, useState } from 'react';
 
 interface IProps {
   currentMode: number;
   interfaceApiInfo?: IInterfaceAPI;
   interApiForm: FormInstance<IInterfaceAPI>;
-  setTitle?: Dispatch<React.SetStateAction<string>>;
-  setSubCardTitle?: Dispatch<React.SetStateAction<string>>;
   envs: { label: string; value: number | null }[];
 }
 
 const ApiDetailForm: FC<IProps> = (props) => {
-  const {
-    currentMode,
-    interfaceApiInfo,
-    envs,
-    interApiForm,
-    setTitle,
-    setSubCardTitle,
-  } = props;
+  const { currentMode, interfaceApiInfo, envs, interApiForm } = props;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [script, setScript] = useState();
   const { API_REQUEST_METHOD } = CONFIG;
@@ -44,7 +35,6 @@ const ApiDetailForm: FC<IProps> = (props) => {
   const { API_LEVEL_SELECT, API_STATUS_SELECT } = CONFIG;
 
   useEffect(() => {
-    console.log(interfaceApiInfo);
     if (interfaceApiInfo) {
       setQueryLength(interfaceApiInfo.params?.length);
       setHeadersLength(interfaceApiInfo.headers?.length);
@@ -91,6 +81,14 @@ const ApiDetailForm: FC<IProps> = (props) => {
         required={true}
         placeholder={'环境选择'}
         label={'Env'}
+        fieldProps={{
+          suffixIcon: <GlobalOutlined />,
+          dropdownStyle: { minWidth: 200 },
+          style: {
+            borderTopRightRadius: 0,
+            borderBottomRightRadius: 0,
+          },
+        }}
       />
     </>
   );
@@ -156,6 +154,7 @@ const ApiDetailForm: FC<IProps> = (props) => {
       )}
     </>
   );
+
   return (
     <>
       <Modal
@@ -182,12 +181,8 @@ const ApiDetailForm: FC<IProps> = (props) => {
           width={'md'}
           required={true}
           rules={[{ required: true, message: '步骤名称不能为空' }]}
-          fieldProps={{
-            onChange: (e) => {
-              if (setTitle) setTitle(e.target.value);
-            },
-          }}
         />
+
         <ProFormText
           label={'URL'}
           disabled={currentMode === 1}
@@ -196,6 +191,9 @@ const ApiDetailForm: FC<IProps> = (props) => {
           width={'md'}
           rules={[{ required: true, message: '请输入请求url' }]}
           addonAfter={addonAfter}
+          fieldProps={{
+            prefix: <LinkOutlined style={{ color: '#8c8c8c' }} />,
+          }}
         />
       </ProForm.Group>
       <ProForm.Group>
@@ -228,14 +226,11 @@ const ApiDetailForm: FC<IProps> = (props) => {
           width={'lg'}
           required={true}
           fieldProps={{
-            rows: 2,
-            onChange: (e) => {
-              if (setSubCardTitle) setSubCardTitle(e.target.value);
-            },
+            rows: 1,
           }}
         />
       </ProForm.Group>
-      <ProCard bodyStyle={{ padding: 0 }}>
+      <ProCard bodyStyle={{ padding: 0, minHeight: 200 }}>
         <MyTabs
           type={'line'}
           size={'small'}

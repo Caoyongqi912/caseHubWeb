@@ -32,8 +32,9 @@ const Index = () => {
         style={{ height: 'auto' }}
         bodyStyle={{
           height: 'auto',
-          minHeight: '100vh',
-          padding: '16px',
+          minHeight: '90vh',
+          padding: 0,
+          overflow: 'hidden',
         }}
       >
         <Splitter

@@ -23,6 +23,7 @@ import { IInterfaceAPI, ITryResponseInfo } from '@/pages/Httpx/types';
 import {
   ApiOutlined,
   CheckCircleOutlined,
+  DownOutlined,
   EditOutlined,
   FormOutlined,
   KeyOutlined,
@@ -35,14 +36,16 @@ import {
 } from '@ant-design/icons';
 import { ProCard, ProForm } from '@ant-design/pro-components';
 import {
-  Dropdown,
+  Button,
   FloatButton,
   Form,
   message,
+  Select,
   Space,
   Spin,
   TabsProps,
   Tooltip,
+  Typography,
 } from 'antd';
 import { FC, useEffect, useRef, useState } from 'react';
 import { history, useParams } from 'umi';
@@ -64,7 +67,9 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
   // 1详情 2新增 3 修改
   const [currentMode, setCurrentMode] = useState(1);
   const [currentProjectId, setCurrentProjectId] = useState<number>();
-  const [tryEnvs, setTryEnvs] = useState<{ key: number; label: string }[]>([]);
+  const [tryEnvs, setTryEnvs] = useState<{ value: number; label: string }[]>(
+    [],
+  );
   const [apiEnvs, setApiEnvs] = useState<{ value: number; label: string }[]>(
     [],
   );
@@ -72,7 +77,7 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
   const [responseInfo, setResponseInfo] = useState<ITryResponseInfo[]>();
   const [currentInterAPIId, setCurrentInterAPIId] = useState<number>();
   const [openDoc, setOpenDoc] = useState(false);
-
+  const [runningEnv, setRunningEnv] = useState<number>();
   //路由进入。空白页
   useEffect(() => {
     if (projectId && moduleId) {
@@ -114,7 +119,7 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
           if (code === 0) {
             setTryEnvs(
               data.map((item: IEnv) => ({
-                key: item.id,
+                value: item.id,
                 label: item.name,
               })),
             );
@@ -144,7 +149,7 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
     values.is_common = 1;
     if (interId !== undefined || values.id !== undefined) {
       //修改
-      const { code, msg, data } = await updateInterApiById(values);
+      const { code, msg } = await updateInterApiById(values);
       if (code === 0) {
         message.success(msg);
         setCurrentMode(1);
@@ -153,7 +158,7 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
       }
     } else {
       //新增
-      const { code, msg, data } = await insertInterApi(values);
+      const { code, data } = await insertInterApi(values);
       if (code === 0) {
         history.push(`/interface/interApi/detail/interId=${data.id}`);
       }
@@ -194,7 +199,11 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
    * 接口 try
    * @constructor
    */
-  const TryClick = async (e: any) => {
+  const TryClick = async () => {
+    if (!runningEnv) {
+      message.error('请选择运行环境');
+      return;
+    }
     setTryLoading(true);
     // 请求完成后滚动到响应区域
     setTimeout(() => {
@@ -207,65 +216,13 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
     }
     tryInterApi({
       interface_id: interfaceId,
-      env_id: e.key,
+      env_id: runningEnv,
     }).then(({ code, data }) => {
       if (code === 0) {
         setResponseInfo(data);
         setTryLoading(false);
       }
     });
-  };
-
-  const DetailExtra: FC<{ currentMode: number }> = ({ currentMode }) => {
-    switch (currentMode) {
-      //用例详情 展示编辑按钮
-      case 1:
-        return (
-          <>
-            {interId || interfaceId ? (
-              <>
-                <a
-                  type={'primary'}
-                  style={{ marginRight: 10 }}
-                  onClick={() => setCurrentMode(3)}
-                >
-                  <EditOutlined />
-                  Edit
-                </a>
-              </>
-            ) : null}
-          </>
-        );
-      //新增模式 显示保存按钮
-      case 2:
-        return (
-          <>
-            <a
-              onClick={SaveOrUpdate}
-              style={{ marginLeft: 10 }}
-              type={'primary'}
-            >
-              <SaveOutlined />
-              Save
-            </a>
-          </>
-        );
-      //编辑
-      case 3:
-        return (
-          <Space>
-            <a onClick={SaveOrUpdate} type={'primary'}>
-              <SaveOutlined />
-              Save
-            </a>
-            <a style={{ marginLeft: 5 }} onClick={() => setCurrentMode(1)}>
-              Cancel
-            </a>
-          </Space>
-        );
-      default:
-        return null;
-    }
   };
 
   const TabItems: TabsProps['items'] = [
@@ -336,6 +293,97 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
       : []),
   ];
 
+  const DetailExtra: FC<{ currentMode: number }> = ({ currentMode }) => {
+    const getModeActions = () => {
+      switch (currentMode) {
+        case 1: // 用例详情 - 编辑按钮
+          return interId || interfaceId ? (
+            <Button
+              type="text"
+              variant={'text'}
+              onClick={() => setCurrentMode(3)}
+            >
+              <Typography.Text type={'secondary'}>
+                <EditOutlined style={{ marginRight: 2 }} />
+                编辑
+              </Typography.Text>
+            </Button>
+          ) : null;
+        case 2: // 新增模式 - 保存按钮
+          return (
+            <Button
+              type="primary"
+              icon={<SaveOutlined />}
+              onClick={SaveOrUpdate}
+            >
+              保存用例
+            </Button>
+          );
+        case 3: // 编辑模式 - 保存/取消
+          return (
+            <div>
+              <Button
+                size="small"
+                type="link"
+                icon={<SaveOutlined />}
+                onClick={SaveOrUpdate}
+              >
+                保存
+              </Button>
+              <Button
+                size="small"
+                type="text"
+                danger
+                onClick={() => setCurrentMode(1)}
+                style={{ marginLeft: 8 }}
+              >
+                取消
+              </Button>
+            </div>
+          );
+
+        default:
+          return null;
+      }
+    };
+
+    return <>{getModeActions()}</>;
+  };
+
+  const tabBarExtraContent = (
+    // 右侧：操作按钮区域
+    <Space size="small">
+      {/* 模式特定操作 */}
+      <DetailExtra currentMode={currentMode} />
+      {/* 调试功能区 */}
+      <Space size="small">
+        {/* 环境选择器 */}
+        <Select
+          size="middle"
+          allowClear
+          variant={'filled'}
+          placeholder="选择环境"
+          disabled={currentMode !== 1}
+          suffixIcon={<DownOutlined />}
+          options={tryEnvs}
+          onChange={(value) => {
+            setRunningEnv(value);
+          }}
+        ></Select>
+
+        {/* 发送按钮 */}
+        <Button
+          type="primary"
+          icon={<SendOutlined />}
+          loading={tryLoading}
+          disabled={currentMode !== 1}
+          onClick={TryClick}
+        >
+          Try
+        </Button>
+      </Space>
+    </Space>
+  );
   return (
     <>
       <MyDrawer
@@ -368,20 +416,7 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
             <MyTabs
               defaultActiveKey={'2'}
               items={TabItems}
-              tabBarExtraContent={
-                <Space size="middle" style={{ paddingRight: 8 }}>
-                  <DetailExtra currentMode={currentMode} />
-                  <Dropdown.Button
-                    type={'primary'}
-                    loading={tryLoading}
-                    disabled={currentMode !== 1}
-                    menu={{ items: tryEnvs, onClick: TryClick }}
-                  >
-                    <SendOutlined />
-                    Try
-                  </Dropdown.Button>
-                </Space>
-              }
+              tabBarExtraContent={tabBarExtraContent}
             />
           </ProCard>
         </ProForm>

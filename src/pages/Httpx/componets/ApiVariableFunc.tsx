@@ -13,7 +13,6 @@ import {
 import { GoogleSquareFilled, SearchOutlined } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
 import { Button, Popover, Select, Space, Typography } from 'antd';
-import Title from 'antd/es/typography/Title';
 import React, { FC, useEffect, useState } from 'react';
 
 interface ISelfProps {
@@ -40,14 +39,18 @@ const ApiVariableFunc: FC<ISelfProps> = ({ value, index, setValue }) => {
         const func = data.map((item: IInterfaceGlobalFunc) => {
           return {
             label: (
-              <span
+              <Typography.Text
                 onMouseEnter={() => {
                   setCurrentValue(item);
                 }}
               >
-                <GoogleSquareFilled style={{ color: 'blue' }} />
-                {item.label}
-              </span>
+                <Typography.Text>
+                  <Space size={'small'}>
+                    <GoogleSquareFilled style={{ color: 'blue' }} />
+                    {item.label}
+                  </Space>
+                </Typography.Text>
+              </Typography.Text>
             ),
             value: item.value,
             desc: item.description,
@@ -150,19 +153,22 @@ const ApiVariableFunc: FC<ISelfProps> = ({ value, index, setValue }) => {
   const renderDetailPanel = (data: any, type: 'func' | 'var' | 'my') => (
     <ProCard bodyStyle={{ padding: 5 }}>
       {data && (
-        <Space direction="vertical" size="middle">
+        <Space direction="vertical" size="small">
           <Typography.Text type="secondary">变量名</Typography.Text>
           <Typography.Text code>{data.label || data.key}</Typography.Text>
-
           <Typography.Text type="secondary">变量值</Typography.Text>
-          <Typography.Text code ellipsis={{ tooltip: data.value }}>
+          <Typography.Text code ellipsis={true}>
             {type === 'func'
+              ? data.description
+              : data.description?.length > 15
+              ? `${data.description.substring(0, 15)}...`
+              : data.description}
+            {type === 'var'
               ? data.value
               : data.value?.length > 15
               ? `${data.value.substring(0, 15)}...`
               : data.value}
           </Typography.Text>
-
           {type === 'func' && (
             <>
               <Typography.Text type="secondary">预览</Typography.Text>
@@ -176,14 +182,13 @@ const ApiVariableFunc: FC<ISelfProps> = ({ value, index, setValue }) => {
   const items = [
     {
       key: '1',
-      label: 'Func',
+      label: '引用变量',
       children: (
         <ProCard split={'horizontal'}>
           <ProCard bodyStyle={{ padding: 5 }}>
             <Select
               allowClear
               showSearch
-              autoFocus
               onChange={(value) => {
                 setSelectValue(value);
               }}
@@ -208,14 +213,13 @@ const ApiVariableFunc: FC<ISelfProps> = ({ value, index, setValue }) => {
     },
     {
       key: '2',
-      label: 'Var',
+      label: '固定值',
       children: (
         <ProCard split={'horizontal'} bodyStyle={{ minHeight: 100 }}>
           <ProCard bodyStyle={{ padding: 5 }}>
             <Select
               allowClear
               showSearch
-              autoFocus
               onChange={(value) => {
                 setSelectValue(value);
               }}
@@ -240,7 +244,7 @@ const ApiVariableFunc: FC<ISelfProps> = ({ value, index, setValue }) => {
     },
     {
       key: '3',
-      label: 'My',
+      label: '我的',
       children: (
         <ProCard split={'horizontal'} bodyStyle={{ minHeight: 100 }}>
           <ProCard bodyStyle={{ padding: 5 }}>
@@ -249,11 +253,7 @@ const ApiVariableFunc: FC<ISelfProps> = ({ value, index, setValue }) => {
               showSearch
               autoFocus
               onChange={(value) => {
-                console.log('my==', value);
                 setSelectValue(value);
-              }}
-              onSelect={(value) => {
-                console.log('my==', value);
               }}
               onClear={() => {
                 setSelectValue(undefined);
@@ -342,7 +342,6 @@ const ApiVariableFunc: FC<ISelfProps> = ({ value, index, setValue }) => {
       />
       <Popover
         content={Content}
-        title={<Title level={5}>引用变量</Title>}
         trigger="click"
         open={open}
         onOpenChange={handleOpenChange}

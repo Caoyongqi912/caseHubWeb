@@ -1,6 +1,6 @@
 import { IUser } from '@/api';
 import { currentUser, queryProject } from '@/api/base';
-import RightContent from '@/components/RightContent';
+import LeftSetting from '@/components/LeftSetting';
 import { errorConfig } from '@/requestErrorConfig';
 import { RequestConfig } from '@@/plugin-request/request';
 import { PageLoading } from '@ant-design/pro-components';
@@ -127,12 +127,21 @@ export const layout: RunTimeLayoutConfig = ({
     onPageChange: handlePageChange,
     unAccessible: <div>无访问权限</div>,
     childrenRender: (children) => (
-      <ConfigProvider>
-        {initialState?.loading ? <PageLoading /> : children}
-      </ConfigProvider>
+      <div
+        style={{
+          width: '100%',
+          height: '100%',
+          backgroundImage:
+            'radial-gradient(circle at 20% 80%, rgba(24, 144, 255, 0.1) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(82, 196, 26, 0.1) 0%, transparent 50%)',
+        }}
+      >
+        <ConfigProvider>
+          {initialState?.loading ? <PageLoading /> : children}
+        </ConfigProvider>
+      </div>
     ),
     rightContentRender: () => (
-      <RightContent
+      <LeftSetting
         collapsed={collapsed}
         currentTheme={currentTheme}
         toggleTheme={handleToggleTheme}

@@ -57,13 +57,11 @@ const RunConfig: FC<Props> = ({
         height: '100%',
         width: '100%',
       }}
-      bordered
       bodyStyle={{
         padding: 16,
         display: 'flex',
         flexDirection: 'column',
         gap: '20px',
-        borderRadius: '12px',
       }}
     >
       {/* 运行方式选择 */}
@@ -72,7 +70,6 @@ const RunConfig: FC<Props> = ({
           bordered
           style={{
             display: 'flex',
-            // alignItems: 'center',
             gap: '8px',
             borderRadius: '8px',
             border: '1px solid #e1e8ff',

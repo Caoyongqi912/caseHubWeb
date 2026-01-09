@@ -448,6 +448,7 @@ export const updateCaseContent = async (
     content_name?: string;
     api_wait_time?: number;
     api_script_text?: string;
+    api_assert_list?: IInterfaceCaseContentAssert[];
   },
   opt?: IObjGet,
 ) => {

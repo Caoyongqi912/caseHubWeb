@@ -700,7 +700,7 @@ const DynamicSettings = () => {
                             fieldProps={{
                               value: JSON.stringify(valueEnum),
                             }}
-                            normalize={(value) => {
+                            normalize={(value: any) => {
                               return JSON.parse(value);
                             }}
                             label="数据枚举"

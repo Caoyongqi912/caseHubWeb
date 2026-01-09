@@ -116,7 +116,7 @@ export const setInterApisModule = async (data: any, options?: IObjGet) => {
  * @param options
  */
 export const tryInterApi = async (
-  data: { interface_id: string | number; env_id: string },
+  data: { interface_id: string | number; env_id: number },
   options?: IObjGet,
 ) => {
   return request<IResponse<ITryResponseInfo[]>>('/api/interface/try', {

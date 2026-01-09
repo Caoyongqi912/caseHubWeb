@@ -437,7 +437,7 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
           <Splitter
             style={{ height: '100%', boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)' }}
           >
-            <Splitter.Panel resizable={false} size={defaultSize} max="100%">
+            <Splitter.Panel size={defaultSize} max="100%">
               <ProCard
                 bodyStyle={{
                   padding: 2,
@@ -454,7 +454,7 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
               </ProCard>
             </Splitter.Panel>
             {!hiddenRunButton && (
-              <Splitter.Panel resizable={false}>
+              <Splitter.Panel resizable={true}>
                 <RunConfig
                   onMenuClick={onMenuClick}
                   run={debugCase}

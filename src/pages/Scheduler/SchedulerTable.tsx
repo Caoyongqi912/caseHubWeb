@@ -186,7 +186,7 @@ const SchedulerTable: FC<SelfProps> = (props) => {
   };
 
   return (
-    <div>
+    <>
       <MyDrawer open={openTaskHistory} setOpen={setOpenTaskHistory}>
         {currentJob?.job_type === 1 ? (
           <InterfaceApiTaskResultTable job={currentJob} />
@@ -246,7 +246,7 @@ const SchedulerTable: FC<SelfProps> = (props) => {
           </Button>,
         ]}
       />
-    </div>
+    </>
   );
 };
 export default SchedulerTable;

@@ -3,7 +3,7 @@ import APIFormData from '@/pages/Httpx/componets/InterBody/APIFormData';
 import JsonBody from '@/pages/Httpx/componets/InterBody/JsonBody';
 import { IInterfaceAPI } from '@/pages/Httpx/types';
 import { ProCard, ProFormSelect } from '@ant-design/pro-components';
-import { FormInstance, Radio, Space } from 'antd';
+import { Empty, FormInstance, Radio, Space, Typography } from 'antd';
 import { RadioChangeEvent } from 'antd/lib/radio/interface';
 import { FC, useEffect, useState } from 'react';
 
@@ -26,9 +26,19 @@ const Index: FC<SelfProps> = (props) => {
       case 0:
         return (
           <ProCard
-            style={{ height: '10vh', lineHeight: '10vh', textAlign: 'center' }}
+            bordered
+            style={{
+              lineHeight: '10vh',
+              textAlign: 'center',
+            }}
           >
-            This request does not have a body
+            <Empty
+              description={
+                <Typography.Text type={'secondary'}>
+                  This request does not have a body
+                </Typography.Text>
+              }
+            />
           </ProCard>
         );
       case 1:
@@ -52,34 +62,54 @@ const Index: FC<SelfProps> = (props) => {
         defaultValue={bodyType}
         value={bodyType}
         onChange={onGroupChange}
-      >
-        <Radio value={0}>none</Radio>
-        <Radio value={2}>form-data</Radio>
-        <Radio value={3}>urlencoded</Radio>
-        <Space>
-          <Radio value={1}>raw</Radio>
-          <ProFormSelect
-            disabled={readonly}
-            hidden={bodyType !== 1}
-            noStyle
-            onChange={async (value) => {
-              props.form.setFieldValue('raw_type', value);
-              await FormEditableOnValueChange(props.form, 'raw_type', false);
-            }}
-            options={[
-              {
-                label: 'JSON',
-                value: 'json',
-              },
-              {
-                label: 'Text',
-                value: 'text',
-              },
-            ]}
-            name={'raw_type'}
-          />
-        </Space>
-      </Radio.Group>
+        options={[
+          {
+            label: 'none',
+            value: 0,
+          },
+
+          {
+            label: 'form-data',
+            value: 2,
+          },
+          {
+            label: 'urlencoded',
+            value: 3,
+          },
+          {
+            label: (
+              <Space>
+                <Typography.Text>raw</Typography.Text>
+                <ProFormSelect
+                  disabled={readonly}
+                  hidden={bodyType !== 1}
+                  noStyle
+                  onChange={async (value) => {
+                    props.form.setFieldValue('raw_type', value);
+                    await FormEditableOnValueChange(
+                      props.form,
+                      'raw_type',
+                      false,
+                    );
+                  }}
+                  options={[
+                    {
+                      label: 'JSON',
+                      value: 'json',
+                    },
+                    {
+                      label: 'TEXT',
+                      value: 'text',
+                    },
+                  ]}
+                  name={'raw_type'}
+                />
+              </Space>
+            ),
+            value: 1,
+          },
+        ]}
+      />
       {BodyMap()}
     </>
   );

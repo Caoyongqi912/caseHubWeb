@@ -68,7 +68,7 @@ const JsonBody: FC<SelfProps> = ({ form, readonly = false }) => {
       <AceCodeEditor
         value={body}
         onChange={handleOnChange}
-        height={'50vh'}
+        height={'40vh'}
         readonly={readonly}
         _mode={'json'}
       />
