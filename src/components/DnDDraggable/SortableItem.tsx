@@ -1,4 +1,3 @@
-import { useModel } from '@@/exports';
 import { ProCard } from '@ant-design/pro-components';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -18,8 +17,6 @@ export const SortableItem: React.FC<SortableItemProps> = ({ id, children }) => {
     transition,
     isDragging,
   } = useSortable({ id });
-  const { initialState, setInitialState } = useModel('@@initialState');
-  const currentTheme = initialState?.theme || 'light';
 
   const style = {
     transform: CSS.Transform.toString(transform),

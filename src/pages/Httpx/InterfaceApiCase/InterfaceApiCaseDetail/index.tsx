@@ -431,17 +431,28 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
       </MyDrawer>
       <RcResizeObserver onResize={handleResize}>
         <ProCard
-          style={{ height: '100%' }}
-          bodyStyle={{ height: '100%', padding: '10px', minHeight: '100vh' }}
+          style={{ height: '100%', overflow: 'hidden' }}
+          bodyStyle={{
+            height: '100%',
+            padding: '10px',
+            overflow: 'hidden',
+            minHeight: '100vh',
+          }}
         >
           <Splitter
-            style={{ height: '100%', boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)' }}
+            style={{
+              height: '100%',
+              overflow: 'hidden',
+              boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
+            }}
           >
             <Splitter.Panel size={defaultSize} max="100%">
               <ProCard
+                style={{ overflow: 'hidden' }}
                 bodyStyle={{
                   padding: 2,
                   borderRadius: '12px',
+                  overflow: 'hidden',
                 }}
                 extra={<ApisCardExtra />}
               >

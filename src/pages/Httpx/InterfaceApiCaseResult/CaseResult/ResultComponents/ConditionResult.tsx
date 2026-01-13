@@ -28,7 +28,13 @@ const ConditionResult: FC<Props> = ({ result }) => {
   return (
     <ProCard
       bordered
-      style={{ borderRadius: '5px', marginTop: 5 }}
+      style={{
+        borderRadius: '5px',
+        borderLeft: `3px solid ${
+          result.content_result ? '#52c41a' : '#ff4d4f'
+        }`,
+        marginTop: 5,
+      }}
       collapsibleIconRender={({}) => {
         return (
           <Space>
@@ -62,6 +68,7 @@ const ConditionResult: FC<Props> = ({ result }) => {
       headerBordered
       collapsible
       defaultCollapsed
+      extra={<Text type="secondary">共 {result?.data?.length || 0} 接口</Text>}
     >
       <APIResult result={result} prefix={'IF_STEP'} />
     </ProCard>

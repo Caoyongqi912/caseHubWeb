@@ -195,7 +195,12 @@ const ApiResult: FC<Props> = ({ result, prefix }) => {
             <ProCard
               extra={tabExtra(item)}
               bordered
-              style={{ borderRadius: '5px', marginTop: 5 }}
+              style={{
+                borderRadius: '5px',
+                borderLeft: `3px solid ${item.result ? '#52c41a' : '#ff4d4f'}`,
+
+                marginTop: 5,
+              }}
               collapsibleIconRender={({}) => {
                 return (
                   <Space>

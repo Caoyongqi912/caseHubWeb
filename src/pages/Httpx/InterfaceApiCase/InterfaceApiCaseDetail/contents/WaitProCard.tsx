@@ -64,7 +64,6 @@ const WaitProCard: FC<Props> = (props) => {
       return (
         <InputNumber
           style={{ width: '100%' }}
-          variant={'underlined'}
           value={waitTime}
           min={0}
           max={10}

@@ -295,6 +295,14 @@ export interface IInterfaceResultByCase {
   asserts: any;
 }
 
+export interface CaseContentAssertResult {
+  assert_key: string;
+  assert_expect: string;
+  assert_actual: string;
+  assert_type: number;
+  assert_result: boolean;
+}
+
 export interface ICaseContentResult extends IBaseField {
   content_type: number;
   interface_case_result_id: number;
@@ -305,7 +313,7 @@ export interface ICaseContentResult extends IBaseField {
   content_step: number | null;
   content_target_result_id: null | number;
   script_extracts: null;
-  content_asserts: IObjGet | null;
+  content_asserts: CaseContentAssertResult[] | null;
   wait_time: number | null;
   content_condition: {
     key: any;

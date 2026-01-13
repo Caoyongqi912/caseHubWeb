@@ -146,12 +146,14 @@ const InterfaceApiCaseResultDrawer: FC<SelfProps> = ({
       key: '2',
       icon: <MessageOutlined />,
       children: (
-        <AceCodeEditor
-          value={logMessage.join('\n')}
-          height="100vh"
-          _mode="json"
-          readonly={true}
-        />
+        <ProCard bordered>
+          <AceCodeEditor
+            value={logMessage.join('\n')}
+            height="100vh"
+            _mode="json"
+            readonly={true}
+          />
+        </ProCard>
       ),
     },
     {

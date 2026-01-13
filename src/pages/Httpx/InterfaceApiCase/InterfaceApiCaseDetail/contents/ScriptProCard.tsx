@@ -91,7 +91,7 @@ const ScriptProCard: FC<Props> = (props) => {
       return (
         <Input
           style={{ width: '100%' }}
-          variant={'underlined'}
+          variant={'borderless'}
           onChange={(e) => {
             e.stopPropagation();
             if (e.target.value) setScriptTextName(e.target.value);

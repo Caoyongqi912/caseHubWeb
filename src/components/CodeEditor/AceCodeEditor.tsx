@@ -42,9 +42,8 @@ const AceCodeEditor: FC<selfProps> = (props) => {
     // @param highlightActiveLine - 是否高亮当前行
     // @param editorProps - 编辑器的其他属性设置
     // @param setOptions - 编辑器的配置选项
-    <>
+    <div>
       <AceEditor
-        style={{ borderRadius: 20 }}
         theme={editorTheme}
         mode={_mode}
         readOnly={readonly || false}
@@ -80,7 +79,7 @@ const AceCodeEditor: FC<selfProps> = (props) => {
         }}
         key={`${editorTheme}_${_mode}`} // 关键修复：添加key强制重新渲染
       />
-    </>
+    </div>
   );
 };
 

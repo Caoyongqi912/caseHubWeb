@@ -182,7 +182,12 @@ const InterfaceApiTaskResultDetail: FC = () => {
           </Col>
         </Row>
       </ProCard>
-      <ProCard bordered hoverable bodyStyle={{ padding: 0 }}>
+      <ProCard
+        bordered
+        hoverable
+        style={{ overflow: 'hidden' }}
+        bodyStyle={{ padding: 10 }}
+      >
         <MyTabs defaultActiveKey={'1'} items={TabsItem} />
       </ProCard>
     </ProCard>

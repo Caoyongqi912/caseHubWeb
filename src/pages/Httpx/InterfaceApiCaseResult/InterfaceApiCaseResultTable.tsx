@@ -10,7 +10,7 @@ import InterfaceApiCaseResultDrawer from '@/pages/Httpx/InterfaceApiCaseResult/I
 import { IInterfaceCaseResult } from '@/pages/Httpx/types';
 import { pageData } from '@/utils/somefunc';
 import { ActionType, ProColumns } from '@ant-design/pro-components';
-import { Button, message, Space, Tag } from 'antd';
+import { Button, message, Space, Tag, Typography } from 'antd';
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
 
 interface SelfProps {
@@ -100,13 +100,6 @@ const InterfaceApiCaseResultTable: FC<SelfProps> = (props) => {
     },
 
     {
-      title: '执行时间',
-      dataIndex: 'create_time',
-      valueType: 'dateTime',
-      key: 'startTime',
-      render: (_, record) => <Tag color={'blue'}>{record.create_time}</Tag>,
-    },
-    {
       title: '执行人',
       dataIndex: 'starterId',
       key: 'starterId',
@@ -114,7 +107,16 @@ const InterfaceApiCaseResultTable: FC<SelfProps> = (props) => {
       renderFormItem: () => {
         return <UserSelect />;
       },
-      render: (_, record) => <Tag color={'blue'}>{record.starterName}</Tag>,
+      render: (_, record) => (
+        <Typography.Text>{record.starterName}</Typography.Text>
+      ),
+    },
+    {
+      title: '执行时间',
+      dataIndex: 'create_time',
+      valueType: 'dateTime',
+      key: 'startTime',
+      render: (_, record) => <Tag color={'blue'}>{record.create_time}</Tag>,
     },
     {
       title: '操作',

@@ -131,7 +131,7 @@ const AssertProCard: FC<Props> = (props) => {
         );
       }}
     >
-      <ProCard bodyStyle={{ padding: 20 }} layout={'center'}>
+      <ProCard bodyStyle={{ padding: 10 }}>
         <ProForm
           form={form}
           onFinish={async (values) => {
@@ -149,7 +149,7 @@ const AssertProCard: FC<Props> = (props) => {
           <ProFormList name={'api_assert_list'}>
             <ProFormGroup>
               <ProFormText
-                width={'lg'}
+                width={'md'}
                 name={'assert_key'}
                 placeholder={'请输入断言变量 不需要{{}}'}
                 required
@@ -163,7 +163,7 @@ const AssertProCard: FC<Props> = (props) => {
                 rules={[{ required: true, message: '请选择条件' }]}
               />
               <ProFormText
-                width={'lg'}
+                width={'md'}
                 name={'assert_value'}
                 rules={[{ required: true, message: '请输入对比值' }]}
                 placeholder={'请输入断言值 不需要{{}}'}
