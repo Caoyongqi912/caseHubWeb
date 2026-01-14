@@ -1,4 +1,3 @@
-import { ProCard } from '@ant-design/pro-components';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
@@ -13,6 +12,7 @@ export const SortableItem: React.FC<SortableItemProps> = ({ id, children }) => {
   });
 
   const style = {
+    padding: 4,
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
@@ -21,10 +21,8 @@ export const SortableItem: React.FC<SortableItemProps> = ({ id, children }) => {
   };
 
   return (
-    <ProCard bodyStyle={{ padding: 4 }}>
-      <div ref={setNodeRef} style={style}>
-        {children}
-      </div>
-    </ProCard>
+    <div ref={setNodeRef} style={style}>
+      {children}
+    </div>
   );
 };
