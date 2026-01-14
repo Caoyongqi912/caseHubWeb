@@ -1,12 +1,9 @@
 import { updateCaseContent } from '@/api/inter/interCase';
+import Handler from '@/components/DnDDraggable/handler';
 import ApiScriptContent from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/apiScriptContent';
 import CardExtraOption from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/CardExtraOption';
 import { IInterfaceCaseContent } from '@/pages/Httpx/types';
-import {
-  EditOutlined,
-  PythonOutlined,
-  UnorderedListOutlined,
-} from '@ant-design/icons';
+import { EditOutlined, PythonOutlined } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
 import { Input, Space, Tag, Typography } from 'antd';
 import { FC, useEffect, useRef, useState } from 'react';
@@ -14,6 +11,7 @@ import { FC, useEffect, useRef, useState } from 'react';
 const { Text } = Typography;
 
 interface Props {
+  id: number;
   step: number;
   caseId: number;
   caseContent: IInterfaceCaseContent;
@@ -23,7 +21,7 @@ interface Props {
 const ScriptProCard: FC<Props> = (props) => {
   const timeoutRef = useRef<any>(null);
 
-  const { step, caseId, caseContent, callback } = props;
+  const { step, id, caseId, caseContent, callback } = props;
   const [showOption, setShowOption] = useState(false);
   const [saveScript, setSaveScript] = useState(false);
   const [scriptText, setScriptText] = useState<string>();
@@ -130,9 +128,8 @@ const ScriptProCard: FC<Props> = (props) => {
       collapsibleIconRender={({}) => {
         return (
           <Space>
-            <UnorderedListOutlined
-              style={{ color: '#c3cad4', marginRight: 20 }}
-            />
+            <Handler id={id} />
+
             <Tag color={'green-inverse'}>STEP_{step}</Tag>
             <Tag color={'geekblue-inverse'} icon={<PythonOutlined />} />
             <div style={{ marginLeft: 10 }}>{SCRIPT()}</div>

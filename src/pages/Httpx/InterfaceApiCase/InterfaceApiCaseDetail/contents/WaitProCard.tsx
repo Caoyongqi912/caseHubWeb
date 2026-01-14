@@ -1,11 +1,8 @@
 import { updateCaseContent } from '@/api/inter/interCase';
+import Handler from '@/components/DnDDraggable/handler';
 import CardExtraOption from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/CardExtraOption';
 import { IInterfaceCaseContent } from '@/pages/Httpx/types';
-import {
-  EditOutlined,
-  FieldTimeOutlined,
-  UnorderedListOutlined,
-} from '@ant-design/icons';
+import { EditOutlined, FieldTimeOutlined } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
 import { InputNumber, Space, Tag, Typography } from 'antd';
 import { FC, useEffect, useState } from 'react';
@@ -13,6 +10,7 @@ import { FC, useEffect, useState } from 'react';
 const { Text } = Typography;
 
 interface Props {
+  id: number;
   step: number;
   caseId: number;
   caseContent: IInterfaceCaseContent;
@@ -20,7 +18,7 @@ interface Props {
 }
 
 const WaitProCard: FC<Props> = (props) => {
-  const { step, caseId, caseContent, callback } = props;
+  const { step, id, caseId, caseContent, callback } = props;
   const [showOption, setShowOption] = useState(false);
   const [showWaitInput, setShowWaitInput] = useState(true);
   const [waitTime, setWaitTime] = useState<number>();
@@ -101,9 +99,8 @@ const WaitProCard: FC<Props> = (props) => {
       }
       title={
         <Space>
-          <UnorderedListOutlined
-            style={{ color: '#c3cad4', marginRight: 20 }}
-          />
+          <Handler id={id} />
+
           <Tag color={'green-inverse'}>STEP_{step}</Tag>
           <Tag color={'orange-inverse'} icon={<FieldTimeOutlined />} />
           {WAIT()}

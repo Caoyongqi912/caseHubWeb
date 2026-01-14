@@ -1,7 +1,7 @@
+import Handler from '@/components/DnDDraggable/handler';
 import ApiCondition from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/ApiCondition';
 import CardExtraOption from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/CardExtraOption';
 import { IInterfaceCaseContent } from '@/pages/Httpx/types';
-import { UnorderedListOutlined } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
 import { Space, Tag, Typography } from 'antd';
 import { FC, useEffect, useState } from 'react';
@@ -9,6 +9,7 @@ import { FC, useEffect, useState } from 'react';
 const { Text } = Typography;
 
 interface Props {
+  id: number;
   step: number;
   caseId: number;
   caseContent: IInterfaceCaseContent;
@@ -17,7 +18,7 @@ interface Props {
 }
 
 const ConditionProCard: FC<Props> = (props) => {
-  const { step, projectId, caseId, caseContent, callback } = props;
+  const { step, id, projectId, caseId, caseContent, callback } = props;
   const [showOption, setShowOption] = useState(false);
   const [conditionKey, setConditionKey] = useState<string>();
   const [conditionValue, setConditionValue] = useState<string>();
@@ -53,9 +54,8 @@ const ConditionProCard: FC<Props> = (props) => {
       collapsibleIconRender={({}) => {
         return (
           <Space>
-            <UnorderedListOutlined
-              style={{ color: '#c3cad4', marginRight: 20 }}
-            />
+            <Handler id={id} />
+
             <Tag color={'green-inverse'}>STEP_{step}</Tag>
             <Tag color={'purple-inverse'}>IF</Tag>
             <Text type={'warning'}> {conditionKey}</Text>

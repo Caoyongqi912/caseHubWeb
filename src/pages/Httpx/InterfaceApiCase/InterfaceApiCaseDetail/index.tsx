@@ -134,6 +134,7 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
         api_Id: item.id,
         content: (
           <CaseContentCollapsible
+            id={index}
             moduleId={currentModuleId}
             projectId={currentProjectId}
             step={index + 1}

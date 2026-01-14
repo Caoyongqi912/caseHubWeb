@@ -1,7 +1,8 @@
+import Handler from '@/components/DnDDraggable/handler';
 import GroupInterfaceTable from '@/pages/Httpx/Interface/interfaceApiGroup/GroupInterfaceTable';
 import CardExtraOption from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/CardExtraOption';
 import { IInterfaceCaseContent } from '@/pages/Httpx/types';
-import { GroupOutlined, UnorderedListOutlined } from '@ant-design/icons';
+import { GroupOutlined } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
 import { Space, Tag, Typography } from 'antd';
 import { FC, useState } from 'react';
@@ -9,6 +10,7 @@ import { FC, useState } from 'react';
 const { Text } = Typography;
 
 interface Props {
+  id: number;
   step: number;
   caseId: number;
   caseContent: IInterfaceCaseContent;
@@ -16,7 +18,7 @@ interface Props {
 }
 
 const GroupProCard: FC<Props> = (props) => {
-  const { step, caseId, caseContent, callback } = props;
+  const { step, id, caseId, caseContent, callback } = props;
   const [showOption, setShowOption] = useState(false);
 
   return (
@@ -43,9 +45,7 @@ const GroupProCard: FC<Props> = (props) => {
       collapsibleIconRender={({}) => {
         return (
           <Space>
-            <UnorderedListOutlined
-              style={{ color: '#c3cad4', marginRight: 20 }}
-            />
+            <Handler id={id} />
             <Tag color={'green-inverse'}>STEP_{step}</Tag>
             <Tag color={'blue-inverse'} icon={<GroupOutlined />} />
             <Text strong>{caseContent.content_name}</Text>

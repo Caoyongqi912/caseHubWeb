@@ -32,23 +32,12 @@ export const SortableItem: React.FC<SortableItemProps> = ({ id, children }) => {
     borderRadius: 8,
   };
 
-  const childrenWithProps = React.Children.map(children, (child) => {
-    if (React.isValidElement(child)) {
-      return React.cloneElement(child as React.ReactElement<any>, {
-        // isDragging,
-        // dragAttributes: canDraggable ? attributes : {},
-        // dragListeners: canDraggable ? listeners : {},
-        setCanDraggable: (canDraggable: boolean) =>
-          setCanDraggable(canDraggable),
-      });
-    }
-    return child;
-  });
   return (
     <ProCard bodyStyle={{ padding: 4 }}>
-      <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-        {children}
-      </div>
+      {/*<div ref={setNodeRef} style={style} {...attributes} {...listeners}>*/}
+      {/*<div ref={setNodeRef}>*/}
+      {children}
+      {/*</div>*/}
     </ProCard>
   );
 };

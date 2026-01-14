@@ -17,6 +17,7 @@ const CaseContentType = {
 };
 
 interface SelfProps {
+  id: number;
   top?: any;
   step: number;
   moduleId?: number;
@@ -34,6 +35,7 @@ const CaseContentCollapsible: FC<SelfProps> = (props) => {
       case CaseContentType.API:
         return (
           <ApiProCard
+            id={props.id}
             step={props.step}
             caseId={caseId}
             caseContent={caseContent}
@@ -43,6 +45,7 @@ const CaseContentCollapsible: FC<SelfProps> = (props) => {
       case CaseContentType.GROUP:
         return (
           <GroupProCard
+            id={props.id}
             step={props.step}
             caseId={caseId}
             caseContent={caseContent}
@@ -52,6 +55,7 @@ const CaseContentCollapsible: FC<SelfProps> = (props) => {
       case CaseContentType.WAIT:
         return (
           <WaitProCard
+            id={props.id}
             step={props.step}
             caseId={caseId}
             caseContent={caseContent}
@@ -61,6 +65,7 @@ const CaseContentCollapsible: FC<SelfProps> = (props) => {
       case CaseContentType.CONDITION:
         return (
           <ConditionProCard
+            id={props.id}
             projectId={projectId}
             step={props.step}
             caseId={caseId}
@@ -71,6 +76,7 @@ const CaseContentCollapsible: FC<SelfProps> = (props) => {
       case CaseContentType.SCRIPT:
         return (
           <ScriptProCard
+            id={props.id}
             step={props.step}
             caseId={caseId}
             caseContent={caseContent}
@@ -80,6 +86,7 @@ const CaseContentCollapsible: FC<SelfProps> = (props) => {
       case CaseContentType.ASSERT:
         return (
           <AssertProCard
+            id={props.id}
             step={props.step}
             caseId={caseId}
             caseContent={caseContent}
@@ -88,7 +95,7 @@ const CaseContentCollapsible: FC<SelfProps> = (props) => {
         );
     }
   };
-  return <>{dispatch()}</>;
+  return <div>{dispatch()}</div>;
 };
 
 export default CaseContentCollapsible;

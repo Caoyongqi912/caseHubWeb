@@ -1,12 +1,9 @@
 import { updateCaseContent } from '@/api/inter/interCase';
+import Handler from '@/components/DnDDraggable/handler';
 import { AssertOption } from '@/pages/Httpx/componets/assertEnum';
 import CardExtraOption from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/CardExtraOption';
 import { IInterfaceCaseContent } from '@/pages/Httpx/types';
-import {
-  EditOutlined,
-  QuestionOutlined,
-  UnorderedListOutlined,
-} from '@ant-design/icons';
+import { EditOutlined, QuestionOutlined } from '@ant-design/icons';
 import {
   ProCard,
   ProForm,
@@ -21,6 +18,7 @@ import { FC, useEffect, useState } from 'react';
 const { Text } = Typography;
 
 interface Props {
+  id: number;
   step: number;
   caseId: number;
   caseContent: IInterfaceCaseContent;
@@ -30,7 +28,7 @@ interface Props {
 
 const AssertProCard: FC<Props> = (props) => {
   const [form] = Form.useForm();
-  const { step, caseId, caseContent, callback } = props;
+  const { step, id, caseId, caseContent, callback } = props;
   const [showOption, setShowOption] = useState(false);
   const [showEditIcon, setShowEditIcon] = useState(false);
   const [showAssertInput, setShowAssertInput] = useState(true);
@@ -125,10 +123,8 @@ const AssertProCard: FC<Props> = (props) => {
       collapsibleIconRender={({}) => {
         return (
           <Space>
-            <UnorderedListOutlined
-              style={{ color: '#c3cad4', marginRight: 20 }}
-            />
-            <Tag color={'green-inverse'}>STEP_{step}</Tag>
+            <Handler id={id} step={step} />
+            {/*<Tag color={'green-inverse'}>STEP_{step}</Tag>*/}
             <Tag color={'red-inverse'} icon={<QuestionOutlined />} />
             {Assert()}
           </Space>

@@ -1,8 +1,9 @@
+import Handler from '@/components/DnDDraggable/handler';
 import MyDrawer from '@/components/MyDrawer';
 import InterfaceApiDetail from '@/pages/Httpx/Interface/InterfaceApiDetail';
 import CardExtraOption from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/CardExtraOption';
 import { IInterfaceCaseContent } from '@/pages/Httpx/types';
-import { ApiOutlined, UnorderedListOutlined } from '@ant-design/icons';
+import { ApiOutlined } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
 import { Space, Tag, Typography } from 'antd';
 import { BaseType } from 'antd/es/typography/Base';
@@ -11,6 +12,7 @@ import { FC, useState } from 'react';
 const { Text } = Typography;
 
 interface Props {
+  id: number;
   step: number;
   caseId: number;
   caseContent: IInterfaceCaseContent;
@@ -25,7 +27,7 @@ const TextType: { [key: string]: string } = {
 };
 
 const ApiProCard: FC<Props> = (props) => {
-  const { step, caseId, caseContent, callback } = props;
+  const { step, caseId, id, caseContent, callback } = props;
   const [showAPIDetail, setShowAPIDetail] = useState(false);
   const [showOption, setShowOption] = useState(false);
 
@@ -55,9 +57,7 @@ const ApiProCard: FC<Props> = (props) => {
         }}
         title={
           <Space>
-            <UnorderedListOutlined
-              style={{ color: '#c3cad4', marginRight: 20 }}
-            />
+            <Handler id={id} />
             <Tag color={'green-inverse'}>STEP_{step}</Tag>
             <Tag color={'gold-inverse'} icon={<ApiOutlined />}></Tag>
             {caseContent.is_common_api === 1 ? (
@@ -91,7 +91,7 @@ const ApiProCard: FC<Props> = (props) => {
           event.stopPropagation();
           setShowAPIDetail(true);
         }}
-      ></ProCard>
+      />
     </>
   );
 };
