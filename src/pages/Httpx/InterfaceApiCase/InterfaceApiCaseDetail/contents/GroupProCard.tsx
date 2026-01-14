@@ -45,8 +45,7 @@ const GroupProCard: FC<Props> = (props) => {
       collapsibleIconRender={({}) => {
         return (
           <Space>
-            <Handler id={id} />
-            <Tag color={'green-inverse'}>STEP_{step}</Tag>
+            <Handler id={id} step={step} />
             <Tag color={'blue-inverse'} icon={<GroupOutlined />} />
             <Text strong>{caseContent.content_name}</Text>
             <Text type={'secondary'}>{caseContent.content_desc}</Text>

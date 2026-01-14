@@ -57,8 +57,7 @@ const ApiProCard: FC<Props> = (props) => {
         }}
         title={
           <Space>
-            <Handler id={id} />
-            <Tag color={'green-inverse'}>STEP_{step}</Tag>
+            <Handler id={id} step={step} />
             <Tag color={'gold-inverse'} icon={<ApiOutlined />}></Tag>
             {caseContent.is_common_api === 1 ? (
               <Tag color={'#059669'}>共</Tag>

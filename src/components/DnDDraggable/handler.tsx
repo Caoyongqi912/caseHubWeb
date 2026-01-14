@@ -1,4 +1,4 @@
-import { UnorderedListOutlined } from '@ant-design/icons';
+import { HolderOutlined } from '@ant-design/icons';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Tag } from 'antd';
@@ -26,11 +26,10 @@ const Handler: FC<{ id: number; step: number }> = ({ id, step }) => {
       onClick={(e) => {
         e.stopPropagation(); // 防止触发卡片点击事件
       }}
-      style={style}
       {...attributes}
       {...listeners}
     >
-      <UnorderedListOutlined style={{ color: '#c3cad4', marginRight: 20 }} />
+      <HolderOutlined style={{ color: '#c3cad4', marginRight: 20 }} />
       <Tag color={'green-inverse'}>STEP_{step}</Tag>
     </div>
   );

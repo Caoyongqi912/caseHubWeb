@@ -99,9 +99,7 @@ const WaitProCard: FC<Props> = (props) => {
       }
       title={
         <Space>
-          <Handler id={id} />
-
-          <Tag color={'green-inverse'}>STEP_{step}</Tag>
+          <Handler id={id} step={step} />
           <Tag color={'orange-inverse'} icon={<FieldTimeOutlined />} />
           {WAIT()}
         </Space>

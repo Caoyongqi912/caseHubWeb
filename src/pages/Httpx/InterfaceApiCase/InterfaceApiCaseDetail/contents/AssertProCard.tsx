@@ -124,7 +124,6 @@ const AssertProCard: FC<Props> = (props) => {
         return (
           <Space>
             <Handler id={id} step={step} />
-            {/*<Tag color={'green-inverse'}>STEP_{step}</Tag>*/}
             <Tag color={'red-inverse'} icon={<QuestionOutlined />} />
             {Assert()}
           </Space>

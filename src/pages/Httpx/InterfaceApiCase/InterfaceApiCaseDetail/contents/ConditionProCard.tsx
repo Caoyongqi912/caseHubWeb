@@ -54,9 +54,7 @@ const ConditionProCard: FC<Props> = (props) => {
       collapsibleIconRender={({}) => {
         return (
           <Space>
-            <Handler id={id} />
-
-            <Tag color={'green-inverse'}>STEP_{step}</Tag>
+            <Handler id={id} step={step} />
             <Tag color={'purple-inverse'}>IF</Tag>
             <Text type={'warning'}> {conditionKey}</Text>
             <Text strong> {conditionOperator}</Text>

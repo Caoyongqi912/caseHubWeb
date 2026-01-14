@@ -105,6 +105,7 @@ const ScriptProCard: FC<Props> = (props) => {
   };
   return (
     <ProCard
+      className={'content'}
       bordered
       collapsible
       hoverable
@@ -128,9 +129,7 @@ const ScriptProCard: FC<Props> = (props) => {
       collapsibleIconRender={({}) => {
         return (
           <Space>
-            <Handler id={id} />
-
-            <Tag color={'green-inverse'}>STEP_{step}</Tag>
+            <Handler id={id} step={step} />
             <Tag color={'geekblue-inverse'} icon={<PythonOutlined />} />
             <div style={{ marginLeft: 10 }}>{SCRIPT()}</div>
           </Space>
