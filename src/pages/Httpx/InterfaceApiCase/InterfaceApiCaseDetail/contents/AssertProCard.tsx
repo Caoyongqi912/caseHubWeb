@@ -25,6 +25,7 @@ interface Props {
   caseId: number;
   caseContent: IInterfaceCaseContent;
   callback?: () => void;
+  setCanDraggable?: (canDraggable: boolean) => void;
 }
 
 const AssertProCard: FC<Props> = (props) => {
@@ -34,6 +35,7 @@ const AssertProCard: FC<Props> = (props) => {
   const [showEditIcon, setShowEditIcon] = useState(false);
   const [showAssertInput, setShowAssertInput] = useState(true);
   const [assertName, setAssertName] = useState<string>();
+  const [isCollapsed, setIsCollapsed] = useState(true); // 控制展开状态
 
   useEffect(() => {
     const { content_name } = caseContent;
@@ -102,6 +104,8 @@ const AssertProCard: FC<Props> = (props) => {
       collapsible
       hoverable
       defaultCollapsed
+      // collapsed={isCollapsed}
+      // onCollapse={(collapsed) => props.setCanDraggable?.(collapsed)}
       onMouseEnter={() => {
         setShowOption(true);
         setShowEditIcon(true);
