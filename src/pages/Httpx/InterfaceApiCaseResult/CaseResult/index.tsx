@@ -1,6 +1,7 @@
 import { caseAPIResultsByCase } from '@/api/inter/interCase';
 import APIResult from '@/pages/Httpx/InterfaceApiCaseResult/CaseResult/ResultComponents/APIResult';
 import AssertResult from '@/pages/Httpx/InterfaceApiCaseResult/CaseResult/ResultComponents/AssertResult';
+import BdResult from '@/pages/Httpx/InterfaceApiCaseResult/CaseResult/ResultComponents/BDResult';
 import GroupResult from '@/pages/Httpx/InterfaceApiCaseResult/CaseResult/ResultComponents/GroupResult';
 import ScriptResult from '@/pages/Httpx/InterfaceApiCaseResult/CaseResult/ResultComponents/ScriptResult';
 import WaitResult from '@/pages/Httpx/InterfaceApiCaseResult/CaseResult/ResultComponents/WaitResult';
@@ -74,6 +75,8 @@ const Index: FC<Props> = ({ caseResultId }) => {
               return <ScriptResult result={item} />;
             case CaseContentType.ASSERT:
               return <AssertResult result={item} />;
+            case CaseContentType.DB:
+              return <BdResult result={item} />;
           }
         })
       ) : (

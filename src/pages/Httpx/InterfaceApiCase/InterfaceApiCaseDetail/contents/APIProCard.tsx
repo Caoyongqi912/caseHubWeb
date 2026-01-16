@@ -7,7 +7,7 @@ import { ApiOutlined } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
 import { Space, Tag, Typography } from 'antd';
 import { BaseType } from 'antd/es/typography/Base';
-import { FC, useState } from 'react';
+import { FC, useEffect, useState } from 'react';
 
 const { Text } = Typography;
 
@@ -17,6 +17,7 @@ interface Props {
   caseId: number;
   caseContent: IInterfaceCaseContent;
   callback?: () => void;
+  open?: boolean;
 }
 
 const TextType: { [key: string]: string } = {
@@ -27,18 +28,19 @@ const TextType: { [key: string]: string } = {
 };
 
 const ApiProCard: FC<Props> = (props) => {
-  const { step, caseId, id, caseContent, callback } = props;
+  const { open = false, step, caseId, id, caseContent, callback } = props;
   const [showAPIDetail, setShowAPIDetail] = useState(false);
   const [showOption, setShowOption] = useState(false);
 
+  useEffect(() => {
+    if (open) {
+      console.log('======', open);
+      setShowAPIDetail(open);
+    }
+  }, [open]);
   return (
     <>
-      <MyDrawer
-        width={'75%'}
-        name={''}
-        open={showAPIDetail}
-        setOpen={setShowAPIDetail}
-      >
+      <MyDrawer width={'75%'} open={showAPIDetail} setOpen={setShowAPIDetail}>
         <InterfaceApiDetail
           interfaceId={caseContent.target_id}
           callback={() => {}}

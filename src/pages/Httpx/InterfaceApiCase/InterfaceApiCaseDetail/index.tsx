@@ -19,13 +19,18 @@ import RunConfig from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/Run
 import InterfaceApiCaseResultDrawer from '@/pages/Httpx/InterfaceApiCaseResult/InterfaceApiCaseResultDrawer';
 import InterfaceApiCaseResultTable from '@/pages/Httpx/InterfaceApiCaseResult/InterfaceApiCaseResultTable';
 import InterfaceCaseChoiceApiTable from '@/pages/Httpx/InterfaceApiCaseResult/InterfaceCaseChoiceApiTable';
-import { IInterfaceAPICase, IInterfaceCaseContent } from '@/pages/Httpx/types';
+import {
+  IInterfaceAPI,
+  IInterfaceAPICase,
+  IInterfaceCaseContent,
+} from '@/pages/Httpx/types';
 import { useParams } from '@@/exports';
 import {
   AimOutlined,
   AlignLeftOutlined,
   ApiOutlined,
   BranchesOutlined,
+  DatabaseOutlined,
   FieldTimeOutlined,
   PythonOutlined,
   SelectOutlined,
@@ -76,15 +81,12 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
   const [runningEnvId, setRunningEnvId] = useState<number>();
   const [errorJump, setErrorJump] = useState<boolean>(false);
   const [runningStyle, setRunningStyle] = useState<number>(1);
-
   const [defaultSize, setDefaultSize] = useState('80%');
-
   const [activeKey, setActiveKey] = useState('2'); // 默认选中 b
-
+  const [emptyAPi, setEmptyAPi] = useState<IInterfaceAPI>();
   // 防抖处理，避免频繁重渲染
   const handleResize = useCallback(
     debounce(({ width }) => {
-      console.log('=====', width);
       const breakpoints = [
         { max: 768, size: '75%' }, // 平板及以下
         { max: 1030, size: '75%' }, // 小笔记本
@@ -95,7 +97,6 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
       ];
 
       const breakpoint = breakpoints.find((bp) => width <= bp.max);
-      console.log(breakpoint?.size);
       setDefaultSize(breakpoint?.size || '80%');
     }, 100),
     [],
@@ -135,6 +136,7 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
         content: (
           <CaseContentCollapsible
             id={index}
+            apiOpen={item.target_id === emptyAPi?.id}
             moduleId={currentModuleId}
             projectId={currentProjectId}
             step={index + 1}
@@ -165,6 +167,7 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
     setEditCase(editCase + 1);
     setChoiceOpen(false);
     setChoiceGroupOpen(false);
+    setEmptyAPi(undefined);
   };
 
   const onMenuClick = async (e: RadioChangeEvent) => {
@@ -258,13 +261,14 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
               icon: <ApiOutlined style={{ color: 'orange' }} />,
               onClick: async () => {
                 if (currentCaseId && currentProjectId && currentModuleId) {
-                  const { code } = await add_empty_api({
+                  const { code, data } = await add_empty_api({
                     case_id: currentCaseId,
                     project_id: currentProjectId,
                     module_id: currentModuleId,
                   });
                   if (code === 0) {
                     await refresh();
+                    setEmptyAPi(data);
                   }
                 }
               },
@@ -325,6 +329,22 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
                   const { code } = await addCaseContent({
                     case_id: currentCaseId,
                     content_type: 8,
+                  });
+                  if (code === 0) {
+                    await refresh();
+                  }
+                }
+              },
+            },
+            {
+              key: 'add_db_script',
+              label: '添加数据库脚本',
+              icon: <DatabaseOutlined style={{ color: 'orange' }} />,
+              onClick: async () => {
+                if (currentCaseId) {
+                  const { code } = await addCaseContent({
+                    case_id: currentCaseId,
+                    content_type: 5,
                   });
                   if (code === 0) {
                     await refresh();

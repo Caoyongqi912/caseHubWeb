@@ -62,11 +62,8 @@ const InterfaceApiCaseResultTable: FC<SelfProps> = (props) => {
       title: '执行用例',
       dataIndex: 'interfaceCaseName',
       key: 'interfaceCaseName',
-      render: (_, record) => (
-        <Tag color={'blue'}>{record.interfaceCaseName}</Tag>
-      ),
+      ellipsis: true,
     },
-
     {
       title: '测试结果',
       dataIndex: 'result',

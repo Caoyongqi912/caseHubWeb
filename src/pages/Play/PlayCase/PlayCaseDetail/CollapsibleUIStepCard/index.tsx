@@ -1,18 +1,16 @@
 import { copyCaseStep, removePlayStep } from '@/api/play/playCase';
+import Handler from '@/components/DnDDraggable/handler';
 import MyDrawer from '@/components/MyDrawer';
-import StepFunc from '@/pages/Play/componets/StepFunc';
 import { IUICaseSteps } from '@/pages/Play/componets/uiTypes';
+import CaseStepDetail from '@/pages/Play/PlayCase/PlayCaseDetail/CollapsibleUIStepCard/caseStepDetail';
 import PlayGroupStepsTable from '@/pages/Play/PlayStep/PlayStepGroup/PlayGroupStepsTable';
-import PlayStepInfo from '@/pages/Play/PlayStep/PlayStepInfo';
 import { useModel } from '@@/exports';
 import {
   ApiFilled,
   ConsoleSqlOutlined,
   CopyFilled,
   DeleteOutlined,
-  EditOutlined,
   QuestionOutlined,
-  UnorderedListOutlined,
 } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
 import {
@@ -29,6 +27,7 @@ import { FC, useState } from 'react';
 const { Text } = Typography;
 
 interface ISelfProps {
+  id: number;
   caseId: string;
   currentProjectId?: string;
   uiStepInfo?: IUICaseSteps;
@@ -37,7 +36,8 @@ interface ISelfProps {
 }
 
 const Index: FC<ISelfProps> = (props) => {
-  const { caseId, uiStepInfo, callBackFunc, currentProjectId, step } = props;
+  const { caseId, id, uiStepInfo, callBackFunc, currentProjectId, step } =
+    props;
   const [openStepDetailDrawer, setOpenStepDetailDrawer] = useState(false);
   const [showOption, setShowOption] = useState(false);
   const { initialState } = useModel('@@initialState');
@@ -102,17 +102,6 @@ const Index: FC<ISelfProps> = (props) => {
               复制
             </Button>
           </Tooltip>
-          <Button
-            icon={<EditOutlined />}
-            color={'primary'}
-            variant="filled"
-            hidden={uiStepInfo?.is_group}
-            onClick={() => {
-              setOpenStepDetailDrawer(true);
-            }}
-          >
-            详情
-          </Button>
           <Popconfirm
             title={'确认删除？'}
             description={'非公共步骤会彻底删除'}
@@ -141,49 +130,46 @@ const Index: FC<ISelfProps> = (props) => {
         collapsible
         hoverable
         defaultCollapsed
+        onClick={() => {
+          !uiStepInfo?.is_group
+            ? setOpenStepDetailDrawer(true)
+            : setOpenStepDetailDrawer(false);
+        }}
         onMouseEnter={() => {
           setShowOption(true);
         }}
         onMouseLeave={() => {
           setShowOption(false);
         }}
-        collapsibleIconRender={() => {
-          return (
-            <Space>
-              <UnorderedListOutlined
-                style={{ color: '#c3cad4', marginRight: 20 }}
-              />
-              <Tag color={'green-inverse'}>STEP_{step}</Tag>
-              {uiStepInfo?.is_group ? (
-                <Tag color={'orange-inverse'}>组</Tag>
-              ) : (
-                <>
-                  {uiStepInfo?.is_common_step ? (
-                    <Tag color={'yellow-inverse'}>公</Tag>
-                  ) : (
-                    <Tag color={'blue-inverse'}>私</Tag>
-                  )}
-                </>
-              )}
-
-              <Text strong>{uiStepInfo?.name}</Text>
-              <Text type={'secondary'}>{uiStepInfo?.description}</Text>
-            </Space>
-          );
+        collapsibleIconRender={({ collapsed }) => {
+          return !!uiStepInfo?.is_group;
         }}
+        title={
+          <Space>
+            <Handler id={id} step={step} />
+            {uiStepInfo?.is_group ? (
+              <Tag color={'orange-inverse'}>组</Tag>
+            ) : (
+              <>
+                {uiStepInfo?.is_common_step ? (
+                  <Tag color={'yellow-inverse'}>公</Tag>
+                ) : (
+                  <Tag color={'blue-inverse'}>私</Tag>
+                )}
+              </>
+            )}
+
+            <Text strong>{uiStepInfo?.name}</Text>
+            <Text type={'secondary'}>{uiStepInfo?.description}</Text>
+          </Space>
+        }
         extra={ExtraArea}
       >
         <ProCard headerBordered>
-          {uiStepInfo?.is_group ? (
+          {uiStepInfo?.is_group && (
             <PlayGroupStepsTable
               groupName={uiStepInfo.name!}
               groupId={uiStepInfo.id!}
-            />
-          ) : (
-            <StepFunc
-              currentProjectId={parseInt(currentProjectId!)}
-              subStepInfo={uiStepInfo!}
-              callback={callBackFunc}
             />
           )}
         </ProCard>
@@ -194,14 +180,10 @@ const Index: FC<ISelfProps> = (props) => {
         open={openStepDetailDrawer}
         setOpen={setOpenStepDetailDrawer}
       >
-        <PlayStepInfo
-          readonly={
-            !initialState?.currentUser?.isAdmin ||
-            initialState.currentUser?.id !== uiStepInfo?.creator
-          }
-          is_common_step={uiStepInfo?.is_common_step}
-          stepInfo={uiStepInfo}
-          callback={() => {
+        <CaseStepDetail
+          uiStepInfo={uiStepInfo}
+          currentProjectId={parseInt(currentProjectId!)}
+          callBackFunc={() => {
             setOpenStepDetailDrawer(false);
             callBackFunc();
           }}

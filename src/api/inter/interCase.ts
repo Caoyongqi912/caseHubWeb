@@ -235,29 +235,6 @@ export const queryContentsByCaseId = async (
   );
 };
 
-export const updateContentAssert = async (
-  data: IInterfaceCaseContentAssert,
-  opt?: IObjGet,
-) => {
-  return request<IResponse<IInterfaceCaseContentAssert>>(
-    '/api/interface/case/updateCaseContentAssert',
-    {
-      method: 'POST',
-      data,
-      ...(opt || {}),
-    },
-  );
-};
-export const detailContentAssert = async (data: number, opt?: IObjGet) => {
-  return request<IResponse<IInterfaceCaseContentAssert>>(
-    '/api/interface/case/getCaseContentAssert',
-    {
-      method: 'GET',
-      params: { assert_id: data },
-      ...(opt || {}),
-    },
-  );
-};
 /**
  * 获取条件 APIs
  * @param data
@@ -326,6 +303,19 @@ export const getConditionContentInfo = async (data: number, opt?: IObjGet) => {
       ...(opt || {}),
     },
   );
+};
+
+/**
+ * 获取db
+ * @param data
+ * @param opt
+ */
+export const getDBContentInfo = async (data: number, opt?: IObjGet) => {
+  return request<IResponse<any>>('/api/interface/case/getDBContent', {
+    method: 'GET',
+    params: { db_content_id: data },
+    ...(opt || {}),
+  });
 };
 
 /**
@@ -454,6 +444,23 @@ export const updateCaseContent = async (
 ) => {
   return request<IResponse<IInterfaceCaseContent>>(
     '/api/interface/case/updateCaseContent',
+    {
+      method: 'POST',
+      data: data,
+      ...(opt || {}),
+    },
+  );
+};
+
+/**
+ * 修改 case db步骤
+ */
+export const updateCaseContentDBScript = async (
+  data: { id: number; sql_text?: string; db_id?: number; sql_extracts?: any },
+  opt?: IObjGet,
+) => {
+  return request<IResponse<IInterfaceCaseContent>>(
+    '/api/interface/case/updateDBExecuteContent',
     {
       method: 'POST',
       data: data,
@@ -658,9 +665,12 @@ export const add_empty_api = async (
   data: { case_id: number; module_id: number; project_id: number },
   options?: IObjGet,
 ) => {
-  return request<IResponse<null>>('/api/interface/case/associationApi', {
-    method: 'POST',
-    data,
-    ...(options || {}),
-  });
+  return request<IResponse<IInterfaceAPI>>(
+    '/api/interface/case/associationApi',
+    {
+      method: 'POST',
+      data,
+      ...(options || {}),
+    },
+  );
 };

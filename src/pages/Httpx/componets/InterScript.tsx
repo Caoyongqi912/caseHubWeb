@@ -142,7 +142,11 @@ const InterScript: FC<SelfProps> = ({ form, tag }) => {
   };
 
   const useDemoScript = (value: string) => {
-    handleOnChange(scriptData + '\n' + value);
+    if (scriptData) {
+      handleOnChange(scriptData + '\n' + value);
+    } else {
+      handleOnChange(value);
+    }
   };
 
   const Desc = (

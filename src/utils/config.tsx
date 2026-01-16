@@ -384,4 +384,5 @@ export const CaseContentType = {
   WAIT: 6,
   SCRIPT: 4,
   ASSERT: 8,
+  DB: 5,
 };

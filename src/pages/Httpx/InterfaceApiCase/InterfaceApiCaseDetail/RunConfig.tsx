@@ -132,7 +132,7 @@ const RunConfig: FC<Props> = ({
           <Select
             placeholder="请选择运行环境"
             style={{
-              width: '100%',
+              width: 'auto',
               borderRadius: '6px',
             }}
             options={apiEnvs}
@@ -140,7 +140,7 @@ const RunConfig: FC<Props> = ({
             allowClear
             showSearch
             optionFilterProp="label"
-            size="middle"
+            size="large"
           />
         </Space>
       </ProCard>

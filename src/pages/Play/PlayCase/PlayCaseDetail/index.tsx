@@ -75,6 +75,7 @@ const Index = () => {
           step_id: item.id,
           content: (
             <CollapsibleUIStepCard
+              id={index}
               step={index + 1}
               caseId={caseId!}
               currentProjectId={projectId}
