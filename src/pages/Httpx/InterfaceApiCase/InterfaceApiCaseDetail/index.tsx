@@ -15,6 +15,7 @@ import GroupApiChoiceTable from '@/pages/Httpx/Interface/interfaceApiGroup/Group
 import ApiCaseBaseForm from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/ApiCaseBaseForm';
 import CaseContentCollapsible from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/CaseContentCollapsible';
 import InterfaceApiCaseVars from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/InterfaceApiCaseVars';
+import LoopForm from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/LoopForm';
 import RunConfig from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/RunConfig';
 import InterfaceApiCaseResultDrawer from '@/pages/Httpx/InterfaceApiCaseResult/InterfaceApiCaseResultDrawer';
 import InterfaceApiCaseResultTable from '@/pages/Httpx/InterfaceApiCaseResult/InterfaceApiCaseResultTable';
@@ -33,6 +34,7 @@ import {
   DatabaseOutlined,
   FieldTimeOutlined,
   PythonOutlined,
+  RetweetOutlined,
   SelectOutlined,
   UngroupOutlined,
 } from '@ant-design/icons';
@@ -84,6 +86,7 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
   const [defaultSize, setDefaultSize] = useState('80%');
   const [activeKey, setActiveKey] = useState('2'); // 默认选中 b
   const [emptyAPi, setEmptyAPi] = useState<IInterfaceAPI>();
+  const [loopModal, setLoopModal] = useState(false);
   // 防抖处理，避免频繁重渲染
   const handleResize = useCallback(
     debounce(({ width }) => {
@@ -352,6 +355,14 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
                 }
               },
             },
+            {
+              key: 'add_loop',
+              label: '添加循环',
+              icon: <RetweetOutlined style={{ color: 'orange' }} />,
+              onClick: () => {
+                setLoopModal(true);
+              },
+            },
           ],
         }}
         icon={<AlignLeftOutlined />}
@@ -421,6 +432,7 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
 
   return (
     <>
+      <LoopForm open={loopModal} setOpen={setLoopModal} />
       <MyDrawer
         name={'测试结果'}
         width={'80%'}

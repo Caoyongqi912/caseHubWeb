@@ -123,7 +123,6 @@ const ProjectList: React.FC = () => {
               setOpenModel(true);
             }}
           >
-            {' '}
             <PlusOutlined />
             新建项目
           </Button>

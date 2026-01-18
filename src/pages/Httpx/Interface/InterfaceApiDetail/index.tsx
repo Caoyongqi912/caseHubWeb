@@ -398,6 +398,9 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
         ref={containerRef}
         bordered
         hoverable
+        bodyStyle={{
+          minHeight: '100vh',
+        }}
         style={{
           borderRadius: 16,
           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',

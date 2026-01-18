@@ -103,6 +103,12 @@ export default [
   },
   {
     path: '/ui',
+    redirect: '/ui/commonStep',
+    name: 'UI自动化',
+    hideInMenu: true,
+  },
+  {
+    path: '/ui',
     name: 'UI自动化',
     icon: 'RobotOutlined',
     routes: [
@@ -187,6 +193,12 @@ export default [
       //     '@/pages/UIPlaywright/Config/CommonStepsGroup/StepGroupDetail',
       // },
     ],
+  },
+  {
+    path: '/interface',
+    redirect: '/interface/interApi/api',
+    name: 'API自动化',
+    hideInMenu: true,
   },
   {
     path: '/interface',

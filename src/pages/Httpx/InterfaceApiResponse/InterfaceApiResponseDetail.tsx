@@ -39,7 +39,6 @@ const InterfaceApiResponseDetail: FC<SelfProps> = ({ responses }) => {
           flexWrap: 'wrap',
           rowGap: 8,
           padding: '8px 12px',
-          backgroundColor: '#f8f9fa',
           borderRadius: 6,
         }}
       >

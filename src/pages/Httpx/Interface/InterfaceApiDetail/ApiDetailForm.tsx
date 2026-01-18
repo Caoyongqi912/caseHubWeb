@@ -156,7 +156,7 @@ const ApiDetailForm: FC<IProps> = (props) => {
   );
 
   return (
-    <>
+    <div style={{ padding: 8 }}>
       <Modal
         title="导入CURL"
         open={isModalOpen}
@@ -238,7 +238,7 @@ const ApiDetailForm: FC<IProps> = (props) => {
           items={TabItems}
         />
       </ProCard>
-    </>
+    </div>
   );
 };
 

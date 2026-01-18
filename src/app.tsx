@@ -117,7 +117,7 @@ export const layout: RunTimeLayoutConfig = ({
 
   return {
     navTheme: currentTheme,
-    disableContentMargin: true,
+    disableContentMargin: false,
     defaultCollapsed: collapsed,
     onCollapse: setCollapsed,
     breakpoint: false,
@@ -136,7 +136,7 @@ export const layout: RunTimeLayoutConfig = ({
         }}
       >
         <ConfigProvider>
-          {initialState?.loading ? <PageLoading /> : children}
+          {initialState?.loading ? <PageLoading /> : <>{children}</>}
         </ConfigProvider>
       </div>
     ),

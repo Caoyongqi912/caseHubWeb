@@ -77,7 +77,7 @@ const InterAssertList: FC<ISelfProps> = ({ form, readonly = false }) => {
   };
   return (
     <>
-      <MyDrawer name={''} open={showTools} setOpen={setShowTools}>
+      <MyDrawer open={showTools} setOpen={setShowTools}>
         <JsonPathTool />
       </MyDrawer>
       <ProFormList
@@ -181,7 +181,7 @@ const InterAssertList: FC<ISelfProps> = ({ form, readonly = false }) => {
         {(_, index, list) => {
           return (
             <>
-              <ProForm.Group>
+              <ProForm.Group key={index}>
                 <ProFormSelect
                   name={'assert_target'}
                   label={'断言内容'}
