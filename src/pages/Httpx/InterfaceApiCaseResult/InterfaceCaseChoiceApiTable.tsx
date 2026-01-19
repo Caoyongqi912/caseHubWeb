@@ -3,6 +3,7 @@ import { pageInterApi } from '@/api/inter';
 import {
   associationApis,
   selectCommonAPI2ConditionAPI,
+  selectCommonAPI2LoopAPI,
 } from '@/api/inter/interCase';
 import { addInterfaceGroupApis } from '@/api/inter/interGroup';
 import { associationApisByTaskId } from '@/api/inter/interTask';
@@ -24,6 +25,7 @@ interface SelfProps {
   currentTaskId?: string;
   currentStepId?: number; //playStep choise
   condition_id?: number;
+  loop_id?: number;
   refresh?: (value?: number[]) => void;
 }
 
@@ -35,6 +37,7 @@ const InterfaceCaseChoiceApiTable: FC<SelfProps> = ({
   currentTaskId,
   currentStepId,
   condition_id,
+  loop_id,
 }) => {
   const actionRef = useRef<ActionType>(); //Table action 的引用，便于自定义触发
   const [projectEnumMap, setProjectEnumMap] = useState<IObjGet>({});
@@ -154,6 +157,17 @@ const InterfaceCaseChoiceApiTable: FC<SelfProps> = ({
                 if (condition_id) {
                   const { code, msg } = await selectCommonAPI2ConditionAPI({
                     condition_id: condition_id,
+                    interface_id_list: selectedRowKeys as number[],
+                  });
+                  if (code === 0) {
+                    message.success(msg);
+                    refresh?.();
+                  }
+                  return;
+                }
+                if (loop_id) {
+                  const { code, msg } = await selectCommonAPI2LoopAPI({
+                    loop_id: loop_id,
                     interface_id_list: selectedRowKeys as number[],
                   });
                   if (code === 0) {

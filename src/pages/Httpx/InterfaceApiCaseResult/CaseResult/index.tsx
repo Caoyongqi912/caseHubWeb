@@ -3,6 +3,7 @@ import APIResult from '@/pages/Httpx/InterfaceApiCaseResult/CaseResult/ResultCom
 import AssertResult from '@/pages/Httpx/InterfaceApiCaseResult/CaseResult/ResultComponents/AssertResult';
 import BdResult from '@/pages/Httpx/InterfaceApiCaseResult/CaseResult/ResultComponents/BDResult';
 import GroupResult from '@/pages/Httpx/InterfaceApiCaseResult/CaseResult/ResultComponents/GroupResult';
+import LoopResult from '@/pages/Httpx/InterfaceApiCaseResult/CaseResult/ResultComponents/LoopResult';
 import ScriptResult from '@/pages/Httpx/InterfaceApiCaseResult/CaseResult/ResultComponents/ScriptResult';
 import WaitResult from '@/pages/Httpx/InterfaceApiCaseResult/CaseResult/ResultComponents/WaitResult';
 import { ICaseContentResult } from '@/pages/Httpx/types';
@@ -77,6 +78,8 @@ const Index: FC<Props> = ({ caseResultId }) => {
               return <AssertResult result={item} />;
             case CaseContentType.DB:
               return <BdResult result={item} />;
+            case CaseContentType.LOOP:
+              return <LoopResult result={item} />;
           }
         })
       ) : (

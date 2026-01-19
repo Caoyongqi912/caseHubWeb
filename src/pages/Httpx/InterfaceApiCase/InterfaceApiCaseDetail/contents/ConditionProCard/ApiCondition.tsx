@@ -285,15 +285,10 @@ const ApiCondition: FC<SelfProps> = ({
           onDragSortEnd={handleDragSortEnd}
         />
       </ProCard>
-      <MyDrawer
-        width={'75%'}
-        name={''}
-        open={showAPIDetail}
-        setOpen={setShowAPIDetail}
-      >
+      <MyDrawer width={'75%'} open={showAPIDetail} setOpen={setShowAPIDetail}>
         <InterfaceApiDetail interfaceId={currentApiId} callback={() => {}} />;
       </MyDrawer>
-      <MyDrawer name={''} open={choiceGroupOpen} setOpen={setChoiceGroupOpen}>
+      <MyDrawer open={choiceGroupOpen} setOpen={setChoiceGroupOpen}>
         <GroupApiChoiceTable
           projectId={projectId}
           refresh={refresh}
@@ -301,7 +296,7 @@ const ApiCondition: FC<SelfProps> = ({
           condition_api_id={caseContent.id}
         />
       </MyDrawer>
-      <MyDrawer name={''} open={choiceOpen} setOpen={setChoiceOpen}>
+      <MyDrawer open={choiceOpen} setOpen={setChoiceOpen}>
         <InterfaceCaseChoiceApiTable
           projectId={projectId}
           currentCaseApiId={case_id}

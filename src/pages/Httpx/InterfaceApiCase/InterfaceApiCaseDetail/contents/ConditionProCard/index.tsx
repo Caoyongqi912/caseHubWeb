@@ -1,6 +1,6 @@
 import Handler from '@/components/DnDDraggable/handler';
-import ApiCondition from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/ApiCondition';
 import CardExtraOption from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/CardExtraOption';
+import ApiCondition from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/ConditionProCard/ApiCondition';
 import { IInterfaceCaseContent } from '@/pages/Httpx/types';
 import { ProCard } from '@ant-design/pro-components';
 import { Space, Tag, Typography } from 'antd';
@@ -17,7 +17,7 @@ interface Props {
   callback?: () => void;
 }
 
-const ConditionProCard: FC<Props> = (props) => {
+const Index: FC<Props> = (props) => {
   const { step, id, projectId, caseId, caseContent, callback } = props;
   const [showOption, setShowOption] = useState(false);
   const [conditionKey, setConditionKey] = useState<string>();
@@ -75,4 +75,4 @@ const ConditionProCard: FC<Props> = (props) => {
   );
 };
 
-export default ConditionProCard;
+export default Index;

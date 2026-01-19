@@ -52,6 +52,7 @@ export const CONFIG: IObjGet = {
     3: { text: 'BeforeScript' },
     4: { text: 'BeforeParams' },
     10: { text: 'BeforeSQL' },
+    13: { text: 'Loop' },
     11: { text: 'CaseStep' },
     5: { text: 'AfterScript' },
     6: { text: 'ResponseJsonExtract' },
@@ -385,4 +386,5 @@ export const CaseContentType = {
   SCRIPT: 4,
   ASSERT: 8,
   DB: 5,
+  LOOP: 9,
 };

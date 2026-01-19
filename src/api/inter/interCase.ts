@@ -9,6 +9,7 @@ import {
   IInterfaceCaseResult,
   ITryResponseInfo,
   IVariable,
+  LoopContent,
 } from '@/pages/Httpx/types';
 import { IUIVars } from '@/pages/Play/componets/uiTypes';
 import { request } from '@@/plugin-request/request';
@@ -177,6 +178,24 @@ export const selectCommonAPI2ConditionAPI = async (
     },
   );
 };
+/**
+ * 选择公共api 给 API
+ * @param data
+ * @param opt
+ */
+export const selectCommonAPI2LoopAPI = async (
+  data: { loop_id: number | string; interface_id_list: number[] },
+  opt?: IObjGet,
+) => {
+  return request<IResponse<null>>(
+    '/api/interface/case/loopContent/associationAPI',
+    {
+      method: 'POST',
+      data: data,
+      ...(opt || {}),
+    },
+  );
+};
 
 /**
  * 重新排序
@@ -198,6 +217,24 @@ export const reorderAssociationAPI = async (
 };
 
 /**
+ * 重新排序
+ * @param data
+ * @param opt
+ */
+export const reorderLoopAssociationAPI = async (
+  data: { loop_id: number | string; interface_id_list: number[] },
+  opt?: IObjGet,
+) => {
+  return request<IResponse<null>>(
+    '/api/interface/case/loopContent/reorderAssociationAPI',
+    {
+      method: 'POST',
+      data: data,
+      ...(opt || {}),
+    },
+  );
+};
+/**
  * 解除关联
  * @param data
  * @param opt
@@ -208,6 +245,24 @@ export const removerAssociationAPI = async (
 ) => {
   return request<IResponse<null>>(
     '/api/interface/case/conditionContent/removeAssociationAPI',
+    {
+      method: 'POST',
+      data: data,
+      ...(opt || {}),
+    },
+  );
+};
+/**
+ * 解除关联
+ * @param data
+ * @param opt
+ */
+export const removerLoopAssociationAPI = async (
+  data: { loop_id: number; interface_id: number },
+  opt?: IObjGet,
+) => {
+  return request<IResponse<null>>(
+    '/api/interface/case/loopContent/removeAssociationAPI',
     {
       method: 'POST',
       data: data,
@@ -249,6 +304,22 @@ export const queryConditionAPI = async (
     {
       method: 'GET',
       params: { content_condition_id: data },
+      ...(opt || {}),
+    },
+  );
+};
+
+/**
+ * 获取条件 APIs
+ * @param data
+ * @param opt
+ */
+export const queryLoopAPI = async (data: string | number, opt?: IObjGet) => {
+  return request<IResponse<IInterfaceAPI[]>>(
+    '/api/interface/case/conditionContent/queryLoopAPI',
+    {
+      method: 'GET',
+      params: { content_loop_id: data },
       ...(opt || {}),
     },
   );
@@ -657,6 +728,32 @@ export const initAPICondition = async (
   return request<IResponse<null>>('/api/interface/case/associationCondition', {
     method: 'POST',
     data,
+    ...(options || {}),
+  });
+};
+export const addAPILoop = async (data: LoopContent, options?: IObjGet) => {
+  return request<IResponse<LoopContent>>(
+    '/api/interface/case/associationLoop',
+    {
+      method: 'POST',
+      data,
+      ...(options || {}),
+    },
+  );
+};
+
+export const updateAPILoop = async (data: LoopContent, options?: IObjGet) => {
+  return request<IResponse<LoopContent>>('/api/interface/case/updateLoop', {
+    method: 'POST',
+    data,
+    ...(options || {}),
+  });
+};
+
+export const getAPILoop = async (data: number, options?: IObjGet) => {
+  return request<IResponse<LoopContent>>('/api/interface/case/getLoopContent', {
+    method: 'GET',
+    params: { loop_id: data },
     ...(options || {}),
   });
 };

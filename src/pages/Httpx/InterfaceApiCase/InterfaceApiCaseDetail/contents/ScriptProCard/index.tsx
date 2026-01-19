@@ -1,7 +1,7 @@
 import { updateCaseContent } from '@/api/inter/interCase';
 import Handler from '@/components/DnDDraggable/handler';
-import ApiScriptContent from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/apiScriptContent';
 import CardExtraOption from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/CardExtraOption';
+import ApiScriptContent from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/ScriptProCard/apiScriptContent';
 import { IInterfaceCaseContent } from '@/pages/Httpx/types';
 import { EditOutlined, PythonOutlined } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
@@ -18,7 +18,7 @@ interface Props {
   callback?: () => void;
 }
 
-const ScriptProCard: FC<Props> = (props) => {
+const Index: FC<Props> = (props) => {
   const timeoutRef = useRef<any>(null);
 
   const { step, id, caseId, caseContent, callback } = props;
@@ -145,4 +145,4 @@ const ScriptProCard: FC<Props> = (props) => {
   );
 };
 
-export default ScriptProCard;
+export default Index;

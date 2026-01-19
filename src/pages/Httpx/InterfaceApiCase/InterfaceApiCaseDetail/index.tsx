@@ -14,8 +14,8 @@ import MyTabs from '@/components/MyTabs';
 import GroupApiChoiceTable from '@/pages/Httpx/Interface/interfaceApiGroup/GroupApiChoiceTable';
 import ApiCaseBaseForm from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/ApiCaseBaseForm';
 import CaseContentCollapsible from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/CaseContentCollapsible';
+import LoopForm from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/LoopProCard/LoopForm';
 import InterfaceApiCaseVars from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/InterfaceApiCaseVars';
-import LoopForm from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/LoopForm';
 import RunConfig from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/RunConfig';
 import InterfaceApiCaseResultDrawer from '@/pages/Httpx/InterfaceApiCaseResult/InterfaceApiCaseResultDrawer';
 import InterfaceApiCaseResultTable from '@/pages/Httpx/InterfaceApiCaseResult/InterfaceApiCaseResultTable';
@@ -170,6 +170,7 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
     setEditCase(editCase + 1);
     setChoiceOpen(false);
     setChoiceGroupOpen(false);
+    setLoopModal(false);
     setEmptyAPi(undefined);
   };
 
@@ -432,7 +433,12 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
 
   return (
     <>
-      <LoopForm open={loopModal} setOpen={setLoopModal} />
+      <LoopForm
+        open={loopModal}
+        setOpen={setLoopModal}
+        callback={refresh}
+        case_id={parseInt(caseApiId!)}
+      />
       <MyDrawer
         name={'测试结果'}
         width={'80%'}

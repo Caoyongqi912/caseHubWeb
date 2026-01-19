@@ -1,4 +1,6 @@
+import { addAPILoop, updateAPILoop } from '@/api/inter/interCase';
 import MyModal from '@/components/MyModal';
+import { LoopContent } from '@/pages/Httpx/types';
 import {
   ProForm,
   ProFormDependency,
@@ -8,21 +10,53 @@ import {
   ProFormText,
 } from '@ant-design/pro-components';
 import { Form } from 'antd';
-import React, { FC } from 'react';
+import React, { FC, useEffect } from 'react';
 
 const LoopForm: FC<{
+  loop_info?: LoopContent;
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  case_id: number;
+  case_id?: number;
+  callback?: () => void;
 }> = (props) => {
   const [form] = Form.useForm();
+
+  useEffect(() => {
+    if (props.loop_info) {
+      form.setFieldsValue(props.loop_info);
+    }
+  }, [props.loop_info]);
   return (
     <MyModal
       open={props.open}
       setOpen={props.setOpen}
       title={'循环步骤'}
       onFinish={async (values) => {
-        console.log(values);
+        if (!props.case_id) return;
+        const { loop_info } = props;
+        if (loop_info) {
+          const v = {
+            ...values,
+            id: loop_info.id,
+          };
+          const { code, msg } = await updateAPILoop(v);
+          if (code === 0) {
+            props.callback?.();
+            return true;
+          }
+        } else {
+          // 添加
+          const { code, data } = await addAPILoop({
+            ...values,
+            case_id: props.case_id,
+          });
+          if (code === 0) {
+            props.callback?.();
+            return true;
+          }
+        }
+
+        return false;
       }}
       form={form}
     >

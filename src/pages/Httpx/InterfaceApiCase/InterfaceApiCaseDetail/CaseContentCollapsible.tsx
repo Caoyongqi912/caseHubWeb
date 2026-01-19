@@ -3,10 +3,11 @@ import ApiProCard from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/co
 import AssertProCard from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/AssertProCard';
 import ConditionProCard from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/ConditionProCard';
 import GroupProCard from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/GroupProCard';
-import ScriptProCard from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/ScriptProCard';
+import LoopProCard from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/LoopProCard';
+import Index from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/ScriptProCard';
 import WaitProCard from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/WaitProCard';
 import { IInterfaceCaseContent } from '@/pages/Httpx/types';
-import { FC, useEffect } from 'react';
+import { FC } from 'react';
 
 const CaseContentType = {
   API: 1,
@@ -16,6 +17,7 @@ const CaseContentType = {
   SCRIPT: 4,
   ASSERT: 8,
   DB: 5,
+  LOOP: 9,
 };
 
 interface SelfProps {
@@ -33,9 +35,6 @@ interface SelfProps {
 
 const CaseContentCollapsible: FC<SelfProps> = (props) => {
   const { projectId, caseContent, caseId, callback } = props;
-  useEffect(() => {
-    console.log(props);
-  }, []);
   const dispatch = () => {
     switch (caseContent.content_type) {
       case CaseContentType.API:
@@ -82,7 +81,7 @@ const CaseContentCollapsible: FC<SelfProps> = (props) => {
         );
       case CaseContentType.SCRIPT:
         return (
-          <ScriptProCard
+          <Index
             id={props.id}
             step={props.step}
             caseId={caseId}
@@ -108,6 +107,17 @@ const CaseContentCollapsible: FC<SelfProps> = (props) => {
             caseId={caseId}
             caseContent={caseContent}
             callback={callback}
+          />
+        );
+      case CaseContentType.LOOP:
+        return (
+          <LoopProCard
+            id={props.id}
+            step={props.step}
+            caseId={caseId}
+            caseContent={caseContent}
+            callback={callback}
+            projectId={projectId}
           />
         );
     }

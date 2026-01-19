@@ -328,3 +328,14 @@ export interface ICaseContentResult extends IBaseField {
   content_result: boolean;
   data?: ITryResponseInfo[];
 }
+
+export interface LoopContent {
+  id: number;
+  case_id: number;
+  loop_type: number;
+  loop_times?: number;
+  loop_items?: string;
+  loop_item_key?: string;
+  loop_condition?: IObjGet;
+  max_loop?: number;
+}

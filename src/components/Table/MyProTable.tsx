@@ -74,7 +74,6 @@ const MyProTable: FC<SelfProps> = (props) => {
           width: '100%',
           minWidth: 'auto', // 防止最小宽度过大
         }}
-        bordered
         form={form}
         dataSource={dataSource}
         columns={columns}
