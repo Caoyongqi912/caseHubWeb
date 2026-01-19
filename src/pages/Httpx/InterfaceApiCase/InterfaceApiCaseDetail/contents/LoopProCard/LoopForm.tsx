@@ -133,19 +133,19 @@ const LoopForm: FC<{
                   <ProFormDigit
                     name={'max_loop'}
                     label={'最大循环次数'}
-                    max={1}
-                    min={10}
+                    max={10}
+                    min={1}
                   />
                   <ProForm.Group>
                     <ProFormText
-                      name={['condition', 'key']}
+                      name={['loop_condition', 'key']}
                       label="变量"
                       placeholder="字符串 或者 变量 {{xx}}"
                       required={true}
                       rules={[{ required: true, message: '输入循环变量' }]}
                     />
                     <ProFormSelect
-                      name={['condition', 'operate']}
+                      name={['loop_condition', 'operate']}
                       label="条件"
                       options={[
                         {
@@ -161,7 +161,7 @@ const LoopForm: FC<{
                       rules={[{ required: true, message: '选择条件' }]}
                     />
                     <ProFormText
-                      name={['condition', 'value']}
+                      name={['loop_condition', 'value']}
                       label="结束值"
                       placeholder="字符串 或者 变量 {{xx}}"
                       required={true}
