@@ -337,6 +337,11 @@ export default [
         component: '@/pages/DebuggerPage/Mind2',
       },
       {
+        path: '/debugger/mind2',
+        name: 'mind2',
+        component: '@/pages/DebuggerPage/TestCaseMindMap',
+      },
+      {
         path: '/debugger/plist',
         name: 'List',
         component: '@/pages/DebuggerPage/ProList',
