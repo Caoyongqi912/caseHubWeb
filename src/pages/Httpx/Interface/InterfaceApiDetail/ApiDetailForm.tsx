@@ -32,7 +32,6 @@ const ApiDetailForm: FC<IProps> = (props) => {
   const [headersLength, setHeadersLength] = useState<number>();
   const [queryLength, setQueryLength] = useState<number>();
   const [bodyLength, setBodyLength] = useState<number>();
-  const { API_LEVEL_SELECT, API_STATUS_SELECT } = CONFIG;
 
   useEffect(() => {
     if (interfaceApiInfo) {
@@ -197,28 +196,6 @@ const ApiDetailForm: FC<IProps> = (props) => {
         />
       </ProForm.Group>
       <ProForm.Group>
-        <ProForm.Group>
-          <ProFormSelect
-            disabled={currentMode === 1}
-            name="level"
-            label="优先级"
-            width={'sm'}
-            initialValue={'P1'}
-            options={API_LEVEL_SELECT}
-            required={true}
-            rules={[{ required: true, message: '用例优先级必选' }]}
-          />
-          <ProFormSelect
-            disabled={currentMode === 1}
-            name="status"
-            label="状态"
-            initialValue={'DEBUG'}
-            width={'sm'}
-            options={API_STATUS_SELECT}
-            required={true}
-            rules={[{ required: true, message: '用例状态必须选' }]}
-          />
-        </ProForm.Group>
         <ProFormTextArea
           label={'步骤描述'}
           disabled={currentMode === 1}
@@ -226,7 +203,7 @@ const ApiDetailForm: FC<IProps> = (props) => {
           width={'lg'}
           required={true}
           fieldProps={{
-            rows: 1,
+            rows: 2,
           }}
         />
       </ProForm.Group>

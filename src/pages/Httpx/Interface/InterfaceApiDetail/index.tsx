@@ -14,7 +14,6 @@ import InterDoc from '@/pages/Httpx/componets/InterDoc';
 import InterExtractList from '@/pages/Httpx/componets/InterExtractList';
 import InterOtherSetting from '@/pages/Httpx/componets/InterOtherSetting';
 import InterPerf from '@/pages/Httpx/componets/InterPerf';
-import ApiAfterItems from '@/pages/Httpx/Interface/InterfaceApiDetail/ApiAfterItems';
 import ApiBaseForm from '@/pages/Httpx/Interface/InterfaceApiDetail/ApiBaseForm';
 import ApiBeforeItems from '@/pages/Httpx/Interface/InterfaceApiDetail/ApiBeforeItems';
 import ApiDetailForm from '@/pages/Httpx/Interface/InterfaceApiDetail/ApiDetailForm';
@@ -25,14 +24,13 @@ import {
   CheckCircleOutlined,
   DownOutlined,
   EditOutlined,
-  FormOutlined,
   KeyOutlined,
   LineChartOutlined,
+  MoreOutlined,
   QuestionCircleOutlined,
   SaveOutlined,
   SendOutlined,
   SettingOutlined,
-  SmallDashOutlined,
 } from '@ant-design/icons';
 import { ProCard, ProForm } from '@ant-design/pro-components';
 import {
@@ -45,9 +43,8 @@ import {
   Spin,
   TabsProps,
   Tooltip,
-  Typography,
 } from 'antd';
-import { FC, useEffect, useRef, useState } from 'react';
+import { FC, useEffect, useMemo, useRef, useState } from 'react';
 import { history, useParams } from 'umi';
 
 interface SelfProps {
@@ -78,6 +75,39 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
   const [currentInterAPIId, setCurrentInterAPIId] = useState<number>();
   const [openDoc, setOpenDoc] = useState(false);
   const [runningEnv, setRunningEnv] = useState<number>();
+  const [activeKey, setActiveKey] = useState('2');
+  const [windowWidth, setWindowWidth] = useState(
+    typeof window !== 'undefined' ? window.innerWidth : 1200,
+  );
+
+  // 监听窗口大小变化
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  // 响应式配置
+  const responsiveConfig: any = useMemo(() => {
+    const isMobile = windowWidth < 768;
+    const isTablet = windowWidth >= 768 && windowWidth < 1024;
+    const isDesktop = windowWidth >= 1024;
+
+    return {
+      isMobile,
+      isTablet,
+      isDesktop,
+      cardPadding: isMobile ? 16 : 24,
+      tabBarPadding: isMobile ? 16 : 24,
+      buttonSize: isMobile ? 'small' : 'middle',
+      selectWidth: isMobile ? 120 : 160,
+    };
+  }, [windowWidth]);
   //路由进入。空白页
   useEffect(() => {
     if (projectId && moduleId) {
@@ -170,7 +200,7 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
    * @param id
    */
   const fetchInterfaceDetails = async (id: string | number) => {
-    const { code, data } = await detailInterApiById({ interfaceId: id });
+    const { code, data } = await detailInterApiById({ interface_id: id });
     if (code === 0) {
       interApiForm.setFieldsValue(data);
       setCurrentProjectId(data.project_id);
@@ -264,18 +294,18 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
       icon: <CheckCircleOutlined />,
       children: <InterAssertList form={interApiForm} readonly={false} />,
     },
-    {
-      key: '5',
-      label: '后置动作',
-      icon: <FormOutlined />,
-      children: (
-        <ApiAfterItems interApiForm={interApiForm} currentMode={currentMode} />
-      ),
-    },
+    // {
+    //   key: '5',
+    //   label: '后置动作',
+    //   icon: <FormOutlined />,
+    //   children: (
+    //     <ApiAfterItems interApiForm={interApiForm} currentMode={currentMode} />
+    //   ),
+    // },
     {
       key: '8',
-      label: '设置',
-      icon: <SmallDashOutlined />,
+      label: '其他',
+      icon: <MoreOutlined />,
       children: (
         <InterOtherSetting currentMode={currentMode} form={interApiForm} />
       ),
@@ -299,14 +329,14 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
         case 1: // 用例详情 - 编辑按钮
           return interId || interfaceId ? (
             <Button
-              type="text"
-              variant={'text'}
+              type="default"
+              variant={'outlined'}
               onClick={() => setCurrentMode(3)}
+              icon={<EditOutlined />}
+              size={responsiveConfig.buttonSize}
+              style={{ borderRadius: 8 }}
             >
-              <Typography.Text type={'secondary'}>
-                <EditOutlined style={{ marginRight: 2 }} />
-                编辑
-              </Typography.Text>
+              编辑
             </Button>
           ) : null;
         case 2: // 新增模式 - 保存按钮
@@ -315,31 +345,39 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
               type="primary"
               icon={<SaveOutlined />}
               onClick={SaveOrUpdate}
+              size={responsiveConfig.buttonSize}
+              style={{
+                borderRadius: 8,
+                boxShadow: '0 2px 8px rgba(24, 144, 255, 0.3)',
+              }}
             >
               保存用例
             </Button>
           );
         case 3: // 编辑模式 - 保存/取消
           return (
-            <div>
+            <Space size={responsiveConfig.isMobile ? 'small' : 'middle'}>
               <Button
-                size="small"
-                type="link"
+                size={responsiveConfig.buttonSize}
+                type="primary"
                 icon={<SaveOutlined />}
                 onClick={SaveOrUpdate}
+                style={{ borderRadius: 8 }}
               >
                 保存
               </Button>
               <Button
-                size="small"
-                type="text"
-                danger
+                size={responsiveConfig.buttonSize}
+                type="default"
                 onClick={() => setCurrentMode(1)}
-                style={{ marginLeft: 8 }}
+                style={{
+                  borderRadius: 8,
+                  borderColor: '#d9d9d9',
+                }}
               >
                 取消
               </Button>
-            </div>
+            </Space>
           );
 
         default:
@@ -352,16 +390,16 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
 
   const tabBarExtraContent = (
     // 右侧：操作按钮区域
-    <Space size="small">
+    <Space size="middle">
       {/* 模式特定操作 */}
       <DetailExtra currentMode={currentMode} />
       {/* 调试功能区 */}
       <Space size="small">
         {/* 环境选择器 */}
         <Select
-          size="middle"
+          size={responsiveConfig.buttonSize}
           allowClear
-          variant={'filled'}
+          variant={'outlined'}
           placeholder="选择环境"
           disabled={currentMode !== 1}
           suffixIcon={<DownOutlined />}
@@ -369,7 +407,8 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
           onChange={(value) => {
             setRunningEnv(value);
           }}
-        ></Select>
+          style={{ minWidth: responsiveConfig.selectWidth }}
+        />
 
         {/* 发送按钮 */}
         <Button
@@ -378,6 +417,23 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
           loading={tryLoading}
           disabled={currentMode !== 1}
           onClick={TryClick}
+          size={responsiveConfig.buttonSize}
+          style={{
+            boxShadow: '0 2px 8px rgba(24, 144, 255, 0.3)',
+            borderRadius: 8,
+            padding: responsiveConfig.isMobile ? '0 16px' : '0 20px',
+            transition: 'all 0.3s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.boxShadow =
+              '0 4px 16px rgba(24, 144, 255, 0.4)';
+            e.currentTarget.style.transform = 'translateY(-1px)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.boxShadow =
+              '0 2px 8px rgba(24, 144, 255, 0.3)';
+            e.currentTarget.style.transform = 'translateY(0)';
+          }}
         >
           Try
         </Button>
@@ -396,30 +452,45 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
       </MyDrawer>
       <ProCard
         ref={containerRef}
-        bordered
-        hoverable
         bodyStyle={{
           minHeight: '100vh',
+          padding: responsiveConfig.cardPadding,
         }}
         style={{
           borderRadius: 16,
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
           overflow: 'hidden',
         }}
       >
         <ProForm form={interApiForm} submitter={false}>
           <ApiBaseForm />
           <ProCard
+            bordered
             style={{
-              marginTop: 16,
-              borderRadius: 12,
+              marginTop: 24,
+              borderRadius: 16,
               overflow: 'hidden',
+              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.04)',
+            }}
+            headStyle={{
+              backgroundColor: '#f6f8fa',
+              borderBottom: '1px solid #e8e8e8',
+              padding: '16px 24px',
             }}
           >
             <MyTabs
               defaultActiveKey={'2'}
               items={TabItems}
               tabBarExtraContent={tabBarExtraContent}
+              style={{
+                marginBottom: 0,
+                paddingLeft: responsiveConfig.tabBarPadding,
+                paddingRight: responsiveConfig.tabBarPadding,
+                borderBottom: '1px solid #e8e8e8',
+                flexWrap: responsiveConfig.isMobile ? 'wrap' : 'nowrap',
+              }}
+              activeKey={activeKey}
+              onChangeKey={setActiveKey}
             />
           </ProCard>
         </ProForm>
@@ -431,17 +502,19 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
           </Spin>
         </div>
         <FloatButton
-          icon={<QuestionCircleOutlined style={{ fontSize: 18 }} />}
+          icon={<QuestionCircleOutlined style={{ fontSize: 20 }} />}
           type="primary"
           tooltip="查看文档"
           onClick={() => setOpenDoc(true)}
           style={{
-            right: 32,
-            bottom: 32,
-            width: 52,
-            height: 52,
-            boxShadow: '0 4px 12px rgba(22, 119, 255, 0.3)',
+            right: responsiveConfig.isMobile ? 16 : 32,
+            bottom: responsiveConfig.isMobile ? 16 : 32,
+            width: responsiveConfig.isMobile ? 44 : 52,
+            height: responsiveConfig.isMobile ? 44 : 52,
+            boxShadow: '0 4px 16px rgba(22, 119, 255, 0.4)',
+            borderRadius: '50%',
           }}
+          shape="circle"
         />
       </ProCard>
     </>

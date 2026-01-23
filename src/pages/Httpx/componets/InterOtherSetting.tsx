@@ -1,4 +1,5 @@
 import { IInterfaceAPI } from '@/pages/Httpx/types';
+import { CONFIG } from '@/utils/config';
 import {
   ProCard,
   ProForm,
@@ -15,9 +16,29 @@ interface Props {
 
 const InterOtherSetting: FC<Props> = (props) => {
   const { currentMode, form } = props;
+  const { API_LEVEL_SELECT, API_STATUS_SELECT } = CONFIG;
+
   return (
     <ProCard>
       <>
+        <ProForm.Group>
+          <ProFormSelect
+            disabled={currentMode === 1}
+            name="level"
+            label="优先级"
+            width={'sm'}
+            initialValue={'P1'}
+            options={API_LEVEL_SELECT}
+          />
+          <ProFormSelect
+            disabled={currentMode === 1}
+            name="status"
+            label="状态"
+            initialValue={'DEBUG'}
+            width={'sm'}
+            options={API_STATUS_SELECT}
+          />
+        </ProForm.Group>
         <ProForm.Group>
           <ProFormSelect
             disabled={currentMode === 1}

@@ -146,7 +146,7 @@ export const setCurl2InterApi = async (
  * @param options
  */
 export const detailInterApiById = async (
-  data?: { interfaceId: string | number },
+  data?: { interface_id: string | number },
   options?: IObjGet,
 ) => {
   return request<IResponse<IInterfaceAPI>>('/api/interface/detail', {
