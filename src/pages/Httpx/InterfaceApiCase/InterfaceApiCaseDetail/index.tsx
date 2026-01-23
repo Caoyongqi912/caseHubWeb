@@ -66,7 +66,7 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
     moduleId: string;
   }>();
   const [form] = Form.useForm<IInterfaceAPICase>();
-  const [caseContentElement, setCaseContentElement] = useState<any[]>([]);
+  const [caseContentElements, setCaseContentElements] = useState<any[]>([]);
   const [currentProjectId, setCurrentProjectId] = useState<number>();
   const [currentModuleId, setCurrentModuleId] = useState<number>();
   const [currentCaseId, setCurrentCaseId] = useState<number>();
@@ -74,19 +74,23 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
   const [caseContentsStepLength, setCaseContentsStepLength] =
     useState<number>(0);
 
-  const [editCase, setEditCase] = useState<number>(0);
-  const [runOpen, setRunOpen] = useState(false);
-  const [choiceOpen, setChoiceOpen] = useState(false);
-  const [choiceGroupOpen, setChoiceGroupOpen] = useState(false);
-  const [reloadResult, setReloadResult] = useState(0);
+  const [refreshCounter, setRefreshCounter] = useState<number>(0);
+  const [isRunDrawerOpen, setIsRunDrawerOpen] = useState(false);
+  const [isChoiceDrawerOpen, setIsChoiceDrawerOpen] = useState(false);
+  const [isChoiceGroupDrawerOpen, setIsChoiceGroupDrawerOpen] = useState(false);
+  const [resultReloadCount, setResultReloadCount] = useState(0);
 
-  const [runningEnvId, setRunningEnvId] = useState<number>();
-  const [errorJump, setErrorJump] = useState<boolean>(false);
-  const [runningStyle, setRunningStyle] = useState<number>(1);
-  const [defaultSize, setDefaultSize] = useState('80%');
-  const [activeKey, setActiveKey] = useState('2'); // 默认选中 b
-  const [emptyAPi, setEmptyAPi] = useState<IInterfaceAPI>();
-  const [loopModal, setLoopModal] = useState(false);
+  const [selectedEnvId, setSelectedEnvId] = useState<number>();
+  const [isErrorStop, setIsErrorStop] = useState<boolean>(false);
+  const [runMode, setRunMode] = useState<number>(1);
+  const [drawerWidth, setDrawerWidth] = useState('80%');
+  const [activeKey, setActiveKey] = useState('2'); // 默认选中步骤标签
+  const [emptyApi, setEmptyApi] = useState<IInterfaceAPI>();
+  const [isLoopModalOpen, setIsLoopModalOpen] = useState(false);
+  // 固定配置，不再根据屏幕尺寸动态调整
+  const config = {
+    cardPadding: 24,
+  };
   // 防抖处理，避免频繁重渲染
   const handleResize = useCallback(
     debounce(({ width }) => {
@@ -100,7 +104,7 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
       ];
 
       const breakpoint = breakpoints.find((bp) => width <= bp.max);
-      setDefaultSize(breakpoint?.size || '80%');
+      setDrawerWidth(breakpoint?.size || '80%');
     }, 100),
     [],
   );
@@ -128,30 +132,38 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
     });
     setCurrentCaseId(parseInt(caseApiId));
     queryCaseContentSteps(caseApiId).then();
-  }, [editCase, caseApiId]);
-
+  }, [refreshCounter, caseApiId]);
+  // 使用 useEffect 确保在 caseContentElement 更新后执行滚动操作
+  /**
+   * 刷新页面数据和状态
+   */
+  const refresh = async () => {
+    setRefreshCounter((prev) => prev + 1);
+    setIsChoiceDrawerOpen(false);
+    setIsChoiceGroupDrawerOpen(false);
+    setIsLoopModalOpen(false);
+    setEmptyApi(undefined);
+  };
   useEffect(() => {
-    if (caseContents) {
-      setCaseContentsStepLength(caseContents.length);
-      const init = caseContents.map((item, index) => ({
-        id: index,
-        api_Id: item.id,
-        content: (
-          <CaseContentCollapsible
-            id={index}
-            apiOpen={item.target_id === emptyAPi?.id}
-            moduleId={currentModuleId}
-            projectId={currentProjectId}
-            step={index + 1}
-            collapsible={true}
-            callback={refresh}
-            caseContent={item}
-            caseId={currentCaseId!}
-          />
-        ),
-      }));
-      setCaseContentElement(init);
-    }
+    setCaseContentsStepLength(caseContents.length);
+    const init = caseContents.map((item, index) => ({
+      id: index,
+      api_Id: item.id,
+      content: (
+        <CaseContentCollapsible
+          id={index}
+          apiOpen={item.target_id === emptyApi?.id}
+          moduleId={currentModuleId}
+          projectId={currentProjectId}
+          step={index + 1}
+          collapsible={true}
+          callback={refresh}
+          caseContent={item}
+          caseId={currentCaseId!}
+        />
+      ),
+    }));
+    setCaseContentElements(init);
   }, [caseContents]); // 确保所有相关变量在依赖数组中
 
   /**
@@ -165,52 +177,65 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
     }
   };
 
-  // 使用 useEffect 确保在 caseContentElement 更新后执行滚动操作
-  const refresh = async () => {
-    setEditCase(editCase + 1);
-    setChoiceOpen(false);
-    setChoiceGroupOpen(false);
-    setLoopModal(false);
-    setEmptyAPi(undefined);
-  };
-
+  /**
+   * 处理运行模式选择
+   * @param e 单选按钮变更事件
+   */
   const onMenuClick = async (e: RadioChangeEvent) => {
     const { value } = e.target;
-    setRunningStyle(value);
+    setRunMode(value);
   };
 
-  const debugCase = async () => {
-    if (!runningEnvId) {
+  /**
+   * 执行测试用例
+   */
+  const executeTestCase = async () => {
+    if (!selectedEnvId) {
       message.error('请选择运行环境');
       return;
     }
     if (!currentCaseId) return;
-    if (runningStyle === 1) {
-      setActiveKey('3');
-      await runApiCaseBack({
-        env_id: runningEnvId,
-        error_stop: errorJump,
-        case_id: currentCaseId,
-      }).then(async ({ code }) => {
+    try {
+      if (runMode === 1) {
+        setActiveKey('3');
+        const { code } = await runApiCaseBack({
+          env_id: selectedEnvId,
+          error_stop: isErrorStop,
+          case_id: currentCaseId,
+        });
         if (code === 0) {
-          setReloadResult(reloadResult + 1);
-          message.success('后台运行中。。');
+          setResultReloadCount((prev) => prev + 1);
+          message.success('后台运行中');
         }
-      });
-    } else {
-      setReloadResult(reloadResult + 1);
-      setRunOpen(true);
+      } else {
+        setResultReloadCount((prev) => prev + 1);
+        setIsRunDrawerOpen(true);
+      }
+    } catch (error) {
+      message.error('运行失败，请重试');
     }
   };
 
+  /**
+   * 处理运行环境变更
+   * @param value 环境ID
+   */
   const onEnvChange = (value: number) => {
-    setRunningEnvId(value);
+    setSelectedEnvId(value);
   };
+  /**
+   * 处理错误停止选项变更
+   * @param value 是否在错误时停止
+   */
   const onErrorJumpChange = (value: boolean) => {
-    setErrorJump(value);
+    setIsErrorStop(value);
   };
+  /**
+   * 处理步骤拖拽结束事件
+   * @param reorderedUIContents 重新排序后的UI内容
+   */
   const onDragEnd = (reorderedUIContents: any[]) => {
-    setCaseContentElement(reorderedUIContents);
+    setCaseContentElements(reorderedUIContents);
     if (currentCaseId) {
       const reorderData = reorderedUIContents.map((item) => item.api_Id);
       reorderCaseContents({
@@ -225,36 +250,49 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
     }
   };
 
+  /**
+   * 更新测试用例基本信息
+   */
   const updateBaseInfo = async () => {
     if (caseApiId) {
+      // 验证表单字段
       const values = await form.validateFields();
-      await setApiCase({
+      // 调用API更新测试用例信息
+      const { code, msg } = await setApiCase({
         ...values,
         id: parseInt(caseApiId),
-      }).then(async ({ code, msg }) => {
-        if (code === 0) {
-          await message.success(msg);
-        }
       });
+      // 显示成功消息
+      if (code === 0) {
+        await message.success(msg);
+      }
     }
   };
+  /**
+   * API步骤卡片额外操作按钮
+   */
   const ApisCardExtra = () => {
     return (
       <Dropdown.Button
         type={'primary'}
+        style={{
+          boxShadow: '0 2px 8px rgba(24, 144, 255, 0.3)',
+          borderRadius: 8,
+          transition: 'all 0.3s ease',
+        }}
         menu={{
           items: [
             {
               key: 'choice_group',
               label: '选择公共组',
               icon: <UngroupOutlined style={{ color: 'blue' }} />,
-              onClick: () => setChoiceGroupOpen(true),
+              onClick: () => setIsChoiceGroupDrawerOpen(true),
             },
             {
               key: 'choice_api',
               label: '选择公共接口',
               icon: <SelectOutlined style={{ color: 'blue' }} />,
-              onClick: () => setChoiceOpen(true),
+              onClick: () => setIsChoiceDrawerOpen(true),
             },
             {
               type: 'divider',
@@ -272,7 +310,7 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
                   });
                   if (code === 0) {
                     await refresh();
-                    setEmptyAPi(data);
+                    setEmptyApi(data);
                   }
                 }
               },
@@ -361,7 +399,7 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
               label: '添加循环',
               icon: <RetweetOutlined style={{ color: 'orange' }} />,
               onClick: () => {
-                setLoopModal(true);
+                setIsLoopModalOpen(true);
               },
             },
           ],
@@ -373,6 +411,9 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
     );
   };
 
+  /**
+   * API步骤标签页配置
+   */
   const APIStepItems: TabsProps['items'] = [
     {
       key: '0',
@@ -401,12 +442,18 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
       label: `步骤 (${caseContentsStepLength})`,
       children: (
         <>
-          {caseContentElement.length === 0 ? (
-            <Empty />
+          {caseContentElements.length === 0 ? (
+            <Empty
+              description={
+                <span style={{ fontSize: '14px', color: '#666' }}>
+                  暂无步骤，请点击上方"添加"按钮添加步骤
+                </span>
+              }
+            />
           ) : (
             <DnDDraggable
-              items={caseContentElement}
-              setItems={setCaseContentElement}
+              items={caseContentElements}
+              setItems={setCaseContentElements}
               orderFetch={onDragEnd}
             />
           )}
@@ -421,10 +468,16 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
           {currentCaseId ? (
             <InterfaceApiCaseResultTable
               apiCaseId={currentCaseId}
-              reload={reloadResult}
+              reload={resultReloadCount}
             />
           ) : (
-            <Empty />
+            <Empty
+              description={
+                <span style={{ fontSize: '14px', color: '#666' }}>
+                  暂无执行历史
+                </span>
+              }
+            />
           )}
         </>
       ),
@@ -434,26 +487,29 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
   return (
     <>
       <LoopForm
-        open={loopModal}
-        setOpen={setLoopModal}
+        open={isLoopModalOpen}
+        setOpen={setIsLoopModalOpen}
         callback={refresh}
         case_id={parseInt(caseApiId!)}
       />
       <MyDrawer
         name={'测试结果'}
-        width={'80%'}
-        open={runOpen}
-        setOpen={setRunOpen}
+        width={drawerWidth}
+        open={isRunDrawerOpen}
+        setOpen={setIsRunDrawerOpen}
       >
         <InterfaceApiCaseResultDrawer
-          openStatus={runOpen}
+          openStatus={isRunDrawerOpen}
           caseApiId={currentCaseId!}
-          error_stop={errorJump}
-          env_id={runningEnvId!}
+          error_stop={isErrorStop}
+          env_id={selectedEnvId!}
         />
       </MyDrawer>
 
-      <MyDrawer open={choiceGroupOpen} setOpen={setChoiceGroupOpen}>
+      <MyDrawer
+        open={isChoiceGroupDrawerOpen}
+        setOpen={setIsChoiceGroupDrawerOpen}
+      >
         <GroupApiChoiceTable
           projectId={currentProjectId}
           refresh={refresh}
@@ -461,7 +517,7 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
         />
       </MyDrawer>
 
-      <MyDrawer open={choiceOpen} setOpen={setChoiceOpen}>
+      <MyDrawer open={isChoiceDrawerOpen} setOpen={setIsChoiceDrawerOpen}>
         <InterfaceCaseChoiceApiTable
           projectId={parseInt(projectId!)}
           currentCaseApiId={currentCaseId}
@@ -470,10 +526,15 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
       </MyDrawer>
       <RcResizeObserver onResize={handleResize}>
         <ProCard
-          style={{ height: '100%', overflow: 'hidden' }}
+          style={{
+            height: '100%',
+            overflow: 'hidden',
+            borderRadius: 16,
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+          }}
           bodyStyle={{
             height: '100%',
-            padding: '10px',
+            padding: config.cardPadding,
             overflow: 'hidden',
             minHeight: '100vh',
           }}
@@ -482,32 +543,47 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
             style={{
               height: '100%',
               overflow: 'hidden',
-              boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
+              borderRadius: 12,
             }}
           >
-            <Splitter.Panel size={defaultSize} max="100%">
+            <Splitter.Panel size={drawerWidth} max="100%">
               <ProCard
-                style={{ overflow: 'hidden' }}
+                bordered={false}
+                style={{
+                  overflow: 'hidden',
+                  borderRadius: 12,
+                  boxShadow: '0 4px 16px rgba(0, 0, 0, 0.06)',
+                }}
                 bodyStyle={{
-                  padding: 2,
-                  borderRadius: '12px',
+                  padding: config.cardPadding,
+                  borderRadius: 12,
                   overflow: 'hidden',
                 }}
-                extra={<ApisCardExtra />}
               >
                 <MyTabs
                   defaultActiveKey={activeKey}
                   onChangeKey={setActiveKey}
                   activeKey={activeKey}
                   items={APIStepItems}
+                  tabBarExtraContent={<ApisCardExtra />}
+                  style={{
+                    padding: '0 16px',
+                    borderBottom: '1px solid #f0f0f0',
+                    flexWrap: 'nowrap',
+                    marginBottom: 16,
+                  }}
                 />
               </ProCard>
             </Splitter.Panel>
             {!hiddenRunButton && (
-              <Splitter.Panel resizable={true}>
+              <Splitter.Panel
+                resizable={true}
+                style={{ padding: config.cardPadding }}
+              >
                 <RunConfig
                   onMenuClick={onMenuClick}
-                  run={debugCase}
+                  run={executeTestCase}
                   onEnvChange={onEnvChange}
                   onErrorJumpChange={onErrorJumpChange}
                   currentProjectId={currentProjectId}
@@ -517,7 +593,14 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
           </Splitter>
         </ProCard>
 
-        <FloatButton.BackTop />
+        <FloatButton.BackTop
+          style={{
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+            borderRadius: '50%',
+            background: '#1890ff',
+            transition: 'all 0.3s ease',
+          }}
+        />
       </RcResizeObserver>
     </>
   );

@@ -19,7 +19,7 @@ const Index: FC<SelfProps> = (props) => {
     <Drawer
       autoFocus
       loading={loading}
-      styles={{ body: { padding: 0 } }}
+      styles={{ body: { padding: 0, overflow: 'hidden' } }}
       open={open}
       destroyOnClose={true}
       height={height || 'auto'}

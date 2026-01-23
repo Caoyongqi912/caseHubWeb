@@ -94,18 +94,16 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
 
   // 响应式配置
   const responsiveConfig: any = useMemo(() => {
-    const isMobile = windowWidth < 768;
     const isTablet = windowWidth >= 768 && windowWidth < 1024;
     const isDesktop = windowWidth >= 1024;
 
     return {
-      isMobile,
       isTablet,
       isDesktop,
-      cardPadding: isMobile ? 16 : 24,
-      tabBarPadding: isMobile ? 16 : 24,
-      buttonSize: isMobile ? 'small' : 'middle',
-      selectWidth: isMobile ? 120 : 160,
+      cardPadding: 24,
+      tabBarPadding: 24,
+      buttonSize: 'middle',
+      selectWidth: 160,
     };
   }, [windowWidth]);
   //路由进入。空白页
@@ -356,7 +354,7 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
           );
         case 3: // 编辑模式 - 保存/取消
           return (
-            <Space size={responsiveConfig.isMobile ? 'small' : 'middle'}>
+            <Space size={'middle'}>
               <Button
                 size={responsiveConfig.buttonSize}
                 type="primary"
@@ -421,7 +419,7 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
           style={{
             boxShadow: '0 2px 8px rgba(24, 144, 255, 0.3)',
             borderRadius: 8,
-            padding: responsiveConfig.isMobile ? '0 16px' : '0 20px',
+            padding: '0 20px',
             transition: 'all 0.3s ease',
           }}
           onMouseEnter={(e) => {
@@ -487,7 +485,7 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
                 paddingLeft: responsiveConfig.tabBarPadding,
                 paddingRight: responsiveConfig.tabBarPadding,
                 borderBottom: '1px solid #e8e8e8',
-                flexWrap: responsiveConfig.isMobile ? 'wrap' : 'nowrap',
+                flexWrap: 'nowrap',
               }}
               activeKey={activeKey}
               onChangeKey={setActiveKey}
@@ -507,10 +505,10 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
           tooltip="查看文档"
           onClick={() => setOpenDoc(true)}
           style={{
-            right: responsiveConfig.isMobile ? 16 : 32,
-            bottom: responsiveConfig.isMobile ? 16 : 32,
-            width: responsiveConfig.isMobile ? 44 : 52,
-            height: responsiveConfig.isMobile ? 44 : 52,
+            right: 32,
+            bottom: 32,
+            width: 52,
+            height: 52,
             boxShadow: '0 4px 16px rgba(22, 119, 255, 0.4)',
             borderRadius: '50%',
           }}
