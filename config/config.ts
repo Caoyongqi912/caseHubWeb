@@ -30,5 +30,10 @@ export default defineConfig({
   manifest: {
     basePath: '/',
   },
-  mfsu: {},
+  mfsu: {
+    chainWebpack(config: any) {
+      return config;
+    },
+    excludes: ['mind-elixir'],
+  },
 });

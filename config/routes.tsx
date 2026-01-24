@@ -331,15 +331,11 @@ export default [
         name: 'table',
         component: '@/pages/DebuggerPage/Debugge',
       },
+
       {
         path: '/debugger/mind',
         name: 'mind',
-        component: '@/pages/DebuggerPage/Mind2',
-      },
-      {
-        path: '/debugger/mind2',
-        name: 'mind2',
-        component: '@/pages/DebuggerPage/TestCaseMindMap',
+        component: '@/pages/CaseHub/MindMap',
       },
       {
         path: '/debugger/plist',

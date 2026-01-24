@@ -1,6 +1,7 @@
 import LeftComponents from '@/components/LeftComponents';
 import MyTabs from '@/components/MyTabs';
 import CaseDataTable from '@/pages/CaseHub/CaseDataBase/CaseDataTable';
+import MindMap from '@/pages/CaseHub/MindMap';
 import RequirementTable from '@/pages/CaseHub/Requirement/RequirementTable';
 import { ModuleEnum } from '@/utils/config';
 import { ProCard } from '@ant-design/pro-components';
@@ -44,6 +45,11 @@ const Index = () => {
         />
       ),
     },
+    {
+      key: '3',
+      label: '脑图',
+      children: <MindMap />,
+    },
   ];
   return (
     <ProCard
@@ -72,7 +78,6 @@ const Index = () => {
           </ProCard>
         </Splitter.Panel>
       </Splitter>
-      .
     </ProCard>
   );
 };
