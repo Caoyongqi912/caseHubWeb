@@ -7,6 +7,14 @@ import {
 import { ProCard } from '@ant-design/pro-components';
 import { Avatar, Button, Select, Space, Tooltip, Typography } from 'antd';
 import { FC, useState } from 'react';
+import {
+  borderRadius,
+  colors,
+  shadows,
+  spacing,
+  styleHelpers,
+  typography,
+} from './designTokens';
 
 const { Title, Text } = Typography;
 
@@ -28,39 +36,64 @@ const ProjectSelect: FC<IProps> = ({
     ? projects.find((item) => item.id === currentProjectId)
     : null;
 
-  // 渲染自定义选项
+  // 渲染自定义选项 - 使用设计令牌优化
   const renderOption = (item: IProject) => {
     const projectColors = [
-      '#1890ff', // 蓝色
-      '#52c41a', // 绿色
-      '#722ed1', // 紫色
-      '#fa8c16', // 橙色
-      '#f5222d', // 红色
-      '#13c2c2', // 青色
-      '#eb2f96', // 粉色
+      colors.primary[500],
+      colors.success[500],
+      colors.secondary[500],
+      colors.warning[500],
+      colors.error[500],
+      '#13c2c2',
+      '#eb2f96',
     ];
     const colorIndex = item.id ? item.id % projectColors.length : 0;
 
     return {
       label: (
-        <Space style={{ width: '100%', padding: '8px 4px' }}>
+        <Space
+          style={{
+            width: '100%',
+            padding: `${spacing.sm}px ${spacing.xs}px`,
+            ...styleHelpers.transition(['background-color', 'transform']),
+          }}
+        >
           <Avatar
             size="small"
             style={{
-              // backgroundColor: projectColors[colorIndex],
-              color: '#fff',
-              fontSize: '12px',
+              backgroundColor: projectColors[colorIndex],
+              color: colors.neutral[0],
+              fontSize: typography.fontSize.xs,
+              fontWeight: typography.fontWeight.semibold,
+              boxShadow: shadows.xs,
             }}
           >
             {item.title?.charAt(0).toUpperCase()}
           </Avatar>
-          <div style={{ flex: 1 }}>
-            <Text strong style={{ fontSize: '13px' }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <Text
+              strong
+              style={{
+                fontSize: typography.fontSize.base,
+                color: colors.neutral[800],
+                fontWeight: typography.fontWeight.medium,
+                display: 'block',
+                lineHeight: typography.lineHeight.tight,
+              }}
+            >
               {item.title}
             </Text>
             {item.description && (
-              <div>
-                <Text type="secondary" style={{ fontSize: '11px' }}>
+              <div style={{ marginTop: 2 }}>
+                <Text
+                  type="secondary"
+                  style={{
+                    fontSize: typography.fontSize.xs,
+                    color: colors.neutral[500],
+                    lineHeight: typography.lineHeight.tight,
+                    ...styleHelpers.truncate(1),
+                  }}
+                >
                   {item.description.length > 30
                     ? `${item.description.substring(0, 30)}...`
                     : item.description}
@@ -86,70 +119,94 @@ const ProjectSelect: FC<IProps> = ({
   if (currentProject) {
     return (
       <ProCard
-        // bordered={true}
         size="small"
         style={{
           width: '100%',
-          marginBottom: 5,
-          borderRadius: 12,
-          borderLeft: `4px solid #1890ff`,
-          borderBottom: `1px solid #1890ff`,
-          // boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+          marginBottom: spacing.sm,
+          borderRadius: borderRadius.xl,
+          borderLeft: `4px solid ${colors.primary[500]}`,
+          border: `1px solid ${colors.primary[100]}`,
+          boxShadow: shadows.card,
+          ...styleHelpers.transition(['box-shadow', 'transform']),
+          cursor: 'default',
         }}
-        bodyStyle={{ padding: '16px' }}
+        bodyStyle={{ padding: spacing.lg }}
+        hoverable={false}
       >
-        <Space
-          direction="vertical"
+        <div
           style={{
-            width: '100%',
+            display: 'flex',
             justifyContent: 'space-between',
+            alignItems: 'center',
+            width: '100%',
           }}
         >
-          {/* 项目标题区域 */}
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'flex-start',
-              width: '100%',
-            }}
-          >
-            <Space align="center">
-              <ProjectTwoTone
-                twoToneColor="#1890ff"
-                style={{ fontSize: '24px' }}
-              />
-              <div>
-                <Title
-                  level={4}
+          <Space align="center" size={spacing.md}>
+            <ProjectTwoTone
+              twoToneColor={colors.primary[500]}
+              style={{
+                fontSize: typography.fontSize.xxxl,
+                ...styleHelpers.transition(['transform']),
+              }}
+            />
+            <div>
+              <Title
+                level={4}
+                style={{
+                  margin: 0,
+                  fontWeight: typography.fontWeight.semibold,
+                  color: colors.primary[600],
+                  fontSize: typography.fontSize.lg,
+                  lineHeight: typography.lineHeight.tight,
+                }}
+              >
+                {currentProject.title}
+              </Title>
+              {currentProject.description && (
+                <Text
+                  type="secondary"
                   style={{
-                    margin: 0,
-                    fontWeight: 600,
-                    color: '#1890ff',
+                    fontSize: typography.fontSize.xs,
+                    color: colors.neutral[600],
+                    marginTop: spacing.xs,
+                    display: 'block',
+                    ...styleHelpers.truncate(1),
                   }}
                 >
-                  {currentProject.title}
-                </Title>
-              </div>
-            </Space>
+                  {currentProject.description}
+                </Text>
+              )}
+            </div>
+          </Space>
 
-            <Tooltip title="切换项目">
-              <Button
-                type="text"
-                size="small"
-                icon={<CloseOutlined />}
-                onClick={() => onProjectChange(undefined)}
-                style={{
-                  color: '#999',
-                  borderRadius: '50%',
-                  width: 24,
-                  height: 24,
-                  minWidth: 24,
-                }}
-              />
-            </Tooltip>
-          </div>
-        </Space>
+          <Tooltip title="切换项目" placement="left">
+            <Button
+              type="text"
+              size="small"
+              icon={<CloseOutlined />}
+              onClick={() => onProjectChange(undefined)}
+              style={{
+                color: colors.neutral[500],
+                borderRadius: borderRadius.round,
+                width: 28,
+                height: 28,
+                minWidth: 28,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                ...styleHelpers.transition(['background-color', 'color']),
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = colors.neutral[100];
+                e.currentTarget.style.color = colors.neutral[700];
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.color = colors.neutral[500];
+              }}
+            />
+          </Tooltip>
+        </div>
       </ProCard>
     );
   }
@@ -158,33 +215,46 @@ const ProjectSelect: FC<IProps> = ({
     <ProCard
       size="small"
       style={{
-        marginBottom: 16,
-        borderRadius: 12,
+        marginBottom: spacing.lg,
+        borderRadius: borderRadius.xl,
+        border: `1px solid ${colors.functional.borderLight}`,
+        boxShadow: shadows.card,
+        ...styleHelpers.transition(['box-shadow']),
       }}
-      bodyStyle={{ padding: '20px 16px' }}
+      bodyStyle={{ padding: `${spacing.xl}px ${spacing.lg}px` }}
     >
-      <Space direction="vertical" style={{ width: '100%' }}>
+      <Space direction="vertical" style={{ width: '100%' }} size={spacing.lg}>
         {/* 标题区域 */}
-        <Space align="center" style={{ marginBottom: 16 }}>
-          <ProjectTwoTone twoToneColor="#722ed1" style={{ fontSize: '20px' }} />
-          <Text strong style={{ fontSize: '14px', color: '#722ed1' }}>
+        <Space align="center" size={spacing.md}>
+          <ProjectTwoTone
+            twoToneColor={colors.secondary[500]}
+            style={{ fontSize: typography.fontSize.xl }}
+          />
+          <Text
+            strong
+            style={{
+              fontSize: typography.fontSize.md,
+              color: colors.secondary[600],
+              fontWeight: typography.fontWeight.semibold,
+            }}
+          >
             选择项目
           </Text>
         </Space>
 
         {/* 搜索选择区域 */}
         <Select
-          style={{
-            width: '100%',
-          }}
+          style={{ width: '100%' }}
           size="large"
           showSearch
           allowClear
           autoFocus
           placeholder={
             <Space>
-              <SearchOutlined />
-              <span>搜索或选择项目...</span>
+              <SearchOutlined style={{ color: colors.neutral[400] }} />
+              <span style={{ color: colors.neutral[400] }}>
+                搜索或选择项目...
+              </span>
             </Space>
           }
           options={filteredOptions}
@@ -192,20 +262,23 @@ const ProjectSelect: FC<IProps> = ({
             onProjectChange(value);
           }}
           onSearch={setSearchValue}
-          filterOption={false} // 使用自定义过滤
+          filterOption={false}
           dropdownStyle={{
-            borderRadius: 8,
-            padding: '8px 0',
+            borderRadius: borderRadius.md,
+            padding: `${spacing.sm}px 0`,
+            boxShadow: shadows.dropdown,
           }}
           dropdownRender={(menu) => (
             <div>
               {searchValue && (
                 <div
                   style={{
-                    padding: '8px 12px',
-                    fontSize: '12px',
-                    color: '#666',
-                    borderBottom: '1px solid #f0f0f0',
+                    padding: `${spacing.sm}px ${spacing.md}px`,
+                    fontSize: typography.fontSize.xs,
+                    color: colors.neutral[600],
+                    fontWeight: typography.fontWeight.medium,
+                    borderBottom: `1px solid ${colors.functional.divider}`,
+                    backgroundColor: colors.neutral[50],
                   }}
                 >
                   搜索结果 ({filteredOptions.length})
@@ -215,11 +288,12 @@ const ProjectSelect: FC<IProps> = ({
               {projects.length > 5 && !searchValue && (
                 <div
                   style={{
-                    padding: '8px 12px',
-                    fontSize: '11px',
-                    color: '#999',
+                    padding: `${spacing.sm}px ${spacing.md}px`,
+                    fontSize: typography.fontSize.xs,
+                    color: colors.neutral[500],
                     textAlign: 'center',
-                    borderTop: '1px solid #f0f0f0',
+                    borderTop: `1px solid ${colors.functional.divider}`,
+                    backgroundColor: colors.neutral[50],
                   }}
                 >
                   共有 {projects.length} 个项目
@@ -227,7 +301,7 @@ const ProjectSelect: FC<IProps> = ({
               )}
             </div>
           )}
-          suffixIcon={<SearchOutlined style={{ color: '#666' }} />}
+          suffixIcon={<SearchOutlined style={{ color: colors.neutral[500] }} />}
         />
 
         {/* 项目统计提示 */}
@@ -235,11 +309,20 @@ const ProjectSelect: FC<IProps> = ({
           <div
             style={{
               textAlign: 'center',
-              marginTop: 12,
+              padding: `${spacing.sm}px ${spacing.md}px`,
+              backgroundColor: colors.success[50],
+              borderRadius: borderRadius.md,
+              border: `1px solid ${colors.success[100]}`,
             }}
           >
-            <Text type="secondary" style={{ fontSize: '12px' }}>
-              <ProjectTwoTone twoToneColor="#52c41a" />
+            <Text
+              style={{
+                fontSize: typography.fontSize.xs,
+                color: colors.success[700],
+                fontWeight: typography.fontWeight.medium,
+              }}
+            >
+              <ProjectTwoTone twoToneColor={colors.success[500]} />
               &nbsp;共 {projects.length} 个项目可供选择
             </Text>
           </div>

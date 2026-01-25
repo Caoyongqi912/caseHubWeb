@@ -1,21 +1,12 @@
 import ToolBar from '@/pages/CaseHub/MindMap/ToolBar';
 import { generateId } from '@/pages/CaseHub/MindMap/utils';
+import { ProCard } from '@ant-design/pro-components';
 import nodeMenu from '@mind-elixir/node-menu-neo';
 import MindElixir, { Options } from 'mind-elixir';
 import type { NodeObj } from 'mind-elixir/dist/types/types';
 import { Operation } from 'mind-elixir/dist/types/utils/pubsub';
 import { useEffect, useRef, useState } from 'react';
 
-const option: Options = {
-  el: '#mind-elixir-container',
-  direction: MindElixir.RIGHT,
-  draggable: true,
-  toolBar: true,
-  keypress: true,
-  locale: 'zh_CN',
-  theme: MindElixir.DARK_THEME,
-  mouseSelectionButton: 0,
-};
 const initData = {
   nodeData: {
     topic: '测试脑图',
@@ -55,10 +46,12 @@ const initData = {
     ],
   },
 };
+
 const Index = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const mindRef = useRef<any | null>(null);
   const [mindData, setMindData] = useState<any>(initData);
+  const [isDarkTheme, setIsDarkTheme] = useState(false); // 默认浅色主题
 
   useEffect(() => {
     setMindData(initData);
@@ -66,11 +59,22 @@ const Index = () => {
 
   useEffect(() => {
     if (!containerRef.current) return;
-    const mindInstance = new MindElixir(option);
 
-    const initData = mindData || MindElixir.new('中心主题');
+    const option: Options = {
+      el: '#mind-elixir-container',
+      direction: MindElixir.RIGHT,
+      draggable: true,
+      toolBar: true,
+      keypress: true,
+      locale: 'zh_CN',
+      theme: MindElixir.THEME,
+      mouseSelectionButton: 0,
+    };
+
+    const mindInstance = new MindElixir(option);
+    const initDataToUse = mindData || MindElixir.new('中心主题');
     mindInstance.install(nodeMenu);
-    mindInstance.init(initData);
+    mindInstance.init(initDataToUse);
 
     mindInstance.bus.addListener('operation', operationHandle);
     mindInstance.bus.addListener('selectNodes', selectNodesHandle);
@@ -86,7 +90,7 @@ const Index = () => {
         mindInstance.destroy();
       }
     };
-  }, []);
+  }, [isDarkTheme]);
 
   const operationHandle = (info: Operation) => {
     console.log('operationHandle', info);
@@ -101,41 +105,28 @@ const Index = () => {
   };
 
   return (
-    <div
-      style={{
-        height: 'calc(100vh - 64px)',
+    <ProCard
+      bordered
+      title={<ToolBar mind={mindRef} />}
+      bodyStyle={{
+        height: '90vh',
         width: '100%',
         display: 'flex',
         flexDirection: 'column',
+        position: 'relative',
         overflow: 'hidden',
-        transition: 'background-color 0.3s ease, color 0.3s ease',
       }}
     >
-      <div
-        style={{
-          flex: '0 0 auto',
-          padding: '12px 16px',
-          zIndex: 10,
-          transition: 'background-color 0.3s ease, box-shadow 0.3s ease',
-        }}
-      >
-        <ToolBar mind={mindRef} />
-      </div>
       <div
         id="mind-elixir-container"
         ref={containerRef}
         style={{
-          height: '100%',
+          flex: 1,
           width: '100%',
-          overflow: 'hidden',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
+          overflow: 'auto',
         }}
       />
-    </div>
+    </ProCard>
   );
 };
 

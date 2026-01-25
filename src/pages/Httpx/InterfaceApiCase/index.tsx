@@ -30,8 +30,7 @@ const Index = () => {
   return (
     <ProCard
       bodyStyle={{
-        height: '100%',
-        minHeight: '90vh',
+        minHeight: '100vh',
         padding: 0,
         overflow: 'hidden',
       }}

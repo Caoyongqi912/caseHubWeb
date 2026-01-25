@@ -5,7 +5,7 @@ export interface IRequirement {
   uid: string;
   project_id: number;
   module_id: number;
-
+  case_type: number;
   requirement_url: string;
   requirement_level: 'P1' | 'P2' | 'P0';
   requirement_name: string;

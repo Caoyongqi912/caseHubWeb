@@ -60,33 +60,20 @@ const ToolBar: FC<Props> = (props) => {
     }
   };
   return (
-    <div
-      style={{
-        position: 'absolute',
-        top: 8,
-        left: 16,
-        transform: 'none',
-        zIndex: 1000,
-        padding: '6px 12px',
-        borderRadius: '6px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '4px',
-      }}
-    >
-      <Space size={4}>
+    <div>
+      <Space.Compact block>
         <Tooltip title="添加子节点 (Tab)">
           <Button
-            type="text"
-            size="small"
+            type="primary"
+            size="large"
             icon={<AddOne theme="outline" size="18" />}
             onClick={handleAddChild}
           />
         </Tooltip>
         <Tooltip title="添加同级节点 (Enter)">
           <Button
-            type="text"
-            size="small"
+            type="primary"
+            size="large"
             icon={
               <AddOne
                 theme="outline"
@@ -99,8 +86,8 @@ const ToolBar: FC<Props> = (props) => {
         </Tooltip>
         <Tooltip title="删除节点 (Delete)">
           <Button
-            type="text"
-            size="small"
+            type="primary"
+            size="large"
             icon={<DeleteOne theme="outline" size="18" />}
             onClick={handleDeleteNode}
           />
@@ -108,28 +95,30 @@ const ToolBar: FC<Props> = (props) => {
         <Divider type="vertical" style={{ margin: '0 4px' }} />
         <Tooltip title="重置视图">
           <Button
-            type="text"
-            size="small"
+            type="primary"
+            size="large"
             icon={<Refresh theme="outline" size="18" />}
             onClick={handleReset}
           />
         </Tooltip>
         <Divider type="vertical" style={{ margin: '0 4px' }} />
-        <Button
-          type="text"
-          size="small"
-          onClick={handleExport}
-          icon={<Download theme="outline" size="18" />}
-        />
+        <Tooltip title="导出JSON">
+          <Button
+            type="primary"
+            size="large"
+            onClick={handleExport}
+            icon={<Download theme="outline" size="18" />}
+          />
+        </Tooltip>
         <Tooltip title="保存">
           <Button
-            type="text"
-            size="small"
+            type="primary"
+            size="large"
             icon={<Save theme="outline" size="18" />}
             onClick={() => console.log(mind?.current.getData())}
           />
         </Tooltip>
-      </Space>
+      </Space.Compact>
     </div>
   );
 };

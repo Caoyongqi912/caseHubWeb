@@ -39,14 +39,24 @@ import {
   Typography,
 } from 'antd';
 import React, { FC, useEffect, useMemo, useState } from 'react';
+import {
+  borderRadius,
+  colors,
+  shadows,
+  spacing,
+  styleHelpers,
+  typography,
+} from './designTokens';
 
 const { Search } = Input;
 const { Text } = Typography;
+
+// 模块操作类型定义
 type HandleAction = {
   title: string;
   key: number;
 };
-// 定义 Handle 类型
+
 type IHandle = {
   AddRoot: HandleAction;
   AddChild: HandleAction;
@@ -54,7 +64,7 @@ type IHandle = {
   RemoveModule: HandleAction;
 };
 
-// 修正 Handle 对象
+// 模块操作枚举，用于区分不同的操作类型
 const Handle: IHandle = {
   AddRoot: { title: '新增模块', key: 1 },
   AddChild: { title: '新增子模块', key: 2 },
@@ -71,25 +81,27 @@ interface IProps {
 const ModuleTree: FC<IProps> = (props) => {
   const { currentProjectId, moduleType, onModuleChange } = props;
   const { isAdmin } = useAccess();
-  const [reload, setReload] = useState(0);
-  const [modules, setModules] = useState<IModule[]>([]);
-  const [modulesTree, setModulesTree] = useState<any[]>([]);
+
+  // 数据状态
+  const [reload, setReload] = useState(0); // 刷新标记
+  const [modules, setModules] = useState<IModule[]>([]); // 模块列表
+  const [modulesTree, setModulesTree] = useState<any[]>([]); // 扁平化的模块树，用于搜索
+
+  // 弹窗状态
   const [open, setOpen] = useState(false);
   const [currentModule, setCurrentModule] = useState<IModule | null>(null);
   const [handleModule, setHandleModule] = useState<HandleAction>(
     Handle.AddRoot,
   );
-  const [hoverNodeKey, setHoverNodeKey] = useState<number | null>(null);
 
+  // 交互状态
+  const [hoverNodeKey, setHoverNodeKey] = useState<number | null>(null);
   const [expandedKeys, setExpandedKeys] = useState<React.Key[]>([]);
+  const [selectedKeys, setSelectedKeys] = useState<React.Key[]>([]);
   const [searchValue, setSearchValue] = useState('');
   const [autoExpandParent, setAutoExpandParent] = useState(true);
-  const [defaultSelectedKeys, setDefaultSelectedKeys] = useState<React.Key[]>(
-    [],
-  );
-  /**
-   * 查询module
-   */
+
+  // 加载模块数据
   useEffect(() => {
     if (currentProjectId) {
       queryTreeModuleByProject(currentProjectId, moduleType).then(
@@ -97,26 +109,54 @@ const ModuleTree: FC<IProps> = (props) => {
           if (code === 0 && data) {
             setModules(data);
             setModulesTree(module2Tree(data));
+            localStorageFun(data);
           }
         },
       );
+    } else {
+      setModules([]);
+      setModulesTree([]);
+      setSelectedKeys([]);
+      setExpandedKeys([]);
     }
-    localStorageFun();
   }, [currentProjectId, reload]);
 
-  const localStorageFun = () => {
+  // 从 localStorage 恢复上次选中的模块
+  const localStorageFun = (modulesList: IModule[]) => {
     const storageNum = getLocalStorageModule(moduleType);
     if (storageNum) {
-      onModuleChange(parseInt(storageNum));
-      setDefaultSelectedKeys([parseInt(storageNum)]);
-      setExpandedKeys([parseInt(storageNum)]);
-      setAutoExpandParent(true);
+      const moduleId = parseInt(storageNum);
+      const moduleExists = checkModuleExists(modulesList, moduleId);
+
+      if (moduleExists) {
+        onModuleChange(moduleId);
+        setSelectedKeys([moduleId]);
+        setExpandedKeys([moduleId]);
+        setAutoExpandParent(true);
+      } else {
+        // 模块已被删除，清理无效缓存
+        localStorage.removeItem('module_type_' + moduleType);
+        setSelectedKeys([]);
+        setExpandedKeys([]);
+      }
     }
   };
 
-  /**
-   * 数渲染
-   */
+  // 递归检查模块是否存在
+  const checkModuleExists = (
+    modulesList: IModule[],
+    targetId: number,
+  ): boolean => {
+    for (const module of modulesList) {
+      if (module.key === targetId) return true;
+      if (module.children?.length) {
+        if (checkModuleExists(module.children, targetId)) return true;
+      }
+    }
+    return false;
+  };
+
+  // 构建树节点数据，处理搜索高亮
   const TreeModule = useMemo(() => {
     const loop: any = (data: IModule[]) =>
       data.map((item: IModule) => {
@@ -126,15 +166,36 @@ const ModuleTree: FC<IProps> = (props) => {
         const afterStr = strTitle.slice(index + searchValue.length);
         const title =
           index > -1 ? (
-            <Text type={'secondary'}>
+            <Text
+              style={{
+                fontSize: typography.fontSize.base,
+                color: colors.neutral[700],
+              }}
+            >
               {beforeStr}
-              <Text type={'secondary'} style={{ color: 'red' }}>
+              <Text
+                strong
+                style={{
+                  color: colors.error[500],
+                  // backgroundColor: colors.error[50],
+                  padding: `${spacing.xs / 2}px ${spacing.xs}px`,
+                  borderRadius: borderRadius.xs,
+                  fontWeight: typography.fontWeight.semibold,
+                }}
+              >
                 {searchValue}
               </Text>
               {afterStr}
             </Text>
           ) : (
-            <Text type={'secondary'} strong>
+            <Text
+              strong
+              style={{
+                fontSize: typography.fontSize.base,
+                color: colors.neutral[700],
+                fontWeight: typography.fontWeight.medium,
+              }}
+            >
               {strTitle}
             </Text>
           );
@@ -153,48 +214,86 @@ const ModuleTree: FC<IProps> = (props) => {
     return loop(modules);
   }, [modules, searchValue]);
 
-  /**
-   * 刷新
-   */
-  const handleReload = async () => {
+  const handleReload = () => {
     setReload(reload + 1);
   };
 
-  /**
-   * 拖拽
-   * @param info
-   */
+  // 拖拽排序
   const onDrop: TreeProps['onDrop'] = async (info) => {
     const { code } = await dropModule({
       id: info.dragNode.key,
       targetId: info.dropToGap ? null : info.node.key,
     });
-    if (code === 0) {
-      await handleReload();
-    }
+    if (code === 0) handleReload();
   };
+
+  // 右键菜单项
   const menuItem = (node: IModule): MenuProps['items'] => {
     return [
       {
         key: '1',
-        label: <Text strong>编辑</Text>,
+        label: (
+          <Text
+            strong
+            style={{
+              fontSize: typography.fontSize.base,
+              color: colors.neutral[700],
+            }}
+          >
+            编辑
+          </Text>
+        ),
         onClick: async () => {
           setOpen(true);
           setCurrentModule(node);
           setHandleModule(Handle.EditModule);
         },
-        icon: <EditOutlined />,
+        icon: <EditOutlined style={{ color: colors.primary[500] }} />,
       },
       {
         key: '2',
-        label: <Text strong={true}>删除</Text>,
+        label: (
+          <Text
+            strong
+            style={{
+              fontSize: typography.fontSize.base,
+              color: colors.error[500],
+            }}
+          >
+            删除
+          </Text>
+        ),
         onClick: async () => {
           return Modal.confirm({
-            title: '你确定要删除这个目录吗?',
-            icon: <ExclamationCircleOutlined />,
+            title: (
+              <span
+                style={{
+                  fontSize: typography.fontSize.lg,
+                  fontWeight: typography.fontWeight.semibold,
+                }}
+              >
+                你确定要删除这个目录吗?
+              </span>
+            ),
+            icon: (
+              <ExclamationCircleOutlined
+                style={{ color: colors.warning[500] }}
+              />
+            ),
             okText: '确定',
             okType: 'danger',
             cancelText: '点错了',
+            okButtonProps: {
+              style: {
+                borderRadius: borderRadius.md,
+                fontWeight: typography.fontWeight.medium,
+              },
+            },
+            cancelButtonProps: {
+              style: {
+                borderRadius: borderRadius.md,
+              },
+            },
             onOk() {
               removeModule({ moduleId: node.key }).then(
                 async ({ code, msg }) => {
@@ -207,16 +306,16 @@ const ModuleTree: FC<IProps> = (props) => {
             },
           });
         },
-        icon: <DeleteOutlined />,
+        icon: <DeleteOutlined style={{ color: colors.error[500] }} />,
       },
     ];
   };
 
+  // 树节点渲染
   const TreeTitleRender = (tree: any) => {
-    const isSelected = defaultSelectedKeys.includes(tree.key);
+    const isSelected = selectedKeys.includes(tree.key);
     const isHovered = hoverNodeKey === tree.key;
-    const hasChildren = tree.children && tree.children.length > 0;
-    const isExpanded = expandedKeys.includes(tree.key);
+
     return (
       <div
         style={{
@@ -224,84 +323,132 @@ const ModuleTree: FC<IProps> = (props) => {
           alignItems: 'center',
           justifyContent: 'space-between',
           width: '100%',
-          borderRadius: '8px',
-          transition: 'all 0.2s',
-          margin: '2px 0',
+          padding: `${spacing.xs}px ${spacing.sm}px`,
+          borderRadius: borderRadius.md,
+          border: isSelected
+            ? `1px solid ${colors.primary[200]}`
+            : '1px solid transparent',
+          ...styleHelpers.transition([
+            'background-color',
+            'border-color',
+            'transform',
+          ]),
+          margin: `${spacing.xs}px 0`,
+          cursor: 'pointer',
         }}
         onMouseEnter={() => setHoverNodeKey(tree.key)}
         onMouseLeave={() => setHoverNodeKey(null)}
-        onMouseOver={(event) => {
-          event.preventDefault();
-          setCurrentModule(tree);
-        }}
-        onClick={() => {
-          onModuleChange(tree.key);
-          setLocalStorageModule(moduleType, tree.key);
-          setCurrentModule(tree.data);
-          setCurrentModule(tree);
-        }}
+        onClick={() => setCurrentModule(tree)}
       >
-        <Space align="center" style={{ flex: 1 }}>
-          {/* 标题 */}
-          <div style={{ flex: 1 }}>
+        <Space align="center" style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <Text
               style={{
-                fontSize: '13px',
-                fontWeight: isSelected ? 600 : 500,
-                color: isSelected ? '#1890ff' : '#262626',
+                fontSize: typography.fontSize.base,
+                fontWeight: isSelected
+                  ? typography.fontWeight.semibold
+                  : typography.fontWeight.medium,
+                // color: isSelected ? colors.primary[600] : colors.neutral[800],
+                ...styleHelpers.transition(['color']),
               }}
             >
               {tree.title}
             </Text>
 
-            {/* 统计信息 */}
             {tree.count > 0 && (
               <Badge
                 count={tree.count}
                 size="small"
                 style={{
-                  marginLeft: '8px',
-                  backgroundColor: '#f0f0f0',
-                  color: '#595959',
-                  fontSize: '10px',
+                  marginLeft: spacing.sm,
+                  // backgroundColor: isSelected
+                  //   ? colors.primary[100]
+                  //   : colors.neutral[100],
+                  // color: isSelected
+                  //   ? colors.primary[600]
+                  //   : colors.neutral[600],
+                  fontSize: typography.fontSize.xs,
+                  fontWeight: typography.fontWeight.medium,
+                  border: `1px solid ${
+                    isSelected ? colors.primary[200] : colors.neutral[200]
+                  }`,
                 }}
               />
             )}
           </div>
         </Space>
 
-        {isAdmin && (
-          <>
-            {currentModule && currentModule.key === tree.key ? (
-              <Space style={{ float: 'right' }}>
-                <PlusOutlined
-                  onClick={async (event) => {
-                    event.stopPropagation();
-                    setCurrentModule(tree);
-                    setHandleModule(Handle.AddChild);
-                    setOpen(true);
-                  }}
-                />
-                <Dropdown
-                  menu={{ items: menuItem(tree) }}
-                  trigger={['click', 'hover']}
-                  placement="bottomRight"
-                >
-                  <Text onClick={(e) => e.preventDefault()}>
-                    <MoreOutlined />
-                  </Text>
-                </Dropdown>
-              </Space>
-            ) : null}
-          </>
+        {isAdmin && currentModule && currentModule.key === tree.key && (
+          <Space
+            style={{
+              marginLeft: spacing.sm,
+              ...styleHelpers.transition(['opacity']),
+            }}
+            size={spacing.xs}
+          >
+            <Tooltip title="添加子模块" placement="top">
+              <Button
+                type="text"
+                size="small"
+                icon={<PlusOutlined />}
+                onClick={async (event) => {
+                  event.stopPropagation();
+                  setCurrentModule(tree);
+                  setHandleModule(Handle.AddChild);
+                  setOpen(true);
+                }}
+                style={{
+                  color: colors.primary[500],
+                  borderRadius: borderRadius.sm,
+                  width: 24,
+                  height: 24,
+                  minWidth: 24,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  ...styleHelpers.transition(['background-color', 'color']),
+                }}
+              />
+            </Tooltip>
+            <Dropdown
+              menu={{ items: menuItem(tree) }}
+              trigger={['click']}
+              placement="bottomRight"
+            >
+              <Button
+                type="text"
+                size="small"
+                icon={<MoreOutlined />}
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  color: colors.neutral[500],
+                  borderRadius: borderRadius.sm,
+                  width: 24,
+                  height: 24,
+                  minWidth: 24,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  ...styleHelpers.transition(['background-color', 'color']),
+                }}
+              />
+            </Dropdown>
+          </Space>
         )}
       </div>
     );
   };
 
+  // 搜索框变化，自动展开匹配的节点
   const OnSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = e.target;
     setSearchValue(value);
+
+    if (!value) {
+      setExpandedKeys([]);
+      return;
+    }
+
     const newExpandedKeys = modulesTree
       .map((item) => {
         if (item.title.indexOf(value) > -1) {
@@ -313,55 +460,50 @@ const ModuleTree: FC<IProps> = (props) => {
         (item, i, self): item is React.Key =>
           !!(item && self.indexOf(item) === i),
       );
-    console.log(newExpandedKeys);
     setExpandedKeys(newExpandedKeys);
     setAutoExpandParent(true);
   };
 
+  // 模块操作完成回调
   const onModuleFinish = async (value: { title: string }) => {
+    let result;
+
     switch (handleModule) {
       case Handle.AddRoot:
-        if (currentModule === null && currentProjectId) {
-          const { code, msg } = await insertModule({
-            title: value.title,
-            project_id: currentProjectId,
-            module_type: moduleType,
-          });
-          if (code === 0) {
-            message.success(msg);
-            setOpen(false);
-            await handleReload();
-          }
-        }
+        if (!currentProjectId) return;
+        result = await insertModule({
+          title: value.title,
+          project_id: currentProjectId,
+          module_type: moduleType,
+        });
         break;
+
       case Handle.AddChild:
-        if (currentProjectId && currentModule) {
-          const { code, msg } = await insertModule({
-            title: value.title,
-            project_id: currentProjectId,
-            module_type: moduleType,
-            parent_id: currentModule.key,
-          });
-          if (code === 0) {
-            message.success(msg);
-            setOpen(false);
-            await handleReload();
-          }
-        }
+        if (!currentProjectId || !currentModule) return;
+        result = await insertModule({
+          title: value.title,
+          project_id: currentProjectId,
+          module_type: moduleType,
+          parent_id: currentModule.key,
+        });
         break;
+
       case Handle.EditModule:
-        if (currentProjectId && currentModule) {
-          const { code, msg } = await updateModule({
-            id: currentModule.key,
-            title: value.title,
-          });
-          if (code === 0) {
-            message.success(msg);
-            setOpen(false);
-            await handleReload();
-          }
-        }
+        if (!currentModule) return;
+        result = await updateModule({
+          id: currentModule.key,
+          title: value.title,
+        });
         break;
+
+      default:
+        return;
+    }
+
+    if (result?.code === 0) {
+      message.success(result.msg);
+      setOpen(false);
+      handleReload();
     }
   };
 
@@ -385,15 +527,21 @@ const ModuleTree: FC<IProps> = (props) => {
             <ProCard
               size="small"
               style={{
-                marginBottom: '16px',
-                borderRadius: '12px',
-                borderLeft: `4px solid #1890ff`,
-                borderBottom: `1px solid #1890ff`,
-                // boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+                marginBottom: spacing.lg,
+                borderRadius: borderRadius.xl,
+                borderLeft: `4px solid ${colors.primary[500]}`,
+                border: `1px solid ${colors.primary[100]}`,
+                // backgroundColor: colors.primary[50],
+                boxShadow: shadows.card,
+                ...styleHelpers.transition(['box-shadow']),
               }}
-              bodyStyle={{ padding: '12px' }}
+              bodyStyle={{ padding: spacing.md }}
             >
-              <Space direction="vertical" style={{ width: '100%' }}>
+              <Space
+                direction="vertical"
+                style={{ width: '100%' }}
+                size={spacing.md}
+              >
                 <div
                   style={{
                     display: 'flex',
@@ -401,11 +549,18 @@ const ModuleTree: FC<IProps> = (props) => {
                     alignItems: 'center',
                   }}
                 >
-                  <Text strong style={{ fontSize: '14px', color: '#722ed1' }}>
+                  <Text
+                    strong
+                    style={{
+                      fontSize: typography.fontSize.md,
+                      color: colors.secondary[600],
+                      fontWeight: typography.fontWeight.semibold,
+                    }}
+                  >
                     模块目录
                   </Text>
                   {isAdmin && (
-                    <Tooltip title="新建根模块">
+                    <Tooltip title="新建根模块" placement="left">
                       <Button
                         type="link"
                         size="small"
@@ -416,10 +571,16 @@ const ModuleTree: FC<IProps> = (props) => {
                           setOpen(true);
                         }}
                         style={{
-                          borderRadius: '6px',
-                          padding: '0 8px',
-                          height: '28px',
-                          fontSize: '12px',
+                          borderRadius: borderRadius.md,
+                          padding: `0 ${spacing.sm}px`,
+                          height: 28,
+                          fontSize: typography.fontSize.xs,
+                          fontWeight: typography.fontWeight.medium,
+                          color: colors.primary[600],
+                          ...styleHelpers.transition([
+                            'background-color',
+                            'color',
+                          ]),
                         }}
                       >
                         新建
@@ -430,57 +591,68 @@ const ModuleTree: FC<IProps> = (props) => {
 
                 <Search
                   placeholder="搜索模块..."
-                  prefix={<SearchOutlined style={{ color: '#8c8c8c' }} />}
+                  prefix={
+                    <SearchOutlined style={{ color: colors.neutral[500] }} />
+                  }
                   allowClear
                   variant="filled"
                   onChange={OnSearchChange}
-                  style={{ marginTop: '8px' }}
+                  style={{
+                    borderRadius: borderRadius.md,
+                  }}
                 />
               </Space>
             </ProCard>
             <ProCard
               size="small"
               style={{
-                borderRadius: '12px',
+                borderRadius: borderRadius.xl,
+                border: `1px solid ${colors.functional.borderLight}`,
+                boxShadow: shadows.card,
+                ...styleHelpers.transition(['box-shadow']),
               }}
               bodyStyle={{
-                padding: '8px',
+                padding: spacing.sm,
                 maxHeight: 'calc(100vh - 300px)',
                 overflowY: 'auto',
               }}
             >
               <Tree
-                // showLine
                 showLine={{ showLeafIcon: false }}
                 showIcon={false}
                 style={{ width: 'auto' }}
-                draggable={isAdmin} //admin 可拖动
-                blockNode //是否节点占据一行
+                draggable={isAdmin}
+                blockNode
                 onExpand={(newExpandedKeys: React.Key[]) => {
                   setExpandedKeys(newExpandedKeys);
                   setAutoExpandParent(false);
                 }}
-                onDrop={onDrop} //拖拽结束触发
+                onDrop={onDrop}
                 expandedKeys={expandedKeys}
                 autoExpandParent={autoExpandParent}
-                defaultSelectedKeys={defaultSelectedKeys}
+                selectedKeys={selectedKeys}
                 onSelect={(keys: React.Key[], info: any) => {
-                  onModuleChange(info.node.key);
-                  setLocalStorageModule(moduleType, info.node.key);
+                  const nodeKey = info.node.key;
+                  setSelectedKeys([nodeKey]);
+                  onModuleChange(nodeKey);
+                  setLocalStorageModule(moduleType, nodeKey);
                 }}
                 treeData={TreeModule}
                 titleRender={TreeTitleRender}
               />
-              {/* 统计信息 */}
+
               {modules.length > 0 && (
                 <div
                   style={{
-                    marginTop: '12px',
-                    padding: '8px',
-                    borderTop: '1px solid #f0f0f0',
-                    fontSize: '11px',
-                    color: '#8c8c8c',
+                    marginTop: spacing.md,
+                    padding: spacing.sm,
+                    borderTop: `1px solid ${colors.functional.divider}`,
+                    fontSize: typography.fontSize.xs,
+                    color: colors.neutral[500],
                     textAlign: 'center',
+                    fontWeight: typography.fontWeight.medium,
+                    // backgroundColor: colors.neutral[50],
+                    borderRadius: `0 0 ${borderRadius.md}px ${borderRadius.md}px`,
                   }}
                 >
                   共 {modules.length} 个模块 •{' '}
@@ -495,15 +667,13 @@ const ModuleTree: FC<IProps> = (props) => {
           </Space>
         </div>
       ) : (
-        <>
-          {isAdmin && (
-            <EmptyModule
-              currentProjectId={currentProjectId}
-              moduleType={moduleType}
-              callBack={handleReload}
-            />
-          )}
-        </>
+        isAdmin && (
+          <EmptyModule
+            currentProjectId={currentProjectId}
+            moduleType={moduleType}
+            callBack={handleReload}
+          />
+        )
       )}
     </>
   );
