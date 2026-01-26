@@ -331,3 +331,58 @@ export const moveTestCase2Common = async (
     ...(options || {}),
   });
 };
+
+/**
+ * moveTestCase2Common
+ * @param info
+ * @param options
+ */
+export const getTestCaseMind = async (
+  info: {
+    requirement_id: string;
+  },
+  options?: IObjGet,
+) => {
+  return request<IResponse<null>>(`/api/hub/mindCase/detail`, {
+    method: 'GET',
+    params: info,
+    ...(options || {}),
+  });
+};
+
+/**
+ * moveTestCase2Common
+ * @param info
+ * @param options
+ */
+export const insertTestCaseMind = async (
+  info: {
+    requirement_id: string;
+    mind_node: any;
+    module_id: string;
+    project_id: string;
+  },
+  options?: IObjGet,
+) => {
+  return request<IResponse<any>>(`/api/hub/mindCase/insert`, {
+    method: 'POST',
+    data: info,
+    ...(options || {}),
+  });
+};
+
+export const updateTestCaseMind = async (
+  info: {
+    id: int;
+    mind_node?: any;
+    module_id?: string;
+    project_id?: string;
+  },
+  options?: IObjGet,
+) => {
+  return request<IResponse<any>>(`/api/hub/mindCase/update`, {
+    method: 'POST',
+    data: info,
+    ...(options || {}),
+  });
+};

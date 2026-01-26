@@ -99,6 +99,12 @@ export default [
         hideInMenu: true,
         component: '@/pages/CaseHub/CaseInfo',
       },
+      {
+        path: '/cases/caseHub/requirementMindMap/reqId=:reqId&projectId=:projectId&moduleId=:moduleId',
+        name: 'CaseHubMind',
+        hideInMenu: true,
+        component: '@/pages/CaseHub/MindMap',
+      },
     ],
   },
   {

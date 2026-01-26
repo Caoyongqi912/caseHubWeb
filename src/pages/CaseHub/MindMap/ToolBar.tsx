@@ -5,32 +5,57 @@ import React, { FC } from 'react';
 
 interface Props {
   mind: React.MutableRefObject<any>;
+  saveMap: () => Promise<void>;
 }
 
 const ToolBar: FC<Props> = (props) => {
-  const { mind } = props;
+  const { mind, saveMap } = props;
 
   /**
    * 添加子node
    */
   const handleAddChild = () => {
-    if (!mind.current) return;
-    console.log('handleAddChild', mind.current);
+    if (!mind.current) {
+      message.warning('脑图未初始化');
+      return;
+    }
     try {
+      const currentNode = mind.current.currentNode;
+      if (!currentNode) {
+        message.warning('请先选择一个节点');
+        return;
+      }
       mind.current.addChild();
+      message.success('添加子节点成功');
     } catch (e) {
       console.error('Error adding child:', e);
+      message.error('添加子节点失败');
     }
   };
+
   /**
    * 添加兄弟node
    */
   const handleAddSibling = async () => {
-    if (!mind.current) return;
+    if (!mind.current) {
+      message.warning('脑图未初始化');
+      return;
+    }
     try {
+      const currentNode = mind.current.currentNode;
+      if (!currentNode) {
+        message.warning('请先选择一个节点');
+        return;
+      }
+      if (currentNode.root) {
+        message.warning('根节点不能添加同级节点');
+        return;
+      }
       await mind.current.insertSibling('after');
+      message.success('添加同级节点成功');
     } catch (error) {
       console.error('Error adding sibling:', error);
+      message.error('添加同级节点失败');
     }
   };
 
@@ -38,11 +63,25 @@ const ToolBar: FC<Props> = (props) => {
    * 删除node
    */
   const handleDeleteNode = async () => {
-    if (!mind.current) return;
+    if (!mind.current) {
+      message.warning('脑图未初始化');
+      return;
+    }
     try {
+      const currentNode = mind.current.currentNode;
+      if (!currentNode) {
+        message.warning('请先选择一个节点');
+        return;
+      }
+      if (currentNode.root) {
+        message.warning('根节点不能删除');
+        return;
+      }
       await mind.current.removeNode();
+      message.success('删除节点成功');
     } catch (error) {
       console.error('Error deleting node:', error);
+      message.error('删除节点失败');
     }
   };
 
@@ -115,7 +154,10 @@ const ToolBar: FC<Props> = (props) => {
             type="primary"
             size="large"
             icon={<Save theme="outline" size="18" />}
-            onClick={() => console.log(mind?.current.getData())}
+            onClick={async () => {
+              console.log(mind?.current.getData());
+              await saveMap();
+            }}
           />
         </Tooltip>
       </Space.Compact>

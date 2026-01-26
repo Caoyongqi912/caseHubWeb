@@ -1,61 +1,39 @@
+import {
+  getTestCaseMind,
+  insertTestCaseMind,
+  updateTestCaseMind,
+} from '@/api/case/testCase';
 import ToolBar from '@/pages/CaseHub/MindMap/ToolBar';
-import { generateId } from '@/pages/CaseHub/MindMap/utils';
+import { useParams } from '@@/exports';
 import { ProCard } from '@ant-design/pro-components';
 import nodeMenu from '@mind-elixir/node-menu-neo';
+import { message } from 'antd';
 import MindElixir, { Options } from 'mind-elixir';
 import type { NodeObj } from 'mind-elixir/dist/types/types';
 import { Operation } from 'mind-elixir/dist/types/utils/pubsub';
 import { useEffect, useRef, useState } from 'react';
 
-const initData = {
-  nodeData: {
-    topic: '测试脑图',
-    id: generateId(),
-    direction: 0,
-    expanded: true,
-    nodeMenu: true,
-    children: [
-      {
-        topic: '功能模块',
-        id: generateId(),
-        children: [
-          { topic: '用户管理', id: generateId() },
-          { topic: '权限控制', id: generateId() },
-          { topic: '数据统计', id: generateId() },
-        ],
-      },
-      {
-        topic: '技术栈',
-        id: generateId(),
-        children: [
-          { topic: 'React', id: generateId() },
-          { topic: 'TypeScript', id: generateId() },
-          { topic: 'Mind Elixir', id: generateId() },
-        ],
-      },
-      {
-        topic: '开发计划',
-        id: generateId(),
-        children: [
-          { topic: '需求分析', id: generateId() },
-          { topic: '设计阶段', id: generateId() },
-          { topic: '开发实现', id: generateId() },
-          { topic: '测试验收', id: generateId() },
-        ],
-      },
-    ],
-  },
-};
-
 const Index = () => {
+  const { reqId, projectId, moduleId } = useParams<{
+    reqId: string;
+    projectId: string;
+    moduleId: string;
+  }>();
   const containerRef = useRef<HTMLDivElement>(null);
   const mindRef = useRef<any | null>(null);
-  const [mindData, setMindData] = useState<any>(initData);
-  const [isDarkTheme, setIsDarkTheme] = useState(false); // 默认浅色主题
+  const [mindData, setMindData] = useState<any>();
+  const [currentMindId, setCurrentMindId] = useState<number>();
 
   useEffect(() => {
-    setMindData(initData);
-  }, []);
+    if (!reqId) return;
+    getTestCaseMind({ requirement_id: reqId }).then(async ({ code, data }) => {
+      if (code === 0 && data?.mind_node) {
+        // 使用完整的 mind_node 数据，包含 theme、arrows、direction、summaries 等
+        setMindData(data.mind_node);
+        setCurrentMindId(data.id);
+      }
+    });
+  }, [reqId]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -69,6 +47,7 @@ const Index = () => {
       locale: 'zh_CN',
       theme: MindElixir.THEME,
       mouseSelectionButton: 0,
+      editable: true,
     };
 
     const mindInstance = new MindElixir(option);
@@ -90,7 +69,7 @@ const Index = () => {
         mindInstance.destroy();
       }
     };
-  }, [isDarkTheme]);
+  }, [mindData]);
 
   const operationHandle = (info: Operation) => {
     console.log('operationHandle', info);
@@ -104,10 +83,50 @@ const Index = () => {
     console.log('selectNodeHandle', nodeObj, e);
   };
 
+  const saveMap = async () => {
+    if (!mindRef.current) {
+      message.warning('脑图未初始化');
+      return;
+    }
+    if (!reqId || !moduleId || !projectId) {
+      message.error('缺少必要参数');
+      return;
+    }
+
+    try {
+      const value = mindRef.current.getData();
+
+      if (currentMindId) {
+        const { code, data } = await updateTestCaseMind({
+          mind_node: value,
+          id: currentMindId,
+        });
+        if (code === 0) {
+          setMindData(data.mind_node);
+          message.success('保存成功');
+        }
+      } else {
+        const { code, data } = await insertTestCaseMind({
+          requirement_id: reqId,
+          mind_node: value,
+          module_id: moduleId,
+          project_id: projectId,
+        });
+
+        if (code === 0) {
+          setMindData(data.mind_node);
+          message.success('保存成功');
+        }
+      }
+    } catch (error) {
+      console.error('Error saving mind map:', error);
+      message.error('保存失败');
+    }
+  };
   return (
     <ProCard
       bordered
-      title={<ToolBar mind={mindRef} />}
+      title={<ToolBar mind={mindRef} saveMap={saveMap} />}
       bodyStyle={{
         height: '90vh',
         width: '100%',

@@ -121,7 +121,16 @@ const RequirementTable: FC<SelfProps> = ({
                 );
               }}
             >
-              关联用例
+              用例
+            </a>
+            <a
+              onClick={() => {
+                window.open(
+                  `/cases/caseHub/requirementMindMap/reqId=${record.id}&projectId=${currentProjectId}&moduleId=${currentModuleId}`,
+                );
+              }}
+            >
+              Mind
             </a>
             <a
               onClick={() => {
