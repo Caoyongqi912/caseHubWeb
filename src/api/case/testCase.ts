@@ -25,7 +25,7 @@ export const queryCasesByRequirement = async (
  * @param options
  */
 export const queryTagsByRequirement = async (
-  searchInfo: { requirementId: number },
+  searchInfo: { requirement_id: number },
   options?: IObjGet,
 ) => {
   return request<IResponse<string[]>>('/api/hub/cases/queryTagsByReqId', {
@@ -54,7 +54,7 @@ export const saveTestCase = async (caseInfo: ITestCase, options?: IObjGet) => {
  */
 export const addDefaultTestCase = async (
   caseInfo: {
-    requirementId: int;
+    requirement_id: int;
   },
   options?: IObjGet,
 ) => {
@@ -137,7 +137,7 @@ export const queryTestCaseDynamic = async (
  */
 export const reorderTestCase = async (
   info: {
-    requirementId: number;
+    requirement_id: number;
     caseIds: number[];
   },
   options?: IObjGet,
@@ -155,7 +155,7 @@ export const reorderTestCase = async (
  */
 export const removeTestCase = async (
   info: {
-    requirementId: number | null;
+    requirement_id: number | null;
     caseId: number;
   },
   options?: IObjGet,
@@ -174,7 +174,7 @@ export const removeTestCase = async (
  */
 export const copyTestCase = async (
   info: {
-    requirementId: number | null;
+    requirement_id: number | null;
     caseId: number;
   },
   options?: IObjGet,

@@ -16,7 +16,7 @@ const Index = () => {
   const PerKeyNoPart = 'InterfaceApiNoPart';
   const PerGroupKey = 'InterfaceGroupApi';
   const PerKeySplitter = 'InterfaceApi:Splitter';
-  const [sizes, setSizes] = useState<(number | string)[]>(['25%', '75%']);
+  const [sizes, setSizes] = useState<(number | string)[]>(['20%', '80%']);
   const TabItems: TabsProps['items'] = [
     {
       key: 'api',

@@ -558,6 +558,7 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
                 bodyStyle={{
                   padding: config.cardPadding,
                   borderRadius: 12,
+                  minHeight: '80vh',
                   overflow: 'hidden',
                 }}
               >

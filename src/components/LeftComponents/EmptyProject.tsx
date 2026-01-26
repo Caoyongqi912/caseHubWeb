@@ -1,7 +1,6 @@
 import { Button, Empty, Typography } from 'antd';
 import {
   borderRadius,
-  colors,
   shadows,
   spacing,
   transitions,
@@ -29,7 +28,6 @@ const EmptyProject = () => {
             <Text
               style={{
                 fontSize: typography.fontSize.md,
-                color: colors.neutral[600],
                 fontWeight: typography.fontWeight.medium,
               }}
             >
@@ -40,7 +38,6 @@ const EmptyProject = () => {
                 type="secondary"
                 style={{
                   fontSize: typography.fontSize.xs,
-                  color: colors.neutral[500],
                 }}
               >
                 创建第一个项目开始您的工作

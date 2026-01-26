@@ -16,7 +16,7 @@ const { Text } = Typography;
 export interface IProps {
   currentProjectId?: number;
   moduleType: number;
-  callBack: () => {};
+  callBack: () => void;
 }
 
 const EmptyModule: FC<IProps> = ({

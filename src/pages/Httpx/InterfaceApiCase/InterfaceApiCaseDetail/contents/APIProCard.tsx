@@ -38,12 +38,22 @@ const ApiProCard: FC<Props> = (props) => {
       setShowAPIDetail(open);
     }
   }, [open]);
+
+  const selfCallback = () => {
+    setShowAPIDetail(false);
+    callback && callback();
+  };
   return (
     <>
-      <MyDrawer width={'75%'} open={showAPIDetail} setOpen={setShowAPIDetail}>
+      <MyDrawer
+        name={caseContent.content_name}
+        width={'75%'}
+        open={showAPIDetail}
+        setOpen={setShowAPIDetail}
+      >
         <InterfaceApiDetail
           interfaceId={caseContent.target_id}
-          callback={() => {}}
+          callback={selfCallback}
         />
       </MyDrawer>
       <ProCard
@@ -83,7 +93,7 @@ const ApiProCard: FC<Props> = (props) => {
         extra={
           <CardExtraOption
             show={showOption}
-            callback={callback}
+            callback={selfCallback}
             caseContent={caseContent}
             caseId={caseId}
           />

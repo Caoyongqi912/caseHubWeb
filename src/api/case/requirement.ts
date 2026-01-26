@@ -58,7 +58,7 @@ export const getRequirement = async (
 ) => {
   return request<IResponse<IRequirement>>('/api/hub/getRequirement', {
     method: 'GET',
-    params: { requirementId: requirementId },
+    params: { requirement_id: requirementId },
     ...(options || {}),
   });
 };
@@ -73,7 +73,7 @@ export const removeRequirement = async (
 ) => {
   return request<IResponse<number>>('/api/hub/removeRequirement', {
     method: 'POST',
-    data: { requirementId: requirementId },
+    data: { requirement_id: requirementId },
     ...(options || {}),
   });
 };

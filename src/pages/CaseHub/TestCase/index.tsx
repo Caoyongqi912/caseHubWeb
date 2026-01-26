@@ -169,7 +169,7 @@ const Index: FC<Props> = (props) => {
   const copyStepCase = async () => {
     if (testcaseData?.id) {
       const { code, msg } = await copyTestCase({
-        requirementId: reqId ? parseInt(reqId) : null,
+        requirement_id: reqId ? parseInt(reqId) : null,
         caseId: testcaseData.id,
       });
       if (code === 0) {
@@ -181,7 +181,7 @@ const Index: FC<Props> = (props) => {
   const deleteStepCase = async () => {
     if (testcaseData?.id) {
       const { code, msg } = await removeTestCase({
-        requirementId: reqId ? parseInt(reqId) : null,
+        requirement_id: reqId ? parseInt(reqId) : null,
         caseId: testcaseData.id,
       });
       if (code === 0) {

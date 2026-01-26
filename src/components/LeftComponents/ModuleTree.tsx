@@ -95,7 +95,6 @@ const ModuleTree: FC<IProps> = (props) => {
   );
 
   // 交互状态
-  const [hoverNodeKey, setHoverNodeKey] = useState<number | null>(null);
   const [expandedKeys, setExpandedKeys] = useState<React.Key[]>([]);
   const [selectedKeys, setSelectedKeys] = useState<React.Key[]>([]);
   const [searchValue, setSearchValue] = useState('');
@@ -169,7 +168,6 @@ const ModuleTree: FC<IProps> = (props) => {
             <Text
               style={{
                 fontSize: typography.fontSize.base,
-                color: colors.neutral[700],
               }}
             >
               {beforeStr}
@@ -192,7 +190,6 @@ const ModuleTree: FC<IProps> = (props) => {
               strong
               style={{
                 fontSize: typography.fontSize.base,
-                color: colors.neutral[700],
                 fontWeight: typography.fontWeight.medium,
               }}
             >
@@ -299,7 +296,7 @@ const ModuleTree: FC<IProps> = (props) => {
                 async ({ code, msg }) => {
                   if (code === 0) {
                     message.success(msg);
-                    await handleReload();
+                    handleReload();
                   }
                 },
               );
@@ -313,9 +310,6 @@ const ModuleTree: FC<IProps> = (props) => {
 
   // 树节点渲染
   const TreeTitleRender = (tree: any) => {
-    const isSelected = selectedKeys.includes(tree.key);
-    const isHovered = hoverNodeKey === tree.key;
-
     return (
       <div
         style={{
@@ -323,37 +317,15 @@ const ModuleTree: FC<IProps> = (props) => {
           alignItems: 'center',
           justifyContent: 'space-between',
           width: '100%',
-          padding: `${spacing.xs}px ${spacing.sm}px`,
           borderRadius: borderRadius.md,
-          border: isSelected
-            ? `1px solid ${colors.primary[200]}`
-            : '1px solid transparent',
-          ...styleHelpers.transition([
-            'background-color',
-            'border-color',
-            'transform',
-          ]),
           margin: `${spacing.xs}px 0`,
           cursor: 'pointer',
         }}
-        onMouseEnter={() => setHoverNodeKey(tree.key)}
-        onMouseLeave={() => setHoverNodeKey(null)}
         onClick={() => setCurrentModule(tree)}
       >
         <Space align="center" style={{ flex: 1, minWidth: 0 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <Text
-              style={{
-                fontSize: typography.fontSize.base,
-                fontWeight: isSelected
-                  ? typography.fontWeight.semibold
-                  : typography.fontWeight.medium,
-                // color: isSelected ? colors.primary[600] : colors.neutral[800],
-                ...styleHelpers.transition(['color']),
-              }}
-            >
-              {tree.title}
-            </Text>
+            <Text strong>{tree.title}</Text>
 
             {tree.count > 0 && (
               <Badge
@@ -361,17 +333,8 @@ const ModuleTree: FC<IProps> = (props) => {
                 size="small"
                 style={{
                   marginLeft: spacing.sm,
-                  // backgroundColor: isSelected
-                  //   ? colors.primary[100]
-                  //   : colors.neutral[100],
-                  // color: isSelected
-                  //   ? colors.primary[600]
-                  //   : colors.neutral[600],
                   fontSize: typography.fontSize.xs,
                   fontWeight: typography.fontWeight.medium,
-                  border: `1px solid ${
-                    isSelected ? colors.primary[200] : colors.neutral[200]
-                  }`,
                 }}
               />
             )}
@@ -421,7 +384,6 @@ const ModuleTree: FC<IProps> = (props) => {
                 icon={<MoreOutlined />}
                 onClick={(e) => e.stopPropagation()}
                 style={{
-                  color: colors.neutral[500],
                   borderRadius: borderRadius.sm,
                   width: 24,
                   height: 24,
@@ -531,7 +493,6 @@ const ModuleTree: FC<IProps> = (props) => {
                 borderRadius: borderRadius.xl,
                 borderLeft: `4px solid ${colors.primary[500]}`,
                 border: `1px solid ${colors.primary[100]}`,
-                // backgroundColor: colors.primary[50],
                 boxShadow: shadows.card,
                 ...styleHelpers.transition(['box-shadow']),
               }}
@@ -553,7 +514,6 @@ const ModuleTree: FC<IProps> = (props) => {
                     strong
                     style={{
                       fontSize: typography.fontSize.md,
-                      color: colors.secondary[600],
                       fontWeight: typography.fontWeight.semibold,
                     }}
                   >
@@ -605,12 +565,6 @@ const ModuleTree: FC<IProps> = (props) => {
             </ProCard>
             <ProCard
               size="small"
-              style={{
-                borderRadius: borderRadius.xl,
-                border: `1px solid ${colors.functional.borderLight}`,
-                boxShadow: shadows.card,
-                ...styleHelpers.transition(['box-shadow']),
-              }}
               bodyStyle={{
                 padding: spacing.sm,
                 maxHeight: 'calc(100vh - 300px)',
@@ -631,7 +585,7 @@ const ModuleTree: FC<IProps> = (props) => {
                 expandedKeys={expandedKeys}
                 autoExpandParent={autoExpandParent}
                 selectedKeys={selectedKeys}
-                onSelect={(keys: React.Key[], info: any) => {
+                onSelect={(_: React.Key[], info: any) => {
                   const nodeKey = info.node.key;
                   setSelectedKeys([nodeKey]);
                   onModuleChange(nodeKey);
@@ -648,10 +602,8 @@ const ModuleTree: FC<IProps> = (props) => {
                     padding: spacing.sm,
                     borderTop: `1px solid ${colors.functional.divider}`,
                     fontSize: typography.fontSize.xs,
-                    color: colors.neutral[500],
                     textAlign: 'center',
                     fontWeight: typography.fontWeight.medium,
-                    // backgroundColor: colors.neutral[50],
                     borderRadius: `0 0 ${borderRadius.md}px ${borderRadius.md}px`,
                   }}
                 >

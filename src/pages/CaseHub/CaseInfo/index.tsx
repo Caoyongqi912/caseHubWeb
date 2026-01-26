@@ -50,7 +50,7 @@ const Index = () => {
     const fetchCases = async () => {
       try {
         const searchValues = {
-          requirementId: reqId,
+          requirement_id: reqId,
           ...searchInfo,
         };
         const { code, data } = await queryCasesByRequirement(searchValues);
@@ -67,7 +67,7 @@ const Index = () => {
 
   useEffect(() => {
     if (!reqId) return;
-    queryTagsByRequirement({ requirementId: parseInt(reqId) }).then(
+    queryTagsByRequirement({ requirement_id: parseInt(reqId) }).then(
       async ({ code, data }) => {
         if (code === 0 && data.length > 0) {
           setTags(data.map((tag) => ({ label: tag, value: tag })));
@@ -117,7 +117,7 @@ const Index = () => {
   const handleAddCase = async () => {
     if (reqId) {
       const { code } = await addDefaultTestCase({
-        requirementId: parseInt(reqId),
+        requirement_id: parseInt(reqId),
       });
       if (code === 0) {
         handelReload();
@@ -129,7 +129,7 @@ const Index = () => {
   const orderFetch = async (newItems: any[]) => {
     const orderIds = newItems.map((item) => item.step_id);
     await reorderTestCase({
-      requirementId: parseInt(reqId!),
+      requirement_id: parseInt(reqId!),
       caseIds: orderIds,
     });
   };
