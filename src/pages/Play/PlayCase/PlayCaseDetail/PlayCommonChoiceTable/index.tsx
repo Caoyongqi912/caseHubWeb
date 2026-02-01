@@ -1,5 +1,9 @@
 import { IModuleEnum, IObjGet } from '@/api';
-import { choicePlayStep2Case, pagePlaySteps } from '@/api/play/playCase';
+import {
+  associationPlayGroupStep,
+  associationPlayStep,
+  pagePlaySteps,
+} from '@/api/play/playCase';
 import { queryProjectEnum } from '@/components/CommonFunc';
 import MyProTable from '@/components/Table/MyProTable';
 import { IUICaseSteps } from '@/pages/Play/componets/uiTypes';
@@ -13,10 +17,16 @@ import React, { FC, useEffect, useState } from 'react';
 interface ISelfProps {
   projectId?: string;
   caseId?: string;
+  groupId?: string;
   callBackFunc: () => void;
 }
 
-const Index: FC<ISelfProps> = ({ projectId, caseId, callBackFunc }) => {
+const Index: FC<ISelfProps> = ({
+  projectId,
+  groupId,
+  caseId,
+  callBackFunc,
+}) => {
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [selectProjectId, setSelectProjectId] = useState<string | undefined>(
     projectId,
@@ -28,7 +38,7 @@ const Index: FC<ISelfProps> = ({ projectId, caseId, callBackFunc }) => {
       ...values,
       project_id: projectId,
       module_type: ModuleEnum.UI_STEP,
-      is_common_step: true,
+      is_common: true,
       sort: sort,
     });
     return pageData(code, data);
@@ -120,9 +130,20 @@ const Index: FC<ISelfProps> = ({ projectId, caseId, callBackFunc }) => {
               type={'primary'}
               onClick={async () => {
                 if (caseId) {
-                  const { code } = await choicePlayStep2Case({
-                    caseId: caseId,
-                    choice_steps: selectedRowKeys as number[],
+                  const { code } = await associationPlayStep({
+                    case_id: caseId,
+                    play_step_id_list: selectedRowKeys as number[],
+                    quote: false,
+                  });
+                  if (code === 0) {
+                    message.success('添加成功');
+                    callBackFunc();
+                  }
+                }
+                if (groupId) {
+                  const { code } = await associationPlayGroupStep({
+                    group_id: groupId,
+                    play_step_id_list: selectedRowKeys as number[],
                     quote: false,
                   });
                   if (code === 0) {
@@ -138,13 +159,24 @@ const Index: FC<ISelfProps> = ({ projectId, caseId, callBackFunc }) => {
               style={{ marginLeft: 5 }}
               onClick={async () => {
                 if (caseId) {
-                  const { code } = await choicePlayStep2Case({
-                    caseId: caseId,
-                    choice_steps: selectedRowKeys as number[],
+                  const { code, msg } = await associationPlayStep({
+                    case_id: caseId,
+                    play_step_id_list: selectedRowKeys as number[],
                     quote: true,
                   });
                   if (code === 0) {
-                    message.success('添加成功、过滤重复Step');
+                    message.success(msg);
+                    callBackFunc();
+                  }
+                }
+                if (groupId) {
+                  const { code } = await associationPlayGroupStep({
+                    group_id: groupId,
+                    play_step_id_list: selectedRowKeys as number[],
+                    quote: true,
+                  });
+                  if (code === 0) {
+                    message.success('添加成功');
                     callBackFunc();
                   }
                 }

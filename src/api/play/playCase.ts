@@ -1,5 +1,8 @@
 import { IObjGet, IPage, IResponse, ISearch } from '@/api';
 import {
+  ILocator,
+  IPlayStepContent,
+  IPlayStepDetail,
   IUICase,
   IUICaseSteps,
   IUICaseSubStep,
@@ -75,53 +78,123 @@ export const copyPlayCase = async (data: { caseId: number }, opt?: IObjGet) => {
     ...(opt || {}),
   });
 };
-/**
- * ui 用例详情
- * @param params
- * @param options
- */
-export const playCaseDetailById = async (
-  params: string | number,
-  options?: IObjGet,
-) => {
-  return request<IResponse<IUICase>>('/api/play/case/detail', {
-    method: 'GET',
-    params: { caseId: params },
-    ...(options || {}),
-  });
-};
 
 /**
- * ui 用例详情
+ * 用例 步骤复制
  * @param values
  * @param options
  */
 export const copyCaseStep = async (
   values: {
-    caseId: number;
-    stepId: number;
+    case_id: number;
+    content_id: number;
   },
   options?: IObjGet,
 ) => {
-  return request<IResponse<IUICase>>('/api/play/case/copy_step', {
+  return request<IResponse<null>>('/api/play/case/copy_content', {
     method: 'POST',
     data: values,
     ...(options || {}),
   });
 };
 
-export const reorderCaseStep = async (
-  values: {
-    caseId: number;
-    stepIds: number[];
+/**
+ * 删除 Case Content
+ * @param data
+ * @param options
+ */
+export const updateCaseContent = async (
+  data: {
+    id: number;
+    enable?: boolean;
+    content_name?: string;
+    api_script_text?: string;
   },
   options?: IObjGet,
 ) => {
-  return request<IResponse<IUICase>>('/api/play/case/reorder_step', {
+  return request<IResponse<any>>('/api/play/case/edit_content', {
+    method: 'POST',
+    data: data,
+    ...(options || {}),
+  });
+};
+
+/**
+ * 删除 Case Content
+ * @param body
+ * @param options
+ */
+export const removePlayStepContent = async (
+  body: { content_id: number; case_id: number },
+  options?: IObjGet,
+) => {
+  return request<IResponse<any>>('/api/play/case/remove_content', {
+    method: 'POST',
+    data: body,
+    ...(options || {}),
+  });
+};
+
+/**
+ * 用例 步骤排序
+ * @param values
+ * @param options
+ */
+export const reorderCaseStep = async (
+  values: {
+    case_id: number;
+    content_id_list: number[];
+  },
+  options?: IObjGet,
+) => {
+  return request<IResponse<IUICase>>('/api/play/case/reorder_content_step', {
     method: 'POST',
     data: values,
     ...(options || {}),
   });
+};
+
+/**
+ * 关联Step 到Case
+ * @param data
+ * @param options
+ */
+export const associationPlayStep = async (
+  data: {
+    case_id: string | number;
+    play_step_id_list: number[];
+    quote: boolean;
+  },
+  options?: IObjGet,
+) => {
+  return request<IResponse<null>>('/api/play/case/associationPlayStep', {
+    method: 'POST',
+    data: data,
+    ...(options || {}),
+  });
+};
+
+/**
+ * 关联Step 到group
+ * @param data
+ * @param options
+ */
+export const associationPlayGroupStep = async (
+  data: {
+    group_id: string | number;
+    play_step_id_list: number[];
+    quote: boolean;
+  },
+  options?: IObjGet,
+) => {
+  return request<IResponse<null>>(
+    '/api/play/stepGroup/associationPlayGroupStep',
+    {
+      method: 'POST',
+      data: data,
+      ...(options || {}),
+    },
+  );
 };
 
 /**
@@ -286,9 +359,9 @@ export const playStepDetailById = async (
   params: string | number,
   options?: IObjGet,
 ) => {
-  return request<IResponse<IUICase>>('/api/play/step/detail', {
+  return request<IResponse<IPlayStepDetail>>('/api/play/step/detail', {
     method: 'GET',
-    params: { stepId: params },
+    params: { step_id: params },
     ...(options || {}),
   });
 };
@@ -348,6 +421,22 @@ export const queryPlayStepByCaseId = async (
 };
 
 /**
+ * 用例步骤详情
+ * @param ident
+ * @param options
+ */
+export const queryPlayStepContentByCaseId = async (
+  ident: string,
+  options?: IObjGet,
+): Promise<IResponse<IPlayStepContent[]>> => {
+  return request<IResponse<IPlayStepContent[]>>('/api/play/case/queryContent', {
+    method: 'GET',
+    params: { case_id: ident },
+    ...(options || {}),
+  });
+};
+
+/**
  * 添加步骤
  * @param data
  * @param options
@@ -356,7 +445,55 @@ export const insertPlayStep = async (
   data: IUICaseSubStep,
   options?: IObjGet,
 ) => {
-  return request<IResponse<null>>('/api/play/step/insert', {
+  return request<IResponse<null>>('/api/play/step/insertCasePlayStep', {
+    method: 'POST',
+    data,
+    ...(options || {}),
+  });
+};
+
+/**
+ * Case添加私有步骤
+ * @param data
+ * @param options
+ */
+export const insertPlayCaseStep = async (
+  data: IPlayStepDetail,
+  options?: IObjGet,
+) => {
+  return request<IResponse<any>>('/api/play/case/insertCasePlayStep', {
+    method: 'POST',
+    data,
+    ...(options || {}),
+  });
+};
+
+/**
+ * Case添加私有步骤
+ * @param data
+ * @param options
+ */
+export const insertPlayGroupStep = async (
+  data: IPlayStepDetail,
+  options?: IObjGet,
+) => {
+  return request<IResponse<any>>('/api/play/stepGroup/insertStep', {
+    method: 'POST',
+    data,
+    ...(options || {}),
+  });
+};
+
+/**
+ * 添加步骤
+ * @param data
+ * @param options
+ */
+export const savePlayStep = async (
+  data: IPlayStepDetail,
+  options?: IObjGet,
+) => {
+  return request<IResponse<IPlayStepDetail>>('/api/play/step/insert', {
     method: 'POST',
     data,
     ...(options || {}),
@@ -369,7 +506,7 @@ export const insertPlayStep = async (
  * @param options
  */
 export const pagePlaySteps = async (params: ISearch, options?: IObjGet) => {
-  return request<IResponse<IPage<IUICaseSteps>>>('/api/play/step/page', {
+  return request<IResponse<IPage<IPlayStepDetail>>>('/api/play/step/page', {
     method: 'POST',
     data: params,
     ...(options || {}),
@@ -381,8 +518,11 @@ export const pagePlaySteps = async (params: ISearch, options?: IObjGet) => {
  * @param data
  * @param options
  */
-export const updatePlayStep = async (data: IUICaseSteps, options?: IObjGet) => {
-  return request<IResponse<null>>('/api/play/step/update', {
+export const updatePlayStep = async (
+  data: IPlayStepDetail,
+  options?: IObjGet,
+) => {
+  return request<IResponse<IPlayStepDetail>>('/api/play/step/edit', {
     method: 'POST',
     data: data,
     ...(options || {}),
@@ -394,10 +534,10 @@ export const updatePlayStep = async (data: IUICaseSteps, options?: IObjGet) => {
  * @param options
  */
 export const removePlayStep = async (
-  body: { stepId: number; caseId?: number },
+  body: { step_id: number },
   options?: IObjGet,
 ) => {
-  return request<IResponse<any>>('/api/play/case/remove_step', {
+  return request<IResponse<any>>('/api/play/step/remove', {
     method: 'POST',
     data: body,
     ...(options || {}),
@@ -435,21 +575,6 @@ export const removePlayStepCondition = async (
   });
 };
 
-/**
- * 删除条件
- * @param body
- * @param options
- */
-export const reorderPlayStepCondition = async (
-  body: { stepIds: number[] },
-  options?: IObjGet,
-) => {
-  return request<IResponse<any>>('/api/play/step/reorderConditionStep', {
-    method: 'POST',
-    data: body,
-    ...(options || {}),
-  });
-};
 export const getCasesByStepId = async (stepId: number, opt?: IObjGet) => {
   return request<IResponse<IUICase[]>>('/api/play/step/getAssociationCases', {
     method: 'GET',
@@ -463,28 +588,9 @@ export const getCasesByStepId = async (stepId: number, opt?: IObjGet) => {
  * @param body
  * @param options
  */
-export const copyPlayStep = async (
-  body: {
-    caseId: number;
-    stepId: number;
-  },
-  options?: IObjGet,
-) => {
-  return request<IResponse<any>>('/api/play/case/copy_step', {
-    method: 'POST',
-    data: body,
-    ...(options || {}),
-  });
-};
-
-/**
- * 复制step
- * @param body
- * @param options
- */
 export const copyCommonPlayStep = async (
   body: {
-    stepId: number;
+    step_id: number;
   },
   options?: IObjGet,
 ) => {
@@ -493,30 +599,6 @@ export const copyCommonPlayStep = async (
     data: body,
     ...(options || {}),
   });
-};
-
-export const insertPlayConditionSubSteps = async (
-  values: IUIGroupStep,
-  options?: IObjGet,
-) => {
-  return request<IResponse<null>>('/api/play/step/insertConditionStep', {
-    method: 'POST',
-    data: values,
-    ...(options || {}),
-  });
-};
-export const queryPlayConditionSubSteps = async (
-  values: { stepId: number },
-  options?: IObjGet,
-) => {
-  return request<IResponse<IUICaseSteps[]>>(
-    '/api/play/step/queryConditionSteps',
-    {
-      method: 'POST',
-      data: values,
-      ...(options || {}),
-    },
-  );
 };
 
 // =============================================GROUP STEP=======================================================
@@ -546,11 +628,14 @@ export const queryPlayGroupSubSteps = async (
   values: number,
   options?: IObjGet,
 ) => {
-  return request<IResponse<IUICaseSteps[]>>('/api/play/stepGroup/querySteps', {
-    method: 'GET',
-    params: { groupId: values },
-    ...(options || {}),
-  });
+  return request<IResponse<IPlayStepDetail[]>>(
+    '/api/play/stepGroup/querySteps',
+    {
+      method: 'GET',
+      params: { group_id: values },
+      ...(options || {}),
+    },
+  );
 };
 export const insertPlayGroupSteps = async (
   values: IUIGroupStep,
@@ -569,7 +654,7 @@ export const getPlayGroup = async (
 ) => {
   return request<IResponse<IUIGroupStep>>('/api/play/stepGroup/detail', {
     method: 'GET',
-    params: { groupId: values },
+    params: { group_id: values },
     ...(options || {}),
   });
 };
@@ -596,8 +681,8 @@ export const insertPlayGroupSubSteps = async (
 };
 export const reOrderSubSteps = async (
   values: {
-    groupId: number;
-    stepIdList: number[];
+    group_id: number;
+    step_list: number[];
   },
   options?: IObjGet,
 ) => {
@@ -610,7 +695,8 @@ export const reOrderSubSteps = async (
 
 export const copySubSteps = async (
   values: {
-    stepId: number;
+    group_id: number;
+    step_id: number;
   },
   options?: IObjGet,
 ) => {
@@ -623,7 +709,8 @@ export const copySubSteps = async (
 
 export const removeSubSteps = async (
   values: {
-    stepId: number;
+    group_id: number;
+    step_id: number;
   },
   options?: IObjGet,
 ) => {
@@ -644,6 +731,17 @@ export const queryPlayMethods = async (options?: IObjGet) => {
     ...(options || {}),
   });
 };
+
+/**
+ * 查询方法
+ * @param options
+ */
+export const queryPlayLocators = async (options?: IObjGet) => {
+  return request<IResponse<ILocator[]>>('/api/play/config/locator/list', {
+    method: 'GET',
+    ...(options || {}),
+  });
+};
 /**
  * 分页方法
  * @param data
@@ -656,6 +754,20 @@ export const pagePlayMethods = async (data: ISearch, options?: IObjGet) => {
     ...(options || {}),
   });
 };
+
+/**
+ * 分页Locator
+ * @param data
+ * @param options
+ */
+export const pagePlayLocators = async (data: ISearch, options?: IObjGet) => {
+  return request<IResponse<IPage<ILocator>>>('/api/play/config/locator/page', {
+    method: 'POST',
+    data: data,
+    ...(options || {}),
+  });
+};
+
 /**
  * 添加方法
  * @param me

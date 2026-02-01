@@ -7,19 +7,13 @@ import {
 } from '@/api/play/playCase';
 import MyDrawer from '@/components/MyDrawer';
 import MyProTable from '@/components/Table/MyProTable';
+import UserSelect from '@/components/Table/UserSelect';
 import PlayCaseStepAss from '@/pages/Play/componets/PlayCaseStepAss';
-import StepFunc from '@/pages/Play/componets/StepFunc';
-import { IUICaseSteps } from '@/pages/Play/componets/uiTypes';
-import PlayStepInfo from '@/pages/Play/PlayStep/PlayStepInfo';
+import { IPlayStepDetail } from '@/pages/Play/componets/uiTypes';
+import PlayStepDetail from '@/pages/Play/PlayStep/PlayStepDetail';
 import { ModuleEnum } from '@/utils/config';
 import { pageData } from '@/utils/somefunc';
-import { useModel } from '@@/exports';
-import {
-  ApiFilled,
-  ConsoleSqlOutlined,
-  PlusOutlined,
-  QuestionOutlined,
-} from '@ant-design/icons';
+import { PlusOutlined } from '@ant-design/icons';
 import { ActionType } from '@ant-design/pro-components';
 import { ProColumns } from '@ant-design/pro-table/lib/typing';
 import { Button, message, Popconfirm, Space, Tag, Tooltip } from 'antd';
@@ -36,16 +30,21 @@ const Index: FC<SelfProps> = ({
   currentProjectId,
   perKey,
 }) => {
-  const { initialState } = useModel('@@initialState');
   const actionRef = useRef<ActionType>(); //Table action 的引用，便于自定义触发
   const [methodEnum, setMethodEnum] = useState<IObjGet>();
-  const [addStepOpen, setAddStepOpen] = useState(false);
-  const [stepDetailOpen, setStepDetailOpen] = useState(false);
-  const [currentStep, setCurrentStep] = useState<IUICaseSteps>();
+  const [addStepOpen, setStepOpen] = useState(false);
+  const [currentStep, setCurrentStep] = useState<IPlayStepDetail>();
   const [dataOpen, setDataOpen] = useState<boolean>(false);
+  const [drawerTitle, setDrawerTitle] = useState('');
+
+  const reload = async () => {
+    setStepOpen(false);
+    setCurrentStep(undefined);
+    await actionRef.current?.reload();
+  };
 
   useEffect(() => {
-    actionRef.current?.reload();
+    reload().then();
   }, [currentModuleId, currentProjectId]);
 
   useEffect(() => {
@@ -75,18 +74,14 @@ const Index: FC<SelfProps> = ({
       ...values,
       module_id: currentModuleId,
       module_type: ModuleEnum.UI_STEP,
-      is_common_step: true,
+      is_common: true,
     });
     return pageData(code, data);
   };
 
-  const reload = async () => {
-    await actionRef.current?.reload();
-  };
-
-  const remove_step = async (record: IUICaseSteps) => {
+  const remove_step = async (record: IPlayStepDetail) => {
     const { code, msg } = await removePlayStep({
-      stepId: record.id,
+      step_id: record.id,
     });
     if (code === 0) {
       message.success(msg);
@@ -94,9 +89,9 @@ const Index: FC<SelfProps> = ({
     }
   };
 
-  const copy_step = async (record: IUICaseSteps) => {
+  const copy_step = async (record: IPlayStepDetail) => {
     const { code, msg } = await copyCommonPlayStep({
-      stepId: record.id,
+      step_id: record.id,
     });
     if (code === 0) {
       message.success(msg);
@@ -104,7 +99,7 @@ const Index: FC<SelfProps> = ({
     }
   };
 
-  const columns: ProColumns<IUICaseSteps>[] = [
+  const columns: ProColumns<IPlayStepDetail>[] = [
     {
       title: 'ID',
       dataIndex: 'uid',
@@ -136,45 +131,22 @@ const Index: FC<SelfProps> = ({
     },
     {
       title: '创建人',
-      dataIndex: 'creatorName',
+      dataIndex: 'creator',
       valueType: 'text',
       editable: false,
-      render: (text) => <Tag color={'blue'}>{text}</Tag>,
-    },
-    {
-      title: '其他',
-      valueType: 'text',
-      search: false,
-      width: '20%',
+      renderFormItem: () => {
+        return <UserSelect />;
+      },
       render: (_, record) => {
-        return (
-          <Space>
-            {record.condition && (
-              <Tag color={'green'} icon={<QuestionOutlined />}>
-                IF
-              </Tag>
-            )}
-            {record.interface_id && (
-              <Tag color={'green'}>
-                <Space>
-                  <ApiFilled />
-                  {record.interface_a_or_b === 1 ? '前' : '后'}
-                </Space>
-              </Tag>
-            )}
-            {record.db_id && (
-              <Tag color={'green'}>
-                <Space>
-                  <ConsoleSqlOutlined />
-                  {record.db_a_or_b === 1 ? '前' : '后'}
-                </Space>
-              </Tag>
-            )}
-          </Space>
-        );
+        return <Tag color={'orange'}>{record.creatorName}</Tag>;
       },
     },
-
+    {
+      title: '创建时间',
+      dataIndex: 'create_time',
+      valueType: 'dateTime',
+      search: false,
+    },
     {
       title: 'opt',
       valueType: 'option',
@@ -185,7 +157,8 @@ const Index: FC<SelfProps> = ({
             key={'detail'}
             onClick={() => {
               setCurrentStep(record);
-              setStepDetailOpen(true);
+              setDrawerTitle('步骤详情');
+              setStepOpen(true);
             }}
           >
             详情
@@ -220,62 +193,32 @@ const Index: FC<SelfProps> = ({
       type={'primary'}
       hidden={!currentModuleId}
       onClick={async () => {
-        setAddStepOpen(true);
+        setCurrentStep(undefined);
+        setDrawerTitle('添加共有步骤');
+        setStepOpen(true);
       }}
     >
       <PlusOutlined />
       添加共有步骤
     </Button>
   );
-  const closeDrawer = async () => {
-    setAddStepOpen(false);
-    setStepDetailOpen(false);
-    await reload();
-  };
-  const expandedRowRender = (record: IUICaseSteps) => {
-    return (
-      <StepFunc
-        currentProjectId={currentProjectId!}
-        subStepInfo={record!}
-        callback={reload}
-      />
-    );
-  };
 
   return (
     <>
-      <MyDrawer
-        name={'步骤详情'}
-        width={'auto'}
-        open={stepDetailOpen}
-        setOpen={setStepDetailOpen}
-      >
-        {/*// 管理 创建人可编辑*/}
-        <PlayStepInfo
-          stepInfo={currentStep}
-          is_common_step={true}
-          callback={closeDrawer}
-          readonly={
-            !initialState?.currentUser?.isAdmin ||
-            initialState.currentUser?.id !== currentStep?.creator
-          }
-        />
-      </MyDrawer>
       <MyDrawer name={'关联用例'} open={dataOpen} setOpen={setDataOpen}>
         <PlayCaseStepAss stepId={currentStep?.id} />
       </MyDrawer>
       <MyDrawer
-        name={'添加公共步骤'}
+        name={drawerTitle}
         width={'auto'}
         open={addStepOpen}
-        setOpen={setAddStepOpen}
+        setOpen={setStepOpen}
       >
-        <PlayStepInfo
+        <PlayStepDetail
+          step_detail={currentStep}
           currentProjectId={currentProjectId}
-          readonly={false}
-          callback={closeDrawer}
-          is_common_step={true}
           currentModuleId={currentModuleId}
+          callback={reload}
         />
       </MyDrawer>
       <MyProTable
@@ -283,9 +226,6 @@ const Index: FC<SelfProps> = ({
         headerTitle={'公共步骤列表'}
         actionRef={actionRef}
         rowKey={'id'}
-        expandable={{
-          expandedRowRender,
-        }}
         x={1000}
         columns={columns}
         toolBarRender={() => [addStepButton]}

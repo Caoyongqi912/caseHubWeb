@@ -78,6 +78,31 @@ export interface IUIGroupStep {
   creatorName: string;
 }
 
+export interface IPlayStepDetail {
+  case_id?: number;
+  id: number;
+  uid: string;
+  name: string;
+  description?: string;
+  selector?: string;
+  locator?: string;
+  iframe_name?: string;
+  method?: string;
+  key?: string;
+  value?: string;
+  new_page?: boolean;
+  is_common: boolean;
+  is_ignore: boolean;
+  module_id: number;
+  project_id: number;
+  creator: number;
+  creatorName: string;
+  updater: number;
+  updaterName: string;
+  create_time: string;
+  update_time: string;
+}
+
 export interface IUICaseSteps {
   id: number;
   uid: string;
@@ -131,6 +156,13 @@ export interface IUIMethod {
   description?: string;
   need_locator: number;
   need_value: number;
+  need_key: number;
+}
+
+export interface ILocator {
+  getter_name: string;
+  getter_desc: string;
+  getter_demo: string;
 }
 
 export interface IUIEnv {
@@ -235,4 +267,34 @@ export interface IPlayTaskResult {
   total_usetime: string;
   start_time: string;
   end_time: string;
+}
+
+export interface IPlayStepContent {
+  id: number;
+  uid: string;
+  target_id: number;
+  content_name: string;
+  content_desc: string;
+  content_type: number;
+  enable: boolean;
+  is_common: boolean;
+  script_text?: string;
+  assert_list?: any;
+}
+
+export interface IPlayStep {
+  id: number;
+  uid: string;
+  name: string;
+  description: string;
+  selector?: string;
+  locator?: string;
+  iframe_name?: string;
+  method?: string;
+  key?: string;
+  value?: string;
+  new_page?: boolean;
+  is_ignore?: boolean;
+  module_id: number;
+  project_id: number;
 }

@@ -1,181 +1,121 @@
 import { copySubSteps, removeSubSteps } from '@/api/play/playCase';
+import Handler from '@/components/DnDDraggable/handler';
 import MyDrawer from '@/components/MyDrawer';
-import StepFunc from '@/pages/Play/componets/StepFunc';
-import { IUICaseSteps } from '@/pages/Play/componets/uiTypes';
-import PlayStepInfo from '@/pages/Play/PlayStep/PlayStepInfo';
-import { useModel } from '@@/exports';
+import { IPlayStepDetail } from '@/pages/Play/componets/uiTypes';
+import PlayStepDetail from '@/pages/Play/PlayStep/PlayStepDetail';
 import {
-  ApiFilled,
-  ConsoleSqlOutlined,
-  CopyFilled,
-  DeleteOutlined,
-  EditOutlined,
-  QuestionOutlined,
-  UnorderedListOutlined,
+  CopyTwoTone,
+  DeleteTwoTone,
+  PlayCircleOutlined,
 } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
-import {
-  Button,
-  message,
-  Popconfirm,
-  Space,
-  Tag,
-  Tooltip,
-  Typography,
-} from 'antd';
-import { FC, useEffect, useState } from 'react';
+import { Button, message, Space, Tag, Tooltip, Typography } from 'antd';
+import { FC, useState } from 'react';
 
 const { Text } = Typography;
 
 interface ISelfProps {
+  id: number;
   groupId: number;
   currentProjectId?: number;
-  subStepInfo?: IUICaseSteps;
-  callBackFunc: () => void;
+  stepInfo: IPlayStepDetail;
+  callback: () => void;
   step: number;
 }
 
 const PlayStepGroupCollapsible: FC<ISelfProps> = (props) => {
-  const { step, callBackFunc, groupId, currentProjectId, subStepInfo } = props;
+  const { step, callback, id, groupId, currentProjectId, stepInfo } = props;
   const [openStepDetailDrawer, setOpenStepDetailDrawer] = useState(false);
   const [showOption, setShowOption] = useState(false);
-  const { initialState } = useModel('@@initialState');
 
-  useEffect(() => {
-    console.log(!initialState?.currentUser?.isAdmin);
-    console.log(initialState?.currentUser?.id !== subStepInfo?.creator);
-  }, []);
+  const selfCallBack = () => {
+    setOpenStepDetailDrawer(false);
+    callback();
+  };
+
   const copyUIStep = async () => {
-    copySubSteps({ stepId: subStepInfo?.id! }).then(async ({ code }) => {
+    copySubSteps({
+      step_id: stepInfo.id,
+      group_id: groupId,
+    }).then(async ({ code }) => {
       if (code === 0) {
-        callBackFunc();
+        selfCallBack();
       }
     });
   };
   const removeUIStep = async () => {
     const { code, msg } = await removeSubSteps({
-      stepId: subStepInfo?.id!,
+      step_id: stepInfo.id,
+      group_id: groupId,
     });
     if (code === 0) {
       message.success(msg);
-      callBackFunc();
+      selfCallBack();
     }
   };
 
-  const ExtraArea = (
-    <Space>
-      <>
-        {subStepInfo?.condition && (
-          <Tag color={'green'} icon={<QuestionOutlined />}>
-            IF
-          </Tag>
-        )}
-        {subStepInfo?.interface_id && (
-          <Tag color={'green'}>
-            <Space>
-              <ApiFilled />
-              {subStepInfo.interface_a_or_b === 1 ? '前' : '后'}
-            </Space>
-          </Tag>
-        )}
-        {subStepInfo?.db_id && (
-          <Tag color={'green'}>
-            <Space>
-              <ConsoleSqlOutlined />
-              {subStepInfo.db_a_or_b === 1 ? '前' : '后'}
-            </Space>
-          </Tag>
-        )}
-      </>
-
-      {showOption && (
-        <>
-          <Tooltip title={'复制步骤到底步、如果是公共复制、将复制成私有'}>
+  const ContentExtra = (
+    <>
+      <Space>
+        <Space hidden={!showOption}>
+          <Tooltip title="复制步骤">
             <Button
-              icon={<CopyFilled />}
-              color={'primary'}
-              variant="filled"
-              hidden={subStepInfo?.is_group}
-              onClick={copyUIStep}
+              type={'primary'}
+              icon={<CopyTwoTone onClick={copyUIStep} />}
             >
               复制
             </Button>
           </Tooltip>
-          <Button
-            icon={<EditOutlined />}
-            color={'primary'}
-            variant="filled"
-            hidden={subStepInfo?.is_group}
-            onClick={() => {
-              setOpenStepDetailDrawer(true);
-            }}
-          >
-            详情
-          </Button>
-          <Popconfirm
-            title={'确认删除？'}
-            description={'非公共步骤会彻底删除'}
-            okText={'确认'}
-            cancelText={'点错了'}
-            onConfirm={removeUIStep}
-          >
+          <Tooltip title="非公共步骤彻底删除">
             <Button
-              icon={<DeleteOutlined />}
               color={'danger'}
-              variant={'filled'}
-              style={{ marginRight: 10 }}
+              icon={<DeleteTwoTone onClick={removeUIStep} />}
             >
-              移除
+              删除
             </Button>
-          </Popconfirm>
-        </>
-      )}
-    </Space>
+          </Tooltip>
+        </Space>
+      </Space>
+    </>
   );
   return (
     <>
       <ProCard
         bordered
+        collapsible={false}
+        hoverable
         defaultCollapsed
-        extra={ExtraArea}
         onMouseEnter={() => {
           setShowOption(true);
         }}
         onMouseLeave={() => {
           setShowOption(false);
         }}
-        collapsibleIconRender={() => (
-          <Space>
-            <UnorderedListOutlined
-              style={{ color: '#c3cad4', marginLeft: 20 }}
-            />
-            <Tag color={'green-inverse'}>STEP_{step}</Tag>
-          </Space>
-        )}
-        hoverable
-        collapsible={true}
-        ghost={true}
-        style={{ borderRadius: '5px', marginTop: 10 }}
-        subTitle={
-          <Space>
-            <Text type={'secondary'}>{subStepInfo?.description}</Text>
-          </Space>
-        }
+        collapsibleIconRender={() => {
+          return null;
+        }}
+        extra={ContentExtra}
+        onClick={(event) => {
+          event.stopPropagation();
+          setOpenStepDetailDrawer(true);
+        }}
         title={
-          <>
-            <Tag color={'#108ee9'} style={{ marginLeft: 4 }}>
-              {subStepInfo?.name}
-            </Tag>
-          </>
+          <Space>
+            <Handler id={id} step={step} />
+            <Tag color={'gold-inverse'} icon={<PlayCircleOutlined />} />
+            {stepInfo.is_common ? (
+              <Tag color={'#059669'}>共</Tag>
+            ) : (
+              <Tag color={'#DC2626'}>私</Tag>
+            )}
+            <Text strong>{stepInfo.name}</Text>
+
+            {stepInfo.description && (
+              <Text type={'secondary'}>{stepInfo.description}</Text>
+            )}
+          </Space>
         }
-      >
-        {' '}
-        <StepFunc
-          currentProjectId={currentProjectId!}
-          subStepInfo={subStepInfo!}
-          callback={callBackFunc}
-        />
-      </ProCard>
+      />
       <MyDrawer
         name={'Step Detail'}
         width={'auto'}
@@ -183,16 +123,7 @@ const PlayStepGroupCollapsible: FC<ISelfProps> = (props) => {
         setOpen={setOpenStepDetailDrawer}
       >
         {groupId && (
-          <PlayStepInfo
-            readonly={false}
-            is_common_step={false}
-            stepInfo={subStepInfo}
-            callback={() => {
-              setOpenStepDetailDrawer(false);
-              callBackFunc();
-            }}
-            play_group_id={groupId}
-          />
+          <PlayStepDetail callback={callback} step_detail={stepInfo} />
         )}
       </MyDrawer>
     </>

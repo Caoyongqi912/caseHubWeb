@@ -20,6 +20,7 @@ const PlayStepGroupTable: FC<SelfProps> = (props) => {
   const { currentProjectId, currentModuleId, perKey } = props;
   const actionRef = useRef<ActionType>(); //Table action 的引用，便于自定义触发
   const [currentGroup, setCurrentGroup] = useState<IUIGroupStep>();
+
   const reload = () => {
     actionRef.current?.reload();
   };

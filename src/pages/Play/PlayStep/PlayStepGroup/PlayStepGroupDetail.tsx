@@ -5,22 +5,25 @@ import {
 } from '@/api/play/playCase';
 import DnDDraggable from '@/components/DnDDraggable';
 import MyDrawer from '@/components/MyDrawer';
-import { IUICaseSteps } from '@/pages/Play/componets/uiTypes';
+import { IPlayStepDetail } from '@/pages/Play/componets/uiTypes';
+import PlayCommonChoiceTable from '@/pages/Play/PlayCase/PlayCaseDetail/PlayCommonChoiceTable';
+import PlayStepDetail from '@/pages/Play/PlayStep/PlayStepDetail';
 import PlayStepGroupCollapsible from '@/pages/Play/PlayStep/PlayStepGroup/PlayStepGroupCollapsible';
-import PlayStepInfo from '@/pages/Play/PlayStep/PlayStepInfo';
 import { useParams } from '@@/exports';
+import { EditOutlined, SelectOutlined } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
-import { Button, Empty } from 'antd';
+import { Dropdown, Empty } from 'antd';
 import { useEffect, useState } from 'react';
 
 const PlayStepGroupDetail = () => {
   const { groupId } = useParams<{ groupId: string }>();
-  const [subSteps, setSubSteps] = useState<IUICaseSteps[]>([]);
+  const [subSteps, setSubSteps] = useState<IPlayStepDetail[]>([]);
   const [subStepsContent, setSubStepsContent] = useState<any[]>([]);
   const [openAddSubStep, setOpenAddSubStep] = useState(false);
   const [refresh, setRefresh] = useState<number>(0);
   const [projectId, setProjectId] = useState<number | undefined>(undefined);
   const [moduleId, setModuleId] = useState<number>();
+  const [openChoiceStepDrawer, setOpenChoiceStepDrawer] = useState(false);
 
   /**
    * 通过组ID
@@ -52,10 +55,11 @@ const PlayStepGroupDetail = () => {
           step_id: item.id,
           content: (
             <PlayStepGroupCollapsible
+              id={index}
               step={index + 1}
               currentProjectId={projectId}
-              subStepInfo={item}
-              callBackFunc={handelRefresh}
+              stepInfo={item}
+              callback={handelRefresh}
               groupId={parseInt(groupId!)}
             />
           ),
@@ -67,13 +71,14 @@ const PlayStepGroupDetail = () => {
   const handelRefresh = async () => {
     setRefresh(refresh + 1);
     setOpenAddSubStep(false);
+    setOpenChoiceStepDrawer(false);
   };
   const onDragEnd = async (reorderedUIContents: any[]) => {
     if (groupId) {
       const reorderData = reorderedUIContents.map((item) => item.step_id);
       reOrderSubSteps({
-        groupId: parseInt(groupId),
-        stepIdList: reorderData,
+        group_id: parseInt(groupId),
+        step_list: reorderData,
       }).then(async () => {
         await handelRefresh();
       });
@@ -83,53 +88,81 @@ const PlayStepGroupDetail = () => {
   const CardExtra = (
     <>
       {groupId && (
-        <Button
-          onClick={() => {
-            setOpenAddSubStep(true);
+        <Dropdown.Button
+          menu={{
+            items: [
+              {
+                key: 'add_step',
+                label: '添加私有步骤',
+                icon: <EditOutlined style={{ color: 'orange' }} />,
+                onClick: () => setOpenAddSubStep(true),
+              },
+              {
+                type: 'divider',
+              },
+
+              {
+                key: 'choice_step',
+                label: '选择公共步骤',
+                icon: <SelectOutlined style={{ color: 'blue' }} />,
+                onClick: () => setOpenChoiceStepDrawer(true),
+              },
+            ],
           }}
           type="primary"
         >
-          Add Step
-        </Button>
+          添加
+        </Dropdown.Button>
       )}
     </>
   );
 
   return (
-    <ProCard
-      bordered
-      bodyStyle={{
-        minHeight: '100vh',
-      }}
-      extra={CardExtra}
-    >
-      {subSteps.length > 0 ? (
-        <DnDDraggable
-          items={subStepsContent}
-          setItems={setSubStepsContent}
-          orderFetch={onDragEnd}
-        />
-      ) : (
-        <Empty description={'暂无子步骤'} />
-      )}
+    <>
       <MyDrawer
-        name={'Step'}
         width={'auto'}
         open={openAddSubStep}
         setOpen={setOpenAddSubStep}
       >
         {groupId && (
-          <PlayStepInfo
+          <PlayStepDetail
             currentModuleId={moduleId}
             currentProjectId={projectId}
-            is_common_step={false}
             callback={handelRefresh}
             play_group_id={parseInt(groupId)}
-            readonly={false}
           />
         )}
       </MyDrawer>
-    </ProCard>
+
+      <MyDrawer
+        name={'关联公共步骤'}
+        open={openChoiceStepDrawer}
+        setOpen={setOpenChoiceStepDrawer}
+      >
+        <PlayCommonChoiceTable
+          projectId={projectId?.toString()}
+          callBackFunc={handelRefresh}
+          groupId={groupId}
+        />
+      </MyDrawer>
+      <ProCard
+        bordered
+        bodyStyle={{
+          minHeight: '100vh',
+        }}
+        extra={CardExtra}
+      >
+        {subSteps.length > 0 ? (
+          <DnDDraggable
+            items={subStepsContent}
+            setItems={setSubStepsContent}
+            orderFetch={onDragEnd}
+          />
+        ) : (
+          <Empty description={'暂无子步骤'} />
+        )}
+      </ProCard>
+    </>
   );
 };
 

@@ -1,6 +1,6 @@
 import {
   queryPlayCaseVars,
-  queryPlayStepByCaseId,
+  queryPlayStepContentByCaseId,
   reorderCaseStep,
 } from '@/api/play/playCase';
 import { executePlayCaseByBack } from '@/api/play/result';
@@ -8,15 +8,15 @@ import DnDDraggable from '@/components/DnDDraggable';
 import { DraggableItem } from '@/components/DnDDraggable/type';
 import MyDrawer from '@/components/MyDrawer';
 import MyTabs from '@/components/MyTabs';
-import { IUICaseSteps } from '@/pages/Play/componets/uiTypes';
-import CollapsibleUIStepCard from '@/pages/Play/PlayCase/PlayCaseDetail/CollapsibleUIStepCard';
+import { IPlayStepContent } from '@/pages/Play/componets/uiTypes';
+import PlayCaseStepContents from '@/pages/Play/PlayCase/PlayCaseDetail/PlayCaseStepContents';
 import PlayCaseVars from '@/pages/Play/PlayCase/PlayCaseDetail/PlayCaseVars';
 import PlayCommonChoiceTable from '@/pages/Play/PlayCase/PlayCaseDetail/PlayCommonChoiceTable';
 import PlayGroupChoiceTable from '@/pages/Play/PlayCase/PlayCaseDetail/PlayGroupChoiceTable';
 import RunConfig from '@/pages/Play/PlayCase/PlayCaseDetail/RunConfig';
 import PlayCaseResultDetail from '@/pages/Play/PlayResult/PlayCaseResultDetail';
 import PlayCaseResultTable from '@/pages/Play/PlayResult/PlayCaseResultTable';
-import PlayStepInfo from '@/pages/Play/PlayStep/PlayStepInfo';
+import PlayStepDetail from '@/pages/Play/PlayStep/PlayStepDetail';
 import { useParams } from '@@/exports';
 import {
   EditOutlined,
@@ -38,7 +38,7 @@ const Index = () => {
   }>();
 
   const [uiStepsContent, setUIStepsContent] = useState<DraggableItem[]>([]);
-  const [uiSteps, setUISteps] = useState<IUICaseSteps[]>([]);
+  const [uiSteps, setUISteps] = useState<IPlayStepContent[]>([]);
   const [stepIndex, setStepIndex] = useState<number>(0);
   const [openAddStepDrawer, setOpenAddStepDrawer] = useState(false);
   const [openChoiceStepDrawer, setOpenChoiceStepDrawer] = useState(false);
@@ -53,7 +53,7 @@ const Index = () => {
   useEffect(() => {
     if (caseId) {
       Promise.all([
-        queryPlayStepByCaseId(caseId), // 获取步骤数据
+        queryPlayStepContentByCaseId(caseId), // 获取步骤数据
         queryPlayCaseVars(caseId),
       ]).then(([steps, vars]) => {
         if (steps.code === 0 && steps) {
@@ -68,19 +68,22 @@ const Index = () => {
 
   //set case steps content
   useEffect(() => {
+    if (!caseId || !projectId || !moduleId) return;
     if (uiSteps && uiSteps.length > 0) {
       setUIStepsContent(
         uiSteps.map((item, index) => ({
           id: index,
           step_id: item.id,
           content: (
-            <CollapsibleUIStepCard
+            <PlayCaseStepContents
               id={index}
               step={index + 1}
-              caseId={caseId!}
-              currentProjectId={projectId}
-              callBackFunc={handelRefresh}
-              uiStepInfo={item}
+              caseId={parseInt(caseId)}
+              projectId={parseInt(projectId)}
+              moduleId={parseInt(moduleId)}
+              callback={handelRefresh}
+              stepContent={item}
+              collapsible={true}
             />
           ),
         })),
@@ -94,9 +97,10 @@ const Index = () => {
   const onDragEnd = async (reorderedUIContents: any[]) => {
     if (caseId) {
       const reorderData = reorderedUIContents.map((item) => item.step_id);
-      reorderCaseStep({ caseId: parseInt(caseId), stepIds: reorderData }).then(
-        async () => setRefresh(refresh + 1),
-      );
+      reorderCaseStep({
+        case_id: parseInt(caseId),
+        content_id_list: reorderData,
+      }).then(async () => setRefresh(refresh + 1));
     }
   };
   const handelRefresh = async () => {
@@ -109,19 +113,28 @@ const Index = () => {
     const { value } = e.target;
     setRunningStyle(value);
   };
-
+  const AddUIStep = () => {
+    setOpenAddStepDrawer(true);
+    const currStepIndex = stepIndex + 1;
+    setStepIndex(currStepIndex);
+  };
   const AddStepExtra = () => {
-    const AddUIStep = () => {
-      setOpenAddStepDrawer(true);
-      const currStepIndex = stepIndex + 1;
-      setStepIndex(currStepIndex);
-    };
     return (
       <>
         <Dropdown.Button
           type={'primary'}
           menu={{
             items: [
+              {
+                key: 'add_step',
+                label: '添加私有步骤',
+                icon: <EditOutlined style={{ color: 'orange' }} />,
+                onClick: AddUIStep,
+              },
+              {
+                type: 'divider',
+              },
+
               {
                 key: 'choice_group',
                 label: '选择公共组',
@@ -133,15 +146,6 @@ const Index = () => {
                 label: '选择公共步骤',
                 icon: <SelectOutlined style={{ color: 'blue' }} />,
                 onClick: () => setOpenChoiceStepDrawer(true),
-              },
-              {
-                type: 'divider',
-              },
-              {
-                key: 'add_step',
-                label: '添加私有步骤',
-                icon: <EditOutlined style={{ color: 'blue' }} />,
-                onClick: AddUIStep,
               },
             ],
           }}
@@ -258,13 +262,11 @@ const Index = () => {
           setOpen={setOpenAddStepDrawer}
         >
           {caseId && (
-            <PlayStepInfo
-              readonly={false}
+            <PlayStepDetail
               currentProjectId={parseInt(projectId!)}
               currentModuleId={parseInt(moduleId!)}
+              play_case_id={parseInt(caseId)}
               callback={handelRefresh}
-              is_common_step={false}
-              play_case_id={caseId}
             />
           )}
         </MyDrawer>
