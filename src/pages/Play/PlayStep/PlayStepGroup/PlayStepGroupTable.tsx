@@ -1,4 +1,8 @@
-import { pagePlayGroupSteps } from '@/api/play/playCase';
+import {
+  copyPlayGroup,
+  pagePlayGroupSteps,
+  removePlayGroup,
+} from '@/api/play/playCase';
 import MyProTable from '@/components/Table/MyProTable';
 import { IUIGroupStep } from '@/pages/Play/componets/uiTypes';
 import PlayStepGroupModalForm from '@/pages/Play/PlayStep/PlayStepGroup/PlayStepGroupModalForm';
@@ -34,7 +38,6 @@ const PlayStepGroupTable: FC<SelfProps> = (props) => {
       ...values,
       module_id: currentModuleId,
       module_type: ModuleEnum.UI_STEP,
-      is_group: true,
     });
     return pageData(code, data);
   };
@@ -110,7 +113,15 @@ const PlayStepGroupTable: FC<SelfProps> = (props) => {
           详情
         </a>,
         <Divider type="vertical" />,
-        <a key={'copy'} onClick={() => {}}>
+        <a
+          key={'copy'}
+          onClick={async () => {
+            const { code } = await copyPlayGroup({ group_id: record.id });
+            if (code === 0) {
+              reload();
+            }
+          }}
+        >
           复制
         </a>,
         <Divider type="vertical" />,
@@ -119,7 +130,12 @@ const PlayStepGroupTable: FC<SelfProps> = (props) => {
           description={'删除后会影响被关联的用例！'}
           okText={'确认'}
           cancelText={'点错了'}
-          onConfirm={() => {}}
+          onConfirm={async () => {
+            const { code } = await removePlayGroup({ group_id: record.id });
+            if (code === 0) {
+              reload();
+            }
+          }}
         >
           <a>删除</a>
         </Popconfirm>,

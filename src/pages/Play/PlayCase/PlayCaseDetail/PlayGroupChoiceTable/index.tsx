@@ -9,7 +9,7 @@ import { IUICaseSteps } from '@/pages/Play/componets/uiTypes';
 import { ModuleEnum } from '@/utils/config';
 import { fetchModulesEnum, pageData } from '@/utils/somefunc';
 import { ProColumns } from '@ant-design/pro-table/lib/typing';
-import { Button, message, Tag } from 'antd';
+import { Button, Tag } from 'antd';
 import { TableRowSelection } from 'antd/es/table/interface';
 import React, { FC, useEffect, useState } from 'react';
 
@@ -125,11 +125,10 @@ const Index: FC<ISelfProps> = (props) => {
               onClick={async () => {
                 if (caseId) {
                   const { code } = await choicePlayGroupStep2Case({
-                    caseId: caseId,
-                    choice_steps: selectedRowKeys as number[],
+                    case_id: caseId,
+                    group_id_list: selectedRowKeys as number[],
                   });
                   if (code === 0) {
-                    message.success('添加成功、过滤重复Step');
                     callBackFunc();
                   }
                 }

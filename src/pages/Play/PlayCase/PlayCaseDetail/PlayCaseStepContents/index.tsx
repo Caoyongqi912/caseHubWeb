@@ -1,4 +1,5 @@
 import { IPlayStepContent } from '@/pages/Play/componets/uiTypes';
+import PlayGroupContent from '@/pages/Play/PlayCase/PlayCaseDetail/PlayCaseStepContents/contents/PlayGroupContent';
 import PlayStepContent from '@/pages/Play/PlayCase/PlayCaseDetail/PlayCaseStepContents/contents/PlayStepContent';
 import { FC } from 'react';
 
@@ -38,7 +39,15 @@ const Index: FC<SelfProps> = (props) => {
           />
         );
       case CaseContentType.Play_GROUP:
-        return null;
+        return (
+          <PlayGroupContent
+            id={id}
+            step={step}
+            caseId={caseId}
+            stepContent={stepContent}
+            callback={callback}
+          />
+        );
     }
   };
   return <div>{dispatch()}</div>;

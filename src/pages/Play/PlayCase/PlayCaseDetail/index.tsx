@@ -107,6 +107,7 @@ const Index = () => {
     setRefresh(refresh + 1);
     setOpenAddStepDrawer(false);
     setOpenChoiceStepDrawer(false);
+    setOpenChoiceGroupStepDrawer(false);
   };
 
   const onMenuClick = (e: RadioChangeEvent) => {

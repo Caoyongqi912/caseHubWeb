@@ -57,7 +57,11 @@ const ContentExtra: FC<SelfProps> = (props) => {
       <Space hidden={!show}>
         {stepContent.content_type === CaseContentType.Play_GROUP && (
           <Tooltip title="查看分组">
-            <InfoCircleTwoTone onClick={() => window.open()} />
+            <InfoCircleTwoTone
+              onClick={() =>
+                window.open(`/ui/group/detail/groupId=${stepContent.target_id}`)
+              }
+            />
           </Tooltip>
         )}
         <Tooltip title="复制步骤">

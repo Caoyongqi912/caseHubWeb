@@ -67,7 +67,7 @@ export const removePlayCase = async (
 };
 
 /**
- * 删除
+ * 複製
  * @param data
  * @param opt
  */
@@ -219,12 +219,12 @@ export const choicePlayStep2Case = async (
 
 export const choicePlayGroupStep2Case = async (
   data: {
-    caseId: string;
-    choice_steps: number[];
+    case_id: string;
+    group_id_list: number[];
   },
   options?: IObjGet,
 ) => {
-  return request<IResponse<null>>('/api/play/case/insert_group_step', {
+  return request<IResponse<null>>('/api/play/case/associationPlayGroup', {
     method: 'POST',
     data: data,
     ...(options || {}),
@@ -400,22 +400,6 @@ export const removeAssociationStepInterApi = async (
   return request<IResponse<any>>('/api/play/step/removeAssociationAPI', {
     method: 'POST',
     data: data,
-    ...(options || {}),
-  });
-};
-
-/**
- * 用例步骤详情
- * @param ident
- * @param options
- */
-export const queryPlayStepByCaseId = async (
-  ident: string,
-  options?: IObjGet,
-): Promise<IResponse<IUICaseSteps[]>> => {
-  return request<IResponse<IUICaseSteps[]>>('/api/play/case/query_steps', {
-    method: 'GET',
-    params: { caseId: ident },
     ...(options || {}),
   });
 };
@@ -617,6 +601,57 @@ export const pagePlayGroupSteps = async (
     data: params,
     ...(options || {}),
   });
+};
+
+/**
+ * 复制
+ * @param data
+ * @param options
+ */
+export const copyPlayGroup = async (
+  data: { group_id: number },
+  options?: IObjGet,
+) => {
+  return request<IResponse<null>>('/api/play/stepGroup/copy', {
+    method: 'POST',
+    data,
+    ...(options || {}),
+  });
+};
+
+/**
+ * 删除
+ * @param data
+ * @param options
+ */
+export const removePlayGroup = async (
+  data: { group_id: number },
+  options?: IObjGet,
+) => {
+  return request<IResponse<null>>('/api/play/stepGroup/remove', {
+    method: 'POST',
+    data,
+    ...(options || {}),
+  });
+};
+
+/**
+ * 步骤组分页
+ * @param params
+ * @param options
+ */
+export const queryPlayGroupSteps = async (
+  params: { group_id: number },
+  options?: IObjGet,
+) => {
+  return request<IResponse<IPlayStepDetail[]>>(
+    '/api/play/stepGroup/query_steps',
+    {
+      method: 'GET',
+      params,
+      ...(options || {}),
+    },
+  );
 };
 
 /**

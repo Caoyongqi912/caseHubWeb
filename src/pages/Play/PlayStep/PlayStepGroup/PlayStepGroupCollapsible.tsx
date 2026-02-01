@@ -61,7 +61,8 @@ const PlayStepGroupCollapsible: FC<ISelfProps> = (props) => {
           <Tooltip title="复制步骤">
             <Button
               type={'primary'}
-              icon={<CopyTwoTone onClick={copyUIStep} />}
+              icon={<CopyTwoTone />}
+              onClick={copyUIStep}
             >
               复制
             </Button>
@@ -69,7 +70,8 @@ const PlayStepGroupCollapsible: FC<ISelfProps> = (props) => {
           <Tooltip title="非公共步骤彻底删除">
             <Button
               color={'danger'}
-              icon={<DeleteTwoTone onClick={removeUIStep} />}
+              icon={<DeleteTwoTone />}
+              onClick={removeUIStep}
             >
               删除
             </Button>

@@ -71,6 +71,10 @@ const Index: FC<SelfProps> = ({
 
   useEffect(() => {
     actionRef.current?.reload();
+    groupForm.setFieldsValue({
+      project_id: currentProjectId,
+      module_id: currentModuleId,
+    });
   }, [currentModuleId, currentProjectId]);
 
   const saveBaseInfo = async (values: IInterfaceGroup) => {
