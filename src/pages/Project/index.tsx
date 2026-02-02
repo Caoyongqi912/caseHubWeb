@@ -2,6 +2,7 @@ import { IProject } from '@/api';
 import { newProject, putProject, queryProject, searchUser } from '@/api/base';
 import { history } from '@@/core/history';
 import {
+  ArrowRightOutlined,
   InfoCircleOutlined,
   PlusOutlined,
   ProjectTwoTone,
@@ -14,6 +15,7 @@ import {
   ProFormText,
 } from '@ant-design/pro-components';
 import {
+  Badge,
   Button,
   Col,
   Empty,
@@ -25,9 +27,14 @@ import {
 } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { useAccess } from 'umi';
+import ProjectStats from './ProjectStats';
 
 const { Paragraph } = Typography;
 
+/**
+ * 项目列表页面组件
+ * 用于展示所有项目，支持新建、编辑项目，并在项目卡片上显示统计信息
+ */
 const ProjectList: React.FC = () => {
   const { isAdmin } = useAccess();
   const [projects, setProjects] = useState<IProject[]>([]);
@@ -73,6 +80,7 @@ const ProjectList: React.FC = () => {
       });
     }
   };
+
   const queryUser: any = async (value: any) => {
     const { keyWords } = value;
     if (keyWords) {
@@ -91,9 +99,13 @@ const ProjectList: React.FC = () => {
       style={{
         padding: '24px',
         minHeight: '100vh',
-        backgroundColor: '#f5f5f5',
       }}
     >
+      <style>{`
+        .ant-pro-card:hover .card-arrow {
+          opacity: 1 !important;
+        }
+      `}</style>
       <ModalForm<IProject>
         title={`${title}项目`}
         form={currentForm}
@@ -183,16 +195,19 @@ const ProjectList: React.FC = () => {
                       boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
                       transition: 'all 0.3s ease',
                       cursor: 'pointer',
+                      border: '1px solid',
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.transform = 'translateY(-4px)';
                       e.currentTarget.style.boxShadow =
-                        '0 4px 16px rgba(0, 0, 0, 0.12)';
+                        '0 8px 24px rgba(0, 0, 0, 0.12)';
+                      e.currentTarget.style.borderColor = '#1890ff';
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.transform = 'translateY(0)';
                       e.currentTarget.style.boxShadow =
                         '0 2px 8px rgba(0, 0, 0, 0.06)';
+                      e.currentTarget.style.borderColor = '#f0f0f0';
                     }}
                     actions={
                       isAdmin
@@ -217,18 +232,46 @@ const ProjectList: React.FC = () => {
                         : []
                     }
                     title={
-                      <Space size={8}>
-                        <ProjectTwoTone style={{ fontSize: '18px' }} />
-                        <span
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                        }}
+                      >
+                        <Space size={8}>
+                          <Badge
+                            count={item.id}
+                            showZero
+                            style={{
+                              backgroundColor: '#1890ff',
+                              fontSize: '12px',
+                              padding: '0 6px',
+                            }}
+                          />
+                          <Space size={8}>
+                            <ProjectTwoTone style={{ fontSize: '18px' }} />
+                            <span
+                              style={{
+                                fontSize: '16px',
+                                fontWeight: 600,
+                                color: '#262626',
+                              }}
+                            >
+                              {item.title}
+                            </span>
+                          </Space>
+                        </Space>
+                        <ArrowRightOutlined
                           style={{
+                            color: '#1890ff',
                             fontSize: '16px',
-                            fontWeight: 600,
-                            color: '#262626',
+                            opacity: 0,
+                            transition: 'opacity 0.3s ease',
                           }}
-                        >
-                          {item.title}
-                        </span>
-                      </Space>
+                          className="card-arrow"
+                        />
+                      </div>
                     }
                   >
                     <Space direction="vertical" style={{ width: '100%' }}>
@@ -238,6 +281,7 @@ const ProjectList: React.FC = () => {
                             marginBottom: 12,
                             color: '#595959',
                             lineHeight: '1.5',
+                            fontSize: '14px',
                           }}
                         >
                           {item.description}
@@ -269,6 +313,7 @@ const ProjectList: React.FC = () => {
                           <span>创建人: {item.creatorName}</span>
                         </div>
                       )}
+                      <ProjectStats projectId={item.id} />
                     </Space>
                   </ProCard>
                 </Col>

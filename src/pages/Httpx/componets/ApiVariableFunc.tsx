@@ -15,12 +15,72 @@ import { ProCard } from '@ant-design/pro-components';
 import { Button, Popover, Select, Space, Typography } from 'antd';
 import React, { FC, useEffect, useState } from 'react';
 
+const { Text } = Typography;
+
 interface ISelfProps {
   value?: string | undefined;
   setValue?: ((rowIndex: string | number, data: any) => void) | undefined;
   index?: React.Key | undefined;
 }
 
+/**
+ * 公共样式配置
+ */
+const commonStyles = {
+  cardBody: {
+    padding: '8px',
+  },
+  cardBodyCompact: {
+    padding: '4px',
+  },
+  cardBodyMinimal: {
+    padding: 0,
+  },
+  popover: {
+    borderRadius: '8px',
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+  },
+  button: {
+    borderRadius: '6px',
+    transition: 'all 0.3s ease',
+  },
+  buttonPrimary: {
+    borderRadius: '6px',
+    boxShadow: '0 2px 0 rgba(24, 144, 255, 0.2)',
+    transition: 'all 0.3s ease',
+  },
+  icon: {
+    color: '#1890ff',
+    fontSize: '14px',
+    cursor: 'pointer',
+    transition: 'all 0.3s ease',
+  },
+  iconHover: {
+    color: '#40a9ff',
+    transform: 'scale(1.1)',
+  },
+  label: {
+    color: '#8c8c8c',
+    fontSize: '12px',
+    marginBottom: '4px',
+  },
+  code: {
+    fontSize: '12px',
+    padding: '4px 8px',
+    backgroundColor: '#f5f5f5',
+    borderRadius: '4px',
+    fontFamily: 'monospace',
+  },
+  googleIcon: {
+    color: '#1890ff',
+    fontSize: '14px',
+  },
+};
+
+/**
+ * API变量和函数选择组件
+ * 用于快速插入变量、函数和自定义变量到接口参数中
+ */
 const ApiVariableFunc: FC<ISelfProps> = ({ value, index, setValue }) => {
   const [open, setOpen] = useState(false);
   const [currentActiveKey, setCurrentActiveKey] = useState<string>('1');
@@ -33,84 +93,114 @@ const ApiVariableFunc: FC<ISelfProps> = ({ value, index, setValue }) => {
   const [myData, setMyData] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [refresh, setRefresh] = useState(false);
+
+  /**
+   * 通用数据获取函数
+   * 减少代码冗余，统一数据处理逻辑
+   */
+  const fetchData = async <T,>(
+    fetchFn: () => Promise<any>,
+    mapper: (item: T) => any,
+    setter: (data: any[]) => void,
+  ) => {
+    try {
+      const { code, data } = await fetchFn();
+      if (code === 0 && data) {
+        const mappedData = data.map(mapper);
+        setter(mappedData);
+      }
+    } catch (error) {
+      console.error('Failed to fetch data:', error);
+    }
+  };
+
+  /**
+   * 获取函数数据
+   */
   const fetch_func_data = async () => {
-    queryInterGlobalFunc().then(async ({ code, data }) => {
-      if (code === 0) {
-        const func = data.map((item: IInterfaceGlobalFunc) => {
-          return {
-            label: (
-              <Typography.Text
-                onMouseEnter={() => {
-                  setCurrentValue(item);
-                }}
-              >
-                <Typography.Text>
-                  <Space size={'small'}>
-                    <GoogleSquareFilled style={{ color: 'blue' }} />
-                    {item.label}
-                  </Space>
-                </Typography.Text>
-              </Typography.Text>
-            ),
-            value: item.value,
-            desc: item.description,
-          };
-        });
-        setFuncData(func);
-      }
-    });
+    fetchData(
+      queryInterGlobalFunc,
+      (item: IInterfaceGlobalFunc) => ({
+        label: (
+          <Text
+            onMouseEnter={() => {
+              setCurrentValue(item);
+            }}
+            style={{
+              cursor: 'pointer',
+            }}
+          >
+            <Space size={'small'}>
+              <GoogleSquareFilled style={commonStyles.googleIcon} />
+              {item.label}
+            </Space>
+          </Text>
+        ),
+        value: item.value,
+        desc: item.description,
+      }),
+      setFuncData,
+    );
   };
+
+  /**
+   * 获取变量数据
+   */
   const fetch_var_data = async () => {
-    queryInterGlobalVariable().then(async ({ code, data }) => {
-      if (code === 0) {
-        const var_data = data.map((item: IInterfaceGlobalVariable) => {
-          return {
-            label: (
-              <span
-                onMouseEnter={(event) => {
-                  event.stopPropagation();
-                  setCurrentData(item);
-                }}
-              >
-                <Space>
-                  <GoogleSquareFilled style={{ color: 'blue' }} />
-                  {item.key}
-                </Space>
-              </span>
-            ),
-            value: `{{$g_${item.key}}}`,
-          };
-        });
-        setVarData(var_data);
-      }
-    });
+    fetchData(
+      queryInterGlobalVariable,
+      (item: IInterfaceGlobalVariable) => ({
+        label: (
+          <span
+            onMouseEnter={(event) => {
+              event.stopPropagation();
+              setCurrentData(item);
+            }}
+            style={{
+              cursor: 'pointer',
+            }}
+          >
+            <Space>
+              <GoogleSquareFilled style={commonStyles.googleIcon} />
+              {item.key}
+            </Space>
+          </span>
+        ),
+        value: `{{$g_${item.key}}}`,
+      }),
+      setVarData,
+    );
   };
+
+  /**
+   * 获取用户自定义变量数据
+   */
   const fetch_my_var_data = async () => {
-    queryUserVars().then(async ({ code, data }) => {
-      if (code === 0) {
-        const value = data.map((item: IUserVar) => {
-          return {
-            label: (
-              <span
-                onMouseEnter={(event) => {
-                  event.stopPropagation();
-                  setCurrentMyData(item);
-                }}
-              >
-                <Space>
-                  <GoogleSquareFilled style={{ color: 'blue' }} />
-                  {item.key}
-                </Space>
-              </span>
-            ),
-            id: item.id,
-            key: item.key,
-            value: item.value,
-          };
-        });
-        setMyData(value);
-      }
-    });
+    fetchData(
+      queryUserVars,
+      (item: IUserVar) => ({
+        label: (
+          <span
+            onMouseEnter={(event) => {
+              event.stopPropagation();
+              setCurrentMyData(item);
+            }}
+            style={{
+              cursor: 'pointer',
+            }}
+          >
+            <Space>
+              <GoogleSquareFilled style={commonStyles.googleIcon} />
+              {item.key}
+            </Space>
+          </span>
+        ),
+        id: item.id,
+        key: item.key,
+        value: item.value,
+      }),
+      setMyData,
+    );
   };
 
   useEffect(() => {
@@ -124,86 +214,125 @@ const ApiVariableFunc: FC<ISelfProps> = ({ value, index, setValue }) => {
   const handleOpenChange = (newOpen: boolean) => {
     setOpen(newOpen);
   };
+
+  /**
+   * 渲染内容面板
+   * 统一渲染逻辑，减少代码重复
+   */
   const renderContentPanel = (data: any, type: 'func' | 'var' | 'my') => (
-    <ProCard bodyStyle={{ padding: 5 }}>
+    <ProCard bodyStyle={commonStyles.cardBodyCompact}>
       {data && (
-        <Space direction="vertical" size="middle">
-          <Typography.Text type="secondary">
+        <Space direction="vertical" size="small" style={{ width: '100%' }}>
+          <Text style={commonStyles.label}>
             {type === 'func' ? '表达式' : '变量名'}
-          </Typography.Text>
-          <Typography.Text code copyable>
+          </Text>
+          <Text code copyable style={commonStyles.code}>
             {type === 'func' ? selectValue : data.key}
-          </Typography.Text>
-          <Typography.Text type="secondary">变量值</Typography.Text>
-          <Typography.Text code ellipsis={{ tooltip: data.value }}>
+          </Text>
+          <Text style={commonStyles.label}>变量值</Text>
+          <Text
+            code
+            ellipsis={{ tooltip: data.value }}
+            style={commonStyles.code}
+          >
             {data.value?.length > 40
               ? `${data.value.substring(0, 40)}...`
               : data.value}
-          </Typography.Text>
+          </Text>
           {type === 'func' && (
             <>
-              <Typography.Text type="secondary">描述</Typography.Text>
-              <Typography.Text>{data.description}</Typography.Text>
+              <Text style={commonStyles.label}>描述</Text>
+              <Text>{data.description}</Text>
             </>
           )}
         </Space>
       )}
     </ProCard>
   );
+
+  /**
+   * 渲染详情面板
+   * 统一渲染逻辑，减少代码重复
+   */
   const renderDetailPanel = (data: any, type: 'func' | 'var' | 'my') => (
-    <ProCard bodyStyle={{ padding: 5 }}>
+    <ProCard bodyStyle={commonStyles.cardBodyCompact}>
       {data && (
-        <Space direction="vertical" size="small">
-          <Typography.Text type="secondary">变量名</Typography.Text>
-          <Typography.Text code>{data.label || data.key}</Typography.Text>
-          <Typography.Text type="secondary">变量值</Typography.Text>
-          <Typography.Text code ellipsis={true}>
+        <Space direction="vertical" size="small" style={{ width: '100%' }}>
+          <Text style={commonStyles.label}>变量名</Text>
+          <Text code style={commonStyles.code}>
+            {data.label || data.key}
+          </Text>
+          <Text style={commonStyles.label}>变量值</Text>
+          <Text
+            code
+            ellipsis={{
+              tooltip: type === 'func' ? data.description : data.value,
+            }}
+            style={commonStyles.code}
+          >
             {type === 'func'
               ? data.description
-              : data.description?.length > 15
-              ? `${data.description.substring(0, 15)}...`
-              : data.description}
-            {type === 'var'
+              : type === 'var'
               ? data.value
               : data.value?.length > 15
               ? `${data.value.substring(0, 15)}...`
               : data.value}
-          </Typography.Text>
+          </Text>
           {type === 'func' && (
             <>
-              <Typography.Text type="secondary">预览</Typography.Text>
-              <Typography.Text code>{data.demo}</Typography.Text>
+              <Text style={commonStyles.label}>预览</Text>
+              <Text code style={commonStyles.code}>
+                {data.demo}
+              </Text>
             </>
           )}
         </Space>
       )}
     </ProCard>
   );
+
+  /**
+   * 创建选择器配置
+   * 统一选择器配置，减少代码重复
+   */
+  const createSelectConfig = (
+    options: any[],
+    currentData: any,
+    setCurrentData: (data: any) => void,
+    type: 'func' | 'var' | 'my',
+  ) => ({
+    allowClear: true,
+    showSearch: true,
+    placeholder: '请选择',
+    style: { width: '100%' },
+    onChange: (value: string) => {
+      setSelectValue(value);
+    },
+    onClear: () => {
+      setSelectValue(undefined);
+      setCurrentData(undefined);
+    },
+    options,
+    dropdownRender: (menu: React.ReactNode) => (
+      <ProCard split={'vertical'} style={{ minWidth: '400px' }}>
+        <ProCard bodyStyle={commonStyles.cardBodyMinimal}>{menu}</ProCard>
+        {renderDetailPanel(currentData, type)}
+      </ProCard>
+    ),
+  });
   const items = [
     {
       key: '1',
       label: '引用变量',
       children: (
         <ProCard split={'horizontal'}>
-          <ProCard bodyStyle={{ padding: 5 }}>
+          <ProCard bodyStyle={commonStyles.cardBodyCompact}>
             <Select
-              allowClear
-              showSearch
-              onChange={(value) => {
-                setSelectValue(value);
-              }}
-              onClear={() => {
-                setSelectValue(undefined);
-                setCurrentValue(undefined);
-              }}
-              options={funcData}
-              dropdownRender={(menu) => (
-                <>
-                  <ProCard split={'vertical'}>
-                    <ProCard bodyStyle={{ padding: 0 }}>{menu}</ProCard>
-                    {renderDetailPanel(currentValue, 'func')}
-                  </ProCard>
-                </>
+              {...createSelectConfig(
+                funcData,
+                currentValue,
+                setCurrentValue,
+                'func',
               )}
             />
           </ProCard>
@@ -216,25 +345,13 @@ const ApiVariableFunc: FC<ISelfProps> = ({ value, index, setValue }) => {
       label: '固定值',
       children: (
         <ProCard split={'horizontal'} bodyStyle={{ minHeight: 100 }}>
-          <ProCard bodyStyle={{ padding: 5 }}>
+          <ProCard bodyStyle={commonStyles.cardBodyCompact}>
             <Select
-              allowClear
-              showSearch
-              onChange={(value) => {
-                setSelectValue(value);
-              }}
-              onClear={() => {
-                setSelectValue(undefined);
-                setCurrentData(undefined);
-              }}
-              options={varData}
-              dropdownRender={(menu) => (
-                <>
-                  <ProCard split={'vertical'}>
-                    <ProCard bodyStyle={{ padding: 0 }}>{menu}</ProCard>
-                    {renderDetailPanel(currentData, 'var')}
-                  </ProCard>
-                </>
+              {...createSelectConfig(
+                varData,
+                currentData,
+                setCurrentData,
+                'var',
               )}
             />
           </ProCard>
@@ -247,27 +364,15 @@ const ApiVariableFunc: FC<ISelfProps> = ({ value, index, setValue }) => {
       label: '我的',
       children: (
         <ProCard split={'horizontal'} bodyStyle={{ minHeight: 100 }}>
-          <ProCard bodyStyle={{ padding: 5 }}>
+          <ProCard bodyStyle={commonStyles.cardBodyCompact}>
             <Select
-              allowClear
-              showSearch
-              autoFocus
-              onChange={(value) => {
-                setSelectValue(value);
-              }}
-              onClear={() => {
-                setSelectValue(undefined);
-                setCurrentMyData(undefined);
-              }}
-              options={myData}
-              dropdownRender={(menu) => (
-                <>
-                  <ProCard split={'vertical'}>
-                    <ProCard bodyStyle={{ padding: 0 }}>{menu}</ProCard>
-                    {renderDetailPanel(currentMyData, 'my')}
-                  </ProCard>
-                </>
+              {...createSelectConfig(
+                myData,
+                currentMyData,
+                setCurrentMyData,
+                'my',
               )}
+              autoFocus={true}
             />
           </ProCard>
           {renderContentPanel(currentMyData, 'my')}
@@ -275,19 +380,31 @@ const ApiVariableFunc: FC<ISelfProps> = ({ value, index, setValue }) => {
       ),
     },
   ];
+
+  /**
+   * 渲染主内容区域
+   */
   const Content = (
-    <ProCard split="horizontal" style={{ height: 'auto', width: 450 }}>
+    <ProCard
+      split="horizontal"
+      style={{
+        height: 'auto',
+        width: 480,
+        maxWidth: '90vw',
+      }}
+    >
       <MyTabs
         items={items}
         defaultActiveKey={currentActiveKey}
         onChangeKey={(key) => setCurrentActiveKey(key)}
       />
-      <ProCard style={{ marginTop: 20, padding: '10px 0' }}>
+      <ProCard style={{ marginTop: 20, padding: '12px 0' }}>
         <div
           style={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
+            gap: '12px',
           }}
         >
           {selectValue && (
@@ -299,6 +416,7 @@ const ApiVariableFunc: FC<ISelfProps> = ({ value, index, setValue }) => {
                   }
                   setOpen(false);
                 }}
+                style={commonStyles.button}
               >
                 添加
               </Button>
@@ -313,6 +431,7 @@ const ApiVariableFunc: FC<ISelfProps> = ({ value, index, setValue }) => {
                   }
                   setOpen(false);
                 }}
+                style={commonStyles.button}
               >
                 插入
               </Button>
@@ -324,6 +443,7 @@ const ApiVariableFunc: FC<ISelfProps> = ({ value, index, setValue }) => {
               onClick={() => {
                 setIsModalOpen(true);
               }}
+              style={commonStyles.buttonPrimary}
             >
               新增
             </Button>
@@ -333,6 +453,9 @@ const ApiVariableFunc: FC<ISelfProps> = ({ value, index, setValue }) => {
     </ProCard>
   );
 
+  /**
+   * 渲染触发按钮
+   */
   return (
     <>
       <VarModalForm
@@ -345,9 +468,20 @@ const ApiVariableFunc: FC<ISelfProps> = ({ value, index, setValue }) => {
         trigger="click"
         open={open}
         onOpenChange={handleOpenChange}
-        style={{ borderRadius: 8 }}
+        overlayStyle={commonStyles.popover}
+        placement="bottomRight"
       >
-        <SearchOutlined style={{ color: '#1890ff' }} />
+        <SearchOutlined
+          style={commonStyles.icon}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = commonStyles.iconHover.color;
+            e.currentTarget.style.transform = commonStyles.iconHover.transform;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = commonStyles.icon.color;
+            e.currentTarget.style.transform = 'scale(1)';
+          }}
+        />
       </Popover>
     </>
   );

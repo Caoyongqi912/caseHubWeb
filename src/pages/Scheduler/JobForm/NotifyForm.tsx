@@ -11,6 +11,15 @@ interface Props {
   setNotifyName: (value: any) => void;
 }
 
+/**
+ * 通知配置表单组件
+ * 用于配置定时任务的通知方式
+ *
+ * 功能特性：
+ * - 支持选择是否通知
+ * - 支持选择通知方式
+ * - 支持选择通知时机（任务开始、成功、失败）
+ */
 const NotifyForm: FC<Props> = ({ setNotifyName }) => {
   const [pushOptions, setPushOptions] = useState<
     { value: number; label: string }[]
@@ -27,6 +36,7 @@ const NotifyForm: FC<Props> = ({ setNotifyName }) => {
       }
     });
   }, []);
+
   return (
     <>
       <ProFormRadio.Group
@@ -58,7 +68,7 @@ const NotifyForm: FC<Props> = ({ setNotifyName }) => {
                     }
                   }}
                 />
-                <ProFormText name={'job_notify_name'} hidden={true} />
+                <ProFormText name="job_notify_name" hidden={true} />
                 <ProFormSelect
                   name="job_notify_on"
                   label="通知时机"

@@ -48,12 +48,22 @@ interface SelfProps {
   perKey: string;
 }
 
+/**
+ * 接口用例表格组件
+ * 用于展示和管理接口用例列表
+ *
+ * 功能特性：
+ * - 支持查看、添加、复制、删除、移动用例
+ * - 支持按项目、模块筛选
+ * - 支持表格排序和搜索
+ * - 提供分页功能
+ */
 const Index: FC<SelfProps> = ({
   currentModuleId,
   currentProjectId,
   perKey,
 }) => {
-  const actionRef = useRef<ActionType>(); //Table action 的引用，便于自定义触发
+  const actionRef = useRef<ActionType>();
   const [currentCaseId, setCurrentCaseId] = useState<number>();
   const [openModal, setOpenModal] = useState(false);
   const [form] = Form.useForm();
@@ -61,9 +71,8 @@ const Index: FC<SelfProps> = ({
   const { initialState } = useModel('@@initialState');
   const projects = initialState?.projects || [];
   const [moduleEnum, setModuleEnum] = useState<IModuleEnum[]>([]);
-
   const [copyProjectId, setCopyProjectId] = useState<number>();
-  // 根据当前项目ID获取环境和用例部分
+
   useEffect(() => {
     if (copyProjectId) {
       fetchModulesEnum(
@@ -113,6 +122,7 @@ const Index: FC<SelfProps> = ({
       }
     }
   };
+
   const columns: ProColumns<IInterfaceAPICase>[] = [
     {
       title: '业务编号',
@@ -133,7 +143,7 @@ const Index: FC<SelfProps> = ({
       dataIndex: 'apiNum',
       valueType: 'text',
       render: (_, record) => {
-        return <Tag color={'blue'}>{record.apiNum}</Tag>;
+        return <Tag color="blue">{record.apiNum}</Tag>;
       },
     },
     {
@@ -142,7 +152,7 @@ const Index: FC<SelfProps> = ({
       valueType: 'select',
       valueEnum: CONFIG.API_LEVEL_ENUM,
       render: (_, record) => {
-        return <Tag color={'blue'}>{record.level}</Tag>;
+        return <Tag color="blue">{record.level}</Tag>;
       },
     },
     {
@@ -181,6 +191,7 @@ const Index: FC<SelfProps> = ({
       render: (_, record) => {
         return [
           <a
+            key="detail"
             onClick={() => {
               history.push(
                 `/interface/caseApi/detail/caseApiId=${record.id}&projectId=${record.project_id}&moduleId=${record.module_id}`,
@@ -190,6 +201,7 @@ const Index: FC<SelfProps> = ({
             详情
           </a>,
           <Dropdown
+            key="more"
             menu={{
               items: [
                 {
@@ -212,7 +224,6 @@ const Index: FC<SelfProps> = ({
                     setOpenModal(true);
                   },
                 },
-
                 {
                   type: 'divider',
                 },
@@ -221,9 +232,9 @@ const Index: FC<SelfProps> = ({
                   icon: <DeleteOutlined />,
                   label: (
                     <Popconfirm
-                      title={'确认删除？'}
-                      okText={'确认'}
-                      cancelText={'点错了'}
+                      title="确认删除？"
+                      okText="确认"
+                      cancelText="点错了"
                       onConfirm={async () => {
                         await removeApiCase(record.id).then(
                           async ({ code }) => {
@@ -244,7 +255,6 @@ const Index: FC<SelfProps> = ({
             <a onClick={(e) => e.preventDefault()}>
               <Space>
                 <MoreOutlined />
-                {/*<DashOutlined />*/}
               </Space>
             </a>
           </Dropdown>,
@@ -267,7 +277,7 @@ const Index: FC<SelfProps> = ({
   };
 
   return (
-    <>
+    <div>
       <Modal
         open={openModal}
         onOk={async () => {
@@ -284,14 +294,14 @@ const Index: FC<SelfProps> = ({
           }
         }}
         onCancel={() => setOpenModal(false)}
-        title={'移动'}
+        title="移动"
       >
         <ProForm submitter={false} form={form}>
           <ProFormSelect
-            width={'md'}
+            width="md"
             options={projects}
-            label={'项目'}
-            name={'project_id'}
+            label="项目"
+            name="project_id"
             required={true}
             onChange={(value) => {
               setCopyProjectId(value as number);
@@ -309,24 +319,24 @@ const Index: FC<SelfProps> = ({
               },
               filterTreeNode: true,
             }}
-            width={'md'}
+            width="md"
           />
         </ProForm>
       </Modal>
       <MyProTable
         key={perKey}
-        rowKey={'id'}
+        rowKey="id"
         actionRef={actionRef}
-        x={1200}
         columns={columns}
         request={fetchInterfaceCase}
         toolBarRender={() => [
           <MyModal
+            key="add"
             onFinish={saveBaseInfo}
             trigger={
               <Button
                 hidden={currentModuleId === undefined}
-                type={'primary'}
+                type="primary"
                 onClick={() => setCurrentCaseId(undefined)}
               >
                 <PlusOutlined />
@@ -339,7 +349,8 @@ const Index: FC<SelfProps> = ({
           </MyModal>,
         ]}
       />
-    </>
+    </div>
   );
 };
+
 export default Index;

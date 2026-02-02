@@ -72,14 +72,13 @@ const MyProTable: FC<SelfProps> = (props) => {
         style={{ width: '100%' }}
         tableStyle={{
           width: '100%',
-          minWidth: 'auto', // 防止最小宽度过大
         }}
         form={form}
         dataSource={dataSource}
         columns={columns}
         actionRef={actionRef}
         cardBordered
-        scroll={{ x: x }}
+        scroll={{ x: 'max-content' }}
         request={request}
         editable={{
           //可编辑表格的相关配置

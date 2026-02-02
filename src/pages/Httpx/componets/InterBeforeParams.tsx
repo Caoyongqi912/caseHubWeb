@@ -21,17 +21,35 @@ interface SelfProps {
   form: FormInstance<IInterfaceAPI>;
 }
 
+/**
+ * 前置参数配置组件
+ * 用于管理和编辑接口的前置参数，支持增删改查操作
+ */
 const InterBeforeParams: FC<SelfProps> = ({ form }) => {
   const [beforeParamsEditableKeys, setBeforeParamsEditableRowKeys] =
     useState<React.Key[]>();
   const editorFormRef = useRef<EditableFormInstance<IBeforeParams>>();
 
+  /**
+   * 表格列配置
+   * 定义前置参数表格的显示列和渲染方式
+   */
   const beforeColumns: ProColumns<IBeforeParams>[] = [
     {
       title: 'Key',
       dataIndex: 'key',
-      width: '30%',
-      render: (_, record) => <Text strong>{record.key}</Text>,
+      width: 200,
+      render: (_, record) => (
+        <Text
+          strong
+          style={{
+            color: '#262626',
+            fontSize: '14px',
+          }}
+        >
+          {record.key}
+        </Text>
+      ),
       formItemProps: {
         required: true,
         rules: [
@@ -45,7 +63,7 @@ const InterBeforeParams: FC<SelfProps> = ({ form }) => {
     {
       title: 'Value',
       dataIndex: 'value',
-      width: '30%',
+      width: 300,
       formItemProps: {
         required: true,
         rules: [
@@ -56,11 +74,20 @@ const InterBeforeParams: FC<SelfProps> = ({ form }) => {
         ],
       },
       render: (text, record) => {
-        if (record?.value?.includes('{{$')) {
-          return <Tag color="orange">{text}</Tag>;
-        } else {
-          return <Tag color={'blue'}>{text}</Tag>;
-        }
+        const isVariable = record?.value?.includes('{{$');
+        return (
+          <Tag
+            color={isVariable ? 'orange' : 'blue'}
+            style={{
+              borderRadius: '4px',
+              fontSize: '12px',
+              padding: '2px 8px',
+              fontFamily: 'monospace',
+            }}
+          >
+            {text}
+          </Tag>
+        );
       },
       renderFormItem: (_, { record }) => {
         return (
@@ -68,13 +95,16 @@ const InterBeforeParams: FC<SelfProps> = ({ form }) => {
             noStyle
             name={'value'}
             fieldProps={{
+              placeholder: '请输入参数值',
+              style: {
+                fontFamily: 'monospace',
+              },
               suffix: (
                 <ApiVariableFunc
                   value={record?.value}
                   index={record?.id}
                   setValue={(index, newData) => {
                     editorFormRef.current?.setRowData?.(index, newData);
-                    // 更新表单数据
                     form.setFieldsValue({
                       before_params: form
                         .getFieldValue('before_params')
@@ -96,17 +126,44 @@ const InterBeforeParams: FC<SelfProps> = ({ form }) => {
     {
       title: 'Desc',
       dataIndex: 'desc',
-      width: '20%',
+      width: 250,
+      ellipsis: true,
+      render: (_, record) => {
+        return (
+          <div
+            style={{
+              color: '#595959',
+              fontSize: '13px',
+            }}
+          >
+            {record.desc || '-'}
+          </div>
+        );
+      },
     },
     {
       title: 'Opt',
       valueType: 'option',
-      width: '20%',
+      width: 100,
+      fixed: 'right',
       render: (_, record, __, action) => {
         return [
           <a
             onClick={() => {
               action?.startEditable?.(record.id);
+            }}
+            style={{
+              color: '#1890ff',
+              fontWeight: 500,
+              transition: 'all 0.3s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = '#40a9ff';
+              e.currentTarget.style.textDecoration = 'underline';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = '#1890ff';
+              e.currentTarget.style.textDecoration = 'none';
             }}
           >
             编辑
@@ -116,38 +173,61 @@ const InterBeforeParams: FC<SelfProps> = ({ form }) => {
     },
   ];
 
+  /**
+   * 渲染前置参数配置卡片
+   */
   return (
-    <ProCard>
-      <>
-        <ProForm.Item name={'before_params'} trigger={'onValuesChange'}>
-          <EditableProTable<IBeforeParams>
-            editableFormRef={editorFormRef}
-            rowKey={'id'}
-            search={false}
-            columns={beforeColumns}
-            recordCreatorProps={{
-              newRecordType: 'dataSource',
-              record: () => ({
-                id: Date.now(),
-              }),
-            }}
-            editable={{
-              type: 'multiple',
-              editableKeys: beforeParamsEditableKeys,
-              onDelete: async (key) => {
-                await FormEditableOnValueRemove(form, 'before_params', key);
-              },
-              onChange: setBeforeParamsEditableRowKeys,
-              onSave: async () => {
-                await FormEditableOnValueChange(form, 'before_params');
-              },
-              actionRender: (row, _, dom) => {
-                return [dom.save, dom.cancel, dom.delete];
-              },
-            }}
-          />
-        </ProForm.Item>
-      </>
+    <ProCard
+      title="前置参数配置"
+      headerBordered={true}
+      style={{
+        borderRadius: '8px',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.09)',
+        marginBottom: '16px',
+      }}
+      bodyStyle={{
+        padding: '24px',
+      }}
+    >
+      <ProForm.Item name={'before_params'} trigger={'onValuesChange'}>
+        <EditableProTable<IBeforeParams>
+          editableFormRef={editorFormRef}
+          rowKey={'id'}
+          search={false}
+          columns={beforeColumns}
+          scroll={{ x: 'max-content' }}
+          options={{
+            density: true,
+            setting: true,
+          }}
+          pagination={{
+            defaultPageSize: 10,
+            showSizeChanger: true,
+            showQuickJumper: true,
+            pageSizeOptions: ['10', '20', '50'],
+          }}
+          recordCreatorProps={{
+            newRecordType: 'dataSource',
+            record: () => ({
+              id: Date.now(),
+            }),
+          }}
+          editable={{
+            type: 'multiple',
+            editableKeys: beforeParamsEditableKeys,
+            onDelete: async (key) => {
+              await FormEditableOnValueRemove(form, 'before_params', key);
+            },
+            onChange: setBeforeParamsEditableRowKeys,
+            onSave: async () => {
+              await FormEditableOnValueChange(form, 'before_params');
+            },
+            actionRender: (row, _, dom) => {
+              return [dom.save, dom.cancel, dom.delete];
+            },
+          }}
+        />
+      </ProForm.Item>
     </ProCard>
   );
 };

@@ -29,6 +29,18 @@ interface SelfProps {
   currentJob?: IJob;
 }
 
+/**
+ * 定时任务表单组件
+ * 用于创建和编辑定时任务
+ *
+ * 功能特性：
+ * - 支持API和UI两种任务类型
+ * - 支持选择运行环境
+ * - 支持配置任务参数
+ * - 支持选择任务列表
+ * - 支持设置定时触发规则
+ * - 支持配置通知方式
+ */
 const Index: FC<SelfProps> = (props) => {
   const { currentProjectId, currentModuleId, currentJob, callback } = props;
   const [jobType, setJobType] = useState<number>(1);
@@ -81,8 +93,8 @@ const Index: FC<SelfProps> = (props) => {
       job_notify_name: value,
     });
   };
+
   const onFinishOrUpdate = async (values: IJob) => {
-    //更新
     if (currentJob) {
       const { code, data, msg } = await update_aps_job({
         ...values,
@@ -112,6 +124,7 @@ const Index: FC<SelfProps> = (props) => {
       }
     }
   };
+
   return (
     <StepsForm formMapRef={formMapRef} onFinish={onFinishOrUpdate}>
       <StepsForm.StepForm name="step0" title="基础信息">
@@ -152,7 +165,7 @@ const Index: FC<SelfProps> = (props) => {
                 width="lg"
                 required={true}
                 label="运行环境"
-                name={'job_env_id'}
+                name="job_env_id"
                 placeholder="请选择运行环境"
                 allowClear
                 showSearch
@@ -178,7 +191,7 @@ const Index: FC<SelfProps> = (props) => {
         </ProCard>
       </StepsForm.StepForm>
       <StepsForm.StepForm
-        formKey={'jobs'}
+        formKey="jobs"
         name="step1"
         title="选择任务"
         onFinish={async (values) => {
@@ -188,7 +201,7 @@ const Index: FC<SelfProps> = (props) => {
           } else return true;
         }}
       >
-        <ProFormSelect name={'job_task_id_list'} hidden={true} />
+        <ProFormSelect name="job_task_id_list" hidden={true} />
         {showChoiceTable ? (
           <>
             {jobType === 1 ? (
@@ -228,4 +241,5 @@ const Index: FC<SelfProps> = (props) => {
     </StepsForm>
   );
 };
+
 export default Index;

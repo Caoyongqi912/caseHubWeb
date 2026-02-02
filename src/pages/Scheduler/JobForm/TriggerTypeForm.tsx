@@ -13,6 +13,16 @@ const TriggerType = {
   cron: 2,
   fixedRate: 3,
 };
+
+/**
+ * 触发类型表单组件
+ * 用于配置定时任务的触发类型和执行策略
+ *
+ * 功能特性：
+ * - 支持单次执行、周期执行、固定频率三种触发类型
+ * - 支持配置执行策略（并行、跳过、等待）
+ * - 支持配置重试次数和重试间隔
+ */
 const TriggerTypeForm = () => {
   return (
     <>
@@ -21,7 +31,7 @@ const TriggerTypeForm = () => {
           name="job_trigger_type"
           label="触发类型"
           required
-          width={'md'}
+          width="md"
           rules={[{ required: true, message: '请选择触发类型' }]}
           options={[
             { label: '单次执行', value: 1 },
@@ -29,16 +39,14 @@ const TriggerTypeForm = () => {
             { label: '固定频率', value: 3 },
           ]}
           fieldProps={{
-            onChange: (value) => {
-              // 可以根据不同类型显示不同的表单字段
-            },
+            onChange: (value) => {},
           }}
         />
 
         <ProFormSelect
           name="job_execute_strategy"
           label="执行策略"
-          width={'md'}
+          width="md"
           tooltip="当任务正在执行时，新触发的任务如何处理"
           options={[
             { label: '并行执行', value: 2 },
@@ -49,7 +57,6 @@ const TriggerTypeForm = () => {
         />
       </ProForm.Group>
 
-      {/* 单次执行配置 */}
       <ProFormDependency name={['job_trigger_type']}>
         {({ job_trigger_type }) => {
           if (job_trigger_type === TriggerType.once) {
@@ -75,7 +82,6 @@ const TriggerTypeForm = () => {
         }}
       </ProFormDependency>
 
-      {/* Cron表达式配置 */}
       <ProFormDependency name={['job_trigger_type']}>
         {({ job_trigger_type }) => {
           if (job_trigger_type === TriggerType.cron) {
@@ -103,7 +109,6 @@ const TriggerTypeForm = () => {
         }}
       </ProFormDependency>
 
-      {/* 固定频率配置 */}
       <ProFormDependency name={['job_trigger_type']}>
         {({ job_trigger_type }) => {
           if (job_trigger_type === TriggerType.fixedRate) {
@@ -112,7 +117,7 @@ const TriggerTypeForm = () => {
                 <ProFormDigit
                   name="job_execute_interval"
                   label="执行间隔"
-                  width={'md'}
+                  width="md"
                   required
                   rules={[{ required: true, message: '请输入执行间隔' }]}
                   fieldProps={{
@@ -141,7 +146,6 @@ const TriggerTypeForm = () => {
         }}
       </ProFormDependency>
 
-      {/* 通用配置 */}
       <ProForm.Group>
         <ProFormDigit
           name="job_max_retry_count"
