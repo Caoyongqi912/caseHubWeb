@@ -33,20 +33,93 @@ import {
   message,
   Modal,
   Space,
+  theme,
   Tooltip,
   Tree,
   TreeProps,
   Typography,
 } from 'antd';
 import React, { FC, useEffect, useMemo, useState } from 'react';
-import {
-  borderRadius,
-  colors,
-  shadows,
-  spacing,
-  styleHelpers,
-  typography,
-} from './designTokens';
+
+// 样式常量
+const spacing = {
+  xs: 4,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 20,
+  xxl: 24,
+  xxxl: 32,
+};
+
+const borderRadius = {
+  xs: 2,
+  sm: 4,
+  md: 6,
+  lg: 8,
+  xl: 12,
+  xxl: 16,
+  round: 9999,
+};
+
+const shadows = {
+  none: 'none',
+  xs: '0 1px 2px 0 rgba(0, 0, 0, 0.03)',
+  sm: '0 1px 3px 0 rgba(0, 0, 0, 0.06), 0 1px 2px 0 rgba(0, 0, 0, 0.04)',
+  md: '0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04)',
+  lg: '0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04)',
+  xl: '0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0, 0, 0, 0.02)',
+  inner: 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.04)',
+  card: '0 2px 8px rgba(0, 0, 0, 0.06)',
+  cardHover: '0 4px 12px rgba(0, 0, 0, 0.10)',
+  dropdown:
+    '0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 9px 28px 8px rgba(0, 0, 0, 0.05)',
+};
+
+const typography = {
+  fontSize: {
+    xs: 11,
+    sm: 12,
+    base: 13,
+    md: 14,
+    lg: 16,
+    xl: 18,
+    xxl: 20,
+    xxxl: 24,
+  },
+  fontWeight: {
+    normal: 400,
+    medium: 500,
+    semibold: 600,
+    bold: 700,
+  },
+  lineHeight: {
+    tight: 1.2,
+    normal: 1.5,
+    relaxed: 1.75,
+  },
+};
+
+const styleHelpers = {
+  transition: (properties: string[] = ['all']) => {
+    return {
+      transition: properties
+        .map((prop) => `${prop} 200ms ease-in-out`)
+        .join(', '),
+    };
+  },
+  truncate: (lines: number = 1) => {
+    return {
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      display: '-webkit-box',
+      WebkitLineClamp: lines,
+      WebkitBoxOrient: 'vertical' as const,
+    };
+  },
+};
+
+const { useToken } = theme;
 
 const { Search } = Input;
 const { Text } = Typography;
@@ -81,6 +154,7 @@ interface IProps {
 const ModuleTree: FC<IProps> = (props) => {
   const { currentProjectId, moduleType, onModuleChange } = props;
   const { isAdmin } = useAccess();
+  const { token } = useToken();
 
   // 数据状态
   const [reload, setReload] = useState(0); // 刷新标记
@@ -174,8 +248,7 @@ const ModuleTree: FC<IProps> = (props) => {
               <Text
                 strong
                 style={{
-                  color: colors.error[500],
-                  // backgroundColor: colors.error[50],
+                  color: token.colorError,
                   padding: `${spacing.xs / 2}px ${spacing.xs}px`,
                   borderRadius: borderRadius.xs,
                   fontWeight: typography.fontWeight.semibold,
@@ -209,7 +282,7 @@ const ModuleTree: FC<IProps> = (props) => {
         };
       });
     return loop(modules);
-  }, [modules, searchValue]);
+  }, [modules, searchValue, token.colorError]);
 
   const handleReload = () => {
     setReload(reload + 1);
@@ -234,7 +307,7 @@ const ModuleTree: FC<IProps> = (props) => {
             strong
             style={{
               fontSize: typography.fontSize.base,
-              color: colors.neutral[700],
+              color: token.colorText,
             }}
           >
             编辑
@@ -245,7 +318,7 @@ const ModuleTree: FC<IProps> = (props) => {
           setCurrentModule(node);
           setHandleModule(Handle.EditModule);
         },
-        icon: <EditOutlined style={{ color: colors.primary[500] }} />,
+        icon: <EditOutlined style={{ color: token.colorPrimary }} />,
       },
       {
         key: '2',
@@ -254,7 +327,7 @@ const ModuleTree: FC<IProps> = (props) => {
             strong
             style={{
               fontSize: typography.fontSize.base,
-              color: colors.error[500],
+              color: token.colorError,
             }}
           >
             删除
@@ -274,7 +347,7 @@ const ModuleTree: FC<IProps> = (props) => {
             ),
             icon: (
               <ExclamationCircleOutlined
-                style={{ color: colors.warning[500] }}
+                style={{ color: token.colorWarning }}
               />
             ),
             okText: '确定',
@@ -303,7 +376,7 @@ const ModuleTree: FC<IProps> = (props) => {
             },
           });
         },
-        icon: <DeleteOutlined style={{ color: colors.error[500] }} />,
+        icon: <DeleteOutlined style={{ color: token.colorError }} />,
       },
     ];
   };
@@ -361,7 +434,7 @@ const ModuleTree: FC<IProps> = (props) => {
                   setOpen(true);
                 }}
                 style={{
-                  color: colors.primary[500],
+                  color: token.colorPrimary,
                   borderRadius: borderRadius.sm,
                   width: 24,
                   height: 24,
@@ -491,8 +564,8 @@ const ModuleTree: FC<IProps> = (props) => {
               style={{
                 marginBottom: spacing.lg,
                 borderRadius: borderRadius.xl,
-                borderLeft: `4px solid ${colors.primary[500]}`,
-                border: `1px solid ${colors.primary[100]}`,
+                borderLeft: `4px solid ${token.colorPrimary}`,
+                border: `1px solid ${token.colorBorder}`,
                 boxShadow: shadows.card,
                 ...styleHelpers.transition(['box-shadow']),
               }}
@@ -536,7 +609,7 @@ const ModuleTree: FC<IProps> = (props) => {
                           height: 28,
                           fontSize: typography.fontSize.xs,
                           fontWeight: typography.fontWeight.medium,
-                          color: colors.primary[600],
+                          color: token.colorPrimary,
                           ...styleHelpers.transition([
                             'background-color',
                             'color',
@@ -552,7 +625,9 @@ const ModuleTree: FC<IProps> = (props) => {
                 <Search
                   placeholder="搜索模块..."
                   prefix={
-                    <SearchOutlined style={{ color: colors.neutral[500] }} />
+                    <SearchOutlined
+                      style={{ color: token.colorTextSecondary }}
+                    />
                   }
                   allowClear
                   variant="filled"
@@ -600,7 +675,7 @@ const ModuleTree: FC<IProps> = (props) => {
                   style={{
                     marginTop: spacing.md,
                     padding: spacing.sm,
-                    borderTop: `1px solid ${colors.functional.divider}`,
+                    borderTop: `1px solid ${token.colorBorder}`,
                     fontSize: typography.fontSize.xs,
                     textAlign: 'center',
                     fontWeight: typography.fontWeight.medium,

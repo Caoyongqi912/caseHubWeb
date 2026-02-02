@@ -5,18 +5,98 @@ import {
   SearchOutlined,
 } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
-import { Avatar, Button, Select, Space, Tooltip, Typography } from 'antd';
-import { FC, useState } from 'react';
 import {
-  borderRadius,
-  colors,
-  shadows,
-  spacing,
-  styleHelpers,
-  typography,
-} from './designTokens';
+  Avatar,
+  Button,
+  Select,
+  Space,
+  theme,
+  Tooltip,
+  Typography,
+} from 'antd';
+import { FC, useState } from 'react';
+
+const { useToken } = theme;
 
 const { Title, Text } = Typography;
+
+// 样式常量
+const spacing = {
+  xs: 4,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 20,
+  xxl: 24,
+  xxxl: 32,
+};
+
+const borderRadius = {
+  xs: 2,
+  sm: 4,
+  md: 6,
+  lg: 8,
+  xl: 12,
+  xxl: 16,
+  round: 9999,
+};
+
+const shadows = {
+  none: 'none',
+  xs: '0 1px 2px 0 rgba(0, 0, 0, 0.03)',
+  sm: '0 1px 3px 0 rgba(0, 0, 0, 0.06), 0 1px 2px 0 rgba(0, 0, 0, 0.04)',
+  md: '0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04)',
+  lg: '0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04)',
+  xl: '0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0, 0, 0, 0.02)',
+  inner: 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.04)',
+  card: '0 2px 8px rgba(0, 0, 0, 0.06)',
+  cardHover: '0 4px 12px rgba(0, 0, 0, 0.10)',
+  dropdown:
+    '0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 9px 28px 8px rgba(0, 0, 0, 0.05)',
+};
+
+const typography = {
+  fontSize: {
+    xs: 11,
+    sm: 12,
+    base: 13,
+    md: 14,
+    lg: 16,
+    xl: 18,
+    xxl: 20,
+    xxxl: 24,
+  },
+  fontWeight: {
+    normal: 400,
+    medium: 500,
+    semibold: 600,
+    bold: 700,
+  },
+  lineHeight: {
+    tight: 1.2,
+    normal: 1.5,
+    relaxed: 1.75,
+  },
+};
+
+const styleHelpers = {
+  transition: (properties: string[] = ['all']) => {
+    return {
+      transition: properties
+        .map((prop) => `${prop} 200ms ease-in-out`)
+        .join(', '),
+    };
+  },
+  truncate: (lines: number = 1) => {
+    return {
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      display: '-webkit-box',
+      WebkitLineClamp: lines,
+      WebkitBoxOrient: 'vertical' as const,
+    };
+  },
+};
 
 interface IProps {
   currentProjectId?: number;
@@ -30,6 +110,7 @@ const ProjectSelect: FC<IProps> = ({
   onProjectChange,
 }) => {
   const [searchValue, setSearchValue] = useState('');
+  const { token } = useToken();
 
   // 获取当前选中的项目
   const currentProject = currentProjectId
@@ -39,11 +120,11 @@ const ProjectSelect: FC<IProps> = ({
   // 渲染自定义选项 - 使用设计令牌优化
   const renderOption = (item: IProject) => {
     const projectColors = [
-      colors.primary[500],
-      colors.success[500],
-      colors.secondary[500],
-      colors.warning[500],
-      colors.error[500],
+      token.colorPrimary,
+      token.colorSuccess,
+      token.colorInfo,
+      token.colorWarning,
+      token.colorError,
       '#13c2c2',
       '#eb2f96',
     ];
@@ -62,7 +143,7 @@ const ProjectSelect: FC<IProps> = ({
             size="small"
             style={{
               backgroundColor: projectColors[colorIndex],
-              color: colors.neutral[0],
+              color: token.colorBgContainer,
               fontSize: typography.fontSize.xs,
               fontWeight: typography.fontWeight.semibold,
               boxShadow: shadows.xs,
@@ -75,7 +156,7 @@ const ProjectSelect: FC<IProps> = ({
               strong
               style={{
                 fontSize: typography.fontSize.base,
-                color: colors.neutral[800],
+                color: token.colorText,
                 fontWeight: typography.fontWeight.medium,
                 display: 'block',
                 lineHeight: typography.lineHeight.tight,
@@ -89,7 +170,7 @@ const ProjectSelect: FC<IProps> = ({
                   type="secondary"
                   style={{
                     fontSize: typography.fontSize.xs,
-                    color: colors.neutral[500],
+                    color: token.colorTextSecondary,
                     lineHeight: typography.lineHeight.tight,
                     ...styleHelpers.truncate(1),
                   }}
@@ -124,8 +205,8 @@ const ProjectSelect: FC<IProps> = ({
           width: '100%',
           marginBottom: spacing.sm,
           borderRadius: borderRadius.xl,
-          borderLeft: `4px solid ${colors.primary[500]}`,
-          border: `1px solid ${colors.primary[100]}`,
+          borderLeft: `4px solid ${token.colorPrimary}`,
+          border: `1px solid ${token.colorBorder}`,
           boxShadow: shadows.card,
           ...styleHelpers.transition(['box-shadow', 'transform']),
           cursor: 'default',
@@ -143,7 +224,7 @@ const ProjectSelect: FC<IProps> = ({
         >
           <Space align="center" size={spacing.md}>
             <ProjectTwoTone
-              twoToneColor={colors.primary[500]}
+              twoToneColor={token.colorPrimary}
               style={{
                 fontSize: typography.fontSize.xxxl,
                 ...styleHelpers.transition(['transform']),
@@ -155,7 +236,7 @@ const ProjectSelect: FC<IProps> = ({
                 style={{
                   margin: 0,
                   fontWeight: typography.fontWeight.semibold,
-                  color: colors.primary[600],
+                  color: token.colorPrimary,
                   fontSize: typography.fontSize.lg,
                   lineHeight: typography.lineHeight.tight,
                 }}
@@ -167,7 +248,7 @@ const ProjectSelect: FC<IProps> = ({
                   type="secondary"
                   style={{
                     fontSize: typography.fontSize.xs,
-                    color: colors.neutral[600],
+                    color: token.colorTextSecondary,
                     marginTop: spacing.xs,
                     display: 'block',
                     ...styleHelpers.truncate(1),
@@ -186,7 +267,7 @@ const ProjectSelect: FC<IProps> = ({
               icon={<CloseOutlined />}
               onClick={() => onProjectChange(undefined)}
               style={{
-                color: colors.neutral[500],
+                color: token.colorTextSecondary,
                 borderRadius: borderRadius.round,
                 width: 28,
                 height: 28,
@@ -197,12 +278,12 @@ const ProjectSelect: FC<IProps> = ({
                 ...styleHelpers.transition(['background-color', 'color']),
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = colors.neutral[100];
-                e.currentTarget.style.color = colors.neutral[700];
+                e.currentTarget.style.backgroundColor = token.colorBgContainer;
+                e.currentTarget.style.color = token.colorText;
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = 'transparent';
-                e.currentTarget.style.color = colors.neutral[500];
+                e.currentTarget.style.color = token.colorTextSecondary;
               }}
             />
           </Tooltip>
@@ -217,7 +298,7 @@ const ProjectSelect: FC<IProps> = ({
       style={{
         marginBottom: spacing.lg,
         borderRadius: borderRadius.xl,
-        border: `1px solid ${colors.functional.borderLight}`,
+        border: `1px solid ${token.colorBorder}`,
         boxShadow: shadows.card,
         ...styleHelpers.transition(['box-shadow']),
       }}
@@ -227,14 +308,14 @@ const ProjectSelect: FC<IProps> = ({
         {/* 标题区域 */}
         <Space align="center" size={spacing.md}>
           <ProjectTwoTone
-            twoToneColor={colors.secondary[500]}
+            twoToneColor={token.colorPrimary}
             style={{ fontSize: typography.fontSize.xl }}
           />
           <Text
             strong
             style={{
               fontSize: typography.fontSize.md,
-              color: colors.secondary[600],
+              color: token.colorText,
               fontWeight: typography.fontWeight.semibold,
             }}
           >
@@ -251,8 +332,8 @@ const ProjectSelect: FC<IProps> = ({
           autoFocus
           placeholder={
             <Space>
-              <SearchOutlined style={{ color: colors.neutral[400] }} />
-              <span style={{ color: colors.neutral[400] }}>
+              <SearchOutlined style={{ color: token.colorTextSecondary }} />
+              <span style={{ color: token.colorTextSecondary }}>
                 搜索或选择项目...
               </span>
             </Space>
@@ -275,10 +356,10 @@ const ProjectSelect: FC<IProps> = ({
                   style={{
                     padding: `${spacing.sm}px ${spacing.md}px`,
                     fontSize: typography.fontSize.xs,
-                    color: colors.neutral[600],
+                    color: token.colorTextSecondary,
                     fontWeight: typography.fontWeight.medium,
-                    borderBottom: `1px solid ${colors.functional.divider}`,
-                    backgroundColor: colors.neutral[50],
+                    borderBottom: `1px solid ${token.colorBorder}`,
+                    backgroundColor: token.colorBgContainer,
                   }}
                 >
                   搜索结果 ({filteredOptions.length})
@@ -290,10 +371,10 @@ const ProjectSelect: FC<IProps> = ({
                   style={{
                     padding: `${spacing.sm}px ${spacing.md}px`,
                     fontSize: typography.fontSize.xs,
-                    color: colors.neutral[500],
+                    color: token.colorTextSecondary,
                     textAlign: 'center',
-                    borderTop: `1px solid ${colors.functional.divider}`,
-                    backgroundColor: colors.neutral[50],
+                    borderTop: `1px solid ${token.colorBorder}`,
+                    backgroundColor: token.colorBgContainer,
                   }}
                 >
                   共有 {projects.length} 个项目
@@ -301,7 +382,9 @@ const ProjectSelect: FC<IProps> = ({
               )}
             </div>
           )}
-          suffixIcon={<SearchOutlined style={{ color: colors.neutral[500] }} />}
+          suffixIcon={
+            <SearchOutlined style={{ color: token.colorTextSecondary }} />
+          }
         />
 
         {/* 项目统计提示 */}
@@ -310,19 +393,19 @@ const ProjectSelect: FC<IProps> = ({
             style={{
               textAlign: 'center',
               padding: `${spacing.sm}px ${spacing.md}px`,
-              backgroundColor: colors.success[50],
+              backgroundColor: token.colorSuccessBg,
               borderRadius: borderRadius.md,
-              border: `1px solid ${colors.success[100]}`,
+              border: `1px solid ${token.colorSuccessBorder}`,
             }}
           >
             <Text
               style={{
                 fontSize: typography.fontSize.xs,
-                color: colors.success[700],
+                color: token.colorSuccess,
                 fontWeight: typography.fontWeight.medium,
               }}
             >
-              <ProjectTwoTone twoToneColor={colors.success[500]} />
+              <ProjectTwoTone twoToneColor={token.colorSuccess} />
               &nbsp;共 {projects.length} 个项目可供选择
             </Text>
           </div>
