@@ -5,10 +5,10 @@ interface SelfProps {
   name?: string | JSX.Element;
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  width?: string | null;
+  width?: string | number;
   extra?: any;
   onClose?: () => void;
-  height?: string | null;
+  height?: string | number;
   loading?: boolean;
 }
 
@@ -19,7 +19,13 @@ const Index: FC<SelfProps> = (props) => {
     <Drawer
       autoFocus
       loading={loading}
-      styles={{ body: { padding: 0, overflow: 'hidden' } }}
+      styles={{
+        body: {
+          padding: 5,
+          overflowY: 'auto',
+          overflowX: 'hidden',
+        },
+      }}
       open={open}
       destroyOnClose={true}
       height={height || 'auto'}

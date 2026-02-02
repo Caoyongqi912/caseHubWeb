@@ -226,7 +226,6 @@ const Index: FC<SelfProps> = ({
         headerTitle={'公共步骤列表'}
         actionRef={actionRef}
         rowKey={'id'}
-        x={1000}
         columns={columns}
         toolBarRender={() => [addStepButton]}
         request={fetchCommonStepPage}

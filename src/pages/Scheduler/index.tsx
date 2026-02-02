@@ -29,10 +29,8 @@ const Index = () => {
   return (
     <>
       <ProCard
-        style={{ height: 'auto' }}
         bodyStyle={{
-          height: 'auto',
-          minHeight: '90vh',
+          minHeight: '100vh',
           padding: 0,
           overflow: 'hidden',
         }}
@@ -42,12 +40,26 @@ const Index = () => {
             setSizes(sizes);
             setSplitter(PerKeySplitter, sizes[0], sizes[1]);
           }}
-          style={{ boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)' }}
+          style={{
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+          }}
+          layout="horizontal"
         >
           <Splitter.Panel
+            resizable={true}
             collapsible={true}
+            style={{
+              height: '100%',
+              minHeight: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+            }}
             size={sizes[0]}
-            style={{ height: 'auto' }}
+            min={0}
+            max={600}
           >
             <LeftComponents
               moduleType={ModuleEnum.JOB}
@@ -57,9 +69,13 @@ const Index = () => {
             />
           </Splitter.Panel>
           <Splitter.Panel
+            resizable={true}
             size={sizes[1]}
-            min={'60%'}
-            style={{ overflow: 'auto' }}
+            style={{
+              overflow: 'auto',
+              minHeight: 0,
+              display: 'flex',
+            }}
           >
             <SchedulerTable
               perKey={PerKey}

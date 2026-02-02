@@ -5,7 +5,7 @@ import InterfaceApiTableNoModule from '@/pages/Httpx/Interface/InterfaceApiTable
 import InterfaceApiUpload from '@/pages/Httpx/Interface/InterfaceApiUpload';
 import { ModuleEnum } from '@/utils/config';
 import { getSplitter, setSplitter } from '@/utils/token';
-import { PageContainer, ProCard } from '@ant-design/pro-components';
+import { ProCard } from '@ant-design/pro-components';
 import { Splitter, TabsProps } from 'antd';
 import { useEffect, useState } from 'react';
 
@@ -72,13 +72,7 @@ const Index = () => {
     }
   }, []);
   return (
-    <PageContainer
-      title={false}
-      tabProps={{
-        type: 'editable-card',
-        hideAdd: true,
-      }}
-    >
+    <>
       <ProCard
         style={{ height: 'auto' }}
         bodyStyle={{
@@ -93,16 +87,26 @@ const Index = () => {
             setSizes(sizes);
             setSplitter(PerKeySplitter, sizes[0], sizes[1]);
           }}
-          style={{ width: '100%', height: '100%' }}
+          style={{
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+          }}
           layout="horizontal"
         >
           <Splitter.Panel
             resizable={true}
             collapsible={true}
-            style={{ height: 'auto' }}
+            style={{
+              height: '100%',
+              minHeight: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+            }}
             size={sizes[0]}
-            min={'0%'}
-            max={'30%'}
+            min={0}
+            max={600}
           >
             <LeftComponents
               moduleType={ModuleEnum.API}
@@ -114,7 +118,11 @@ const Index = () => {
           <Splitter.Panel
             resizable={true}
             size={sizes[1]}
-            style={{ overflow: 'auto' }}
+            style={{
+              overflow: 'auto',
+              minHeight: 0,
+              display: 'flex',
+            }}
           >
             <ProCard
               bodyStyle={{ padding: 0 }}
@@ -126,7 +134,7 @@ const Index = () => {
           </Splitter.Panel>
         </Splitter>
       </ProCard>
-    </PageContainer>
+    </>
   );
 };
 

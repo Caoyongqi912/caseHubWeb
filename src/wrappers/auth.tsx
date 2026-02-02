@@ -1,15 +1,11 @@
-import React, {ReactNode} from 'react';
+import { ReactNode } from 'react';
 
 interface IProps {
   children?: ReactNode;
 }
 
 const Auth = (props: IProps) => {
-  return (
-    <div>
-      {props?.children}
-    </div>
-  );
+  return <div>{props?.children}</div>;
 };
 
 export default Auth;

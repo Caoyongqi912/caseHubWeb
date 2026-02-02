@@ -1,5 +1,5 @@
-import React, { FC, useEffect } from 'react';
 import { EditableProTable } from '@ant-design/pro-components';
+import { FC, useEffect } from 'react';
 
 interface SelfProps {
   columns: any;

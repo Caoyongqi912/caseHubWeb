@@ -43,9 +43,18 @@ const Index = () => {
         style={{ boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)' }}
       >
         <Splitter.Panel
+          resizable={true}
           collapsible={true}
+          style={{
+            height: '100%',
+            minHeight: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+          }}
           size={sizes[0]}
-          style={{ height: 'auto' }}
+          min={0}
+          max={600}
         >
           <LeftComponents
             moduleType={ModuleEnum.API_CASE}
