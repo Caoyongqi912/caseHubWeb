@@ -40,91 +40,18 @@ import {
   Typography,
 } from 'antd';
 import React, { FC, useEffect, useMemo, useState } from 'react';
-
-// 样式常量
-const spacing = {
-  xs: 4,
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 20,
-  xxl: 24,
-  xxxl: 32,
-};
-
-const borderRadius = {
-  xs: 2,
-  sm: 4,
-  md: 6,
-  lg: 8,
-  xl: 12,
-  xxl: 16,
-  round: 9999,
-};
-
-const shadows = {
-  none: 'none',
-  xs: '0 1px 2px 0 rgba(0, 0, 0, 0.03)',
-  sm: '0 1px 3px 0 rgba(0, 0, 0, 0.06), 0 1px 2px 0 rgba(0, 0, 0, 0.04)',
-  md: '0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04)',
-  lg: '0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04)',
-  xl: '0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0, 0, 0, 0.02)',
-  inner: 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.04)',
-  card: '0 2px 8px rgba(0, 0, 0, 0.06)',
-  cardHover: '0 4px 12px rgba(0, 0, 0, 0.10)',
-  dropdown:
-    '0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 9px 28px 8px rgba(0, 0, 0, 0.05)',
-};
-
-const typography = {
-  fontSize: {
-    xs: 11,
-    sm: 12,
-    base: 13,
-    md: 14,
-    lg: 16,
-    xl: 18,
-    xxl: 20,
-    xxxl: 24,
-  },
-  fontWeight: {
-    normal: 400,
-    medium: 500,
-    semibold: 600,
-    bold: 700,
-  },
-  lineHeight: {
-    tight: 1.2,
-    normal: 1.5,
-    relaxed: 1.75,
-  },
-};
-
-const styleHelpers = {
-  transition: (properties: string[] = ['all']) => {
-    return {
-      transition: properties
-        .map((prop) => `${prop} 200ms ease-in-out`)
-        .join(', '),
-    };
-  },
-  truncate: (lines: number = 1) => {
-    return {
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      display: '-webkit-box',
-      WebkitLineClamp: lines,
-      WebkitBoxOrient: 'vertical' as const,
-    };
-  },
-};
+import {
+  borderRadius,
+  shadows,
+  spacing,
+  styleHelpers,
+  typography,
+} from './styles';
 
 const { useToken } = theme;
-
 const { Search } = Input;
 const { Text } = Typography;
 
-// 模块操作类型定义
 type HandleAction = {
   title: string;
   key: number;
@@ -137,7 +64,6 @@ type IHandle = {
   RemoveModule: HandleAction;
 };
 
-// 模块操作枚举，用于区分不同的操作类型
 const Handle: IHandle = {
   AddRoot: { title: '新增模块', key: 1 },
   AddChild: { title: '新增子模块', key: 2 },
@@ -156,25 +82,21 @@ const ModuleTree: FC<IProps> = (props) => {
   const { isAdmin } = useAccess();
   const { token } = useToken();
 
-  // 数据状态
-  const [reload, setReload] = useState(0); // 刷新标记
-  const [modules, setModules] = useState<IModule[]>([]); // 模块列表
-  const [modulesTree, setModulesTree] = useState<any[]>([]); // 扁平化的模块树，用于搜索
+  const [reload, setReload] = useState(0);
+  const [modules, setModules] = useState<IModule[]>([]);
+  const [modulesTree, setModulesTree] = useState<any[]>([]);
 
-  // 弹窗状态
   const [open, setOpen] = useState(false);
   const [currentModule, setCurrentModule] = useState<IModule | null>(null);
   const [handleModule, setHandleModule] = useState<HandleAction>(
     Handle.AddRoot,
   );
 
-  // 交互状态
   const [expandedKeys, setExpandedKeys] = useState<React.Key[]>([]);
   const [selectedKeys, setSelectedKeys] = useState<React.Key[]>([]);
   const [searchValue, setSearchValue] = useState('');
   const [autoExpandParent, setAutoExpandParent] = useState(true);
 
-  // 加载模块数据
   useEffect(() => {
     if (currentProjectId) {
       queryTreeModuleByProject(currentProjectId, moduleType).then(
@@ -194,7 +116,6 @@ const ModuleTree: FC<IProps> = (props) => {
     }
   }, [currentProjectId, reload]);
 
-  // 从 localStorage 恢复上次选中的模块
   const localStorageFun = (modulesList: IModule[]) => {
     const storageNum = getLocalStorageModule(moduleType);
     if (storageNum) {
@@ -207,7 +128,6 @@ const ModuleTree: FC<IProps> = (props) => {
         setExpandedKeys([moduleId]);
         setAutoExpandParent(true);
       } else {
-        // 模块已被删除，清理无效缓存
         localStorage.removeItem('module_type_' + moduleType);
         setSelectedKeys([]);
         setExpandedKeys([]);
@@ -215,7 +135,6 @@ const ModuleTree: FC<IProps> = (props) => {
     }
   };
 
-  // 递归检查模块是否存在
   const checkModuleExists = (
     modulesList: IModule[],
     targetId: number,
@@ -229,7 +148,6 @@ const ModuleTree: FC<IProps> = (props) => {
     return false;
   };
 
-  // 构建树节点数据，处理搜索高亮
   const TreeModule = useMemo(() => {
     const loop: any = (data: IModule[]) =>
       data.map((item: IModule) => {
@@ -248,8 +166,8 @@ const ModuleTree: FC<IProps> = (props) => {
               <Text
                 strong
                 style={{
-                  color: token.colorError,
-                  padding: `${spacing.xs / 2}px ${spacing.xs}px`,
+                  color: token.colorPrimary,
+                  padding: `0 ${spacing.xs}px`,
                   borderRadius: borderRadius.xs,
                   fontWeight: typography.fontWeight.semibold,
                 }}
@@ -282,13 +200,12 @@ const ModuleTree: FC<IProps> = (props) => {
         };
       });
     return loop(modules);
-  }, [modules, searchValue, token.colorError]);
+  }, [modules, searchValue, token.colorPrimary, token.colorPrimaryBg]);
 
   const handleReload = () => {
     setReload(reload + 1);
   };
 
-  // 拖拽排序
   const onDrop: TreeProps['onDrop'] = async (info) => {
     const { code } = await dropModule({
       id: info.dragNode.key,
@@ -297,7 +214,6 @@ const ModuleTree: FC<IProps> = (props) => {
     if (code === 0) handleReload();
   };
 
-  // 右键菜单项
   const menuItem = (node: IModule): MenuProps['items'] => {
     return [
       {
@@ -342,21 +258,32 @@ const ModuleTree: FC<IProps> = (props) => {
                   fontWeight: typography.fontWeight.semibold,
                 }}
               >
-                你确定要删除这个目录吗?
+                确认删除
               </span>
+            ),
+            content: (
+              <Text
+                style={{
+                  fontSize: typography.fontSize.sm,
+                  color: token.colorTextSecondary,
+                }}
+              >
+                删除后该模块下的所有内容将无法恢复，确定要继续吗？
+              </Text>
             ),
             icon: (
               <ExclamationCircleOutlined
-                style={{ color: token.colorWarning }}
+                style={{ color: token.colorWarning, fontSize: 22 }}
               />
             ),
-            okText: '确定',
+            okText: '确定删除',
             okType: 'danger',
-            cancelText: '点错了',
+            cancelText: '取消',
             okButtonProps: {
               style: {
-                borderRadius: borderRadius.md,
-                fontWeight: typography.fontWeight.medium,
+                ...styleHelpers.buttonPrimary(token),
+                backgroundColor: token.colorError,
+                borderColor: token.colorError,
               },
             },
             cancelButtonProps: {
@@ -381,8 +308,10 @@ const ModuleTree: FC<IProps> = (props) => {
     ];
   };
 
-  // 树节点渲染
   const TreeTitleRender = (tree: any) => {
+    const isSelected = selectedKeys.includes(tree.key);
+    const isHovered = currentModule && currentModule.key === tree.key;
+
     return (
       <div
         style={{
@@ -390,37 +319,69 @@ const ModuleTree: FC<IProps> = (props) => {
           alignItems: 'center',
           justifyContent: 'space-between',
           width: '100%',
-          borderRadius: borderRadius.md,
-          margin: `${spacing.xs}px 0`,
+          borderRadius: borderRadius.sm,
+          margin: '2px 0',
           cursor: 'pointer',
+          padding: `${spacing.xs}px ${spacing.sm}px`,
+          minHeight: 32,
+          background: isSelected
+            ? token.colorPrimaryBg
+            : isHovered
+            ? token.colorFillAlter
+            : 'transparent',
+          border: isSelected
+            ? `1px solid ${token.colorPrimaryBorder}`
+            : '1px solid transparent',
+          ...styleHelpers.transition([
+            'background-color',
+            'border-color',
+            'transform',
+          ]),
         }}
         onClick={() => setCurrentModule(tree)}
+        onMouseEnter={() => setCurrentModule(tree)}
       >
-        <Space align="center" style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <Text strong>{tree.title}</Text>
-
-            {tree.count > 0 && (
-              <Badge
-                count={tree.count}
-                size="small"
-                style={{
-                  marginLeft: spacing.sm,
-                  fontSize: typography.fontSize.xs,
-                  fontWeight: typography.fontWeight.medium,
-                }}
-              />
-            )}
-          </div>
-        </Space>
-
-        {isAdmin && currentModule && currentModule.key === tree.key && (
-          <Space
+        <div
+          style={{
+            flex: 1,
+            minWidth: 0,
+            display: 'flex',
+            alignItems: 'center',
+            gap: spacing.sm,
+          }}
+        >
+          <Text
+            strong
             style={{
-              marginLeft: spacing.sm,
+              fontSize: typography.fontSize.base,
+              color: isSelected ? token.colorPrimary : token.colorText,
+              lineHeight: 1.4,
+            }}
+          >
+            {tree.title}
+          </Text>
+
+          {tree.count > 0 && (
+            <Badge
+              count={tree.count}
+              size="small"
+              style={{
+                fontSize: typography.fontSize.xs,
+                fontWeight: typography.fontWeight.medium,
+                backgroundColor: token.colorInfoBg,
+                color: token.colorInfoText,
+              }}
+            />
+          )}
+        </div>
+
+        {isAdmin && isHovered && (
+          <Space
+            size={2}
+            style={{
+              marginLeft: spacing.xs,
               ...styleHelpers.transition(['opacity']),
             }}
-            size={spacing.xs}
           >
             <Tooltip title="添加子模块" placement="top">
               <Button
@@ -435,14 +396,20 @@ const ModuleTree: FC<IProps> = (props) => {
                 }}
                 style={{
                   color: token.colorPrimary,
-                  borderRadius: borderRadius.sm,
-                  width: 24,
-                  height: 24,
-                  minWidth: 24,
+                  borderRadius: borderRadius.round,
+                  width: 22,
+                  height: 22,
+                  minWidth: 22,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   ...styleHelpers.transition(['background-color', 'color']),
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = token.colorPrimaryBg;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
                 }}
               />
             </Tooltip>
@@ -457,14 +424,20 @@ const ModuleTree: FC<IProps> = (props) => {
                 icon={<MoreOutlined />}
                 onClick={(e) => e.stopPropagation()}
                 style={{
-                  borderRadius: borderRadius.sm,
-                  width: 24,
-                  height: 24,
-                  minWidth: 24,
+                  borderRadius: borderRadius.round,
+                  width: 22,
+                  height: 22,
+                  minWidth: 22,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   ...styleHelpers.transition(['background-color', 'color']),
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = token.colorFillAlter;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
                 }}
               />
             </Dropdown>
@@ -474,7 +447,6 @@ const ModuleTree: FC<IProps> = (props) => {
     );
   };
 
-  // 搜索框变化，自动展开匹配的节点
   const OnSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = e.target;
     setSearchValue(value);
@@ -499,7 +471,6 @@ const ModuleTree: FC<IProps> = (props) => {
     setAutoExpandParent(true);
   };
 
-  // 模块操作完成回调
   const onModuleFinish = async (value: { title: string }) => {
     let result;
 
@@ -558,7 +529,6 @@ const ModuleTree: FC<IProps> = (props) => {
             size={'middle'}
             style={{ width: '100%' }}
           >
-            {/* 搜索区域卡片 */}
             <ProCard
               size="small"
               style={{
@@ -569,7 +539,7 @@ const ModuleTree: FC<IProps> = (props) => {
                 boxShadow: shadows.card,
                 ...styleHelpers.transition(['box-shadow']),
               }}
-              bodyStyle={{ padding: spacing.md }}
+              bodyStyle={{ padding: spacing.lg }}
             >
               <Space
                 direction="vertical"
@@ -583,19 +553,35 @@ const ModuleTree: FC<IProps> = (props) => {
                     alignItems: 'center',
                   }}
                 >
-                  <Text
-                    strong
+                  <div
                     style={{
-                      fontSize: typography.fontSize.md,
-                      fontWeight: typography.fontWeight.semibold,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: spacing.sm,
                     }}
                   >
-                    模块目录
-                  </Text>
+                    <div
+                      style={{
+                        width: 4,
+                        height: 16,
+                        background: `linear-gradient(180deg, ${token.colorPrimary} 0%, ${token.colorPrimaryBg} 100%)`,
+                        borderRadius: borderRadius.xs,
+                      }}
+                    />
+                    <Text
+                      strong
+                      style={{
+                        fontSize: typography.fontSize.md,
+                        fontWeight: typography.fontWeight.semibold,
+                      }}
+                    >
+                      模块目录
+                    </Text>
+                  </div>
                   {isAdmin && (
                     <Tooltip title="新建根模块" placement="left">
                       <Button
-                        type="link"
+                        type="primary"
                         size="small"
                         icon={<PlusOutlined />}
                         onClick={() => {
@@ -604,16 +590,10 @@ const ModuleTree: FC<IProps> = (props) => {
                           setOpen(true);
                         }}
                         style={{
-                          borderRadius: borderRadius.md,
-                          padding: `0 ${spacing.sm}px`,
+                          ...styleHelpers.buttonPrimary(token),
+                          padding: `0 ${spacing.md}px`,
                           height: 28,
                           fontSize: typography.fontSize.xs,
-                          fontWeight: typography.fontWeight.medium,
-                          color: token.colorPrimary,
-                          ...styleHelpers.transition([
-                            'background-color',
-                            'color',
-                          ]),
                         }}
                       >
                         新建
@@ -642,8 +622,13 @@ const ModuleTree: FC<IProps> = (props) => {
               size="small"
               bodyStyle={{
                 padding: spacing.sm,
-                maxHeight: 'calc(100vh - 300px)',
+                maxHeight: 'calc(100vh - 350px)',
                 overflowY: 'auto',
+              }}
+              style={{
+                borderRadius: borderRadius.xl,
+                border: `1px solid ${token.colorBorder}`,
+                boxShadow: shadows.card,
               }}
             >
               <Tree
@@ -674,12 +659,14 @@ const ModuleTree: FC<IProps> = (props) => {
                 <div
                   style={{
                     marginTop: spacing.md,
-                    padding: spacing.sm,
+                    padding: `${spacing.sm}px ${spacing.md}px`,
                     borderTop: `1px solid ${token.colorBorder}`,
                     fontSize: typography.fontSize.xs,
                     textAlign: 'center',
                     fontWeight: typography.fontWeight.medium,
+                    color: token.colorTextSecondary,
                     borderRadius: `0 0 ${borderRadius.md}px ${borderRadius.md}px`,
+                    background: token.colorFillAlter,
                   }}
                 >
                   共 {modules.length} 个模块 •{' '}

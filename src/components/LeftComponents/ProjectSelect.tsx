@@ -15,88 +15,16 @@ import {
   Typography,
 } from 'antd';
 import { FC, useState } from 'react';
+import {
+  borderRadius,
+  shadows,
+  spacing,
+  styleHelpers,
+  typography,
+} from './styles';
 
 const { useToken } = theme;
-
 const { Title, Text } = Typography;
-
-// 样式常量
-const spacing = {
-  xs: 4,
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 20,
-  xxl: 24,
-  xxxl: 32,
-};
-
-const borderRadius = {
-  xs: 2,
-  sm: 4,
-  md: 6,
-  lg: 8,
-  xl: 12,
-  xxl: 16,
-  round: 9999,
-};
-
-const shadows = {
-  none: 'none',
-  xs: '0 1px 2px 0 rgba(0, 0, 0, 0.03)',
-  sm: '0 1px 3px 0 rgba(0, 0, 0, 0.06), 0 1px 2px 0 rgba(0, 0, 0, 0.04)',
-  md: '0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04)',
-  lg: '0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04)',
-  xl: '0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0, 0, 0, 0.02)',
-  inner: 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.04)',
-  card: '0 2px 8px rgba(0, 0, 0, 0.06)',
-  cardHover: '0 4px 12px rgba(0, 0, 0, 0.10)',
-  dropdown:
-    '0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 9px 28px 8px rgba(0, 0, 0, 0.05)',
-};
-
-const typography = {
-  fontSize: {
-    xs: 11,
-    sm: 12,
-    base: 13,
-    md: 14,
-    lg: 16,
-    xl: 18,
-    xxl: 20,
-    xxxl: 24,
-  },
-  fontWeight: {
-    normal: 400,
-    medium: 500,
-    semibold: 600,
-    bold: 700,
-  },
-  lineHeight: {
-    tight: 1.2,
-    normal: 1.5,
-    relaxed: 1.75,
-  },
-};
-
-const styleHelpers = {
-  transition: (properties: string[] = ['all']) => {
-    return {
-      transition: properties
-        .map((prop) => `${prop} 200ms ease-in-out`)
-        .join(', '),
-    };
-  },
-  truncate: (lines: number = 1) => {
-    return {
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      display: '-webkit-box',
-      WebkitLineClamp: lines,
-      WebkitBoxOrient: 'vertical' as const,
-    };
-  },
-};
 
 interface IProps {
   currentProjectId?: number;
@@ -112,12 +40,10 @@ const ProjectSelect: FC<IProps> = ({
   const [searchValue, setSearchValue] = useState('');
   const { token } = useToken();
 
-  // 获取当前选中的项目
   const currentProject = currentProjectId
     ? projects.find((item) => item.id === currentProjectId)
     : null;
 
-  // 渲染自定义选项 - 使用设计令牌优化
   const renderOption = (item: IProject) => {
     const projectColors = [
       token.colorPrimary,
@@ -132,63 +58,65 @@ const ProjectSelect: FC<IProps> = ({
 
     return {
       label: (
-        <Space
+        <div
           style={{
             width: '100%',
-            padding: `${spacing.sm}px ${spacing.xs}px`,
+            padding: `${spacing.md}px ${spacing.xs}px`,
             ...styleHelpers.transition(['background-color', 'transform']),
+            borderRadius: borderRadius.md,
           }}
         >
-          <Avatar
-            size="small"
-            style={{
-              backgroundColor: projectColors[colorIndex],
-              color: token.colorBgContainer,
-              fontSize: typography.fontSize.xs,
-              fontWeight: typography.fontWeight.semibold,
-              boxShadow: shadows.xs,
-            }}
-          >
-            {item.title?.charAt(0).toUpperCase()}
-          </Avatar>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <Text
-              strong
+          <Space align="center" size={spacing.md} style={{ width: '100%' }}>
+            <Avatar
+              size="default"
               style={{
-                fontSize: typography.fontSize.base,
-                color: token.colorText,
-                fontWeight: typography.fontWeight.medium,
-                display: 'block',
-                lineHeight: typography.lineHeight.tight,
+                backgroundColor: projectColors[colorIndex],
+                color: token.colorBgContainer,
+                fontSize: typography.fontSize.sm,
+                fontWeight: typography.fontWeight.semibold,
+                boxShadow: shadows.sm,
+                flexShrink: 0,
               }}
             >
-              {item.title}
-            </Text>
-            {item.description && (
-              <div style={{ marginTop: 2 }}>
+              {item.title?.charAt(0).toUpperCase()}
+            </Avatar>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <Text
+                strong
+                style={{
+                  fontSize: typography.fontSize.base,
+                  color: token.colorText,
+                  fontWeight: typography.fontWeight.medium,
+                  display: 'block',
+                  lineHeight: typography.lineHeight.tight,
+                }}
+              >
+                {item.title}
+              </Text>
+              {item.description && (
                 <Text
                   type="secondary"
                   style={{
                     fontSize: typography.fontSize.xs,
                     color: token.colorTextSecondary,
                     lineHeight: typography.lineHeight.tight,
+                    display: 'block',
                     ...styleHelpers.truncate(1),
                   }}
                 >
-                  {item.description.length > 30
-                    ? `${item.description.substring(0, 30)}...`
+                  {item.description.length > 35
+                    ? `${item.description.substring(0, 35)}...`
                     : item.description}
                 </Text>
-              </div>
-            )}
-          </div>
-        </Space>
+              )}
+            </div>
+          </Space>
+        </div>
       ),
       value: item.id,
     };
   };
 
-  // 过滤选项
   const filteredOptions = projects
     .filter(
       (item) =>
@@ -198,6 +126,19 @@ const ProjectSelect: FC<IProps> = ({
     .map(renderOption);
 
   if (currentProject) {
+    const projectColors = [
+      token.colorPrimary,
+      token.colorSuccess,
+      token.colorInfo,
+      token.colorWarning,
+      token.colorError,
+      '#13c2c2',
+      '#eb2f96',
+    ];
+    const colorIndex = currentProject.id
+      ? currentProject.id % projectColors.length
+      : 0;
+
     return (
       <ProCard
         size="small"
@@ -223,21 +164,26 @@ const ProjectSelect: FC<IProps> = ({
           }}
         >
           <Space align="center" size={spacing.md}>
-            <ProjectTwoTone
-              twoToneColor={token.colorPrimary}
+            <Avatar
+              size="large"
               style={{
-                fontSize: typography.fontSize.xxxl,
-                ...styleHelpers.transition(['transform']),
+                backgroundColor: projectColors[colorIndex],
+                color: token.colorBgContainer,
+                fontSize: typography.fontSize.md,
+                fontWeight: typography.fontWeight.semibold,
+                boxShadow: shadows.sm,
               }}
-            />
+            >
+              {currentProject.title?.charAt(0).toUpperCase()}
+            </Avatar>
             <div>
               <Title
-                level={4}
+                level={5}
                 style={{
                   margin: 0,
                   fontWeight: typography.fontWeight.semibold,
                   color: token.colorPrimary,
-                  fontSize: typography.fontSize.lg,
+                  fontSize: typography.fontSize.base,
                   lineHeight: typography.lineHeight.tight,
                 }}
               >
@@ -267,23 +213,7 @@ const ProjectSelect: FC<IProps> = ({
               icon={<CloseOutlined />}
               onClick={() => onProjectChange(undefined)}
               style={{
-                color: token.colorTextSecondary,
-                borderRadius: borderRadius.round,
-                width: 28,
-                height: 28,
-                minWidth: 28,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                ...styleHelpers.transition(['background-color', 'color']),
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = token.colorBgContainer;
-                e.currentTarget.style.color = token.colorText;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-                e.currentTarget.style.color = token.colorTextSecondary;
+                ...styleHelpers.iconButton(token),
               }}
             />
           </Tooltip>
@@ -305,25 +235,50 @@ const ProjectSelect: FC<IProps> = ({
       bodyStyle={{ padding: `${spacing.xl}px ${spacing.lg}px` }}
     >
       <Space direction="vertical" style={{ width: '100%' }} size={spacing.lg}>
-        {/* 标题区域 */}
         <Space align="center" size={spacing.md}>
-          <ProjectTwoTone
-            twoToneColor={token.colorPrimary}
-            style={{ fontSize: typography.fontSize.xl }}
-          />
-          <Text
-            strong
+          <div
             style={{
-              fontSize: typography.fontSize.md,
-              color: token.colorText,
-              fontWeight: typography.fontWeight.semibold,
+              width: 32,
+              height: 32,
+              borderRadius: borderRadius.md,
+              background: `linear-gradient(135deg, ${token.colorPrimaryBg} 0%, ${token.colorPrimary} 100%)`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
-            选择项目
-          </Text>
+            <ProjectTwoTone
+              twoToneColor={token.colorPrimary}
+              style={{
+                fontSize: typography.fontSize.xl,
+                color: token.colorBgContainer,
+              }}
+            />
+          </div>
+          <div>
+            <Text
+              strong
+              style={{
+                fontSize: typography.fontSize.md,
+                color: token.colorText,
+                fontWeight: typography.fontWeight.semibold,
+                display: 'block',
+              }}
+            >
+              选择项目
+            </Text>
+            <Text
+              type="secondary"
+              style={{
+                fontSize: typography.fontSize.xs,
+                color: token.colorTextSecondary,
+              }}
+            >
+              从下方列表中选择
+            </Text>
+          </div>
         </Space>
 
-        {/* 搜索选择区域 */}
         <Select
           style={{ width: '100%' }}
           size="large"
@@ -387,26 +342,43 @@ const ProjectSelect: FC<IProps> = ({
           }
         />
 
-        {/* 项目统计提示 */}
         {projects.length > 0 && (
           <div
             style={{
-              textAlign: 'center',
-              padding: `${spacing.sm}px ${spacing.md}px`,
-              backgroundColor: token.colorSuccessBg,
+              padding: `${spacing.md}px ${spacing.lg}px`,
+              background: `linear-gradient(135deg, ${token.colorSuccessBg} 0%, ${token.colorSuccessBgHover} 100%)`,
               borderRadius: borderRadius.md,
               border: `1px solid ${token.colorSuccessBorder}`,
+              display: 'flex',
+              alignItems: 'center',
+              gap: spacing.sm,
             }}
           >
-            <Text
+            <div
               style={{
-                fontSize: typography.fontSize.xs,
-                color: token.colorSuccess,
-                fontWeight: typography.fontWeight.medium,
+                width: 24,
+                height: 24,
+                borderRadius: borderRadius.round,
+                background: token.colorSuccess,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
-              <ProjectTwoTone twoToneColor={token.colorSuccess} />
-              &nbsp;共 {projects.length} 个项目可供选择
+              <ProjectTwoTone
+                twoToneColor={token.colorBgContainer}
+                style={{ fontSize: typography.fontSize.sm }}
+              />
+            </div>
+            <Text
+              style={{
+                fontSize: typography.fontSize.sm,
+                color: token.colorSuccessText,
+                fontWeight: typography.fontWeight.medium,
+                flex: 1,
+              }}
+            >
+              共 {projects.length} 个项目可供选择
             </Text>
           </div>
         )}

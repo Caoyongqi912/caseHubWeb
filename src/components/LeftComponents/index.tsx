@@ -4,8 +4,17 @@ import EmptyProject from '@/components/LeftComponents/EmptyProject';
 import ModuleTree from '@/components/LeftComponents/ModuleTree';
 import ProjectSelect from '@/components/LeftComponents/ProjectSelect';
 import { ProCard } from '@ant-design/pro-components';
-import { Space } from 'antd';
+import { Space, theme } from 'antd';
 import { FC, useEffect, useState } from 'react';
+import {
+  borderRadius,
+  responsive,
+  shadows,
+  spacing,
+  styleHelpers,
+} from './styles';
+
+const { useToken } = theme;
 
 interface SelfProps {
   currentProjectId?: number;
@@ -18,8 +27,8 @@ const Index: FC<SelfProps> = (props) => {
   const { currentProjectId, moduleType, onProjectChange, onModuleChange } =
     props;
   const [projects, setProjects] = useState<IProject[]>([]);
+  const { token } = useToken();
 
-  // 首次进入 获取project Arr  默认选择第一个
   useEffect(() => {
     queryProject().then(async ({ data }) => {
       if (data && data.length > 0) {
@@ -34,13 +43,25 @@ const Index: FC<SelfProps> = (props) => {
       style={{
         height: 'auto',
         width: '100%',
-        borderRadius: '6px',
-        whiteSpace: 'nowrap',
+        borderRadius: borderRadius.xl,
+        border: `1px solid ${token.colorBorder}`,
+        boxShadow: shadows.card,
+        background: token.colorBgContainer,
+        ...styleHelpers.transition(['box-shadow']),
       }}
-      bodyStyle={{ padding: 5 }}
+      bodyStyle={{
+        padding: spacing.md,
+        [responsive.mobile]: {
+          padding: spacing.sm,
+        },
+      }}
     >
       {projects.length > 0 ? (
-        <Space direction={'vertical'}>
+        <Space
+          direction={'vertical'}
+          size={spacing.md}
+          style={{ width: '100%' }}
+        >
           <ProjectSelect
             projects={projects}
             currentProjectId={currentProjectId}

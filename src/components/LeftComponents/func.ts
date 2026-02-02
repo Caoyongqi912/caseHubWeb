@@ -33,7 +33,6 @@ export const getParentKey = (key: React.Key, tree: IModule[]): React.Key => {
 
 export const setLocalStorageModule = (module_type: number, data: string) => {
   localStorage.setItem('module_type_' + module_type, data);
-
 };
 
 export const getLocalStorageModule = (module_type: number) => {
