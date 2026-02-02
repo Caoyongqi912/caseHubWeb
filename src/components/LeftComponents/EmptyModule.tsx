@@ -52,7 +52,7 @@ const EmptyModule: FC<IProps> = ({
           alignItems: 'center',
           justifyContent: 'center',
           padding: `${spacing.xxxl}px ${spacing.lg}px`,
-          // minHeight: 'calc(100vh - 200px)',
+          minHeight: 'calc(100vh - 200px)',
           background: `linear-gradient(135deg, ${token.colorBgContainer} 0%, ${token.colorBgLayout} 100%)`,
           borderRadius: borderRadius.xl,
           position: 'relative',

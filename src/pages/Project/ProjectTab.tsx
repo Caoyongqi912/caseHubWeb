@@ -3,6 +3,7 @@ import Db from '@/pages/Project/Db';
 import Env from '@/pages/Project/Env';
 import GlobalVariables from '@/pages/Project/GlobalVariables';
 import Push from '@/pages/Project/Push';
+import { Card } from 'antd';
 import { useParams } from 'umi';
 
 const ProjectTab = () => {
@@ -30,7 +31,29 @@ const ProjectTab = () => {
       children: <GlobalVariables projectId={projectId} />,
     },
   ];
-  return <MyTabs defaultActiveKey={'2'} items={items} />;
+
+  return (
+    <Card
+      style={{
+        width: '100%',
+        borderRadius: '8px',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.09)',
+      }}
+      bodyStyle={{
+        padding: 0,
+        borderRadius: '8px',
+      }}
+    >
+      <MyTabs
+        defaultActiveKey={'2'}
+        items={items}
+        size="middle"
+        style={{
+          borderRadius: '8px',
+        }}
+      />
+    </Card>
+  );
 };
 
 export default ProjectTab;

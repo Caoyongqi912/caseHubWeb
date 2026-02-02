@@ -1,14 +1,28 @@
 import { IProject } from '@/api';
 import { newProject, putProject, queryProject, searchUser } from '@/api/base';
 import { history } from '@@/core/history';
-import { PlusOutlined, ProjectTwoTone } from '@ant-design/icons';
+import {
+  InfoCircleOutlined,
+  PlusOutlined,
+  ProjectTwoTone,
+  TeamOutlined,
+} from '@ant-design/icons';
 import {
   ModalForm,
   ProCard,
   ProFormSelect,
   ProFormText,
 } from '@ant-design/pro-components';
-import { Button, Col, Form, message, Row, Typography } from 'antd';
+import {
+  Button,
+  Col,
+  Empty,
+  Form,
+  message,
+  Row,
+  Space,
+  Typography,
+} from 'antd';
 import React, { useEffect, useState } from 'react';
 import { useAccess } from 'umi';
 
@@ -73,41 +87,47 @@ const ProjectList: React.FC = () => {
   };
 
   return (
-    <>
+    <div
+      style={{
+        padding: '24px',
+        minHeight: '100vh',
+        backgroundColor: '#f5f5f5',
+      }}
+    >
       <ModalForm<IProject>
         title={`${title}项目`}
         form={currentForm}
         open={openModel}
         onOpenChange={setOpenModel}
         autoFocusFirstInput
-        // 关闭执录入执行
         modalProps={{
           onCancel: () => console.log('close'),
+          width: 600,
         }}
         onFinish={saveOrPut}
       >
         <ProFormText
           name="title"
           label="项目名称"
-          placeholder="input your project name"
+          placeholder="请输入项目名称"
           required={true}
         />
         <ProFormText
           name="desc"
           label="项目描述"
-          placeholder="input your project desc"
+          placeholder="请输入项目描述"
         />
         <ProFormSelect
           showSearch
           name="chargeId"
           label="项目负责人"
-          placeholder="input your admin name to search"
-          rules={[{ required: true, message: 'Please select !' }]}
+          placeholder="请输入负责人名称进行搜索"
+          rules={[{ required: true, message: '请选择项目负责人！' }]}
           debounceTime={1000}
           request={queryUser}
           fieldProps={{
-            optionFilterProp: 'label', // 确保搜索是基于 label(chargeName) 而不是 value(chargeId)
-            labelInValue: false, // 确保只提交 value 而不是 {value,label} 对象
+            optionFilterProp: 'label',
+            labelInValue: false,
           }}
         />
       </ModalForm>
@@ -118,62 +138,169 @@ const ProjectList: React.FC = () => {
         extra={
           <Button
             type={'primary'}
+            icon={<PlusOutlined />}
             onClick={() => {
               setTitle('新增');
               setOpenModel(true);
             }}
+            style={{
+              borderRadius: '6px',
+              boxShadow: '0 2px 0 rgba(0, 0, 0, 0.045)',
+            }}
           >
-            <PlusOutlined />
             新建项目
           </Button>
         }
-        style={{ marginBlockStart: 16, height: 'auto' }}
+        style={{
+          marginBottom: 24,
+          borderRadius: '8px',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.09)',
+        }}
       >
-        <Row gutter={[20, 20]}>
-          {projects.map((item, index) => {
-            return (
-              <Col span={8} key={index}>
-                <ProCard
-                  onClick={() => {
-                    history.push(`/project/detail/projectId=${item.id}`);
-                  }}
-                  bordered={true}
-                  hoverable={true}
-                  type="inner"
-                  headerBordered={true}
-                  style={{ marginBlockStart: 16, borderRadius: 16 }}
-                  actions={
-                    isAdmin
-                      ? [
-                          <a
-                            key="edit"
-                            onClick={() => {
-                              setCurrentProjectId(item.uid);
-                              currentForm.setFieldsValue(item);
-                              setTitle('编辑');
-                              setOpenModel(true);
-                            }}
-                          >
-                            编辑
-                          </a>,
-                        ]
-                      : []
-                  }
-                  title={
-                    <>
-                      <ProjectTwoTone />
-                      <span style={{ marginLeft: 8 }}>{item.title} </span>
-                    </>
-                  }
+        {projects.length > 0 ? (
+          <Row gutter={[24, 24]}>
+            {projects.map((item, index) => {
+              return (
+                <Col
+                  xs={24}
+                  sm={12}
+                  md={8}
+                  lg={6}
+                  key={index}
+                  style={{ display: 'flex' }}
                 >
-                  <Paragraph>{item.description}</Paragraph>
-                </ProCard>
-              </Col>
-            );
-          })}
-        </Row>
+                  <ProCard
+                    onClick={() => {
+                      history.push(`/project/detail/projectId=${item.id}`);
+                    }}
+                    bordered={false}
+                    hoverable={true}
+                    type="inner"
+                    headerBordered={false}
+                    style={{
+                      flex: 1,
+                      borderRadius: '12px',
+                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+                      transition: 'all 0.3s ease',
+                      cursor: 'pointer',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow =
+                        '0 4px 16px rgba(0, 0, 0, 0.12)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow =
+                        '0 2px 8px rgba(0, 0, 0, 0.06)';
+                    }}
+                    actions={
+                      isAdmin
+                        ? [
+                            <a
+                              key="edit"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setCurrentProjectId(item.uid);
+                                currentForm.setFieldsValue(item);
+                                setTitle('编辑');
+                                setOpenModel(true);
+                              }}
+                              style={{
+                                color: '#1890ff',
+                                fontSize: '14px',
+                              }}
+                            >
+                              编辑
+                            </a>,
+                          ]
+                        : []
+                    }
+                    title={
+                      <Space size={8}>
+                        <ProjectTwoTone style={{ fontSize: '18px' }} />
+                        <span
+                          style={{
+                            fontSize: '16px',
+                            fontWeight: 600,
+                            color: '#262626',
+                          }}
+                        >
+                          {item.title}
+                        </span>
+                      </Space>
+                    }
+                  >
+                    <Space direction="vertical" style={{ width: '100%' }}>
+                      {item.description ? (
+                        <Paragraph
+                          style={{
+                            marginBottom: 12,
+                            color: '#595959',
+                            lineHeight: '1.5',
+                          }}
+                        >
+                          {item.description}
+                        </Paragraph>
+                      ) : (
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            color: '#bfbfbf',
+                            fontSize: '14px',
+                            marginBottom: 12,
+                          }}
+                        >
+                          <InfoCircleOutlined style={{ marginRight: 8 }} />
+                          暂无项目描述
+                        </div>
+                      )}
+                      {item.creatorName && (
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            color: '#8c8c8c',
+                            fontSize: '12px',
+                          }}
+                        >
+                          <TeamOutlined style={{ marginRight: 4 }} />
+                          <span>创建人: {item.creatorName}</span>
+                        </div>
+                      )}
+                    </Space>
+                  </ProCard>
+                </Col>
+              );
+            })}
+          </Row>
+        ) : (
+          <div
+            style={{
+              textAlign: 'center',
+              padding: '64px 24px',
+              backgroundColor: '#fafafa',
+              borderRadius: '8px',
+              margin: '24px 0',
+            }}
+          >
+            <Empty description="暂无项目数据" imageSize={128} />
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              style={{ marginTop: 24 }}
+              onClick={() => {
+                setTitle('新增');
+                setOpenModel(true);
+              }}
+            >
+              新建项目
+            </Button>
+          </div>
+        )}
       </ProCard>
-    </>
+    </div>
   );
 };
 
