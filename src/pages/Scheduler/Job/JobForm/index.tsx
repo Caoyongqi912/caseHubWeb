@@ -2,7 +2,7 @@ import { IEnv } from '@/api';
 import { queryEnvBy } from '@/api/base';
 import { add_aps_job, update_aps_job } from '@/api/base/aps';
 import { IJob } from '@/pages/Project/types';
-import ApiTaskChoiceTable from '@/pages/Scheduler/APITaskChoiceTable';
+import ApiTaskChoiceTable from '@/pages/Scheduler/Job/APITaskChoiceTable';
 import {
   ProCard,
   ProFormGroup,
@@ -17,10 +17,10 @@ import {
 import { message } from 'antd';
 import React, { FC, useEffect, useRef, useState } from 'react';
 
-import NotifyForm from '@/pages/Scheduler/JobForm/NotifyForm';
-import TriggerTypeForm from '@/pages/Scheduler/JobForm/TriggerTypeForm';
-import JobTasksList from '@/pages/Scheduler/JobTasksList';
-import PlayTaskChoiceTable from '@/pages/Scheduler/PlayTaskChoiceTable';
+import NotifyForm from '@/pages/Scheduler/Job/JobForm/NotifyForm';
+import TriggerTypeForm from '@/pages/Scheduler/Job/JobForm/TriggerTypeForm';
+import JobTasksList from '@/pages/Scheduler/Job/JobTasksList';
+import PlayTaskChoiceTable from '@/pages/Scheduler/Job/PlayTaskChoiceTable';
 
 interface SelfProps {
   callback: () => void;

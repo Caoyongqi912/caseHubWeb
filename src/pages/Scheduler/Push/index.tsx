@@ -1,7 +1,7 @@
 import { pagePushConfig, removePushConfig } from '@/api/base/pushConfig';
 import MyProTable from '@/components/Table/MyProTable';
-import PushModal from '@/pages/Project/Push/PushModal';
 import { IPushConfig } from '@/pages/Project/types';
+import PushModal from '@/pages/Scheduler/Push/PushModal';
 import { pageData } from '@/utils/somefunc';
 import { ActionType, ProCard, ProColumns } from '@ant-design/pro-components';
 import { Divider, Tag } from 'antd';

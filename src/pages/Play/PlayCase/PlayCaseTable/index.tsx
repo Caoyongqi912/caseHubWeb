@@ -257,11 +257,9 @@ const Index: FC<SelfProps> = ({
   );
   return (
     <MyProTable
-      headerTitle={'用例列表'}
       persistenceKey={perKey}
       columns={columns}
       rowKey={'id'}
-      x={1000}
       request={fetchUICase}
       actionRef={actionRef}
       toolBarRender={() => [AddCaseButton]}

@@ -238,7 +238,6 @@ const Index: FC<SelfProps> = (props) => {
       persistenceKey={perKey}
       columns={columns}
       rowKey={'id'}
-      x={1000}
       request={fetchPageUITaskTable}
       actionRef={actionRef}
       toolBarRender={() => [AddTaskButton]}

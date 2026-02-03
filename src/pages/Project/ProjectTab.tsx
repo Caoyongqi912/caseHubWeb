@@ -2,14 +2,12 @@ import MyTabs from '@/components/MyTabs';
 import Db from '@/pages/Project/Db';
 import Env from '@/pages/Project/Env';
 import GlobalVariables from '@/pages/Project/GlobalVariables';
-import Push from '@/pages/Project/Push';
 import {
   DatabaseOutlined,
   EnvironmentOutlined,
   KeyOutlined,
-  SendOutlined,
 } from '@ant-design/icons';
-import { Card } from 'antd';
+import { ProCard } from '@ant-design/pro-components';
 import { useParams } from 'umi';
 
 /**
@@ -43,16 +41,6 @@ const ProjectTab = () => {
     {
       label: (
         <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <SendOutlined style={{ fontSize: '16px' }} />
-          <span>推送配置</span>
-        </span>
-      ),
-      key: '3',
-      children: <Push projectId={projectId} />,
-    },
-    {
-      label: (
-        <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <KeyOutlined style={{ fontSize: '16px' }} />
           <span>全局变量</span>
         </span>
@@ -63,7 +51,7 @@ const ProjectTab = () => {
   ];
 
   return (
-    <Card
+    <ProCard
       style={{
         width: '100%',
         borderRadius: '8px',
@@ -85,13 +73,8 @@ const ProjectTab = () => {
         style={{
           borderRadius: '8px',
         }}
-        tabBarStyle={{
-          marginBottom: 0,
-          paddingLeft: '24px',
-          paddingRight: '24px',
-        }}
       />
-    </Card>
+    </ProCard>
   );
 };
 

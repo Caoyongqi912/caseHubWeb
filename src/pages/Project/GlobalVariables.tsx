@@ -11,8 +11,6 @@ import { pageData } from '@/utils/somefunc';
 import {
   DeleteOutlined,
   EditOutlined,
-  InfoCircleOutlined,
-  KeyOutlined,
   PlusOutlined,
   UserOutlined,
 } from '@ant-design/icons';
@@ -40,11 +38,9 @@ const GlobalVariables: FC<IProps> = ({ projectId }) => {
       title: 'Key',
       dataIndex: 'key',
       copyable: true,
-      width: 200,
       render: (text) => {
         return (
           <Space size={8} align="center">
-            <KeyOutlined style={{ color: '#1890ff' }} />
             <Tag
               color={'blue'}
               style={{
@@ -64,25 +60,8 @@ const GlobalVariables: FC<IProps> = ({ projectId }) => {
       dataIndex: 'value',
       copyable: true,
       hideInSearch: true,
+      tooltip: true,
       ellipsis: true,
-      width: 300,
-      render: (text) => {
-        return (
-          <Tooltip title={text} placement="top">
-            <div
-              style={{
-                maxWidth: '100%',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                color: '#595959',
-              }}
-            >
-              {text}
-            </div>
-          </Tooltip>
-        );
-      },
     },
     {
       title: '描述',
@@ -94,9 +73,6 @@ const GlobalVariables: FC<IProps> = ({ projectId }) => {
       render: (text) => {
         return (
           <Space size={4} align="center">
-            <InfoCircleOutlined
-              style={{ color: '#8c8c8c', fontSize: '14px' }}
-            />
             <Tooltip title={text} placement="top">
               <div
                 style={{
@@ -104,7 +80,6 @@ const GlobalVariables: FC<IProps> = ({ projectId }) => {
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
-                  color: '#595959',
                 }}
               >
                 {text || '暂无描述'}
@@ -118,7 +93,6 @@ const GlobalVariables: FC<IProps> = ({ projectId }) => {
       title: '创建人',
       editable: false,
       dataIndex: 'creatorName',
-      width: 150,
       render: (text) => {
         return (
           <Space size={4} align="center">
@@ -142,7 +116,6 @@ const GlobalVariables: FC<IProps> = ({ projectId }) => {
       valueType: 'option',
       key: 'option',
       fixed: 'right',
-      width: 120,
       render: (__, record, _, action) => {
         return (
           isAdmin && (
@@ -232,7 +205,6 @@ const GlobalVariables: FC<IProps> = ({ projectId }) => {
         actionRef={actionRef}
         columns={columns}
         request={fetchInterApiVariables}
-        x={1000}
         toolBarRender={() => [
           <Button
             type={'primary'}
@@ -252,10 +224,6 @@ const GlobalVariables: FC<IProps> = ({ projectId }) => {
           showSizeChanger: true,
           showQuickJumper: true,
           showTotal: (total) => `共 ${total} 条记录`,
-        }}
-        tableStyle={{
-          borderRadius: '8px',
-          overflow: 'hidden',
         }}
       />
     </ProCard>

@@ -2,7 +2,7 @@ import { IObjGet } from '@/api';
 import { update_aps_job } from '@/api/base/aps';
 import MyModal from '@/components/MyModal';
 import { IJob } from '@/pages/Project/types';
-import NotifyForm from '@/pages/Scheduler/JobForm/NotifyForm';
+import NotifyForm from '@/pages/Scheduler/Job/JobForm/NotifyForm';
 import {
   BellFilled,
   BellOutlined,

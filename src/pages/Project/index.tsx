@@ -175,7 +175,7 @@ const ProjectList: React.FC = () => {
               return (
                 <Col
                   xs={24}
-                  sm={12}
+                  sm={24}
                   md={8}
                   lg={6}
                   key={index}
@@ -185,7 +185,6 @@ const ProjectList: React.FC = () => {
                     onClick={() => {
                       history.push(`/project/detail/projectId=${item.id}`);
                     }}
-                    bordered={false}
                     hoverable={true}
                     type="inner"
                     headerBordered={false}
@@ -195,19 +194,6 @@ const ProjectList: React.FC = () => {
                       boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
                       transition: 'all 0.3s ease',
                       cursor: 'pointer',
-                      border: '1px solid',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'translateY(-4px)';
-                      e.currentTarget.style.boxShadow =
-                        '0 8px 24px rgba(0, 0, 0, 0.12)';
-                      e.currentTarget.style.borderColor = '#1890ff';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = 'translateY(0)';
-                      e.currentTarget.style.boxShadow =
-                        '0 2px 8px rgba(0, 0, 0, 0.06)';
-                      e.currentTarget.style.borderColor = '#f0f0f0';
                     }}
                     actions={
                       isAdmin
@@ -300,19 +286,17 @@ const ProjectList: React.FC = () => {
                           暂无项目描述
                         </div>
                       )}
-                      {item.creatorName && (
-                        <div
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            color: '#8c8c8c',
-                            fontSize: '12px',
-                          }}
-                        >
-                          <TeamOutlined style={{ marginRight: 4 }} />
-                          <span>创建人: {item.creatorName}</span>
-                        </div>
-                      )}
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          color: '#8c8c8c',
+                          fontSize: '12px',
+                        }}
+                      >
+                        <TeamOutlined style={{ marginRight: 4 }} />
+                        <span>创建人: {item.creatorName || '无'}</span>
+                      </div>
                       <ProjectStats projectId={item.id} />
                     </Space>
                   </ProCard>
@@ -330,7 +314,7 @@ const ProjectList: React.FC = () => {
               margin: '24px 0',
             }}
           >
-            <Empty description="暂无项目数据" imageSize={128} />
+            <Empty description="暂无项目数据" />
             <Button
               type="primary"
               icon={<PlusOutlined />}

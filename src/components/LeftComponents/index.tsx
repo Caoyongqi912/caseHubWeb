@@ -44,12 +44,12 @@ const Index: FC<SelfProps> = (props) => {
         height: 'auto',
         width: '100%',
         borderRadius: borderRadius.xl,
-        border: `1px solid ${token.colorBorder}`,
         boxShadow: shadows.card,
         background: token.colorBgContainer,
         ...styleHelpers.transition(['box-shadow']),
       }}
       bodyStyle={{
+        minHeight: '80vh',
         padding: spacing.md,
         [responsive.mobile]: {
           padding: spacing.sm,

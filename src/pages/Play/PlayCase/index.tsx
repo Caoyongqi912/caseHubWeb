@@ -11,7 +11,6 @@ const Index = () => {
   const [currentProjectId, setCurrentProjectId] = useState<number>();
   const PerKey = 'PlayCase';
   const PerKeySplitter = ' PlayCase:Splitter';
-
   const [sizes, setSizes] = useState<(number | string)[]>(['20%', '80%']);
 
   const onProjectChange = (projectId: number | undefined) => {
@@ -29,13 +28,9 @@ const Index = () => {
   }, []);
   return (
     <ProCard
-      style={{ height: 'auto' }}
-      bodyStyle={{
-        height: '100%',
-        minHeight: '90vh',
-        padding: 0,
-        overflow: 'hidden',
-      }}
+      bordered={true}
+      style={{ height: '100vh' }}
+      bodyStyle={{ height: 'auto', padding: 0 }}
     >
       <Splitter
         onResize={(sizes: number[]) => {
@@ -50,8 +45,8 @@ const Index = () => {
         layout="horizontal"
       >
         <Splitter.Panel
-          resizable={true}
           collapsible={true}
+          resizable={true}
           style={{
             height: '100%',
             minHeight: 0,
@@ -71,6 +66,7 @@ const Index = () => {
           />
         </Splitter.Panel>
         <Splitter.Panel
+          collapsible={true}
           resizable={true}
           size={sizes[1]}
           style={{

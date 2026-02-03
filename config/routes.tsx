@@ -320,7 +320,18 @@ export default [
     path: '/scheduler',
     name: '定时任务',
     icon: 'ClockCircleOutlined',
-    component: '@/pages/Scheduler',
+    routes: [
+      {
+        path: '/scheduler/Jobs',
+        name: '任务管理',
+        component: '@/pages/Scheduler/Job',
+      },
+      {
+        path: '/scheduler/push',
+        name: '推送设置',
+        component: '@/pages/Scheduler/Push',
+      },
+    ],
   },
   {
     name: '调试工具',

@@ -127,6 +127,26 @@ export const queryProject = async (options?: IObjGet) => {
 };
 
 /**
+ * queryProjectInfoCount
+ */
+export const queryProjectInfoCount = async (
+  projectId: number,
+  options?: IObjGet,
+) => {
+  return request<
+    IResponse<{
+      db_count: number;
+      env_count: number;
+      variable_count: number;
+    }>
+  >('/api/project/queryInfoCount', {
+    method: 'GET',
+    params: { project_id: projectId },
+    ...(options || {}),
+  });
+};
+
+/**
  * 添加项目
  */
 export const start_sse_task = async (options?: IObjGet) => {

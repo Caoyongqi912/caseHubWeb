@@ -2,7 +2,7 @@ import { IObjGet } from '@/api';
 import { switch_job, update_aps_job } from '@/api/base/aps';
 import MyModal from '@/components/MyModal';
 import { IJob } from '@/pages/Project/types';
-import TriggerTypeForm from '@/pages/Scheduler/JobForm/TriggerTypeForm';
+import TriggerTypeForm from '@/pages/Scheduler/Job/JobForm/TriggerTypeForm';
 import {
   CalendarOutlined,
   ClockCircleOutlined,
