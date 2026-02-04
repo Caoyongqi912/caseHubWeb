@@ -215,7 +215,7 @@ const Index = () => {
   const runCase = async () => {
     if (!caseId) return;
     if (runningStyle === 1) {
-      executePlayCaseByBack({ caseId: caseId, error_stop: errorStop }).then(
+      executePlayCaseByBack({ case_id: caseId, error_stop: errorStop }).then(
         async ({ code }) => {
           if (code === 0) {
             message.success('后台运行中。。');

@@ -41,7 +41,7 @@ export const pageDebugResult = async (
  */
 export const executePlayCaseByBack = async (
   data: {
-    caseId: string;
+    case_id: string;
     error_stop: boolean;
   },
   options?: IObjGet,
