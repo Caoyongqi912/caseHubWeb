@@ -296,7 +296,7 @@ const Index = () => {
         </MyDrawer>
         <MyDrawer name={'UI Case Logs'} open={runOpen} setOpen={setRunOpen}>
           <PlayCaseResultDetail
-            caseId={caseId}
+            caseId={parseInt(caseId!)}
             openStatus={runOpen}
             error_stop={errorStop}
           />

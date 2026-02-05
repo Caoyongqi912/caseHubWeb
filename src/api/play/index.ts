@@ -145,7 +145,7 @@ export const choiceAddUIStepWithCopy = async (
  */
 export const executeCaseByIO = async (
   data: {
-    caseId: string;
+    caseId: number;
     error_stop: boolean;
   },
   options?: IObjGet,

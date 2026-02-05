@@ -1,5 +1,5 @@
-import { IObjGet } from '@/api';
-import { IParams } from '@/pages/Httpx/types';
+import { IBaseField, IObjGet } from '@/api';
+import { CaseContentAssertResult, IParams } from '@/pages/Httpx/types';
 
 export interface IUICase {
   id: number;
@@ -282,19 +282,29 @@ export interface IPlayStepContent {
   assert_list?: any;
 }
 
-export interface IPlayStep {
-  id: number;
-  uid: string;
-  name: string;
-  description: string;
-  selector?: string;
-  locator?: string;
-  iframe_name?: string;
-  method?: string;
-  key?: string;
-  value?: string;
-  new_page?: boolean;
-  is_ignore?: boolean;
-  module_id: number;
-  project_id: number;
+export interface IPlayCaseContentResult extends IBaseField {
+  content_message?: string;
+  content_type: number;
+  interface_case_result_id: number;
+  interface_task_result_id: number | null;
+  content_id: number;
+  content_name: string;
+  content_desc?: string;
+  content_step: number | null;
+  content_target_result_id: null | number;
+  script_extracts: null;
+  content_asserts: CaseContentAssertResult[] | null;
+  wait_time: number | null;
+  content_condition: {
+    key: any;
+    operator: number;
+    value: any;
+    condition_result?: boolean;
+  } | null;
+  start_time: string;
+  use_time: string | number | null;
+  starter_id: number;
+  starter_name: string;
+  content_result: boolean;
+  content_screenshot_path: string | null;
 }

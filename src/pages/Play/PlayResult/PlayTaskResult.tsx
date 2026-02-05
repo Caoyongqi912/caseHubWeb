@@ -29,7 +29,7 @@ import { useEffect, useRef, useState } from 'react';
 const PlayTaskResult = () => {
   const { resultId } = useParams<{ resultId: string }>();
   const actionRef = useRef<ActionType>(); //Table action 的引用，便于自定义触发
-  const [currentDetailId, setCurrentDetailId] = useState<string>();
+  const [currentDetailId, setCurrentDetailId] = useState<number>();
   const [openResult, setOpenResult] = useState(false);
   const [failOnly, setFailOnly] = useState(false);
   const [loading, setLoading] = useState<boolean>(true);
@@ -145,7 +145,7 @@ const PlayTaskResult = () => {
           return (
             <a
               onClick={() => {
-                setCurrentDetailId(record.uid);
+                setCurrentDetailId(record.id);
                 setOpenResult(true);
               }}
             >

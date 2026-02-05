@@ -3,15 +3,15 @@ import { getPlayCaseResultDetail } from '@/api/play/playCase';
 import AceCodeEditor from '@/components/CodeEditor/AceCodeEditor';
 import MyTabs from '@/components/MyTabs';
 import { IUIResult } from '@/pages/Play/componets/uiTypes';
+import PlayCaseResultContents from '@/pages/Play/PlayResult/PlayCaseResultContents';
 import PlayCaseResultInfo from '@/pages/Play/PlayResult/PlayCaseResultDetail/PlayCaseResultInfo';
 import { useModel } from '@@/exports';
 import {
   DatabaseOutlined,
   InfoCircleOutlined,
   MessageOutlined,
-  OrderedListOutlined,
 } from '@ant-design/icons';
-import { ProCard, ProTable } from '@ant-design/pro-components';
+import { ProCard } from '@ant-design/pro-components';
 import { ProColumns } from '@ant-design/pro-table/lib/typing';
 import { TabsProps, Tag } from 'antd';
 import { FC, useEffect, useState } from 'react';
@@ -19,16 +19,16 @@ import io, { Socket } from 'socket.io-client';
 
 interface SelfProps {
   openStatus?: boolean;
-  caseId?: string;
+  caseId?: number;
   error_stop?: boolean;
-  resultId?: string;
+  resultId?: number;
 }
 
 const Index: FC<SelfProps> = (props) => {
   const { openStatus, caseId, error_stop = true, resultId } = props;
   const { initialState } = useModel('@@initialState');
   const [logMessage, setLogMessage] = useState<string[]>([]);
-  const [caseResultId, setCaseResultId] = useState<string>();
+  const [caseResultId, setCaseResultId] = useState<number>();
   const [defaultActiveKey, setDefaultActiveKey] = useState('2');
   const [asserts, setAsserts] = useState<any[]>([]);
   const [vars, setVars] = useState<any[]>([]);
@@ -60,7 +60,7 @@ const Index: FC<SelfProps> = (props) => {
         if (code === 0) {
           setLogMessage((prevMessages) => [...prevMessages, data]);
         } else {
-          setCaseResultId(data.rId);
+          setCaseResultId(data.id);
         }
       });
 
@@ -234,33 +234,11 @@ const Index: FC<SelfProps> = (props) => {
       ),
     },
     {
-      label: '断言详情',
-      key: '3',
-      icon: <OrderedListOutlined />,
-      disabled: tabDisabled,
-      children: (
-        <ProTable
-          search={false}
-          toolBarRender={false}
-          columns={UIAssertColumns}
-          dataSource={asserts}
-          scroll={{ x: 1000 }}
-        />
-      ),
-    },
-    {
-      label: '变量提取',
-      key: '4',
+      label: '步骤详情',
+      key: 'step_detail',
       icon: <DatabaseOutlined />,
       disabled: tabDisabled,
-      children: (
-        <ProTable
-          search={false}
-          toolBarRender={false}
-          columns={UIVarsColumns}
-          dataSource={vars}
-        />
-      ),
+      children: <PlayCaseResultContents play_case_id={caseResultId} />,
     },
   ];
 

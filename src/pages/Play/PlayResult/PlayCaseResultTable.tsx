@@ -14,7 +14,7 @@ interface PlayDebugResultProps {
 }
 
 const PlayCaseResultTable: FC<PlayDebugResultProps> = ({ caseId }) => {
-  const [currentUid, setCurrentUid] = useState<string>();
+  const [currentCaseResultId, setCurrentCaseResultId] = useState<number>();
   const [open, setOpen] = useState(false);
   const actionRef = useRef<ActionType>(); //Table action 的引用，便于自定义触发
 
@@ -36,29 +36,7 @@ const PlayCaseResultTable: FC<PlayDebugResultProps> = ({ caseId }) => {
       valueType: 'text',
       copyable: true,
       fixed: 'left',
-      width: '10%',
     },
-    // {
-    //   title: '用例名称',
-    //   dataIndex: 'ui_case_name',
-    //   valueType: 'text',
-    //   render: (_, record) => {
-    //     if (caseId !== undefined) {
-    //       return record.ui_case_name;
-    //     } else {
-    //       return (
-    //         <a
-    //           onClick={() => {
-    //             history.push(`/ui/case/detail/caseId=${record.ui_case_Id}`);
-    //           }}
-    //         >
-    //           {record.ui_case_name}
-    //         </a>
-    //       );
-    //     }
-    //   },
-    // },
-
     {
       title: '开始时间',
       dataIndex: 'start_time',
@@ -66,10 +44,15 @@ const PlayCaseResultTable: FC<PlayDebugResultProps> = ({ caseId }) => {
       hideInSearch: true,
     },
     {
+      title: '用时',
+      dataIndex: 'use_time',
+      valueType: 'text',
+      hideInSearch: true,
+    },
+    {
       title: '执行状态',
       dataIndex: 'status',
       valueType: 'select',
-
       valueEnum: CONFIG.UI_STATUS_ENUM,
       render: (_, record) => {
         return CONFIG.UI_STATUS_ENUM[record.status].tag;
@@ -79,7 +62,6 @@ const PlayCaseResultTable: FC<PlayDebugResultProps> = ({ caseId }) => {
       title: '执行结果',
       dataIndex: 'result',
       valueType: 'select',
-
       valueEnum: CONFIG.UI_RESULT_ENUM,
       render: (_, record) => {
         return CONFIG.UI_RESULT_ENUM[record.result]?.tag;
@@ -95,14 +77,14 @@ const PlayCaseResultTable: FC<PlayDebugResultProps> = ({ caseId }) => {
       title: '操作',
       dataIndex: 'action',
       valueType: 'option',
-      width: '10%',
+      width: '5%',
       fixed: 'right',
       render: (_, record) => {
         if (record.status === 'DONE') {
           return (
             <a
               onClick={() => {
-                setCurrentUid(record.uid);
+                setCurrentCaseResultId(record.id);
                 setOpen(true);
               }}
             >
@@ -138,7 +120,7 @@ const PlayCaseResultTable: FC<PlayDebugResultProps> = ({ caseId }) => {
   return (
     <>
       <MyDrawer name={'测试详情'} open={open} width={'80%'} setOpen={setOpen}>
-        <PlayCaseResultDetail resultId={currentUid} />
+        <PlayCaseResultDetail resultId={currentCaseResultId} />
       </MyDrawer>
       <MyProTable
         toolBarRender={() => [Clear]}

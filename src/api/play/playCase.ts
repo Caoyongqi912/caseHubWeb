@@ -1,6 +1,7 @@
 import { IObjGet, IPage, IResponse, ISearch } from '@/api';
 import {
   ILocator,
+  IPlayCaseContentResult,
   IPlayStepContent,
   IPlayStepDetail,
   IUICase,
@@ -253,14 +254,33 @@ export const pagePlayCaseResult = async (
  * @param options
  */
 export const getPlayCaseResultDetail = async (
-  data: string,
+  data: number,
   options?: IObjGet,
 ): Promise<IResponse<any>> => {
   return request<IResponse<IUIResult>>('/api/play/case/result_detail', {
     method: 'GET',
-    params: { uid: data },
+    params: { case_result_id: data },
     ...(options || {}),
   });
+};
+
+/**
+ * 查询步骤
+ * @param data
+ * @param options
+ */
+export const queryCaseContentResult = async (
+  data: number,
+  options?: IObjGet,
+): Promise<IResponse<any>> => {
+  return request<IResponse<IPlayCaseContentResult[]>>(
+    '/api/play/case/queryContentResults',
+    {
+      method: 'GET',
+      params: { case_result_id: data },
+      ...(options || {}),
+    },
+  );
 };
 
 /**

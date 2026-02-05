@@ -1,7 +1,11 @@
 import ResponseExtractColumns from '@/pages/Httpx/InterfaceApiResponse/ResponseExtract';
 import RespProTable from '@/pages/Httpx/InterfaceApiResponse/RespProTable';
 import { ICaseContentResult } from '@/pages/Httpx/types';
-import { CheckCircleTwoTone, PythonOutlined } from '@ant-design/icons';
+import {
+  CheckCircleTwoTone,
+  CloseCircleTwoTone,
+  PythonOutlined,
+} from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
 import { Space, Tag, Tooltip, Typography } from 'antd';
 import { FC } from 'react';
@@ -31,7 +35,11 @@ const ScriptResult: FC<Props> = ({ result }) => {
             <Tooltip title={'脚本'}>
               <Tag color={'geekblue-inverse'} icon={<PythonOutlined />} />
             </Tooltip>
-            <CheckCircleTwoTone twoToneColor="#52c41a" />
+            {result.content_result ? (
+              <CheckCircleTwoTone twoToneColor={'#52c41a'} />
+            ) : (
+              <CloseCircleTwoTone twoToneColor={'#ff4d4f'} />
+            )}
             <Text type={'secondary'} style={{ marginLeft: 20 }}>
               {result.content_name}
             </Text>

@@ -106,8 +106,8 @@ const RunConfig: FC<{
           <Switch
             onChange={onErrorJumpChange}
             defaultChecked={false}
-            checkedChildren="开"
-            unCheckedChildren="关"
+            checkedChildren="关"
+            unCheckedChildren="开"
           />
         </div>
         <Button
