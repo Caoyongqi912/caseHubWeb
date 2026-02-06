@@ -1,0 +1,110 @@
+/* 卡片容器样式 */
+.card {
+  border-radius: 8px;
+  border-left: 4px solid #52c41a;
+  margin-top: 12px;
+  box-shadow: 0 2px 8px rgba(0 0 0 0.06);
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+/* 卡片标题样式 */
+.titleSpace {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.stepTag {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 4px;
+}
+
+.uiStepTag {
+  font-size: 13px;
+  padding: 4px 10px;
+  border-radius: 4px;
+}
+
+.statusIcon {
+  font-size: 18px;
+}
+
+.contentName {
+  font-size: 14px;
+  color: #333;
+  margin-left: 12px;
+}
+
+/* 内容区域样式 */
+.contentSpace {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* 消息内容样式 */
+.messageContent {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 16px;
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-all;
+  color: #333;
+}
+
+/* 截图容器样式 */
+.screenshotContainer {
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  padding: 8px;
+  display: inline-block;
+  transition: all 0.3s ease;
+}
+
+.screenshot {
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  padding: 8px;
+  display: inline-block;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.screenshot:hover {
+  transform: scale(1.02);
+}
+
+/* 提取值容器样式 */
+.extractsContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  background-color: #f0f5ff;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.extractItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.extractLabel {
+  font-size: 14px;
+  color: #1890ff;
+  font-weight: bold;
+}
+
+.extractTag {
+  font-size: 13px;
+  padding: 4px 10px;
+  border-radius: 4px;
+}

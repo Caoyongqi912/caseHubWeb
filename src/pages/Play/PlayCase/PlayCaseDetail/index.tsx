@@ -51,19 +51,22 @@ const Index = () => {
   const [errorStop, setErrorStop] = useState<boolean>(true);
   const [runningStyle, setRunningStyle] = useState<number>(1);
   useEffect(() => {
-    if (caseId) {
-      Promise.all([
-        queryPlayStepContentByCaseId(caseId), // 获取步骤数据
-        queryPlayCaseVars(caseId),
-      ]).then(([steps, vars]) => {
-        if (steps.code === 0 && steps) {
-          setUISteps(steps.data);
-        }
-        if (vars.code === 0 && vars.data) {
-          setVarsNum(vars.data.length);
-        }
-      });
-    }
+    if (!caseId) return;
+    const abortController = new AbortController();
+    Promise.all([
+      queryPlayStepContentByCaseId(caseId), // 获取步骤数据
+      queryPlayCaseVars(caseId),
+    ]).then(([steps, vars]) => {
+      if (steps.code === 0 && steps) {
+        setUISteps(steps.data);
+      }
+      if (vars.code === 0 && vars.data) {
+        setVarsNum(vars.data.length);
+      }
+    });
+    return () => {
+      abortController.abort();
+    };
   }, [refresh, caseId]);
 
   //set case steps content
@@ -236,7 +239,11 @@ const Index = () => {
           <Splitter
             style={{ height: '100%', boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)' }}
           >
-            <Splitter.Panel resizable={false} size={defaultSize} max="100%">
+            <Splitter.Panel
+              resizable={false}
+              defaultSize={defaultSize}
+              max="100%"
+            >
               <ProCard
                 extra={<AddStepExtra />}
                 bodyStyle={{ minHeight: '100hv' }}

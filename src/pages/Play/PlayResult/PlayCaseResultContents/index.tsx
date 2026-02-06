@@ -55,10 +55,14 @@ const Index: FC<SelfProps> = ({ play_case_id }) => {
       }
     >
       {stepContentResult && stepContentResult.length > 0 ? (
-        stepContentResult.map((item) => {
+        stepContentResult.map((item, index) => {
           switch (item.content_type) {
             case CaseContentType.Play:
-              return <PlayStepResultContent content={item} />;
+              return (
+                <div key={index}>
+                  <PlayStepResultContent content={item} />
+                </div>
+              );
           }
         })
       ) : (

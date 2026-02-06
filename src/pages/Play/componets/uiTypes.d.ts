@@ -1,5 +1,5 @@
 import { IBaseField, IObjGet } from '@/api';
-import { CaseContentAssertResult, IParams } from '@/pages/Httpx/types';
+import { IParams } from '@/pages/Httpx/types';
 
 export interface IUICase {
   id: number;
@@ -293,7 +293,10 @@ export interface IPlayCaseContentResult extends IBaseField {
   content_step: number | null;
   content_target_result_id: null | number;
   script_extracts: null;
-  content_asserts: CaseContentAssertResult[] | null;
+  extracts: {
+    variable_name: string;
+    extracted_value: any;
+  };
   wait_time: number | null;
   content_condition: {
     key: any;
@@ -307,4 +310,5 @@ export interface IPlayCaseContentResult extends IBaseField {
   starter_name: string;
   content_result: boolean;
   content_screenshot_path: string | null;
+  content_ignore_error: boolean;
 }
