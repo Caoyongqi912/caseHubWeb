@@ -41,38 +41,40 @@ const RunConfig: FC<{
               border: '1px solid #e1e8ff',
             }}
           >
-            <Space style={{ marginBottom: 20 }}>
-              <SettingFilled style={{ color: '#3b82f6' }} />
-              <Text strong style={{ fontSize: '14px', margin: 0 }}>
-                运行方式
-              </Text>
+            <Space direction={'vertical'}>
+              <Space style={{ marginBottom: 20 }}>
+                <SettingFilled style={{ color: '#3b82f6' }} />
+                <Text strong style={{ fontSize: '14px', margin: 0 }}>
+                  运行方式
+                </Text>
+              </Space>
+              <Radio.Group
+                defaultValue={1}
+                onChange={onMenuClick}
+                options={[
+                  {
+                    label: (
+                      // @ts-ignore
+                      <Flex gap="small" justify="center" align="center">
+                        <RobotOutlined style={{ fontSize: 18 }} />
+                        后台执行
+                      </Flex>
+                    ),
+                    value: 1,
+                  },
+                  {
+                    label: (
+                      // @ts-ignore
+                      <Flex gap="small" justify="center" align="center">
+                        <MessageOutlined style={{ fontSize: 18 }} />
+                        实时日志
+                      </Flex>
+                    ),
+                    value: 2,
+                  },
+                ]}
+              />
             </Space>
-            <Radio.Group
-              defaultValue={1}
-              onChange={onMenuClick}
-              options={[
-                {
-                  label: (
-                    // @ts-ignore
-                    <Flex gap="small" justify="center" align="center">
-                      <RobotOutlined style={{ fontSize: 18 }} />
-                      后台执行
-                    </Flex>
-                  ),
-                  value: 1,
-                },
-                {
-                  label: (
-                    // @ts-ignore
-                    <Flex gap="small" justify="center" align="center">
-                      <MessageOutlined style={{ fontSize: 18 }} />
-                      实时日志
-                    </Flex>
-                  ),
-                  value: 2,
-                },
-              ]}
-            />
           </ProCard>
         </>
 

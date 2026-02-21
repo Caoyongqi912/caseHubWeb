@@ -14,7 +14,7 @@ const Index = () => {
   const PlayStepGroup = 'PlayStepGroup';
   const PerKeySplitter = 'PlayStep:Splitter';
 
-  const [sizes, setSizes] = useState<(number | string)[]>(['50%', '50%']);
+  const [sizes, setSizes] = useState<(number | string)[]>(['20%', '80%']);
   useEffect(() => {
     const data = getSplitter(PerKeySplitter);
     if (data) {

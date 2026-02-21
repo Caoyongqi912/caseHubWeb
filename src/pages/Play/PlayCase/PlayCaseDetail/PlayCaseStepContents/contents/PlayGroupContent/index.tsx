@@ -20,6 +20,7 @@ interface Props {
 const Index: FC<Props> = (props) => {
   const { id, step, caseId, stepContent, callback } = props;
   const [showOption, setShowOption] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
 
   return (
     <div>
@@ -34,6 +35,9 @@ const Index: FC<Props> = (props) => {
         }}
         onMouseLeave={() => {
           setShowOption(false);
+        }}
+        onCollapse={(value) => {
+          setCollapsed(value);
         }}
         extra={
           <ContentExtra
@@ -54,7 +58,9 @@ const Index: FC<Props> = (props) => {
           );
         }}
       >
-        <GroupTable groupId={stepContent.target_id} callback={callback} />
+        {!collapsed && (
+          <GroupTable groupId={stepContent.target_id} callback={callback} />
+        )}
       </ProCard>
     </div>
   );

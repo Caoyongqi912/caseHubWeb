@@ -1,3 +1,4 @@
+import { addCaseContent } from '@/api/inter/interCase';
 import {
   queryPlayCaseVars,
   queryPlayStepContentByCaseId,
@@ -20,6 +21,7 @@ import PlayStepDetail from '@/pages/Play/PlayStep/PlayStepDetail';
 import { useParams } from '@@/exports';
 import {
   EditOutlined,
+  PythonOutlined,
   SelectOutlined,
   UngroupOutlined,
 } from '@ant-design/icons';
@@ -50,11 +52,12 @@ const Index = () => {
   const [defaultSize, setDefaultSize] = useState('80%');
   const [errorStop, setErrorStop] = useState<boolean>(true);
   const [runningStyle, setRunningStyle] = useState<number>(1);
+
   useEffect(() => {
     if (!caseId) return;
     const abortController = new AbortController();
     Promise.all([
-      queryPlayStepContentByCaseId(caseId), // 获取步骤数据
+      queryPlayStepContentByCaseId(caseId),
       queryPlayCaseVars(caseId),
     ]).then(([steps, vars]) => {
       if (steps.code === 0 && steps) {
@@ -67,7 +70,7 @@ const Index = () => {
     return () => {
       abortController.abort();
     };
-  }, [refresh, caseId]);
+  }, [caseId, refresh]);
 
   //set case steps content
   useEffect(() => {
@@ -92,12 +95,13 @@ const Index = () => {
         })),
       );
     }
-  }, [refresh, uiSteps]);
+  }, [uiSteps]);
 
   const onErrorJumpChange = (value: boolean) => {
     setErrorStop(value);
   };
   const onDragEnd = async (reorderedUIContents: any[]) => {
+    console.log(reorderedUIContents);
     if (caseId) {
       const reorderData = reorderedUIContents.map((item) => item.step_id);
       reorderCaseStep({
@@ -122,6 +126,14 @@ const Index = () => {
     const currStepIndex = stepIndex + 1;
     setStepIndex(currStepIndex);
   };
+
+  const AddScript = async () => {
+    if (!caseId) return;
+    const { code } = await addCaseContent({
+      case_id: parseInt(caseId),
+      content_type: 4,
+    });
+  };
   const AddStepExtra = () => {
     return (
       <>
@@ -134,6 +146,12 @@ const Index = () => {
                 label: '添加私有步骤',
                 icon: <EditOutlined style={{ color: 'orange' }} />,
                 onClick: AddUIStep,
+              },
+              {
+                key: 'add_script',
+                label: '添加脚本',
+                icon: <PythonOutlined style={{ color: 'orange' }} />,
+                onClick: AddScript,
               },
               {
                 type: 'divider',
