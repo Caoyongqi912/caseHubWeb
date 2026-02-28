@@ -4,10 +4,10 @@ import { IPlayCaseContentResult } from '@/pages/Play/componets/uiTypes';
 import {
   CheckCircleTwoTone,
   CloseCircleTwoTone,
-  PlayCircleTwoTone,
+  ConsoleSqlOutlined,
 } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
-import { Image, Space, Tag, Tooltip, Typography } from 'antd';
+import { Space, Tag, Tooltip, Typography } from 'antd';
 import { FC } from 'react';
 
 const { Text } = Typography;
@@ -25,17 +25,23 @@ const Index: FC<SelfProps> = ({ content }) => {
         borderLeft: `3px solid ${
           content.content_result ? '#52c41a' : '#ff4d4f'
         }`,
-
         marginTop: 5,
       }}
       headerBordered
       collapsible
       defaultCollapsed
+      extra={
+        <Space>
+          {content.extracts && (
+            <Text type={'secondary'}>变量 x {content.extracts.length}</Text>
+          )}
+        </Space>
+      }
       title={
         <Space>
           <Tag color={'green-inverse'}>STEP_{content.content_step}</Tag>
-          <Tooltip title={'UI 步骤'}>
-            <Tag color={'geekblue-inverse'} icon={<PlayCircleTwoTone />} />
+          <Tooltip title={'SQL'}>
+            <Tag color={'geekblue-inverse'} icon={<ConsoleSqlOutlined />} />
           </Tooltip>
           {content.content_result ? (
             <CheckCircleTwoTone twoToneColor={'#52c41a'} />
@@ -52,32 +58,11 @@ const Index: FC<SelfProps> = ({ content }) => {
       collapsibleIconRender={({}) => {
         return true;
       }}
-      extra={
-        <Space>
-          {content.extracts && (
-            <Text type={'secondary'}>变量 x {content.extracts.length}</Text>
-          )}
-        </Space>
-      }
     >
-      <Space direction={'vertical'} style={{ width: '100%' }}>
-        {!content.extracts ? (
-          <Typography>
-            <pre style={{ width: '100%' }}>{content.content_message}</pre>
-          </Typography>
-        ) : (
-          <RespProTable
-            columns={ResponseExtractColumns}
-            dataSource={content.extracts}
-          />
-        )}
-        {!content.content_result && (
-          <Image
-            width={200}
-            src={content?.content_screenshot_path || undefined}
-          />
-        )}
-      </Space>
+      <RespProTable
+        columns={ResponseExtractColumns}
+        dataSource={content.extracts}
+      />
     </ProCard>
   );
 };

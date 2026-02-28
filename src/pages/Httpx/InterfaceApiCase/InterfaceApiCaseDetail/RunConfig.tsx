@@ -58,63 +58,64 @@ const RunConfig: FC<Props> = ({
   return (
     <ProCard
       style={{
-        borderRadius: 16,
-        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.06)',
-        overflow: 'hidden',
+        height: '100%',
+        width: '100%',
       }}
       bodyStyle={{
-        padding: 12,
+        padding: 10,
         display: 'flex',
         flexDirection: 'column',
-        gap: '12px',
-        overflow: 'hidden',
+        gap: '10px',
+        borderRadius: '12px',
       }}
     >
       {/* 运行方式选择 */}
-      <ProCard
-        bordered={true}
-        style={{
-          display: 'flex',
-          gap: '8px',
-          borderRadius: 12,
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
-          padding: 16,
-        }}
-      >
-        {/* 运行方式标题 */}
-        <Space style={{ marginBottom: 20 }}>
-          <SettingFilled style={{ color: '#3b82f6' }} />
-          <Text strong style={{ fontSize: '14px', margin: 0 }}>
-            运行方式
-          </Text>
-        </Space>
-        <Radio.Group
-          defaultValue={1}
-          onChange={onMenuClick}
-          options={[
-            {
-              label: (
-                // @ts-ignore
-                <Flex gap="small" justify="center" align="center" horizontal>
-                  <RobotOutlined style={{ fontSize: 18, color: '#3b82f6' }} />
-                  后台执行
-                </Flex>
-              ),
-              value: 1,
-            },
-            {
-              label: (
-                // @ts-ignore
-                <Flex gap="small" justify="center" align="center" horizontal>
-                  <MessageOutlined style={{ fontSize: 18, color: '#3b82f6' }} />
-                  实时日志
-                </Flex>
-              ),
-              value: 2,
-            },
-          ]}
-        />
-      </ProCard>
+      <>
+        <ProCard
+          bordered
+          style={{
+            display: 'flex',
+            gap: '8px',
+            borderRadius: '8px',
+            border: '1px solid #e1e8ff',
+          }}
+        >
+          <Space direction={'vertical'}>
+            <Space style={{ marginBottom: 20 }}>
+              <SettingFilled style={{ color: '#3b82f6' }} />
+              <Text strong style={{ fontSize: '14px', margin: 0 }}>
+                运行方式
+              </Text>
+            </Space>
+            <Radio.Group
+              defaultValue={1}
+              onChange={onMenuClick}
+              options={[
+                {
+                  label: (
+                    // @ts-ignore
+                    <Flex gap="small" justify="center" align="center">
+                      <RobotOutlined style={{ fontSize: 18 }} />
+                      后台执行
+                    </Flex>
+                  ),
+                  value: 1,
+                },
+                {
+                  label: (
+                    // @ts-ignore
+                    <Flex gap="small" justify="center" align="center">
+                      <MessageOutlined style={{ fontSize: 18 }} />
+                      实时日志
+                    </Flex>
+                  ),
+                  value: 2,
+                },
+              ]}
+            />
+          </Space>
+        </ProCard>
+      </>
 
       {/* 运行环境选择 */}
       <ProCard

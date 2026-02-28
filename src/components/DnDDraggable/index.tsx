@@ -24,9 +24,9 @@ interface Props {
 const Index: FC<Props> = ({ items, setItems, orderFetch }) => {
   const sensors = useSensors(
     useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 5, // 需要移动5像素才触发拖拽
-      },
+      // activationConstraint: {
+      //   distance: 5, // 需要移动5像素才触发拖拽
+      // },
     }),
     // useSensor(KeyboardSensor, {
     //   coordinateGetter: sortableKeyboardCoordinates,

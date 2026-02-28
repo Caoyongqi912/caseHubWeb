@@ -526,42 +526,14 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
       </MyDrawer>
       <RcResizeObserver onResize={handleResize}>
         <ProCard
-          style={{
-            height: '100%',
-            overflow: 'hidden',
-            borderRadius: 16,
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
-          }}
-          bodyStyle={{
-            height: '100%',
-            padding: config.cardPadding,
-            overflow: 'hidden',
-            minHeight: '100vh',
-          }}
+          style={{ height: '100%' }}
+          bodyStyle={{ height: '100%', padding: '10px', minHeight: '100vh' }}
         >
           <Splitter
-            style={{
-              height: '100%',
-              overflow: 'hidden',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
-              borderRadius: 12,
-            }}
+            style={{ height: '100%', boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)' }}
           >
             <Splitter.Panel size={drawerWidth} max="100%">
-              <ProCard
-                bordered={false}
-                style={{
-                  overflow: 'hidden',
-                  borderRadius: 12,
-                  boxShadow: '0 4px 16px rgba(0, 0, 0, 0.06)',
-                }}
-                bodyStyle={{
-                  padding: config.cardPadding,
-                  borderRadius: 12,
-                  minHeight: '80vh',
-                  overflow: 'hidden',
-                }}
-              >
+              <ProCard bodyStyle={{ minHeight: '100hv', overflow: 'auto' }}>
                 <MyTabs
                   defaultActiveKey={activeKey}
                   onChangeKey={setActiveKey}

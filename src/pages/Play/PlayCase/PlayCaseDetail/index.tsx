@@ -1,5 +1,5 @@
-import { addCaseContent } from '@/api/inter/interCase';
 import {
+  addCaseContent,
   queryPlayCaseVars,
   queryPlayStepContentByCaseId,
   reorderCaseStep,
@@ -20,6 +20,7 @@ import PlayCaseResultTable from '@/pages/Play/PlayResult/PlayCaseResultTable';
 import PlayStepDetail from '@/pages/Play/PlayStep/PlayStepDetail';
 import { useParams } from '@@/exports';
 import {
+  DatabaseOutlined,
   EditOutlined,
   PythonOutlined,
   SelectOutlined,
@@ -76,6 +77,7 @@ const Index = () => {
   useEffect(() => {
     if (!caseId || !projectId || !moduleId) return;
     if (uiSteps && uiSteps.length > 0) {
+      console.log('=====', uiSteps);
       setUIStepsContent(
         uiSteps.map((item, index) => ({
           id: index,
@@ -127,12 +129,15 @@ const Index = () => {
     setStepIndex(currStepIndex);
   };
 
-  const AddScript = async () => {
+  const AddContent = async (content_type: number) => {
     if (!caseId) return;
     const { code } = await addCaseContent({
       case_id: parseInt(caseId),
-      content_type: 4,
+      content_type: content_type,
     });
+    if (code === 0) {
+      await handelRefresh();
+    }
   };
   const AddStepExtra = () => {
     return (
@@ -151,8 +156,15 @@ const Index = () => {
                 key: 'add_script',
                 label: '添加脚本',
                 icon: <PythonOutlined style={{ color: 'orange' }} />,
-                onClick: AddScript,
+                onClick: async () => await AddContent(4),
               },
+              {
+                key: 'add_db_script',
+                label: '添加数据库脚本',
+                icon: <DatabaseOutlined style={{ color: 'orange' }} />,
+                onClick: async () => await AddContent(8),
+              },
+
               {
                 type: 'divider',
               },
@@ -257,16 +269,13 @@ const Index = () => {
           <Splitter
             style={{ height: '100%', boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)' }}
           >
-            <Splitter.Panel
-              resizable={false}
-              defaultSize={defaultSize}
-              max="100%"
-            >
-              <ProCard
-                extra={<AddStepExtra />}
-                bodyStyle={{ minHeight: '100hv' }}
-              >
-                <MyTabs defaultActiveKey={'2'} items={CornItems} />
+            <Splitter.Panel defaultSize={defaultSize} max="100%">
+              <ProCard bodyStyle={{ minHeight: '100hv', overflow: 'auto' }}>
+                <MyTabs
+                  defaultActiveKey={'2'}
+                  items={CornItems}
+                  tabBarExtraContent={<AddStepExtra />}
+                />
               </ProCard>
             </Splitter.Panel>
             <Splitter.Panel>

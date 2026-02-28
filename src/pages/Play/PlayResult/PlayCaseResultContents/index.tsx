@@ -1,6 +1,9 @@
 import { queryCaseContentResult } from '@/api/play/playCase';
-import { IPlayCaseContentResult } from '@/pages/Play/componets/uiTypes';
+import { IPlayCaseContentResultResponse } from '@/pages/Play/componets/uiTypes';
+import PlayStepDBResultContent from '@/pages/Play/PlayResult/PlayCaseResultContents/PlayStepDBResultContent';
+import PlayStepGroupResultContents from '@/pages/Play/PlayResult/PlayCaseResultContents/PlayStepGroupResultContents';
 import PlayStepResultContent from '@/pages/Play/PlayResult/PlayCaseResultContents/PlayStepResultContent';
+import PlayStepScriptResultContent from '@/pages/Play/PlayResult/PlayCaseResultContents/PlayStepScriptResultContent';
 import { ProCard } from '@ant-design/pro-components';
 import { Button, Empty } from 'antd';
 import { FC, useEffect, useState } from 'react';
@@ -9,7 +12,8 @@ const CaseContentType = {
   Play: 1,
   Play_GROUP: 2,
   Play_CONDITION: 3,
-  Play_SCRIPT: 6,
+  Play_SCRIPT: 5,
+  Play_DB: 8,
 };
 
 interface SelfProps {
@@ -18,18 +22,20 @@ interface SelfProps {
 
 const Index: FC<SelfProps> = ({ play_case_id }) => {
   const [failOnly, setFailOnly] = useState(false);
-  const [originalData, setOriginalData] = useState<IPlayCaseContentResult[]>(
-    [],
-  ); // 保存原始数据
+  const [originalData, setOriginalData] = useState<
+    IPlayCaseContentResultResponse[]
+  >([]); // 保存原始数据
   const [stepContentResult, setStepContentResult] =
-    useState<IPlayCaseContentResult[]>();
+    useState<IPlayCaseContentResultResponse[]>();
 
   // 根据 failOnly 状态过滤数据
   useEffect(() => {
     if (originalData.length === 0) return;
 
     if (failOnly) {
-      setStepContentResult(originalData.filter((item) => !item.content_result));
+      setStepContentResult(
+        originalData.filter((item) => !item.result.content_result),
+      );
     } else {
       setStepContentResult([...originalData]);
     }
@@ -56,11 +62,29 @@ const Index: FC<SelfProps> = ({ play_case_id }) => {
     >
       {stepContentResult && stepContentResult.length > 0 ? (
         stepContentResult.map((item, index) => {
-          switch (item.content_type) {
+          switch (item.result.content_type) {
+            case CaseContentType.Play_SCRIPT:
+              return (
+                <div key={index}>
+                  <PlayStepScriptResultContent content={item.result} />
+                </div>
+              );
             case CaseContentType.Play:
               return (
                 <div key={index}>
-                  <PlayStepResultContent content={item} />
+                  <PlayStepResultContent content={item.result} />
+                </div>
+              );
+            case CaseContentType.Play_DB:
+              return (
+                <div key={index}>
+                  <PlayStepDBResultContent content={item.result} />
+                </div>
+              );
+            case CaseContentType.Play_GROUP:
+              return (
+                <div key={index}>
+                  <PlayStepGroupResultContents content={item} />
                 </div>
               );
           }

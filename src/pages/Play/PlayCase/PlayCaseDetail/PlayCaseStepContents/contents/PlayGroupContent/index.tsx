@@ -2,7 +2,7 @@ import Handler from '@/components/DnDDraggable/handler';
 import { IPlayStepContent } from '@/pages/Play/componets/uiTypes';
 import ContentExtra from '@/pages/Play/PlayCase/PlayCaseDetail/PlayCaseStepContents/contentExtra';
 import GroupTable from '@/pages/Play/PlayCase/PlayCaseDetail/PlayCaseStepContents/contents/PlayGroupContent/GroupTable';
-import { GroupOutlined } from '@ant-design/icons';
+import { GroupOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
 import { Space, Tag, Typography } from 'antd';
 import { FC, useState } from 'react';
@@ -51,6 +51,7 @@ const Index: FC<Props> = (props) => {
           return (
             <Space>
               <Handler id={id} step={step} />
+              <Tag color={'gold-inverse'} icon={<PlayCircleOutlined />} />
               <Tag color={'blue-inverse'} icon={<GroupOutlined />} />
               <Text strong>{stepContent.content_name}</Text>
               <Text type={'secondary'}>{stepContent.content_desc}</Text>

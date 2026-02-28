@@ -6,7 +6,6 @@ import {
   IPlayStepDetail,
   IUICase,
   IUICaseSteps,
-  IUICaseSubStep,
   IUIGroupStep,
   IUIMethod,
   IUIResult,
@@ -100,7 +99,7 @@ export const copyCaseStep = async (
 };
 
 /**
- * 删除 Case Content
+ * 修改 Case Content
  * @param data
  * @param options
  */
@@ -109,11 +108,11 @@ export const updateCaseContent = async (
     id: number;
     enable?: boolean;
     content_name?: string;
-    api_script_text?: string;
+    script_text?: string;
   },
   options?: IObjGet,
 ) => {
-  return request<IResponse<any>>('/api/play/case/edit_content', {
+  return request<IResponse<IPlayStepContent>>('/api/play/case/edit_content', {
     method: 'POST',
     data: data,
     ...(options || {}),
@@ -441,18 +440,16 @@ export const queryPlayStepContentByCaseId = async (
 };
 
 /**
- * 添加步骤
- * @param data
- * @param options
+ * add case步骤
  */
-export const insertPlayStep = async (
-  data: IUICaseSubStep,
-  options?: IObjGet,
+export const addCaseContent = async (
+  data: { case_id: number; content_type: number },
+  opt?: IObjGet,
 ) => {
-  return request<IResponse<null>>('/api/play/step/insertCasePlayStep', {
+  return request<IResponse<null>>('/api/play/case/insert_content', {
     method: 'POST',
-    data,
-    ...(options || {}),
+    data: data,
+    ...(opt || {}),
   });
 };
 

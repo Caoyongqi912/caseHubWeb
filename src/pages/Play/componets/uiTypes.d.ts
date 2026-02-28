@@ -282,6 +282,11 @@ export interface IPlayStepContent {
   assert_list?: any;
 }
 
+export interface IPlayCaseContentResultResponse {
+  children: IPlayCaseContentResult[];
+  result: IPlayCaseContentResult;
+}
+
 export interface IPlayCaseContentResult extends IBaseField {
   content_message?: string;
   content_type: number;
@@ -294,9 +299,10 @@ export interface IPlayCaseContentResult extends IBaseField {
   content_target_result_id: null | number;
   script_extracts: null;
   extracts: {
-    variable_name: string;
-    extracted_value: any;
-  };
+    key: string;
+    value: any;
+    target: number;
+  }[];
   wait_time: number | null;
   content_condition: {
     key: any;

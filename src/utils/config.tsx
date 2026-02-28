@@ -59,6 +59,8 @@ export const CONFIG: IObjGet = {
     7: { text: 'ResponseHeadExtract' },
     8: { text: 'ResponseTextExtract' },
     9: { text: 'RequestCookieExtract' },
+    14: { text: 'PlayGetter' },
+    15: { text: 'DB' },
   },
   API_LEVEL_SELECT: [
     {

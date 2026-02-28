@@ -1,15 +1,14 @@
 import { updateCaseContent } from '@/api/inter/interCase';
-import Handler from '@/components/DnDDraggable/handler';
+import ScriptContentCard, {
+  ScriptContentInfo,
+} from '@/components/ContentCard/ScriptContentCard';
 import CardExtraOption from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/CardExtraOption';
-import ApiScriptContent from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/ScriptProCard/apiScriptContent';
 import { IInterfaceCaseContent } from '@/pages/Httpx/types';
-import { EditOutlined, PythonOutlined } from '@ant-design/icons';
-import { ProCard } from '@ant-design/pro-components';
-import { Input, Space, Tag, Typography } from 'antd';
-import { FC, useEffect, useRef, useState } from 'react';
+import { FC, useMemo, useState } from 'react';
 
-const { Text } = Typography;
-
+/**
+ * Props接口
+ */
 interface Props {
   id: number;
   step: number;
@@ -18,106 +17,47 @@ interface Props {
   callback?: () => void;
 }
 
+/**
+ * ScriptProCard组件
+ * 接口流程的脚本步骤内容组件
+ */
 const Index: FC<Props> = (props) => {
-  const timeoutRef = useRef<any>(null);
-
-  const { step, id, caseId, caseContent, callback } = props;
+  const { id, step, caseId, caseContent, callback } = props;
   const [showOption, setShowOption] = useState(false);
-  const [saveScript, setSaveScript] = useState(false);
-  const [scriptText, setScriptText] = useState<string>();
-  const [scriptTextName, setScriptTextName] = useState<string>();
-  const [showScriptInput, setShowScriptInput] = useState(true);
-  const [showEditIcon, setShowEditIcon] = useState(false);
 
-  useEffect(() => {
-    const { api_script_text } = caseContent;
-    if (api_script_text) {
-      setScriptTextName(caseContent.content_name);
-      setScriptText(caseContent.api_script_text);
-      setShowScriptInput(false);
-    }
-  }, [caseContent]);
-  const handleScriptOnChange = (value: string) => {
-    clearTimeout(timeoutRef.current);
-    setScriptText(value);
-    timeoutRef.current = setTimeout(async () => {
-      updateCaseContent({ id: caseContent.id, api_script_text: value }).then(
-        async ({ code }) => {
-          if (code === 0) {
-            setSaveScript(true);
-            setTimeout(() => {
-              setSaveScript(false);
-            }, 2000);
-          }
-        },
-      );
-    }, 3000);
+  /**
+   * 更新脚本内容
+   * 使用Inter模块的updateCaseContent API
+   */
+  const handleUpdateScript = async (data: {
+    id: number;
+    script_text?: string;
+    api_script_text?: string;
+    content_name?: string;
+  }) => {
+    return updateCaseContent(data);
   };
 
-  const updateContentTitle = async (value: string | undefined) => {
-    if (value) {
-      const { code, data } = await updateCaseContent({
-        id: caseContent.id,
-        content_name: value,
-      });
-      if (code === 0) {
-        setScriptTextName(data.content_name);
-        setShowScriptInput(false);
-      }
-    } else {
-      setShowScriptInput(true);
-    }
-  };
+  /**
+   * 构造脚本内容信息
+   * 使用useMemo避免每次渲染创建新对象导致useEffect循环触发
+   */
+  const contentInfo: ScriptContentInfo = useMemo(
+    () => ({
+      id: caseContent.id,
+      content_name: caseContent.content_name,
+      api_script_text: caseContent.api_script_text,
+    }),
+    [caseContent.id, caseContent.content_name, caseContent.api_script_text],
+  );
 
-  const SCRIPT = () => {
-    if (scriptTextName && !showScriptInput) {
-      return (
-        <>
-          <Text>{scriptTextName}</Text>
-          {showEditIcon && (
-            <EditOutlined
-              style={{ marginLeft: 10 }}
-              onClick={(event) => {
-                event.stopPropagation();
-                setShowScriptInput(true);
-              }}
-            />
-          )}
-        </>
-      );
-    } else {
-      return (
-        <Input
-          style={{ width: '100%' }}
-          variant={'outlined'}
-          onChange={(e) => {
-            e.stopPropagation();
-            if (e.target.value) setScriptTextName(e.target.value);
-          }}
-          onClick={(e) => {
-            e.stopPropagation();
-          }}
-          onBlur={async () => await updateContentTitle(scriptTextName)}
-          onPressEnter={async () => await updateContentTitle(scriptTextName)}
-        />
-      );
-    }
-  };
   return (
-    <ProCard
-      className={'content'}
-      bordered
-      collapsible
-      hoverable
-      defaultCollapsed
-      onMouseEnter={() => {
-        setShowOption(true);
-        setShowEditIcon(true);
-      }}
-      onMouseLeave={() => {
-        setShowOption(false);
-        setShowEditIcon(false);
-      }}
+    <ScriptContentCard
+      id={id}
+      step={step}
+      caseId={caseId}
+      contentInfo={contentInfo}
+      callback={callback}
       extra={
         <CardExtraOption
           show={showOption}
@@ -126,22 +66,12 @@ const Index: FC<Props> = (props) => {
           caseId={caseId}
         />
       }
-      collapsibleIconRender={({}) => {
-        return (
-          <Space>
-            <Handler id={id} step={step} />
-            <Tag color={'geekblue-inverse'} icon={<PythonOutlined />} />
-            <div style={{ marginLeft: 10 }}>{SCRIPT()}</div>
-          </Space>
-        );
-      }}
-    >
-      <ApiScriptContent
-        isSave={saveScript}
-        script_text={scriptText}
-        onChange={handleScriptOnChange}
-      />
-    </ProCard>
+      showExtra={showOption}
+      onMouseEnter={() => setShowOption(true)}
+      onMouseLeave={() => setShowOption(false)}
+      updateScript={handleUpdateScript}
+      scriptTextKey="api_script_text"
+    />
   );
 };
 

@@ -106,3 +106,16 @@ export async function testDBConfig(data: IDBConfig, options?: IObjGet) {
     ...(options || {}),
   });
 }
+
+/**
+ * 获取db
+ * @param data
+ * @param opt
+ */
+export const getDBContentInfo = async (data: number, opt?: IObjGet) => {
+  return request<IResponse<any>>('/api/project/config/getDBContent', {
+    method: 'GET',
+    params: { db_content_id: data },
+    ...(opt || {}),
+  });
+};

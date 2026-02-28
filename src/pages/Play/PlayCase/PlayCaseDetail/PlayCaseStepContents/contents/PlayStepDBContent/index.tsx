@@ -1,9 +1,9 @@
-import { updateCaseContent } from '@/api/inter/interCase';
+import { updateCaseContent } from '@/api/play/playCase';
 import DBContentCard, {
   DBContentInfo,
 } from '@/components/ContentCard/DBContentCard';
-import CardExtraOption from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/CardExtraOption';
-import { IInterfaceCaseContent } from '@/pages/Httpx/types';
+import { IPlayStepContent } from '@/pages/Play/componets/uiTypes';
+import ContentExtra from '@/pages/Play/PlayCase/PlayCaseDetail/PlayCaseStepContents/contentExtra';
 import { FC, useState } from 'react';
 
 /**
@@ -13,22 +13,21 @@ interface Props {
   id: number;
   step: number;
   caseId: number;
-  caseContent: IInterfaceCaseContent;
-  projectId?: number;
-  callback?: () => void;
+  stepContent: IPlayStepContent;
+  callback: () => void;
 }
 
 /**
- * ApidbCard组件
- * 接口流程的数据库步骤内容组件
+ * PlayStepDBContent组件
+ * UI流程的数据库步骤内容组件
  */
-const ApidbCard: FC<Props> = (props) => {
-  const { id, step, caseId, caseContent, callback } = props;
+const Index: FC<Props> = (props) => {
+  const { id, step, caseId, stepContent, callback } = props;
   const [showOption, setShowOption] = useState(false);
 
   /**
    * 更新内容标题
-   * 使用Inter模块的updateCaseContent API
+   * 使用Play模块的updateCaseContent API
    */
   const handleUpdateContentTitle = async (data: {
     id: number;
@@ -41,9 +40,9 @@ const ApidbCard: FC<Props> = (props) => {
    * 构造DB内容信息
    */
   const contentInfo: DBContentInfo = {
-    id: caseContent.id,
-    content_name: caseContent.content_name,
-    target_id: caseContent.target_id,
+    id: stepContent.id,
+    content_name: stepContent.content_name,
+    target_id: stepContent.target_id,
   };
 
   return (
@@ -54,11 +53,11 @@ const ApidbCard: FC<Props> = (props) => {
       contentInfo={contentInfo}
       callback={callback}
       extra={
-        <CardExtraOption
-          show={showOption}
-          callback={callback}
-          caseContent={caseContent}
+        <ContentExtra
+          stepContent={stepContent}
           caseId={caseId}
+          callback={callback}
+          show={showOption}
         />
       }
       showExtra={showOption}
@@ -69,4 +68,4 @@ const ApidbCard: FC<Props> = (props) => {
   );
 };
 
-export default ApidbCard;
+export default Index;

@@ -45,12 +45,7 @@ const ResponseExtractColumns: ProColumns<IExtracts>[] = [
         );
       }
 
-      if (typeof value === 'boolean') {
-        // 如果是布尔类型，使用勾选框或者“是/否”来展示
-        return <span>{value ? 'true' : 'false'}</span>;
-      }
-
-      if (typeof value === 'number' || typeof value === 'string') {
+      if (typeof value === 'string') {
         // 如果是数字或者字符串，直接返回文本
         return <span>{value}</span>;
       }
