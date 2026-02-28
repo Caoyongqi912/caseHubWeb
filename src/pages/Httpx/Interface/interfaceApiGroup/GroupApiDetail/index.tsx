@@ -1,6 +1,7 @@
 import { IEnv } from '@/api';
 import { queryEnvBy } from '@/api/base';
 import {
+  addInterfaceGroupApis,
   queryInterfaceGroupApis,
   reorderInterfaceGroupApis,
   tryInterfaceGroup,
@@ -20,6 +21,7 @@ interface SelfProps {
   groupId?: number;
   projectId?: number;
 }
+
 const Index: FC<SelfProps> = ({ groupId, projectId }) => {
   const [apisContent, setApisContent] = useState<any[]>([]);
   const [queryApis, setQueryApis] = useState<IInterfaceAPI[]>([]);
@@ -113,13 +115,23 @@ const Index: FC<SelfProps> = ({ groupId, projectId }) => {
     }
   };
 
+  const selectInterface2Group = async (values: number[]) => {
+    if (!groupId) return;
+
+    const { code } = await addInterfaceGroupApis({
+      groupId: groupId,
+      apiIds: values,
+    });
+    if (code === 0) {
+      await handleReload();
+    }
+  };
   return (
     <>
-      <MyDrawer name={''} open={choiceOpen} setOpen={setChoiceOpen}>
+      <MyDrawer open={choiceOpen} setOpen={setChoiceOpen}>
         <InterfaceCaseChoiceApiTable
-          currentGroupId={groupId}
           projectId={projectId}
-          refresh={handleReload}
+          onSelect={selectInterface2Group}
         />
       </MyDrawer>
       <MyDrawer

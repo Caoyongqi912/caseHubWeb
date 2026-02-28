@@ -20,6 +20,7 @@ export default [
     path: '/user',
     name: '用户管理',
     icon: 'user',
+    hideInBreadcrumb: false,
     routes: [
       {
         path: '/user/admin',

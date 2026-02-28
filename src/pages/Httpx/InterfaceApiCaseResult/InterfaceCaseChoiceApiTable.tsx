@@ -1,12 +1,5 @@
 import { IModuleEnum, IObjGet } from '@/api';
 import { pageInterApi } from '@/api/inter';
-import {
-  associationApis,
-  selectCommonAPI2ConditionAPI,
-  selectCommonAPI2LoopAPI,
-} from '@/api/inter/interCase';
-import { addInterfaceGroupApis } from '@/api/inter/interGroup';
-import { associationApisByTaskId } from '@/api/inter/interTask';
 import { queryProjectEnum } from '@/components/CommonFunc';
 import MyProTable from '@/components/Table/MyProTable';
 import UserSelect from '@/components/Table/UserSelect';
@@ -14,30 +7,20 @@ import { IInterfaceAPI } from '@/pages/Httpx/types';
 import { CONFIG, ModuleEnum } from '@/utils/config';
 import { fetchModulesEnum, pageData } from '@/utils/somefunc';
 import { ActionType, ProColumns } from '@ant-design/pro-components';
-import { Button, message, Space, Tag } from 'antd';
+import { Button, Space, Tag } from 'antd';
 import { TableRowSelection } from 'antd/es/table/interface';
 import React, { FC, useCallback, useEffect, useRef, useState } from 'react';
 
 interface SelfProps {
   projectId?: number;
-  currentCaseApiId?: number;
-  currentGroupId?: number;
-  currentTaskId?: string;
-  currentStepId?: number; //playStep choise
-  condition_id?: number;
-  loop_id?: number;
-  refresh?: (value?: number[]) => void;
+  radio?: boolean;
+  onSelect: (value: number[]) => Promise<any>;
 }
 
 const InterfaceCaseChoiceApiTable: FC<SelfProps> = ({
   projectId,
-  currentGroupId,
-  currentCaseApiId,
-  refresh,
-  currentTaskId,
-  currentStepId,
-  condition_id,
-  loop_id,
+  onSelect,
+  radio = false,
 }) => {
   const actionRef = useRef<ActionType>(); //Table action 的引用，便于自定义触发
   const [projectEnumMap, setProjectEnumMap] = useState<IObjGet>({});
@@ -139,7 +122,7 @@ const InterfaceCaseChoiceApiTable: FC<SelfProps> = ({
 
   const rowSelection: TableRowSelection<IInterfaceAPI> = {
     selectedRowKeys,
-    type: currentStepId ? 'radio' : 'checkbox',
+    type: radio ? 'radio' : 'checkbox',
     onChange: (newSelectedRowKeys: React.Key[]) => {
       setSelectedRowKeys(newSelectedRowKeys);
     },
@@ -154,81 +137,11 @@ const InterfaceCaseChoiceApiTable: FC<SelfProps> = ({
             <Button
               type={'primary'}
               onClick={async () => {
-                if (condition_id) {
-                  const { code, msg } = await selectCommonAPI2ConditionAPI({
-                    condition_id: condition_id,
-                    interface_id_list: selectedRowKeys as number[],
-                  });
-                  if (code === 0) {
-                    message.success(msg);
-                    refresh?.();
-                  }
-                  return;
-                }
-                if (loop_id) {
-                  const { code, msg } = await selectCommonAPI2LoopAPI({
-                    loop_id: loop_id,
-                    interface_id_list: selectedRowKeys as number[],
-                  });
-                  if (code === 0) {
-                    message.success(msg);
-                    refresh?.();
-                  }
-                  return;
-                }
-                if (currentCaseApiId) {
-                  const { code, msg } = await associationApis({
-                    interface_case_id: currentCaseApiId,
-                    interface_id_list: selectedRowKeys as number[],
-                  });
-                  if (code === 0) {
-                    message.success(msg);
-                    refresh?.();
-                  }
-                } else if (currentTaskId) {
-                  const { code, msg } = await associationApisByTaskId({
-                    taskId: currentTaskId,
-                    apiIds: selectedRowKeys as number[],
-                  });
-                  if (code === 0) {
-                    message.success(msg);
-                    refresh?.();
-                  }
-                } else if (currentGroupId) {
-                  const { code, msg } = await addInterfaceGroupApis({
-                    groupId: currentGroupId,
-                    apiIds: selectedRowKeys as number[],
-                  });
-                  if (code === 0) {
-                    message.success(msg);
-                    refresh?.();
-                  }
-                } else if (currentStepId) {
-                  refresh?.(selectedRowKeys as number[]);
-                }
+                await onSelect(selectedRowKeys as number[]);
               }}
             >
               引用添加
             </Button>
-            {/*{currentCaseApiId &&*/}
-            {/*  currentGroupId === undefined &&*/}
-            {/*  currentTaskId === undefined && (*/}
-            {/*    <Button*/}
-            {/*      type={'primary'}*/}
-            {/*      onClick={async () => {*/}
-            {/*        const { code, msg } = await selectCommonApisCopy2Case({*/}
-            {/*          caseId: currentCaseApiId,*/}
-            {/*          commonApis: selectedRowKeys as number[],*/}
-            {/*        });*/}
-            {/*        if (code === 0) {*/}
-            {/*          message.success(msg);*/}
-            {/*          refresh?.();*/}
-            {/*        }*/}
-            {/*      }}*/}
-            {/*    >*/}
-            {/*      复制添加*/}
-            {/*    </Button>*/}
-            {/*  )}*/}
           </Space>
         );
       }}

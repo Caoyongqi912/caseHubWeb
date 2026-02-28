@@ -1,5 +1,6 @@
 import {
   addCaseContent,
+  associationInterface,
   queryPlayCaseVars,
   queryPlayStepContentByCaseId,
   reorderCaseStep,
@@ -9,6 +10,7 @@ import DnDDraggable from '@/components/DnDDraggable';
 import { DraggableItem } from '@/components/DnDDraggable/type';
 import MyDrawer from '@/components/MyDrawer';
 import MyTabs from '@/components/MyTabs';
+import InterfaceCaseChoiceApiTable from '@/pages/Httpx/InterfaceApiCaseResult/InterfaceCaseChoiceApiTable';
 import { IPlayStepContent } from '@/pages/Play/componets/uiTypes';
 import PlayCaseStepContents from '@/pages/Play/PlayCase/PlayCaseDetail/PlayCaseStepContents';
 import PlayCaseVars from '@/pages/Play/PlayCase/PlayCaseDetail/PlayCaseVars';
@@ -20,6 +22,7 @@ import PlayCaseResultTable from '@/pages/Play/PlayResult/PlayCaseResultTable';
 import PlayStepDetail from '@/pages/Play/PlayStep/PlayStepDetail';
 import { useParams } from '@@/exports';
 import {
+  ApiOutlined,
   DatabaseOutlined,
   EditOutlined,
   PythonOutlined,
@@ -45,6 +48,7 @@ const Index = () => {
   const [stepIndex, setStepIndex] = useState<number>(0);
   const [openAddStepDrawer, setOpenAddStepDrawer] = useState(false);
   const [openChoiceStepDrawer, setOpenChoiceStepDrawer] = useState(false);
+  const [openChoiceAPIDrawer, setOpenChoiceAPIDrawer] = useState(false);
   const [openChoiceGroupStepDrawer, setOpenChoiceGroupStepDrawer] =
     useState(false);
   const [refresh, setRefresh] = useState<number>(0);
@@ -117,6 +121,7 @@ const Index = () => {
     setOpenAddStepDrawer(false);
     setOpenChoiceStepDrawer(false);
     setOpenChoiceGroupStepDrawer(false);
+    setOpenChoiceAPIDrawer(false);
   };
 
   const onMenuClick = (e: RadioChangeEvent) => {
@@ -163,6 +168,14 @@ const Index = () => {
                 label: '添加数据库脚本',
                 icon: <DatabaseOutlined style={{ color: 'orange' }} />,
                 onClick: async () => await AddContent(8),
+              },
+              {
+                key: 'add_interface',
+                label: '添加接口',
+                icon: <ApiOutlined style={{ color: 'orange' }} />,
+                onClick: () => {
+                  setOpenChoiceAPIDrawer(true);
+                },
               },
 
               {
@@ -259,6 +272,23 @@ const Index = () => {
       setRunOpen(true);
     }
   };
+
+  /**
+   * 关联接口到用例
+   * @param values
+   */
+  const selectAPI2Case = async (values: number[]) => {
+    let value;
+    if (values.length > 0) value = values[0];
+    if (!value || !caseId) return;
+    const { code, data } = await associationInterface({
+      case_id: parseInt(caseId),
+      interface_id: value,
+    });
+    if (code === 0) {
+      await handelRefresh();
+    }
+  };
   return (
     <>
       <RcResizeObserver onResize={handleResize}>
@@ -336,6 +366,14 @@ const Index = () => {
           />
         </MyDrawer>
       </>
+
+      <MyDrawer open={openChoiceAPIDrawer} setOpen={setOpenChoiceAPIDrawer}>
+        <InterfaceCaseChoiceApiTable
+          projectId={parseInt(projectId!)}
+          onSelect={selectAPI2Case}
+          radio={true}
+        />
+      </MyDrawer>
     </>
   );
 };

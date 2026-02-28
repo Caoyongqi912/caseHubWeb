@@ -1,6 +1,7 @@
 import {
   addCaseContent,
   add_empty_api,
+  associationApis,
   baseInfoApiCase,
   initAPICondition,
   queryContentsByCaseId,
@@ -484,6 +485,17 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
     },
   ];
 
+  const selectInterface2Case = async (values: number[]) => {
+    if (!currentCaseId) return;
+    const { code, msg } = await associationApis({
+      interface_case_id: currentCaseId,
+      interface_id_list: values,
+    });
+    if (code === 0) {
+      message.success(msg);
+      refresh();
+    }
+  };
   return (
     <>
       <LoopForm
@@ -520,8 +532,8 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
       <MyDrawer open={isChoiceDrawerOpen} setOpen={setIsChoiceDrawerOpen}>
         <InterfaceCaseChoiceApiTable
           projectId={parseInt(projectId!)}
-          currentCaseApiId={currentCaseId}
-          refresh={refresh}
+          mutable={true}
+          onSelect={selectInterface2Case}
         />
       </MyDrawer>
       <RcResizeObserver onResize={handleResize}>

@@ -262,7 +262,7 @@ const Index: FC<SelfProps> = ({
       title: '操作',
       valueType: 'option',
       key: 'option',
-      width: 180,
+      width: '8%',
       fixed: 'right',
       render: (_, record) => [
         <a

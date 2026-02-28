@@ -317,4 +317,5 @@ export interface IPlayCaseContentResult extends IBaseField {
   content_result: boolean;
   content_screenshot_path: string | null;
   content_ignore_error: boolean;
+  target_result: any;
 }

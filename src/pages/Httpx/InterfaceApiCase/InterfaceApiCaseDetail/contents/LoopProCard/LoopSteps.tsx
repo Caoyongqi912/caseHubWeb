@@ -3,6 +3,7 @@ import {
   queryLoopAPI,
   removerLoopAssociationAPI,
   reorderLoopAssociationAPI,
+  selectCommonAPI2LoopAPI,
 } from '@/api/inter/interCase';
 import MyDrawer from '@/components/MyDrawer';
 import InterfaceApiDetail from '@/pages/Httpx/Interface/InterfaceApiDetail';
@@ -177,6 +178,18 @@ const LoopSteps: FC<{
     </Space>
   );
 
+  const selectInterface2Loop = async (values: number[]) => {
+    const { code, msg } = await selectCommonAPI2LoopAPI({
+      loop_id: caseContent.target_id,
+      interface_id_list: values,
+    });
+    if (code === 0) {
+      message.success(msg);
+      setChoiceOpen(false);
+      reloadTable();
+    }
+  };
+
   return (
     <>
       <LoopForm
@@ -188,17 +201,11 @@ const LoopSteps: FC<{
       />
       <MyDrawer width={'75%'} open={showAPIDetail} setOpen={setShowAPIDetail}>
         <InterfaceApiDetail interfaceId={currentApiId} callback={reloadTable} />
-        ;
       </MyDrawer>
       <MyDrawer open={choiceOpen} setOpen={setChoiceOpen}>
         <InterfaceCaseChoiceApiTable
           projectId={projectId}
-          currentCaseApiId={case_id}
-          loop_id={caseContent.target_id}
-          refresh={() => {
-            setChoiceOpen(false);
-            reloadTable();
-          }}
+          onSelect={selectInterface2Loop}
         />
       </MyDrawer>
       <ProCard

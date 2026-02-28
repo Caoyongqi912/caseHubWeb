@@ -2,6 +2,7 @@ import { queryCaseContentResult } from '@/api/play/playCase';
 import { IPlayCaseContentResultResponse } from '@/pages/Play/componets/uiTypes';
 import PlayStepDBResultContent from '@/pages/Play/PlayResult/PlayCaseResultContents/PlayStepDBResultContent';
 import PlayStepGroupResultContents from '@/pages/Play/PlayResult/PlayCaseResultContents/PlayStepGroupResultContents';
+import PlayStepInterfaceResultContent from '@/pages/Play/PlayResult/PlayCaseResultContents/PlayStepInterfaceResultContent';
 import PlayStepResultContent from '@/pages/Play/PlayResult/PlayCaseResultContents/PlayStepResultContent';
 import PlayStepScriptResultContent from '@/pages/Play/PlayResult/PlayCaseResultContents/PlayStepScriptResultContent';
 import { ProCard } from '@ant-design/pro-components';
@@ -14,6 +15,7 @@ const CaseContentType = {
   Play_CONDITION: 3,
   Play_SCRIPT: 5,
   Play_DB: 8,
+  Play_API: 4,
 };
 
 interface SelfProps {
@@ -63,6 +65,15 @@ const Index: FC<SelfProps> = ({ play_case_id }) => {
       {stepContentResult && stepContentResult.length > 0 ? (
         stepContentResult.map((item, index) => {
           switch (item.result.content_type) {
+            case CaseContentType.Play_API:
+              return (
+                <div key={index}>
+                  <PlayStepInterfaceResultContent
+                    content={item.result}
+                    result={item.result.target_result}
+                  />
+                </div>
+              );
             case CaseContentType.Play_SCRIPT:
               return (
                 <div key={index}>

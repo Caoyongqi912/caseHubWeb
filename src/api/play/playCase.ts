@@ -861,3 +861,21 @@ export const updatePlayMethod = async (
     ...(options || {}),
   });
 };
+
+/**
+ * 关联api 到 play case
+ */
+
+export const associationInterface = async (
+  data: {
+    case_id: number;
+    interface_id: number;
+  },
+  options?: IObjGet,
+) => {
+  return request<IResponse<null>>('/api/play/case/associationInterfaceAPI', {
+    method: 'POST',
+    data: data,
+    ...(options || {}),
+  });
+};

@@ -1,4 +1,3 @@
-import titleName from '@/components/TitleName';
 import { ProTable } from '@ant-design/pro-components';
 import { SearchConfig } from '@ant-design/pro-table/es/components/Form/FormRender';
 import { OptionsFunctionType } from '@ant-design/pro-table/es/components/ToolBar';
@@ -103,7 +102,7 @@ const MyProTable: FC<SelfProps> = (props) => {
         expandable={expandable}
         pagination={pagination || defaultPagination}
         dateFormatter="string"
-        headerTitle={headerTitle ? titleName(headerTitle) : null}
+        headerTitle={headerTitle && null}
         toolBarRender={toolBarRender}
       />
     </>

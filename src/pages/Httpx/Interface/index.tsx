@@ -1,7 +1,6 @@
 import LeftComponents from '@/components/LeftComponents';
 import GroupApiTable from '@/pages/Httpx/Interface/interfaceApiGroup/GroupApiTable';
 import InterfaceApiTable from '@/pages/Httpx/Interface/InterfaceApiTable';
-import InterfaceApiTableNoModule from '@/pages/Httpx/Interface/InterfaceApiTableNoModule';
 import InterfaceApiUpload from '@/pages/Httpx/Interface/InterfaceApiUpload';
 import { ModuleEnum } from '@/utils/config';
 import { getSplitter, setSplitter } from '@/utils/token';
@@ -32,7 +31,7 @@ const Index = () => {
 
     {
       key: 'group',
-      label: 'Group API',
+      label: '用例组',
       children: (
         <GroupApiTable
           currentProjectId={currentProjectId}
@@ -42,18 +41,8 @@ const Index = () => {
       ),
     },
     {
-      key: 'no part',
-      label: 'No Part API',
-      children: (
-        <InterfaceApiTableNoModule
-          currentProjectId={currentProjectId}
-          perKey={PerKeyNoPart}
-        />
-      ),
-    },
-    {
       key: 'upload',
-      label: 'Upload API',
+      label: '批量上传',
       children: <InterfaceApiUpload />,
     },
   ];

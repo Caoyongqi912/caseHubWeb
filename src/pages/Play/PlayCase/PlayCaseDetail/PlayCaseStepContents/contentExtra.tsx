@@ -19,6 +19,7 @@ const CaseContentType = {
   Play_GROUP: 2,
   Play_CONDITION: 3,
   Play_SCRIPT: 6,
+  Play_API: 4,
 };
 
 interface SelfProps {
@@ -64,9 +65,12 @@ const ContentExtra: FC<SelfProps> = (props) => {
             />
           </Tooltip>
         )}
-        <Tooltip title="复制步骤">
-          <CopyTwoTone onClick={copyContentStep} />
-        </Tooltip>
+        {stepContent.content_type !== CaseContentType.Play_API && (
+          <Tooltip title="复制步骤">
+            <CopyTwoTone onClick={copyContentStep} />
+          </Tooltip>
+        )}
+
         <Tooltip title="删除步骤">
           <DeleteTwoTone onClick={removeContentStep} />
         </Tooltip>

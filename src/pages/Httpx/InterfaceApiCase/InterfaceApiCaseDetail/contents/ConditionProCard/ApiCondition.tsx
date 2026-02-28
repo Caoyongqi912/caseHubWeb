@@ -3,6 +3,7 @@ import {
   queryConditionAPI,
   removerAssociationAPI,
   reorderAssociationAPI,
+  selectCommonAPI2ConditionAPI,
   updateConditionContentInfo,
 } from '@/api/inter/interCase';
 import MyDrawer from '@/components/MyDrawer';
@@ -262,6 +263,17 @@ const ApiCondition: FC<SelfProps> = ({
     </ProForm>
   );
 
+  const selectInterface2Condition = async (values: number[]) => {
+    const { code, msg } = await selectCommonAPI2ConditionAPI({
+      condition_id: caseContent.target_id,
+      interface_id_list: values,
+    });
+
+    if (code === 0) {
+      message.success(msg);
+      refresh();
+    }
+  };
   return (
     <>
       <ProCard
@@ -299,9 +311,7 @@ const ApiCondition: FC<SelfProps> = ({
       <MyDrawer open={choiceOpen} setOpen={setChoiceOpen}>
         <InterfaceCaseChoiceApiTable
           projectId={projectId}
-          currentCaseApiId={case_id}
-          condition_id={caseContent.target_id}
-          refresh={refresh}
+          onSelect={selectInterface2Condition}
         />
       </MyDrawer>
     </>

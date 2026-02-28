@@ -1,4 +1,5 @@
 import {
+  associationApisByTaskId,
   queryAssociationApisByTaskId,
   removeAssociationApisByTaskId,
   reorderAssociationApisByTaskId,
@@ -143,6 +144,18 @@ const AssociationApis: FC<IAssociationApisProps> = ({
     },
   ];
 
+  const selectInterface2Task = async (values: number[]) => {
+    if (!currentTaskId) return;
+    const { code, msg } = await associationApisByTaskId({
+      taskId: currentTaskId,
+      apiIds: values,
+    });
+    if (code === 0) {
+      message.success(msg);
+      actionRef.current?.reload();
+    }
+  };
+
   return (
     <>
       <MyDrawer
@@ -152,8 +165,7 @@ const AssociationApis: FC<IAssociationApisProps> = ({
       >
         <InterfaceCaseChoiceApiTable
           projectId={currentProjectId}
-          currentTaskId={currentTaskId}
-          refresh={() => actionRef.current?.reload}
+          onSelect={selectInterface2Task}
         />
       </MyDrawer>
       <MyDrawer open={apiDetailDrawer} setOpen={setApiDetailDrawer}>

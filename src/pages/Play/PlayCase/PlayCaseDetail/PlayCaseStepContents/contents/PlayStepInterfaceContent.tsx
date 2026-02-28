@@ -1,13 +1,12 @@
 import Handler from '@/components/DnDDraggable/handler';
 import MyDrawer from '@/components/MyDrawer';
+import InterfaceApiDetail from '@/pages/Httpx/Interface/InterfaceApiDetail';
 import { IPlayStepContent } from '@/pages/Play/componets/uiTypes';
 import ContentExtra from '@/pages/Play/PlayCase/PlayCaseDetail/PlayCaseStepContents/contentExtra';
-import PlayStepDetail from '@/pages/Play/PlayStep/PlayStepDetail';
-import { PlayCircleOutlined } from '@ant-design/icons';
+import { ApiOutlined } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
 import { Space, Tag, Typography } from 'antd';
 import { FC, useState } from 'react';
-
 const { Text } = Typography;
 
 interface Props {
@@ -18,27 +17,31 @@ interface Props {
   callback: () => void;
 }
 
-const PlayStepContent: FC<Props> = (props) => {
-  const { id, step, stepContent, caseId, callback } = props;
+const PlayStepInterfaceContent: FC<Props> = ({
+  id,
+  step,
+  caseId,
+  stepContent,
+  callback,
+}) => {
   const [showOption, setShowOption] = useState(false);
-  const [showPlayDetail, setShowPlayDetail] = useState(false);
-
+  const [showPlayInterfaceDetail, setShowPlayInterfaceDetail] = useState(false);
   const selfCallback = () => {
-    setShowPlayDetail(false);
+    setShowPlayInterfaceDetail(false);
     callback();
   };
 
   return (
     <div>
       <MyDrawer
-        name={'步骤详情'}
+        name={'接口详情'}
         width={'auto'}
-        open={showPlayDetail}
-        setOpen={setShowPlayDetail}
+        open={showPlayInterfaceDetail}
+        setOpen={setShowPlayInterfaceDetail}
       >
-        <PlayStepDetail
+        <InterfaceApiDetail
+          interfaceId={stepContent.target_id}
           callback={selfCallback}
-          play_step_id={stepContent.target_id}
         />
       </MyDrawer>
       <ProCard
@@ -63,14 +66,9 @@ const PlayStepContent: FC<Props> = (props) => {
         title={
           <Space>
             <Handler id={id} step={step} />
-            <Tag color={'gold-inverse'} icon={<PlayCircleOutlined />} />
-            {stepContent.is_common ? (
-              <Tag color={'#059669'}>共有</Tag>
-            ) : (
-              <Tag color={'#DC2626'}>私有</Tag>
-            )}
+            <Tag color={'gold-inverse'} icon={<ApiOutlined />} />
+            <Tag color={'#059669'}>API</Tag>
             <Text strong>{stepContent.content_name}</Text>
-
             {stepContent.content_desc && (
               <Text type={'secondary'}>{stepContent.content_desc}</Text>
             )}
@@ -81,11 +79,11 @@ const PlayStepContent: FC<Props> = (props) => {
         }}
         onClick={(event) => {
           event.stopPropagation();
-          setShowPlayDetail(true);
+          setShowPlayInterfaceDetail(true);
         }}
       />
     </div>
   );
 };
 
-export default PlayStepContent;
+export default PlayStepInterfaceContent;

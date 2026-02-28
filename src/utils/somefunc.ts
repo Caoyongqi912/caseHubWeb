@@ -1,6 +1,6 @@
 import { IModule, IModuleEnum } from '@/api';
 import { queryTreeModuleByProject } from '@/api/base';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 
 export const pageData = async (code: number, data: any, setter?: any) => {
   if (code === 0) {
@@ -77,20 +77,4 @@ const loopData = (data: IModule[]): IModuleEnum[] => {
     }
     return { title: item.title, value: item.key };
   });
-};
-
-export const useDebounce = (value: string, delay: number) => {
-  const [debouncedValue, setDebouncedValue] = useState(value);
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
-
-  return debouncedValue;
 };
