@@ -109,6 +109,7 @@ export const updateCaseContent = async (
     enable?: boolean;
     content_name?: string;
     script_text?: string;
+    assert_list?: any[];
   },
   options?: IObjGet,
 ) => {

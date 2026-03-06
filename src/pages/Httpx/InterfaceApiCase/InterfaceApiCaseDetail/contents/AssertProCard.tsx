@@ -33,7 +33,6 @@ const AssertProCard: FC<Props> = (props) => {
   const [showEditIcon, setShowEditIcon] = useState(false);
   const [showAssertInput, setShowAssertInput] = useState(true);
   const [assertName, setAssertName] = useState<string>();
-  const [isCollapsed, setIsCollapsed] = useState(true); // 控制展开状态
 
   useEffect(() => {
     const { content_name } = caseContent;
@@ -102,8 +101,6 @@ const AssertProCard: FC<Props> = (props) => {
       collapsible
       hoverable
       defaultCollapsed
-      // collapsed={isCollapsed}
-      // onCollapse={(collapsed) => props.setCanDraggable?.(collapsed)}
       onMouseEnter={() => {
         setShowOption(true);
         setShowEditIcon(true);
@@ -130,7 +127,7 @@ const AssertProCard: FC<Props> = (props) => {
         );
       }}
     >
-      <ProCard bodyStyle={{ padding: 10 }}>
+      <ProCard bordered={false} layout={'center'}>
         <ProForm
           form={form}
           onFinish={async (values) => {
@@ -144,25 +141,37 @@ const AssertProCard: FC<Props> = (props) => {
               message.success('保存成功');
             }
           }}
+          submitter={{
+            searchConfig: {
+              submitText: '保存',
+            },
+            resetButtonProps: {
+              style: {
+                display: 'none',
+              },
+            },
+          }}
         >
-          <ProFormList name={'api_assert_list'}>
+          <ProFormList
+            name={'api_assert_list'}
+            creatorButtonProps={{
+              creatorButtonText: '添加断言',
+            }}
+          >
             <ProFormGroup>
               <ProFormText
-                width={'md'}
                 name={'assert_key'}
                 placeholder={'请输入断言变量 不需要{{}}'}
                 required
                 rules={[{ required: true, message: '请输入变量' }]}
               />
               <ProFormSelect
-                width={'sm'}
                 name={'assert_type'}
                 options={AssertOption}
                 required
                 rules={[{ required: true, message: '请选择条件' }]}
               />
               <ProFormText
-                width={'md'}
                 name={'assert_value'}
                 rules={[{ required: true, message: '请输入对比值' }]}
                 placeholder={'请输入断言值 不需要{{}}'}

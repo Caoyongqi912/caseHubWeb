@@ -1,4 +1,5 @@
 import { IPlayStepContent } from '@/pages/Play/componets/uiTypes';
+import PlayAssertsContent from '@/pages/Play/PlayCase/PlayCaseDetail/PlayCaseStepContents/contents/PlayAssertsContent';
 import PlayGroupContent from '@/pages/Play/PlayCase/PlayCaseDetail/PlayCaseStepContents/contents/PlayGroupContent';
 import PlayScriptContent from '@/pages/Play/PlayCase/PlayCaseDetail/PlayCaseStepContents/contents/PlayScriptContent';
 import PlayStepContent from '@/pages/Play/PlayCase/PlayCaseDetail/PlayCaseStepContents/contents/PlayStepContent';
@@ -11,6 +12,7 @@ const CaseContentType = {
   Play_GROUP: 2,
   Play_CONDITION: 3,
   Play_SCRIPT: 5,
+  Play_ASSERTS: 6,
   Play_DB: 8,
   Play_API: 4,
 };
@@ -33,6 +35,16 @@ const Index: FC<SelfProps> = (props) => {
 
   const dispatch = () => {
     switch (stepContent.content_type) {
+      case CaseContentType.Play_ASSERTS:
+        return (
+          <PlayAssertsContent
+            id={id}
+            step={step}
+            caseId={caseId}
+            stepContent={stepContent}
+            callback={callback}
+          />
+        );
       case CaseContentType.Play:
         return (
           <PlayStepContent

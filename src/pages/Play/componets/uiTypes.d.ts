@@ -310,6 +310,13 @@ export interface IPlayCaseContentResult extends IBaseField {
     value: any;
     condition_result?: boolean;
   } | null;
+  content_asserts: {
+    assert_key: string;
+    assert_type: number;
+    assert_actual: any;
+    assert_expect: string;
+    assert_result: boolean;
+  }[];
   start_time: string;
   use_time: string | number | null;
   starter_id: number;

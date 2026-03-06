@@ -26,6 +26,7 @@ import {
   DatabaseOutlined,
   EditOutlined,
   PythonOutlined,
+  QuestionOutlined,
   SelectOutlined,
   UngroupOutlined,
 } from '@ant-design/icons';
@@ -176,6 +177,12 @@ const Index = () => {
                 onClick: () => {
                   setOpenChoiceAPIDrawer(true);
                 },
+              },
+              {
+                key: 'add_asserts',
+                label: '添加可视化断言',
+                icon: <QuestionOutlined style={{ color: 'orange' }} />,
+                onClick: async () => await AddContent(6),
               },
 
               {

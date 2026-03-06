@@ -36,7 +36,6 @@ const Index: FC<Props> = (props) => {
   const handleUpdateScript = async (data: {
     id: number;
     script_text?: string;
-    api_script_text?: string;
     content_name?: string;
   }) => {
     return updateCaseContent(data);
@@ -78,7 +77,6 @@ const Index: FC<Props> = (props) => {
         onMouseLeave={() => setShowOption(false)}
         updateScript={handleUpdateScript}
         scriptTextKey="script_text"
-        useTitle={true}
       />
     </>
   );
