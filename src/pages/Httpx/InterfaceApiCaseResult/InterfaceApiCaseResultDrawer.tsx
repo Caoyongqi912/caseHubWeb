@@ -1,6 +1,5 @@
 import { caseAPIResultDetail, runApiCaseIo } from '@/api/inter/interCase';
 import AceCodeEditor from '@/components/CodeEditor/AceCodeEditor';
-import MyTabs from '@/components/MyTabs';
 import CaseResult from '@/pages/Httpx/InterfaceApiCaseResult/CaseResult';
 import InterfaceApiCaseResultBaseInfo from '@/pages/Httpx/InterfaceApiCaseResult/InterfaceApiCaseResultBaseInfo';
 import { IInterfaceCaseResult } from '@/pages/Httpx/types';
@@ -165,13 +164,13 @@ const InterfaceApiCaseResultDrawer: FC<SelfProps> = ({
     },
   ];
   return (
-    <ProCard>
-      <MyTabs
-        items={items}
-        tabPosition={'top'}
-        defaultActiveKey={defaultActiveKey}
-      />
-    </ProCard>
+    <ProCard
+      tabs={{
+        items: items,
+        type: 'card',
+        defaultActiveKey: defaultActiveKey,
+      }}
+    />
   );
 };
 

@@ -2,193 +2,260 @@ import { IInterfaceCaseResult } from '@/pages/Httpx/types';
 import {
   CheckCircleOutlined,
   ClockCircleOutlined,
+  CloseCircleOutlined,
   EnvironmentOutlined,
   FieldTimeOutlined,
-  FileTextOutlined,
   IdcardOutlined,
   StepForwardOutlined,
+  ThunderboltOutlined,
   UserOutlined,
 } from '@ant-design/icons';
-import { ProDescriptions } from '@ant-design/pro-components';
-import { Space, Tag, Typography } from 'antd';
+import { ProCard } from '@ant-design/pro-components';
+import { Badge, Col, Empty, Row, Space, Tag, theme, Typography } from 'antd';
 import { FC } from 'react';
 
-const { Text } = Typography;
+const { useToken } = theme;
+const { Title, Text, Paragraph } = Typography;
 
 interface SelfProps {
   caseResultInfo?: IInterfaceCaseResult;
 }
 
-// 使用memo优化性能，避免不必要的重渲染
 const InterfaceApiCaseResultBaseInfo: FC<SelfProps> = ({ caseResultInfo }) => {
-  // 空值处理
+  const { token } = useToken();
+
   if (!caseResultInfo) {
     return (
-      <div style={{ textAlign: 'center', padding: 20, color: '#999' }}>
-        暂无用例结果信息
+      <div style={{ padding: '40px 16px' }}>
+        <Empty
+          description="暂无用例结果信息"
+          image={Empty.PRESENTED_IMAGE_SIMPLE}
+        />
       </div>
     );
   }
 
+  const isSuccess = caseResultInfo.result === 'SUCCESS';
+
   return (
-    <ProDescriptions
-      column={2}
-      bordered
-      style={{ marginTop: 10 }}
-      size="middle"
-      layout="horizontal"
-    >
-      {/* 用例名称 - 突出显示 */}
-      <ProDescriptions.Item
-        span={2}
-        label={
-          <Space>
-            <FileTextOutlined /> 用例名称
-          </Space>
-        }
-        valueType="text"
-        contentStyle={{
-          maxWidth: '100%',
-          fontWeight: 500,
-          color: '#1890ff',
+    <div style={{ padding: '16px' }}>
+      {/* 标题区域 */}
+      <ProCard
+        style={{
+          marginBottom: '16px',
+          borderRadius: token.borderRadiusLG,
+          boxShadow: token.boxShadowSecondary,
         }}
+        bodyStyle={{ padding: '20px 24px' }}
       >
-        <Text ellipsis={{ tooltip: true }}>
-          {caseResultInfo.interfaceCaseName}
-          <Text type="secondary" style={{ marginLeft: 8 }}>
-            【{caseResultInfo.interfaceCaseUid}】
-          </Text>
-        </Text>
-      </ProDescriptions.Item>
+        <Row gutter={[16, 16]} align="middle">
+          <Col flex="auto">
+            <Space direction="vertical" size={4} style={{ width: '100%' }}>
+              <Title level={4} style={{ margin: 0 }}>
+                {caseResultInfo.interfaceCaseName || '未命名测试'}
+              </Title>
+              <Space size={8}>
+                <Text type="secondary" style={{ fontSize: '13px' }}>
+                  <IdcardOutlined /> {caseResultInfo.interfaceCaseUid}
+                </Text>
+                <Text type="secondary" style={{ fontSize: '13px' }}>
+                  结果ID: {caseResultInfo.uid}
+                </Text>
+              </Space>
+            </Space>
+          </Col>
+          <Col>
+            <Badge
+              status={isSuccess ? 'success' : 'error'}
+              text={
+                <Tag
+                  color={isSuccess ? 'success' : 'error'}
+                  icon={
+                    isSuccess ? (
+                      <CheckCircleOutlined />
+                    ) : (
+                      <CloseCircleOutlined />
+                    )
+                  }
+                  style={{ fontSize: '14px', padding: '4px 12px' }}
+                >
+                  {caseResultInfo.result || '未知'}
+                </Tag>
+              }
+            />
+          </Col>
+        </Row>
 
-      {/* 结果ID */}
-      <ProDescriptions.Item
-        span={2}
-        label={
+        {/* 用例描述 */}
+        {caseResultInfo.interfaceCaseDesc && (
+          <div style={{ marginTop: '12px' }}>
+            <Paragraph
+              type="secondary"
+              style={{
+                margin: 0,
+                fontSize: '14px',
+                lineHeight: 1.6,
+              }}
+            >
+              {caseResultInfo.interfaceCaseDesc}
+            </Paragraph>
+          </div>
+        )}
+      </ProCard>
+
+      {/* 执行信息卡片 */}
+      <ProCard
+        title={
           <Space>
-            <IdcardOutlined /> 结果ID
+            <ThunderboltOutlined style={{ color: token.colorPrimary }} />
+            <Text strong>执行信息</Text>
           </Space>
         }
-        valueType="text"
-        contentStyle={{
-          maxWidth: '100%',
-          fontFamily: 'monospace',
+        style={{
+          marginBottom: '16px',
+          borderRadius: token.borderRadiusLG,
+          boxShadow: token.boxShadowSecondary,
         }}
-        ellipsis={{ showTitle: true }}
+        bodyStyle={{ padding: '16px 24px' }}
       >
-        {caseResultInfo.uid}
-      </ProDescriptions.Item>
+        <Row gutter={[16, 16]}>
+          {/* 执行人 */}
+          <Col xs={24} sm={12} md={8}>
+            <div
+              style={{
+                padding: '12px',
+                background: token.colorBgContainer,
+                borderRadius: token.borderRadiusSM,
+                border: `1px solid ${token.colorBorderSecondary}`,
+              }}
+            >
+              <Space direction="vertical" size={2}>
+                <Text type="secondary" style={{ fontSize: '12px' }}>
+                  <UserOutlined /> 执行人
+                </Text>
+                <Text strong>{caseResultInfo.starterName || '未知'}</Text>
+              </Space>
+            </div>
+          </Col>
 
-      {/* 用例描述 */}
-      <ProDescriptions.Item
-        span={2}
-        label={
-          <Space>
-            <FileTextOutlined /> 用例描述
-          </Space>
-        }
-        valueType="textarea"
-        contentStyle={{
-          whiteSpace: 'pre-wrap',
-          lineHeight: 1.6,
-        }}
-      >
-        {caseResultInfo.interfaceCaseDesc || (
-          <Text type="secondary">无描述</Text>
-        )}
-      </ProDescriptions.Item>
+          {/* 运行环境 */}
+          <Col xs={24} sm={12} md={8}>
+            <div
+              style={{
+                padding: '12px',
+                background: token.colorBgContainer,
+                borderRadius: token.borderRadiusSM,
+                border: `1px solid ${token.colorBorderSecondary}`,
+              }}
+            >
+              <Space direction="vertical" size={2}>
+                <Text type="secondary" style={{ fontSize: '12px' }}>
+                  <EnvironmentOutlined /> 运行环境
+                </Text>
+                <Tag color="blue">
+                  {caseResultInfo.running_env_name || '未配置'}
+                </Tag>
+              </Space>
+            </div>
+          </Col>
 
-      {/* 执行人 */}
-      <ProDescriptions.Item
-        valueType="text"
-        span={1}
-        label={
-          <Space>
-            <UserOutlined /> 执行人
-          </Space>
-        }
-      >
-        {caseResultInfo.starterName || <Text type="secondary">未知</Text>}
-      </ProDescriptions.Item>
+          {/* 开始时间 */}
+          <Col xs={24} sm={12} md={8}>
+            <div
+              style={{
+                padding: '12px',
+                background: token.colorBgContainer,
+                borderRadius: token.borderRadiusSM,
+                border: `1px solid ${token.colorBorderSecondary}`,
+              }}
+            >
+              <Space direction="vertical" size={2}>
+                <Text type="secondary" style={{ fontSize: '12px' }}>
+                  <ClockCircleOutlined /> 开始时间
+                </Text>
+                <Text strong>{caseResultInfo.startTime || '未记录'}</Text>
+              </Space>
+            </div>
+          </Col>
 
-      {/* 运行环境 */}
-      <ProDescriptions.Item
-        valueType="text"
-        span={1}
-        label={
-          <Space>
-            <EnvironmentOutlined /> 运行环境
-          </Space>
-        }
-      >
-        {caseResultInfo.running_env_name || (
-          <Text type="secondary">未配置</Text>
-        )}
-      </ProDescriptions.Item>
+          {/* 总用时 */}
+          <Col xs={24} sm={12} md={8}>
+            <div
+              style={{
+                padding: '12px',
+                background: token.colorBgContainer,
+                borderRadius: token.borderRadiusSM,
+                border: `1px solid ${token.colorBorderSecondary}`,
+              }}
+            >
+              <Space direction="vertical" size={2}>
+                <Text type="secondary" style={{ fontSize: '12px' }}>
+                  <FieldTimeOutlined /> 总用时
+                </Text>
+                <Text strong style={{ color: token.colorPrimary }}>
+                  {caseResultInfo.useTime
+                    ? `${caseResultInfo.useTime} ms`
+                    : '未统计'}
+                </Text>
+              </Space>
+            </div>
+          </Col>
 
-      {/* 执行开始时间 */}
-      <ProDescriptions.Item
-        valueType="text"
-        span={1}
-        label={
-          <Space>
-            <ClockCircleOutlined /> 开始时间
-          </Space>
-        }
-      >
-        {caseResultInfo.startTime || <Text type="secondary">未记录</Text>}
-      </ProDescriptions.Item>
+          {/* 总步长 */}
+          <Col xs={24} sm={12} md={8}>
+            <div
+              style={{
+                padding: '12px',
+                background: token.colorBgContainer,
+                borderRadius: token.borderRadiusSM,
+                border: `1px solid ${token.colorBorderSecondary}`,
+              }}
+            >
+              <Space direction="vertical" size={2}>
+                <Text type="secondary" style={{ fontSize: '12px' }}>
+                  <StepForwardOutlined /> 总步长
+                </Text>
+                <Text strong>{caseResultInfo.total_num || 0}</Text>
+              </Space>
+            </div>
+          </Col>
 
-      {/* 总用时 */}
-      <ProDescriptions.Item
-        valueType="text"
-        span={1}
-        label={
-          <Space>
-            <FieldTimeOutlined />
-            总用时
-          </Space>
-        }
-      >
-        {caseResultInfo.useTime ? (
-          `${caseResultInfo.useTime} ms`
-        ) : (
-          <Text type="secondary">未统计</Text>
-        )}
-      </ProDescriptions.Item>
-
-      {/* 总步长 */}
-      <ProDescriptions.Item
-        span={1}
-        label={
-          <Space>
-            <StepForwardOutlined /> 总步长
-          </Space>
-        }
-      >
-        {caseResultInfo.total_num || 0}
-      </ProDescriptions.Item>
-
-      {/* 测试结果 - 重点突出 */}
-      <ProDescriptions.Item
-        label={
-          <Space>
-            <CheckCircleOutlined /> 测试结果
-          </Space>
-        }
-        span={1}
-      >
-        <Tag
-          color={
-            caseResultInfo.result === 'SUCCESS'
-              ? 'green-inverse'
-              : 'red-inverse'
-          }
-        >
-          {caseResultInfo.result}
-        </Tag>
-      </ProDescriptions.Item>
-    </ProDescriptions>
+          {/* 测试结果 */}
+          <Col xs={24} sm={12} md={8}>
+            <div
+              style={{
+                padding: '12px',
+                background: isSuccess
+                  ? token.colorSuccessBg
+                  : token.colorErrorBg,
+                borderRadius: token.borderRadiusSM,
+                border: `1px solid ${
+                  isSuccess ? token.colorSuccessBorder : token.colorErrorBorder
+                }`,
+              }}
+            >
+              <Space direction="vertical" size={2}>
+                <Text type="secondary" style={{ fontSize: '12px' }}>
+                  测试结果
+                </Text>
+                <Tag
+                  color={isSuccess ? 'success' : 'error'}
+                  icon={
+                    isSuccess ? (
+                      <CheckCircleOutlined />
+                    ) : (
+                      <CloseCircleOutlined />
+                    )
+                  }
+                >
+                  {caseResultInfo.result || '未知'}
+                </Tag>
+              </Space>
+            </div>
+          </Col>
+        </Row>
+      </ProCard>
+    </div>
   );
 };
 

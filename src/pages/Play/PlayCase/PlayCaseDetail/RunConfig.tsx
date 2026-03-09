@@ -3,136 +3,189 @@ import {
   PlayCircleOutlined,
   RobotOutlined,
   SettingFilled,
+  ThunderboltOutlined,
   WarningOutlined,
 } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
-import { Button, Flex, Radio, Space, Switch, Typography } from 'antd';
+import { Button, Radio, Space, Switch, theme, Typography } from 'antd';
 import { FC } from 'react';
 
-const { Text } = Typography;
+const { useToken } = theme;
+const { Text, Title } = Typography;
+
 const RunConfig: FC<{
   onMenuClick: (e: any) => void;
   onErrorContinueChange: (e: any) => void;
   run: () => void;
 }> = ({ onMenuClick, onErrorContinueChange, run }) => {
+  const { token } = useToken();
+
   return (
-    <div>
+    <div style={{ padding: '12px', height: '100%' }}>
+      {/* 标题 */}
       <ProCard
         style={{
-          height: '100%',
-          width: '100%',
+          marginBottom: '12px',
+          borderRadius: token.borderRadiusLG,
+          boxShadow: token.boxShadowSecondary,
         }}
-        bodyStyle={{
-          padding: 16,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '20px',
-          borderRadius: '12px',
-        }}
+        bodyStyle={{ padding: '16px' }}
       >
-        {/* 运行方式选择 */}
-        <>
-          <ProCard
-            bordered
-            style={{
-              display: 'flex',
-              gap: '8px',
-              borderRadius: '8px',
-              border: '1px solid #e1e8ff',
-            }}
-          >
-            <Space direction={'vertical'}>
-              <Space style={{ marginBottom: 20 }}>
-                <SettingFilled style={{ color: '#3b82f6' }} />
-                <Text strong style={{ fontSize: '14px', margin: 0 }}>
-                  运行方式
-                </Text>
-              </Space>
-              <Radio.Group
-                defaultValue={1}
-                onChange={onMenuClick}
-                options={[
-                  {
-                    label: (
-                      // @ts-ignore
-                      <Flex gap="small" justify="center" align="center">
-                        <RobotOutlined style={{ fontSize: 18 }} />
-                        后台执行
-                      </Flex>
-                    ),
-                    value: 1,
-                  },
-                  {
-                    label: (
-                      // @ts-ignore
-                      <Flex gap="small" justify="center" align="center">
-                        <MessageOutlined style={{ fontSize: 18 }} />
-                        实时日志
-                      </Flex>
-                    ),
-                    value: 2,
-                  },
-                ]}
-              />
-            </Space>
-          </ProCard>
-        </>
+        <Space>
+          <ThunderboltOutlined
+            style={{ fontSize: '20px', color: token.colorPrimary }}
+          />
+          <Title level={5} style={{ margin: 0 }}>
+            运行配置
+          </Title>
+        </Space>
+      </ProCard>
 
-        {/* 错误处理设置 */}
+      {/* 运行方式选择 */}
+      <ProCard
+        title={
+          <Space size={4}>
+            <SettingFilled
+              style={{ color: token.colorPrimary, fontSize: '14px' }}
+            />
+            <Text strong style={{ fontSize: '14px' }}>
+              运行方式
+            </Text>
+          </Space>
+        }
+        style={{
+          marginBottom: '12px',
+          borderRadius: token.borderRadiusLG,
+          boxShadow: token.boxShadowSecondary,
+        }}
+        bodyStyle={{ padding: '12px' }}
+      >
+        <Radio.Group
+          defaultValue={1}
+          onChange={onMenuClick}
+          style={{ width: '100%' }}
+        >
+          <Space direction="vertical" style={{ width: '100%' }} size={8}>
+            <Radio.Button
+              value={1}
+              style={{
+                width: '100%',
+                height: 'auto',
+                padding: '12px 16px',
+                borderRadius: token.borderRadiusSM,
+                display: 'flex',
+                alignItems: 'center',
+              }}
+            >
+              <Space style={{ width: '100%' }}>
+                <RobotOutlined
+                  style={{ fontSize: '18px', color: token.colorPrimary }}
+                />
+                <div>
+                  <Text strong style={{ display: 'block', fontSize: '14px' }}>
+                    后台执行
+                  </Text>
+                  <Text type="secondary" style={{ fontSize: '12px' }}>
+                    异步执行，不阻塞操作
+                  </Text>
+                </div>
+              </Space>
+            </Radio.Button>
+
+            <Radio.Button
+              value={2}
+              style={{
+                width: '100%',
+                height: 'auto',
+                padding: '12px 16px',
+                borderRadius: token.borderRadiusSM,
+                display: 'flex',
+                alignItems: 'center',
+              }}
+            >
+              <Space style={{ width: '100%' }}>
+                <MessageOutlined
+                  style={{ fontSize: '18px', color: token.colorSuccess }}
+                />
+                <div>
+                  <Text strong style={{ display: 'block', fontSize: '14px' }}>
+                    实时日志
+                  </Text>
+                  <Text type="secondary" style={{ fontSize: '12px' }}>
+                    实时查看执行过程
+                  </Text>
+                </div>
+              </Space>
+            </Radio.Button>
+          </Space>
+        </Radio.Group>
+      </ProCard>
+
+      {/* 错误处理设置 */}
+      <ProCard
+        title={
+          <Space size={4}>
+            <WarningOutlined
+              style={{ color: token.colorWarning, fontSize: '14px' }}
+            />
+            <Text strong style={{ fontSize: '14px' }}>
+              错误处理
+            </Text>
+          </Space>
+        }
+        style={{
+          marginBottom: '12px',
+          borderRadius: token.borderRadiusLG,
+          boxShadow: token.boxShadowSecondary,
+        }}
+        bodyStyle={{ padding: '12px' }}
+      >
         <div
           style={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            padding: '16px',
-            borderRadius: '8px',
-            border: '1px solid #e1e8ff',
+            padding: '10px 12px',
+            background: token.colorWarningBg,
+            borderRadius: token.borderRadiusSM,
+            border: `1px solid ${token.colorWarningBorder}`,
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <WarningOutlined style={{ color: '#f59e0b', fontSize: '18px' }} />
-            <div
-              style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}
-            >
-              <Text strong style={{ fontSize: '14px' }}>
-                遇到错误继续
-              </Text>
-              <Text
-                type="secondary"
-                style={{ fontSize: '12px', color: '#64748b' }}
-              >
-                启用后遇到错误不会中断执行
-              </Text>
-            </div>
+          <div>
+            <Text strong style={{ fontSize: '14px', display: 'block' }}>
+              遇到错误继续
+            </Text>
+            <Text type="secondary" style={{ fontSize: '12px' }}>
+              启用后不会中断执行
+            </Text>
           </div>
           <Switch
             onChange={onErrorContinueChange}
             defaultChecked={false}
             checkedChildren="开"
             unCheckedChildren="关"
+            size="small"
           />
         </div>
-        <Button
-          type="primary"
-          size="large"
-          onClick={run}
-          style={{
-            height: '48px',
-            borderRadius: '8px',
-            background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
-            border: 'none',
-            boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
-            fontSize: '16px',
-            fontWeight: 600,
-            marginTop: '8px',
-          }}
-        >
-          <Space>
-            <PlayCircleOutlined style={{ fontSize: '18px' }} />
-            <span style={{ fontWeight: 600 }}>开始运行</span>
-          </Space>
-        </Button>
       </ProCard>
+
+      {/* 开始运行按钮 */}
+      <Button
+        type="primary"
+        size="large"
+        onClick={run}
+        block
+        style={{
+          height: '48px',
+          borderRadius: token.borderRadiusLG,
+          fontSize: '15px',
+          fontWeight: 600,
+          boxShadow: token.boxShadowSecondary,
+        }}
+        icon={<PlayCircleOutlined style={{ fontSize: '18px' }} />}
+      >
+        开始运行
+      </Button>
     </div>
   );
 };

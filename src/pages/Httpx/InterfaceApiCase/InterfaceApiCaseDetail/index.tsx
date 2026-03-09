@@ -532,7 +532,7 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
       <MyDrawer open={isChoiceDrawerOpen} setOpen={setIsChoiceDrawerOpen}>
         <InterfaceCaseChoiceApiTable
           projectId={parseInt(projectId!)}
-          mutable={true}
+          radio={true}
           onSelect={selectInterface2Case}
         />
       </MyDrawer>
@@ -562,10 +562,7 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
               </ProCard>
             </Splitter.Panel>
             {!hiddenRunButton && (
-              <Splitter.Panel
-                resizable={true}
-                style={{ padding: config.cardPadding }}
-              >
+              <Splitter.Panel>
                 <RunConfig
                   onMenuClick={onMenuClick}
                   run={executeTestCase}
