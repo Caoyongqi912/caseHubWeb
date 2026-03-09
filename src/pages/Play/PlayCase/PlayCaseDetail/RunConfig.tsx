@@ -12,9 +12,9 @@ import { FC } from 'react';
 const { Text } = Typography;
 const RunConfig: FC<{
   onMenuClick: (e: any) => void;
-  onErrorJumpChange: (e: any) => void;
+  onErrorContinueChange: (e: any) => void;
   run: () => void;
-}> = ({ onMenuClick, onErrorJumpChange, run }) => {
+}> = ({ onMenuClick, onErrorContinueChange, run }) => {
   return (
     <div>
       <ProCard
@@ -106,10 +106,10 @@ const RunConfig: FC<{
             </div>
           </div>
           <Switch
-            onChange={onErrorJumpChange}
+            onChange={onErrorContinueChange}
             defaultChecked={false}
-            checkedChildren="关"
-            unCheckedChildren="开"
+            checkedChildren="开"
+            unCheckedChildren="关"
           />
         </div>
         <Button

@@ -1,7 +1,6 @@
 import { executeCaseByIO } from '@/api/play';
 import { getPlayCaseResultDetail } from '@/api/play/playCase';
 import AceCodeEditor from '@/components/CodeEditor/AceCodeEditor';
-import MyTabs from '@/components/MyTabs';
 import { IUIResult } from '@/pages/Play/componets/uiTypes';
 import PlayCaseResultContents from '@/pages/Play/PlayResult/PlayCaseResultContents';
 import PlayCaseResultInfo from '@/pages/Play/PlayResult/PlayCaseResultDetail/PlayCaseResultInfo';
@@ -12,26 +11,23 @@ import {
   MessageOutlined,
 } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
-import { ProColumns } from '@ant-design/pro-table/lib/typing';
-import { TabsProps, Tag } from 'antd';
+import { TabsProps } from 'antd';
 import { FC, useEffect, useState } from 'react';
 import io, { Socket } from 'socket.io-client';
 
 interface SelfProps {
   openStatus?: boolean;
   caseId?: number;
-  error_stop?: boolean;
+  errorContinue?: boolean;
   resultId?: number;
 }
 
 const Index: FC<SelfProps> = (props) => {
-  const { openStatus, caseId, error_stop = true, resultId } = props;
+  const { openStatus, caseId, errorContinue = true, resultId } = props;
   const { initialState } = useModel('@@initialState');
   const [logMessage, setLogMessage] = useState<string[]>([]);
   const [caseResultId, setCaseResultId] = useState<number>();
   const [defaultActiveKey, setDefaultActiveKey] = useState('2');
-  const [asserts, setAsserts] = useState<any[]>([]);
-  const [vars, setVars] = useState<any[]>([]);
   const [currentResultDetail, setCurrentResultDetail] = useState<IUIResult>();
   const [tabDisabled, setTabDisabled] = useState(true);
 
@@ -51,7 +47,10 @@ const Index: FC<SelfProps> = (props) => {
       socket.on('connect', () => {
         console.log('connect socket');
         if (caseId) {
-          executeCaseByIO({ caseId: caseId, error_stop: error_stop }).then();
+          executeCaseByIO({
+            caseId: caseId,
+            error_continue: errorContinue,
+          }).then();
         }
       });
 
@@ -108,109 +107,10 @@ const Index: FC<SelfProps> = (props) => {
           } else {
             setLogMessage([]);
           }
-          if (data.asserts_info) {
-            setAsserts(data.asserts_info);
-            setVars(data.vars_info);
-          }
         }
       });
     }
   }, [caseResultId]);
-
-  const UIAssertColumns: ProColumns[] = [
-    {
-      title: '类型',
-      valueType: 'text',
-      dataIndex: 'type',
-      fixed: 'left',
-      width: '6%',
-      render: (text) => {
-        return <Tag color={'blue'}>{text}</Tag>;
-      },
-    },
-    {
-      title: '步骤',
-      valueType: 'text',
-      dataIndex: 'assert_name',
-      render: (text) => {
-        return <Tag color={'blue'}>{text}</Tag>;
-      },
-    },
-
-    {
-      title: '断言描述',
-      dataIndex: 'desc',
-      valueType: 'textarea',
-    },
-    {
-      title: '预计结果',
-      dataIndex: 'assert_expect',
-      key: 'expect',
-      valueType: 'textarea',
-    },
-    {
-      title: '断言方法',
-      dataIndex: 'assert_opt',
-      render: (text) => <Tag color={'blue'}>{text}</Tag>,
-    },
-    {
-      title: '实际结果',
-      dataIndex: 'assert_actual',
-      valueType: 'textarea',
-    },
-    {
-      title: '测试结果',
-      dataIndex: 'result',
-      key: 'result',
-      fixed: 'right',
-      render: (_, record) => (
-        <Tag color={record.assert_result ? 'green' : 'volcano'}>
-          {record.assert_result ? 'SUCCESS' : 'FAIL'}
-        </Tag>
-      ),
-    },
-  ];
-
-  const UIVarsColumns: ProColumns[] = [
-    {
-      title: '步骤',
-      valueType: 'text',
-      dataIndex: 'step_name',
-      fixed: 'left',
-      width: '10%',
-      render: (text) => {
-        return <Tag color={'blue'}>{text}</Tag>;
-      },
-    },
-    {
-      title: '提取方式',
-      valueType: 'text',
-      dataIndex: 'extract_method',
-      fixed: 'left',
-      width: '10%',
-      render: (text) => {
-        return <Tag color={'blue'}>{text}</Tag>;
-      },
-    },
-    {
-      title: 'Key',
-      dataIndex: 'key',
-      valueType: 'text',
-      render: (text) => {
-        return <Tag color={'blue'}>{text}</Tag>;
-      },
-    },
-
-    {
-      title: 'Value',
-      dataIndex: 'value',
-      valueType: 'text',
-      ellipsis: true,
-      render: (text) => {
-        return <Tag color={'blue'}>{text}</Tag>;
-      },
-    },
-  ];
 
   const items: TabsProps['items'] = [
     {
@@ -243,13 +143,14 @@ const Index: FC<SelfProps> = (props) => {
   ];
 
   return (
-    <ProCard bordered={true}>
-      <MyTabs
-        items={items}
-        tabPosition={'top'}
-        defaultActiveKey={defaultActiveKey}
-      />
-    </ProCard>
+    <ProCard
+      bordered={false}
+      tabs={{
+        items: items,
+        type: 'card',
+        defaultActiveKey: defaultActiveKey,
+      }}
+    />
   );
 };
 

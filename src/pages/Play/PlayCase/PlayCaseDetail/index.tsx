@@ -56,7 +56,8 @@ const Index = () => {
   const [runOpen, setRunOpen] = useState(false);
   const [varsNum, setVarsNum] = useState(0);
   const [defaultSize, setDefaultSize] = useState('80%');
-  const [errorStop, setErrorStop] = useState<boolean>(true);
+  // 失败继续
+  const [errorContinue, setErrorContinue] = useState<boolean>(false);
   const [runningStyle, setRunningStyle] = useState<number>(1);
 
   useEffect(() => {
@@ -104,8 +105,8 @@ const Index = () => {
     }
   }, [uiSteps]);
 
-  const onErrorJumpChange = (value: boolean) => {
-    setErrorStop(value);
+  const onErrorContinueChange = (value: boolean) => {
+    setErrorContinue(value);
   };
   const onDragEnd = async (reorderedUIContents: any[]) => {
     console.log(reorderedUIContents);
@@ -268,13 +269,14 @@ const Index = () => {
   const runCase = async () => {
     if (!caseId) return;
     if (runningStyle === 1) {
-      executePlayCaseByBack({ case_id: caseId, error_stop: errorStop }).then(
-        async ({ code }) => {
-          if (code === 0) {
-            message.success('后台运行中。。');
-          }
-        },
-      );
+      executePlayCaseByBack({
+        case_id: caseId,
+        error_continue: errorContinue,
+      }).then(async ({ code }) => {
+        if (code === 0) {
+          message.success('后台运行中。。');
+        }
+      });
     } else {
       setRunOpen(true);
     }
@@ -319,7 +321,7 @@ const Index = () => {
               <RunConfig
                 onMenuClick={onMenuClick}
                 run={runCase}
-                onErrorJumpChange={onErrorJumpChange}
+                onErrorContinueChange={onErrorContinueChange}
               />
             </Splitter.Panel>
           </Splitter>
@@ -369,7 +371,7 @@ const Index = () => {
           <PlayCaseResultDetail
             caseId={parseInt(caseId!)}
             openStatus={runOpen}
-            error_stop={errorStop}
+            errorContinue={errorContinue}
           />
         </MyDrawer>
       </>
