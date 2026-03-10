@@ -3,22 +3,27 @@ import AceCodeEditor from '@/components/CodeEditor/AceCodeEditor';
 import MyDrawer from '@/components/MyDrawer';
 import { FormEditableOnValueChange } from '@/pages/Httpx/componets/FormEditableOnValueChange';
 import { IInterfaceAPI } from '@/pages/Httpx/types';
-import { QuestionCircleOutlined } from '@ant-design/icons';
-import { ProCard } from '@ant-design/pro-components';
 import {
+  PlayCircleOutlined,
+  QuestionCircleOutlined,
+  SaveOutlined,
+} from '@ant-design/icons';
+import {
+  Alert,
   Button,
   Divider,
   FormInstance,
   List,
   Popover,
   Space,
-  Splitter,
+  theme,
   Typography,
 } from 'antd';
 import { FC, useEffect, useRef, useState } from 'react';
 import InfiniteScroll from 'react-infinite-scroll-component';
 
-const { Text, Title, Paragraph } = Typography;
+const { Text, Title } = Typography;
+const { useToken } = theme;
 
 interface SelfProps {
   form: FormInstance<IInterfaceAPI>;
@@ -100,6 +105,7 @@ const ScriptList = [
 ];
 
 const InterScript: FC<SelfProps> = ({ form, tag }) => {
+  const { token } = useToken();
   const timeoutRef = useRef<any>(null);
 
   const [scriptData, setScriptData] = useState<any>();
@@ -175,96 +181,142 @@ const InterScript: FC<SelfProps> = ({ form, tag }) => {
   );
   return (
     <>
-      <MyDrawer name={'script response'} open={open} setOpen={setOpen}>
+      <MyDrawer name={'脚本执行结果'} open={open} setOpen={setOpen}>
         <AceCodeEditor value={tryData} height={'100vh'} _mode={'json'} />
       </MyDrawer>
-      <ProCard
-        title={
-          <Title level={5}>
-            <Popover content={Desc}>
-              编写py脚本 设置变量{' '}
-              <QuestionCircleOutlined style={{ marginLeft: 20 }} />
-            </Popover>
-          </Title>
-        }
-        headerBordered
-        extra={
+      <div style={{ padding: '16px' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '16px',
+          }}
+        >
           <Space>
-            {showButton && (
-              <Button
-                disabled={false}
-                type={'primary'}
-                onClick={async () => {
-                  const { code, data } = await tryInterScript(scriptData);
-                  if (code === 0) {
-                    try {
-                      setTryData(JSON.stringify(data, null, 2));
-                    } catch (err) {
-                      setTryData(data);
-                    }
-                    setOpen(true);
-                  }
-                }}
-              >
-                Try
-              </Button>
-            )}
+            <Title level={5} style={{ margin: 0 }}>
+              编写 Python 脚本设置变量
+            </Title>
+            <Popover content={Desc}>
+              <QuestionCircleOutlined style={{ color: token.colorPrimary }} />
+            </Popover>
           </Space>
-        }
-      >
-        <Splitter style={{ height: '100%' }}>
-          <Splitter.Panel
-            collapsible={true}
-            defaultSize="80%"
-            min="80%"
-            max="100%"
-          >
-            <ProCard style={{ height: '100%' }} bodyStyle={{ padding: 0 }}>
-              {isSaved && <p style={{ color: 'grey' }}>已保存! </p>}
+          {showButton && (
+            <Button
+              type="primary"
+              icon={<PlayCircleOutlined />}
+              onClick={async () => {
+                const { code, data } = await tryInterScript(scriptData);
+                if (code === 0) {
+                  try {
+                    setTryData(JSON.stringify(data, null, 2));
+                  } catch (err) {
+                    setTryData(data);
+                  }
+                  setOpen(true);
+                }
+              }}
+              style={{
+                borderRadius: token.borderRadius,
+              }}
+            >
+              执行测试
+            </Button>
+          )}
+        </div>
+        {isSaved && (
+          <Alert
+            message="已自动保存"
+            type="success"
+            icon={<SaveOutlined />}
+            showIcon
+            closable
+            style={{ marginBottom: '12px' }}
+          />
+        )}
+        <div style={{ display: 'flex', gap: '16px', height: '60vh' }}>
+          <div style={{ flex: '1' }}>
+            <div
+              style={{
+                border: `1px solid ${token.colorBorder}`,
+                borderRadius: token.borderRadius,
+                overflow: 'hidden',
+                height: '100%',
+              }}
+            >
               <AceCodeEditor
                 value={scriptData}
                 onChange={handleOnChange}
                 height={'60vh'}
                 _mode={'python'}
               />
-            </ProCard>
-          </Splitter.Panel>
-          <Splitter.Panel
-            collapsible={true}
-            defaultSize="20%"
-            min="0%"
-            max="20%"
+            </div>
+          </div>
+          <div
+            style={{
+              width: '300px',
+              border: `1px solid ${token.colorBorder}`,
+              borderRadius: token.borderRadius,
+              overflow: 'auto',
+              background: token.colorBgContainer,
+            }}
+            id="scrollableDiv"
           >
-            <ProCard style={{ height: '500px', overflow: 'auto' }}>
-              <InfiniteScroll
-                dataLength={ScriptList.length}
-                hasMore={false}
-                endMessage={<Divider plain>It is all, nothing more 🤐</Divider>}
-                scrollableTarget="scrollableDiv"
-                loader={false}
-                next={() => {}}
-              >
-                <List
-                  itemLayout="horizontal"
-                  dataSource={ScriptList}
-                  renderItem={(item, index) => (
-                    <List.Item>
-                      <List.Item.Meta
-                        title={
-                          <a onClick={() => useDemoScript(item.value)}>
-                            {item.label}
-                          </a>
-                        }
-                        description={item.desc || ''}
-                      />
-                    </List.Item>
-                  )}
-                />
-              </InfiniteScroll>
-            </ProCard>
-          </Splitter.Panel>
-        </Splitter>
-      </ProCard>
+            <div
+              style={{
+                padding: '12px 16px',
+                borderBottom: `1px solid ${token.colorBorder}`,
+                background: token.colorBgLayout,
+              }}
+            >
+              <Text strong style={{ fontSize: '14px' }}>
+                脚本示例
+              </Text>
+            </div>
+            <InfiniteScroll
+              dataLength={ScriptList.length}
+              hasMore={false}
+              endMessage={
+                <Divider plain style={{ margin: '12px 0' }}>
+                  <Text type="secondary" style={{ fontSize: '12px' }}>
+                    没有更多示例了
+                  </Text>
+                </Divider>
+              }
+              scrollableTarget="scrollableDiv"
+              loader={false}
+              next={() => {}}
+            >
+              <List
+                itemLayout="horizontal"
+                dataSource={ScriptList}
+                renderItem={(item) => (
+                  <List.Item style={{ padding: '8px 16px' }}>
+                    <List.Item.Meta
+                      title={
+                        <Button
+                          type="link"
+                          onClick={() => useDemoScript(item.value)}
+                          style={{ padding: 0, height: 'auto' }}
+                        >
+                          {item.label}
+                        </Button>
+                      }
+                      description={
+                        <Text type="secondary" style={{ fontSize: '12px' }}>
+                          {typeof item.desc === 'string'
+                            ? item.desc
+                            : item.desc}
+                        </Text>
+                      }
+                    />
+                  </List.Item>
+                )}
+              />
+            </InfiniteScroll>
+          </div>
+        </div>
+      </div>
     </>
   );
 };

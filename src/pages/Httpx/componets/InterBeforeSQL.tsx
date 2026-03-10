@@ -317,7 +317,6 @@ const InterBeforeSql: FC<SelfProps> = (props) => {
           <a
             key="edit"
             onClick={() => {
-              console.log('edit', record.id);
               action?.startEditable?.(record.id);
             }}
             style={commonStyles.linkText}

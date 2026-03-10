@@ -7,15 +7,15 @@ import { IBeforeParams, IInterfaceAPI } from '@/pages/Httpx/types';
 import {
   EditableFormInstance,
   EditableProTable,
-  ProCard,
   ProForm,
   ProFormText,
 } from '@ant-design/pro-components';
 import { ProColumns } from '@ant-design/pro-table/lib/typing';
-import { FormInstance, Tag, Typography } from 'antd';
+import { FormInstance, Tag, theme, Typography } from 'antd';
 import React, { FC, useRef, useState } from 'react';
 
 const { Text } = Typography;
+const { useToken } = theme;
 
 interface SelfProps {
   form: FormInstance<IInterfaceAPI>;
@@ -26,6 +26,7 @@ interface SelfProps {
  * 用于管理和编辑接口的前置参数，支持增删改查操作
  */
 const InterBeforeParams: FC<SelfProps> = ({ form }) => {
+  const { token } = useToken();
   const [beforeParamsEditableKeys, setBeforeParamsEditableRowKeys] =
     useState<React.Key[]>();
   const editorFormRef = useRef<EditableFormInstance<IBeforeParams>>();
@@ -36,14 +37,14 @@ const InterBeforeParams: FC<SelfProps> = ({ form }) => {
    */
   const beforeColumns: ProColumns<IBeforeParams>[] = [
     {
-      title: 'Key',
+      title: '变量名',
       dataIndex: 'key',
       width: 200,
       render: (_, record) => (
         <Text
           strong
           style={{
-            color: '#262626',
+            color: token.colorText,
             fontSize: '14px',
           }}
         >
@@ -55,13 +56,13 @@ const InterBeforeParams: FC<SelfProps> = ({ form }) => {
         rules: [
           {
             required: true,
-            message: 'Key 必填',
+            message: '变量名必填',
           },
         ],
       },
     },
     {
-      title: 'Value',
+      title: '变量值',
       dataIndex: 'value',
       width: 300,
       formItemProps: {
@@ -69,7 +70,7 @@ const InterBeforeParams: FC<SelfProps> = ({ form }) => {
         rules: [
           {
             required: true,
-            message: 'value 必填',
+            message: '变量值必填',
           },
         ],
       },
@@ -79,7 +80,7 @@ const InterBeforeParams: FC<SelfProps> = ({ form }) => {
           <Tag
             color={isVariable ? 'orange' : 'blue'}
             style={{
-              borderRadius: '4px',
+              borderRadius: token.borderRadiusSM,
               fontSize: '12px',
               padding: '2px 8px',
               fontFamily: 'monospace',
@@ -124,7 +125,7 @@ const InterBeforeParams: FC<SelfProps> = ({ form }) => {
       },
     },
     {
-      title: 'Desc',
+      title: '描述',
       dataIndex: 'desc',
       width: 250,
       ellipsis: true,
@@ -132,7 +133,7 @@ const InterBeforeParams: FC<SelfProps> = ({ form }) => {
         return (
           <div
             style={{
-              color: '#595959',
+              color: token.colorTextSecondary,
               fontSize: '13px',
             }}
           >
@@ -142,27 +143,28 @@ const InterBeforeParams: FC<SelfProps> = ({ form }) => {
       },
     },
     {
-      title: 'Opt',
+      title: '操作',
       valueType: 'option',
       width: 100,
       fixed: 'right',
       render: (_, record, __, action) => {
         return [
           <a
+            key="edit"
             onClick={() => {
               action?.startEditable?.(record.id);
             }}
             style={{
-              color: '#1890ff',
+              color: token.colorPrimary,
               fontWeight: 500,
               transition: 'all 0.3s ease',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.color = '#40a9ff';
+              e.currentTarget.style.color = token.colorPrimaryHover;
               e.currentTarget.style.textDecoration = 'underline';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.color = '#1890ff';
+              e.currentTarget.style.color = token.colorPrimary;
               e.currentTarget.style.textDecoration = 'none';
             }}
           >
@@ -177,18 +179,23 @@ const InterBeforeParams: FC<SelfProps> = ({ form }) => {
    * 渲染前置参数配置卡片
    */
   return (
-    <ProCard
-      title="前置参数配置"
-      headerBordered={true}
+    <div
       style={{
-        borderRadius: '8px',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.09)',
-        marginBottom: '16px',
-      }}
-      bodyStyle={{
-        padding: '24px',
+        padding: '16px',
+        background: token.colorBgContainer,
+        borderRadius: token.borderRadiusLG,
+        border: `1px solid ${token.colorBorder}`,
       }}
     >
+      <div
+        style={{
+          marginBottom: '16px',
+        }}
+      >
+        <Text strong style={{ fontSize: '16px' }}>
+          前置参数配置
+        </Text>
+      </div>
       <ProForm.Item name={'before_params'} trigger={'onValuesChange'}>
         <EditableProTable<IBeforeParams>
           editableFormRef={editorFormRef}
@@ -228,7 +235,7 @@ const InterBeforeParams: FC<SelfProps> = ({ form }) => {
           }}
         />
       </ProForm.Item>
-    </ProCard>
+    </div>
   );
 };
 
