@@ -44,8 +44,8 @@ export interface IInterfaceCaseContent {
   is_common_api: number;
   enable?: boolean;
   api_wait_time?: number;
-  api_script_text?: string;
-  api_assert_list?: IInterfaceCaseContentAssert[];
+  script_text?: string;
+  assert_list?: IInterfaceCaseContentAssert[];
 }
 
 export interface IInterfaceCaseContentAssert {

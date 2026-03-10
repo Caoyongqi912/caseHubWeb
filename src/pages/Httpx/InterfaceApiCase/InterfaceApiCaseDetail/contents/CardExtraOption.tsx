@@ -6,14 +6,24 @@ import {
 import { IInterfaceCaseContent } from '@/pages/Httpx/types';
 import { CaseContentType } from '@/utils/config';
 import {
-  CopyTwoTone,
-  DeleteTwoTone,
-  InfoCircleTwoTone,
+  CopyOutlined,
+  DeleteOutlined,
+  EyeOutlined,
   PlayCircleOutlined,
   StopOutlined,
 } from '@ant-design/icons';
-import { message, Space, Switch, Tooltip } from 'antd';
+import {
+  Button,
+  message,
+  Popconfirm,
+  Space,
+  Switch,
+  theme,
+  Tooltip,
+} from 'antd';
 import { FC } from 'react';
+
+const { useToken } = theme;
 
 interface SelfProps {
   caseContent: IInterfaceCaseContent;
@@ -28,6 +38,8 @@ const CardExtraOption: FC<SelfProps> = ({
   callback,
   caseId,
 }) => {
+  const { token } = useToken();
+
   const copyContentStep = async () => {
     const { code, msg } = await copyCaseContentStep({
       case_id: caseId,
@@ -49,33 +61,79 @@ const CardExtraOption: FC<SelfProps> = ({
       callback && callback();
     }
   };
+
   return (
-    <Space>
-      <Space hidden={!show}>
-        {caseContent.content_type === CaseContentType.GROUP && (
-          <Tooltip title="查看分组">
-            <InfoCircleTwoTone
-              onClick={() =>
-                window.open(
-                  `/interface/group/detail/groupId=${caseContent.target_id}`,
-                )
-              }
+    <Space size={4}>
+      {show && (
+        <Space size={4}>
+          {caseContent.content_type === CaseContentType.GROUP && (
+            <Tooltip title="查看分组详情">
+              <Button
+                type="text"
+                size="small"
+                icon={<EyeOutlined />}
+                onClick={() =>
+                  window.open(
+                    `/interface/group/detail/groupId=${caseContent.target_id}`,
+                  )
+                }
+                style={{
+                  color: token.colorPrimary,
+                  borderRadius: token.borderRadiusSM,
+                }}
+              />
+            </Tooltip>
+          )}
+          <Tooltip title="复制步骤">
+            <Button
+              type="text"
+              size="small"
+              icon={<CopyOutlined />}
+              onClick={copyContentStep}
+              style={{
+                color: token.colorInfo,
+                borderRadius: token.borderRadiusSM,
+              }}
             />
           </Tooltip>
-        )}
-        <Tooltip title="复制步骤">
-          <CopyTwoTone onClick={copyContentStep} />
-        </Tooltip>
-        <Tooltip title="删除步骤">
-          <DeleteTwoTone onClick={removeContentStep} />
-        </Tooltip>
-      </Space>
-      <Tooltip title="关闭后此步骤将不运行、只在用例场景中生效">
+          <Popconfirm
+            title="确认删除"
+            description="确定要删除这个步骤吗？"
+            onConfirm={removeContentStep}
+            okText="确定"
+            cancelText="取消"
+            okButtonProps={{ danger: true }}
+          >
+            <Tooltip title="删除步骤">
+              <Button
+                type="text"
+                size="small"
+                icon={<DeleteOutlined />}
+                style={{
+                  color: token.colorError,
+                  borderRadius: token.borderRadiusSM,
+                }}
+              />
+            </Tooltip>
+          </Popconfirm>
+        </Space>
+      )}
+      <Tooltip
+        title={
+          <div>
+            <div style={{ fontWeight: 600, marginBottom: 4 }}>步骤控制</div>
+            <div>开启：运行此步骤</div>
+            <div>关闭：跳过此步骤</div>
+          </div>
+        }
+      >
         <Switch
-          style={{ marginLeft: 10, marginRight: 20 }}
           checkedChildren={<PlayCircleOutlined />}
           unCheckedChildren={<StopOutlined />}
           value={caseContent.enable}
+          style={{
+            marginLeft: 8,
+          }}
           onClick={async (checked, _) => {
             const { code, data } = await updateCaseContent({
               id: caseContent.id,

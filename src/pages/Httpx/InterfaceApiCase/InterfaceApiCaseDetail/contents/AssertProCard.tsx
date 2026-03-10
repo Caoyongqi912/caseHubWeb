@@ -31,9 +31,9 @@ const AssertProCard: FC<Props> = (props) => {
     () => ({
       id: caseContent.id,
       content_name: caseContent.content_name,
-      assert_list: caseContent.api_assert_list,
+      assert_list: caseContent.assert_list,
     }),
-    [caseContent.id, caseContent.content_name, caseContent.api_assert_list],
+    [caseContent.id, caseContent.content_name, caseContent.assert_list],
   );
 
   return (

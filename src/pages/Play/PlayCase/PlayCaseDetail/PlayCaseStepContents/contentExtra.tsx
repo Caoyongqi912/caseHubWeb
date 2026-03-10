@@ -5,14 +5,24 @@ import {
 } from '@/api/play/playCase';
 import { IPlayStepContent } from '@/pages/Play/componets/uiTypes';
 import {
-  CopyTwoTone,
-  DeleteTwoTone,
-  InfoCircleTwoTone,
+  CopyOutlined,
+  DeleteOutlined,
+  EyeOutlined,
   PlayCircleOutlined,
   StopOutlined,
 } from '@ant-design/icons';
-import { message, Space, Switch, Tooltip } from 'antd';
+import {
+  Button,
+  message,
+  Popconfirm,
+  Space,
+  Switch,
+  theme,
+  Tooltip,
+} from 'antd';
 import { FC } from 'react';
+
+const { useToken } = theme;
 
 const CaseContentType = {
   Play: 1,
@@ -31,6 +41,7 @@ interface SelfProps {
 
 const ContentExtra: FC<SelfProps> = (props) => {
   const { stepContent, callback, show, caseId } = props;
+  const { token } = useToken();
 
   const copyContentStep = async () => {
     const { code, msg } = await copyCaseStep({
@@ -42,6 +53,7 @@ const ContentExtra: FC<SelfProps> = (props) => {
       callback();
     }
   };
+
   const removeContentStep = async () => {
     const { code, msg } = await removePlayStepContent({
       case_id: caseId,
@@ -54,33 +66,79 @@ const ContentExtra: FC<SelfProps> = (props) => {
   };
 
   return (
-    <Space>
-      <Space hidden={!show}>
-        {stepContent.content_type === CaseContentType.Play_GROUP && (
-          <Tooltip title="查看分组">
-            <InfoCircleTwoTone
-              onClick={() =>
-                window.open(`/ui/group/detail/groupId=${stepContent.target_id}`)
-              }
-            />
-          </Tooltip>
-        )}
-        {stepContent.content_type !== CaseContentType.Play_API && (
-          <Tooltip title="复制步骤">
-            <CopyTwoTone onClick={copyContentStep} />
-          </Tooltip>
-        )}
-
-        <Tooltip title="删除步骤">
-          <DeleteTwoTone onClick={removeContentStep} />
-        </Tooltip>
-      </Space>
-      <Tooltip title="关闭后此步骤将不运行、只在用例场景中生效">
+    <Space size={4}>
+      {show && (
+        <Space size={4}>
+          {stepContent.content_type === CaseContentType.Play_GROUP && (
+            <Tooltip title="查看分组详情">
+              <Button
+                type="text"
+                size="small"
+                icon={<EyeOutlined />}
+                onClick={() =>
+                  window.open(
+                    `/ui/group/detail/groupId=${stepContent.target_id}`,
+                  )
+                }
+                style={{
+                  color: token.colorPrimary,
+                  borderRadius: token.borderRadiusSM,
+                }}
+              />
+            </Tooltip>
+          )}
+          {stepContent.content_type !== CaseContentType.Play_API && (
+            <Tooltip title="复制步骤">
+              <Button
+                type="text"
+                size="small"
+                icon={<CopyOutlined />}
+                onClick={copyContentStep}
+                style={{
+                  color: token.colorInfo,
+                  borderRadius: token.borderRadiusSM,
+                }}
+              />
+            </Tooltip>
+          )}
+          <Popconfirm
+            title="确认删除"
+            description="确定要删除这个步骤吗？"
+            onConfirm={removeContentStep}
+            okText="确定"
+            cancelText="取消"
+            okButtonProps={{ danger: true }}
+          >
+            <Tooltip title="删除步骤">
+              <Button
+                type="text"
+                size="small"
+                icon={<DeleteOutlined />}
+                style={{
+                  color: token.colorError,
+                  borderRadius: token.borderRadiusSM,
+                }}
+              />
+            </Tooltip>
+          </Popconfirm>
+        </Space>
+      )}
+      <Tooltip
+        title={
+          <div>
+            <div style={{ fontWeight: 600, marginBottom: 4 }}>步骤控制</div>
+            <div>开启：运行此步骤</div>
+            <div>关闭：跳过此步骤</div>
+          </div>
+        }
+      >
         <Switch
-          style={{ marginLeft: 10, marginRight: 20 }}
           checkedChildren={<PlayCircleOutlined />}
           unCheckedChildren={<StopOutlined />}
           value={stepContent.enable}
+          style={{
+            marginLeft: 8,
+          }}
           onClick={async (checked, _) => {
             const { code } = await updateCaseContent({
               id: stepContent.id,

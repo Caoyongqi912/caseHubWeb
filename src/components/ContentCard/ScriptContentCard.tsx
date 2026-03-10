@@ -26,7 +26,6 @@ export interface ScriptContentInfo {
   id: number;
   content_name?: string;
   script_text?: string;
-  api_script_text?: string;
 }
 
 /**
@@ -35,7 +34,6 @@ export interface ScriptContentInfo {
 export type UpdateScriptFunc = (data: {
   id: number;
   script_text?: string;
-  api_script_text?: string;
   content_name?: string;
 }) => Promise<any>;
 
@@ -53,7 +51,6 @@ interface Props {
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
   updateScript: UpdateScriptFunc;
-  scriptTextKey: 'script_text' | 'api_script_text';
 }
 
 /**
@@ -281,7 +278,6 @@ const ScriptContentCard: FC<Props> = (props) => {
     onMouseEnter,
     onMouseLeave,
     updateScript,
-    scriptTextKey,
   } = props;
 
   const [showOption, setShowOption] = useState(false);
@@ -292,21 +288,18 @@ const ScriptContentCard: FC<Props> = (props) => {
   const [saveScript, setSaveScript] = useState(false);
 
   useEffect(() => {
-    const { content_name, script_text, api_script_text } = contentInfo;
+    const { content_name, script_text } = contentInfo;
     if (content_name) {
       setScriptTextName(content_name);
       setShowScriptInput(false);
     }
-    if (scriptTextKey === 'api_script_text' && api_script_text) {
-      setScriptText(api_script_text);
-    } else if (scriptTextKey === 'script_text' && script_text) {
+    if (script_text) {
       setScriptText(script_text);
     }
   }, [
     contentInfo.content_name,
     contentInfo.script_text,
-    contentInfo.api_script_text,
-    scriptTextKey,
+    contentInfo.script_text,
   ]);
 
   const handleScriptOnChange = (value: string) => {
@@ -315,7 +308,7 @@ const ScriptContentCard: FC<Props> = (props) => {
     timeoutRef.current = setTimeout(async () => {
       const updateData: any = {
         id: contentInfo.id,
-        [scriptTextKey]: value,
+        script_text: value,
       };
       const { code } = await updateScript(updateData);
       if (code === 0) {
@@ -431,9 +424,9 @@ const ScriptContentCard: FC<Props> = (props) => {
                 borderRadius: token.borderRadiusSM,
               }}
             >
-              Script
+              脚本
             </Tag>
-            {SCRIPT}
+            {SCRIPT()}
           </Space>
         );
       }}

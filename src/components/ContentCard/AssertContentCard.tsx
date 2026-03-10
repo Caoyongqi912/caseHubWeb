@@ -172,7 +172,6 @@ const AssertContentCard: FC<Props> = (props) => {
       hoverable
       defaultCollapsed
       style={{
-        marginBottom: 12,
         borderRadius: token.borderRadiusLG,
         boxShadow: showOption
           ? `0 4px 12px ${token.colorPrimaryBg}`

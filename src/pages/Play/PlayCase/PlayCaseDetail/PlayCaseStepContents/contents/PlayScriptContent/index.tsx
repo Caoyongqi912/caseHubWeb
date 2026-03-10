@@ -76,7 +76,6 @@ const Index: FC<Props> = (props) => {
         onMouseEnter={() => setShowOption(true)}
         onMouseLeave={() => setShowOption(false)}
         updateScript={handleUpdateScript}
-        scriptTextKey="script_text"
       />
     </>
   );

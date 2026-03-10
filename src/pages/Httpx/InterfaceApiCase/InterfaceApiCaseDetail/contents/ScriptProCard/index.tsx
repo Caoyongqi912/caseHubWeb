@@ -32,7 +32,6 @@ const Index: FC<Props> = (props) => {
   const handleUpdateScript = async (data: {
     id: number;
     script_text?: string;
-    api_script_text?: string;
     content_name?: string;
   }) => {
     return updateCaseContent(data);
@@ -46,9 +45,9 @@ const Index: FC<Props> = (props) => {
     () => ({
       id: caseContent.id,
       content_name: caseContent.content_name,
-      api_script_text: caseContent.api_script_text,
+      script_text: caseContent.script_text,
     }),
-    [caseContent.id, caseContent.content_name, caseContent.api_script_text],
+    [caseContent.id, caseContent.content_name, caseContent.script_text],
   );
 
   return (
@@ -70,7 +69,6 @@ const Index: FC<Props> = (props) => {
       onMouseEnter={() => setShowOption(true)}
       onMouseLeave={() => setShowOption(false)}
       updateScript={handleUpdateScript}
-      scriptTextKey="api_script_text"
     />
   );
 };
