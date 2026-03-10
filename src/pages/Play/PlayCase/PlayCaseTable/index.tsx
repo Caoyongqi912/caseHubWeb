@@ -13,9 +13,28 @@ import PlayBaseForm from '@/pages/Play/PlayCase/PlayCaseDetail/PlayBaseForm';
 import { CONFIG, ModuleEnum } from '@/utils/config';
 import { pageData } from '@/utils/somefunc';
 import { useModel } from '@@/exports';
+import {
+  CopyOutlined,
+  DeleteOutlined,
+  EyeOutlined,
+  FileTextOutlined,
+  NumberOutlined,
+  PlusOutlined,
+} from '@ant-design/icons';
 import { ActionType, ProColumns } from '@ant-design/pro-components';
-import { Button, Form, message, Popconfirm, Tag } from 'antd';
-import { FC, useCallback, useEffect, useRef, useState } from 'react';
+import {
+  Button,
+  Form,
+  message,
+  Popconfirm,
+  Space,
+  Tag,
+  theme,
+  Typography,
+} from 'antd';
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+const { Text, Paragraph } = Typography;
 
 interface SelfProps {
   currentProjectId?: number;
@@ -28,14 +47,17 @@ const Index: FC<SelfProps> = ({
   currentProjectId,
   perKey,
 }) => {
+  const { token } = theme.useToken();
   const [caseForm] = Form.useForm<IUICase>();
   const { initialState } = useModel('@@initialState');
-  const actionRef = useRef<ActionType>(); //Table action 的引用，便于自定义触发
+  const actionRef = useRef<ActionType>();
   const [currentPlay, setCurrentPlay] = useState<IUICase>();
   const [modalName, setModalName] = useState('新增用例');
+
   useEffect(() => {
     actionRef.current?.reload();
   }, [currentModuleId, currentProjectId]);
+
   useEffect(() => {
     if (currentProjectId && currentModuleId) {
       caseForm.setFieldsValue({
@@ -82,6 +104,115 @@ const Index: FC<SelfProps> = ({
     return true;
   };
 
+  const styles = useMemo(
+    () => ({
+      actionBtn: {
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 4,
+        padding: '4px 8px',
+        borderRadius: 6,
+        fontSize: 13,
+        fontWeight: 500,
+        transition: 'all 0.2s ease',
+        cursor: 'pointer',
+      },
+      primaryBtn: {
+        color: token.colorPrimary,
+        backgroundColor: token.colorPrimaryBg,
+      },
+      successBtn: {
+        color: token.colorSuccess,
+        backgroundColor: token.colorSuccessBg,
+      },
+      dangerBtn: {
+        color: token.colorError,
+        backgroundColor: token.colorErrorBg,
+      },
+      warningBtn: {
+        color: token.colorWarning,
+        backgroundColor: token.colorWarningBg,
+      },
+      idTag: {
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 4,
+        fontFamily: '"SF Mono", "Fira Code", "JetBrains Mono", monospace',
+        fontSize: 12,
+        fontWeight: 700,
+        padding: '4px 10px',
+        borderRadius: 6,
+        background: `linear-gradient(135deg, ${token.colorPrimaryBg} 0%, ${token.colorPrimaryBorder} 100%)`,
+        color: token.colorPrimary,
+        border: `1px solid ${token.colorPrimaryBorder}`,
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1)',
+        letterSpacing: '0.5px',
+      },
+      nameTag: {
+        fontSize: 13,
+        fontWeight: 500,
+        padding: '4px 12px',
+        borderRadius: 6,
+        backgroundColor: token.colorBgTextActive,
+        color: token.colorText,
+        border: 'none',
+        cursor: 'pointer',
+        transition: 'all 0.2s ease',
+      },
+      creatorTag: {
+        fontSize: 12,
+        padding: '2px 10px',
+        borderRadius: 12,
+        backgroundColor: token.colorWarningBg,
+        color: token.colorWarningText,
+        border: `1px solid ${token.colorWarningBorder}`,
+      },
+      addBtn: {
+        height: 36,
+        borderRadius: 8,
+        fontWeight: 500,
+        boxShadow: `0 2px 8px ${token.colorPrimaryBg}`,
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+      },
+    }),
+    [token],
+  );
+
+  const ActionButton: FC<{
+    icon: React.ReactNode;
+    label: string;
+    type?: 'primary' | 'success' | 'danger' | 'warning';
+    onClick?: () => void;
+  }> = ({ icon, label, type = 'primary', onClick }) => {
+    const styleMap = {
+      primary: styles.primaryBtn,
+      success: styles.successBtn,
+      danger: styles.dangerBtn,
+      warning: styles.warningBtn,
+    };
+
+    return (
+      <a
+        onClick={onClick}
+        style={{
+          ...styles.actionBtn,
+          ...styleMap[type],
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'translateY(-1px)';
+          e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'translateY(0)';
+          e.currentTarget.style.boxShadow = 'none';
+        }}
+      >
+        {icon}
+        {label}
+      </a>
+    );
+  };
+
   const columns: ProColumns<IUICase>[] = [
     {
       title: 'UID',
@@ -89,132 +220,178 @@ const Index: FC<SelfProps> = ({
       key: 'uid',
       fixed: 'left',
       copyable: true,
-      width: '12%',
-      render: (text) => {
-        return <Tag color={'blue'}>{text}</Tag>;
-      },
+      width: 100,
+      render: (_, record) => (
+        <span style={styles.idTag}>
+          <NumberOutlined style={{ fontSize: 10, opacity: 0.7 }} />
+          {record.uid}
+        </span>
+      ),
     },
     {
-      title: 'name',
+      title: '名称',
       dataIndex: 'title',
       sorter: true,
       fixed: 'left',
       key: 'title',
-      render: (text, record) => {
-        return (
-          <MyModal
-            onFinish={saveOrUpdateCaseBase}
-            trigger={
-              <a
-                onClick={() => {
-                  caseForm.setFieldsValue(record);
-                  setCurrentPlay(record);
-                }}
-              >
-                {text}
-              </a>
-            }
-            form={caseForm}
-          >
-            <PlayBaseForm />
-          </MyModal>
-        );
-      },
+      width: 200,
+      render: (_, record) => (
+        <MyModal
+          onFinish={saveOrUpdateCaseBase}
+          trigger={
+            <Tag
+              style={styles.nameTag}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = token.colorPrimaryBg;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = token.colorBgTextActive;
+              }}
+              onClick={() => {
+                caseForm.setFieldsValue(record);
+                setCurrentPlay(record);
+              }}
+            >
+              <FileTextOutlined style={{ marginRight: 4, opacity: 0.6 }} />
+              {record.title}
+            </Tag>
+          }
+          form={caseForm}
+        >
+          <PlayBaseForm />
+        </MyModal>
+      ),
     },
     {
-      title: 'level',
+      title: '优先级',
       key: 'level',
       dataIndex: 'level',
       valueType: 'select',
+      width: 100,
       valueEnum: CONFIG.API_LEVEL_ENUM,
-      render: (_, record) => {
-        return (
-          <Tag color={CONFIG.RENDER_CASE_LEVEL[record.level].color}>
-            {CONFIG.RENDER_CASE_LEVEL[record.level].text}
-          </Tag>
-        );
-      },
+      render: (_, record) => (
+        <Tag
+          color={CONFIG.RENDER_CASE_LEVEL[record.level]?.color || 'default'}
+          style={{
+            borderRadius: 6,
+            fontWeight: 500,
+            padding: '4px 12px',
+          }}
+        >
+          {CONFIG.RENDER_CASE_LEVEL[record.level]?.text || '-'}
+        </Tag>
+      ),
     },
     {
-      title: 'step num',
+      title: '步骤数',
       dataIndex: 'step_num',
       hideInSearch: true,
       key: 'step_num',
-      render: (text) => {
-        return <Tag color={'blue'}>{text}</Tag>;
-      },
+      width: 100,
+      render: (_, record) => (
+        <Tag
+          style={{
+            borderRadius: 6,
+            fontWeight: 500,
+            padding: '4px 12px',
+            backgroundColor: token.colorInfoBg,
+            color: token.colorInfo,
+            border: `1px solid ${token.colorInfoBorder}`,
+          }}
+        >
+          {record.step_num || 0}
+        </Tag>
+      ),
     },
     {
-      title: 'status',
+      title: '状态',
       dataIndex: 'status',
       valueType: 'select',
       key: 'status',
+      width: 100,
       valueEnum: CONFIG.CASE_STATUS_ENUM,
-      render: (_, record) => {
-        return (
-          <Tag color={CONFIG.RENDER_CASE_STATUS[record.status].color}>
-            {CONFIG.RENDER_CASE_STATUS[record.status].text}
-          </Tag>
-        );
-      },
+      render: (_, record) => (
+        <Tag
+          color={CONFIG.RENDER_CASE_STATUS[record.status]?.color || 'default'}
+          style={{
+            borderRadius: 6,
+            fontWeight: 500,
+            padding: '4px 12px',
+          }}
+        >
+          {CONFIG.RENDER_CASE_STATUS[record.status]?.text || '-'}
+        </Tag>
+      ),
     },
     {
-      title: 'creator',
+      title: '创建人',
       dataIndex: 'creator',
       valueType: 'select',
+      width: 120,
       renderFormItem: () => {
         return <UserSelect />;
       },
-      render: (text) => <Tag>{text}</Tag>,
+      render: (_, record) => (
+        <Tag style={styles.creatorTag}>{record.creatorName || '-'}</Tag>
+      ),
     },
     {
-      title: 'create time',
+      title: '创建时间',
       dataIndex: 'create_time',
       valueType: 'date',
       key: 'create_time',
       sorter: true,
       search: false,
+      width: 160,
+      render: (_, record) => (
+        <Text
+          type="secondary"
+          style={{ fontSize: 13, fontFamily: 'monospace' }}
+        >
+          {record.create_time}
+        </Text>
+      ),
     },
     {
-      title: 'opt',
+      title: '操作',
       valueType: 'option',
       key: 'option',
       fixed: 'right',
-      width: '12%',
-      render: (_, record) => [
-        <a
-          target="_blank"
-          rel="noopener noreferrer"
-          key="view"
-          onClick={() => {
-            window.open(
-              `/ui/case/detail/caseId=${record.id}&projectId=${record.project_id}&moduleId=${record.module_id}`,
-            );
-          }}
-        >
-          详情
-        </a>,
-        <a
-          key="copy"
-          onClick={async () => {
-            const { code, data, msg } = await copyPlayCase({
-              caseId: record.id,
-            });
-            if (code === 0) {
-              message.success(msg);
-            }
-          }}
-        >
-          复制
-        </a>,
-        <>
-          {initialState?.currentUser?.id === record.creator ||
-          initialState?.currentUser?.isAdmin ? (
+      width: 220,
+      render: (_, record) => (
+        <Space size={4}>
+          <ActionButton
+            icon={<EyeOutlined />}
+            label="详情"
+            type="primary"
+            onClick={() => {
+              window.open(
+                `/ui/case/detail/caseId=${record.id}&projectId=${record.project_id}&moduleId=${record.module_id}`,
+              );
+            }}
+          />
+          <ActionButton
+            icon={<CopyOutlined />}
+            label="复制"
+            type="success"
+            onClick={async () => {
+              const { code, data, msg } = await copyPlayCase({
+                caseId: record.id,
+              });
+              if (code === 0) {
+                message.success(msg);
+                actionRef.current?.reload();
+              }
+            }}
+          />
+          {(initialState?.currentUser?.id === record.creator ||
+            initialState?.currentUser?.isAdmin) && (
             <Popconfirm
-              key="delete_firm"
-              title={'确认删除？'}
-              okText={'确认'}
-              cancelText={'点错了'}
+              title="确认删除？"
+              description="删除后数据将无法恢复"
+              okText="确认删除"
+              cancelText="取消"
+              okButtonProps={{ danger: true }}
               onConfirm={async () => {
                 const { code, msg } = await removePlayCase({
                   caseId: record.id,
@@ -225,41 +402,45 @@ const Index: FC<SelfProps> = ({
                 }
               }}
             >
-              <a key="delete">删除</a>
+              <ActionButton
+                icon={<DeleteOutlined />}
+                label="删除"
+                type="danger"
+              />
             </Popconfirm>
-          ) : null}
-        </>,
-      ],
+          )}
+        </Space>
+      ),
     },
   ];
 
   const AddCaseButton = (
-    <>
-      <MyModal
-        title={modalName}
-        form={caseForm}
-        onFinish={saveOrUpdateCaseBase}
-        trigger={
-          <Button
-            hidden={currentModuleId === undefined}
-            type={'primary'}
-            onClick={() => {
-              setCurrentPlay(undefined);
-            }}
-          >
-            添加用例
-          </Button>
-        }
-      >
-        <PlayBaseForm />
-      </MyModal>
-    </>
+    <Button
+      type="primary"
+      hidden={currentModuleId === undefined}
+      style={styles.addBtn}
+      icon={<PlusOutlined />}
+      onClick={() => {
+        setCurrentPlay(undefined);
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = 'translateY(-2px)';
+        e.currentTarget.style.boxShadow = `0 4px 16px ${token.colorPrimaryBg}`;
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = 'translateY(0)';
+        e.currentTarget.style.boxShadow = `0 2px 8px ${token.colorPrimaryBg}`;
+      }}
+    >
+      添加用例
+    </Button>
   );
+
   return (
     <MyProTable
       persistenceKey={perKey}
       columns={columns}
-      rowKey={'id'}
+      rowKey="id"
       request={fetchUICase}
       actionRef={actionRef}
       toolBarRender={() => [AddCaseButton]}

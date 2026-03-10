@@ -4,10 +4,11 @@ import PlayStepGroupTable from '@/pages/Play/PlayStep/PlayStepGroup/PlayStepGrou
 import { ModuleEnum } from '@/utils/config';
 import { getSplitter, setSplitter } from '@/utils/token';
 import { ProCard } from '@ant-design/pro-components';
-import { Splitter } from 'antd';
-import { useEffect, useState } from 'react';
+import { Splitter, theme } from 'antd';
+import { useEffect, useMemo, useState } from 'react';
 
 const Index = () => {
+  const { token } = theme.useToken();
   const [currentModuleId, setCurrentModuleId] = useState<number>();
   const [currentProjectId, setCurrentProjectId] = useState<number>();
   const PlayStep = 'PlayStep';
@@ -15,12 +16,14 @@ const Index = () => {
   const PerKeySplitter = 'PlayStep:Splitter';
 
   const [sizes, setSizes] = useState<(number | string)[]>(['20%', '80%']);
+
   useEffect(() => {
     const data = getSplitter(PerKeySplitter);
     if (data) {
       setSizes([data.left, data.right]);
     }
   }, []);
+
   const onProjectChange = (projectId: number | undefined) => {
     setCurrentProjectId(projectId);
   };
@@ -28,10 +31,67 @@ const Index = () => {
   const onModuleChange = (moduleId: number) => {
     setCurrentModuleId(moduleId);
   };
+
+  const styles = useMemo(
+    () => ({
+      container: {
+        height: 'auto',
+        minHeight: '90vh',
+      },
+      bodyStyle: {
+        height: '100%',
+        minHeight: '90vh',
+        padding: 0,
+        overflow: 'hidden',
+      },
+      leftPanel: {
+        height: '100%',
+        minHeight: 0,
+        display: 'flex',
+        flexDirection: 'column' as const,
+        overflow: 'hidden',
+        backgroundColor: token.colorBgContainer,
+        borderRadius: token.borderRadiusLG,
+        margin: 8,
+        boxShadow: `0 1px 2px 0 ${token.colorBgLayout}`,
+      },
+      rightPanel: {
+        overflow: 'auto',
+        minHeight: 0,
+        display: 'flex',
+        backgroundColor: token.colorBgContainer,
+        borderRadius: token.borderRadiusLG,
+        margin: '8px 8px 8px 0',
+        boxShadow: `0 1px 2px 0 ${token.colorBgLayout}`,
+      },
+      splitter: {
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        backgroundColor: token.colorBgLayout,
+      },
+      tabCard: {
+        padding: 0,
+      },
+    }),
+    [token],
+  );
+
   const item = [
     {
       key: 'common',
-      label: '步骤',
+      label: (
+        <span
+          style={{
+            fontWeight: 500,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+          }}
+        >
+          步骤
+        </span>
+      ),
       children: (
         <PlayCommonStep
           currentModuleId={currentModuleId}
@@ -42,7 +102,18 @@ const Index = () => {
     },
     {
       key: 'Group',
-      label: '步骤组',
+      label: (
+        <span
+          style={{
+            fontWeight: 500,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+          }}
+        >
+          步骤组
+        </span>
+      ),
       children: (
         <PlayStepGroupTable
           currentModuleId={currentModuleId}
@@ -52,38 +123,21 @@ const Index = () => {
       ),
     },
   ];
+
   return (
-    <ProCard
-      style={{ height: 'auto' }}
-      bodyStyle={{
-        height: '100%',
-        minHeight: '90vh',
-        padding: 0,
-        overflow: 'hidden',
-      }}
-    >
+    <ProCard style={styles.container} bodyStyle={styles.bodyStyle}>
       <Splitter
         onResize={(sizes: number[]) => {
           setSizes(sizes);
           setSplitter(PerKeySplitter, sizes[0], sizes[1]);
         }}
-        style={{
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-        }}
+        style={styles.splitter}
         layout="horizontal"
       >
         <Splitter.Panel
           resizable={true}
           collapsible={true}
-          style={{
-            height: '100%',
-            minHeight: 0,
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden',
-          }}
+          style={styles.leftPanel}
           size={sizes[0]}
           min={0}
           max={600}
@@ -99,17 +153,20 @@ const Index = () => {
           resizable={true}
           collapsible={true}
           size={sizes[1]}
-          style={{
-            overflow: 'auto',
-            minHeight: 0,
-            display: 'flex',
-          }}
+          style={styles.rightPanel}
         >
           <ProCard
-            bodyStyle={{ padding: 0 }}
+            style={{ width: '100%', height: '100%' }}
+            bodyStyle={styles.tabCard}
             tabs={{
               type: 'card',
               items: item,
+              tabBarStyle: {
+                marginBottom: 0,
+                paddingLeft: 12,
+                backgroundColor: token.colorBgContainer,
+                borderBottom: `1px solid ${token.colorBorderSecondary}`,
+              },
             }}
           />
         </Splitter.Panel>

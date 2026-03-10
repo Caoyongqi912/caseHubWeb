@@ -6,10 +6,23 @@ import UserSelect from '@/components/Table/UserSelect';
 import { IInterfaceAPI } from '@/pages/Httpx/types';
 import { CONFIG, ModuleEnum } from '@/utils/config';
 import { fetchModulesEnum, pageData } from '@/utils/somefunc';
+import {
+  ApiOutlined,
+  NumberOutlined,
+  PlusOutlined,
+  UserOutlined,
+} from '@ant-design/icons';
 import { ActionType, ProColumns } from '@ant-design/pro-components';
-import { Button, Space, Tag } from 'antd';
+import { Button, Space, Tag, theme } from 'antd';
 import { TableRowSelection } from 'antd/es/table/interface';
-import React, { FC, useCallback, useEffect, useRef, useState } from 'react';
+import React, {
+  FC,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 interface SelfProps {
   projectId?: number;
@@ -22,13 +35,12 @@ const InterfaceCaseChoiceApiTable: FC<SelfProps> = ({
   onSelect,
   radio = false,
 }) => {
-  const actionRef = useRef<ActionType>(); //Table action 的引用，便于自定义触发
+  const { token } = theme.useToken();
+  const actionRef = useRef<ActionType>();
   const [projectEnumMap, setProjectEnumMap] = useState<IObjGet>({});
   const [moduleEnum, setModuleEnum] = useState<IModuleEnum[]>([]);
-
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
 
-  // 查询所有project 设置枚举
   useEffect(() => {
     if (!projectId) return;
     queryProjectEnum(setProjectEnumMap).then(async () => {
@@ -40,7 +52,6 @@ const InterfaceCaseChoiceApiTable: FC<SelfProps> = ({
     async (params: any, sort: any) => {
       const searchData = {
         ...params,
-        //只查询公共api
         project_id: projectId,
         module_type: ModuleEnum.API,
         is_common: 1,
@@ -50,6 +61,51 @@ const InterfaceCaseChoiceApiTable: FC<SelfProps> = ({
       return pageData(code, data);
     },
     [projectId],
+  );
+
+  const styles = useMemo(
+    () => ({
+      idTag: {
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 4,
+        fontFamily: '"SF Mono", "Fira Code", "JetBrains Mono", monospace',
+        fontSize: 12,
+        fontWeight: 700,
+        padding: '4px 10px',
+        borderRadius: 6,
+        background: `linear-gradient(135deg, ${token.colorPrimaryBg} 0%, ${token.colorPrimaryBorder} 100%)`,
+        color: token.colorPrimary,
+        border: `1px solid ${token.colorPrimaryBorder}`,
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1)',
+        letterSpacing: '0.5px',
+      },
+      nameTag: {
+        fontSize: 13,
+        fontWeight: 500,
+        padding: '4px 12px',
+        borderRadius: 6,
+        backgroundColor: token.colorBgTextActive,
+        color: token.colorText,
+        border: 'none',
+      },
+      creatorTag: {
+        fontSize: 12,
+        padding: '2px 10px',
+        borderRadius: 12,
+        backgroundColor: token.colorWarningBg,
+        color: token.colorWarningText,
+        border: `1px solid ${token.colorWarningBorder}`,
+      },
+      addBtn: {
+        height: 36,
+        borderRadius: 8,
+        fontWeight: 500,
+        boxShadow: `0 2px 8px ${token.colorPrimaryBg}`,
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+      },
+    }),
+    [token],
   );
 
   const columns: ProColumns<IInterfaceAPI>[] = [
@@ -80,29 +136,52 @@ const InterfaceCaseChoiceApiTable: FC<SelfProps> = ({
       title: '接口编号',
       dataIndex: 'uid',
       key: 'uid',
+      width: 140,
       copyable: true,
+      render: (_, record) => (
+        <span style={styles.idTag}>
+          <NumberOutlined style={{ fontSize: 10, opacity: 0.7 }} />
+          {record.uid}
+        </span>
+      ),
     },
     {
       title: '名称',
       dataIndex: 'name',
       key: 'name',
+      width: 200,
+      render: (_, record) => (
+        <Tag style={styles.nameTag}>
+          <ApiOutlined style={{ marginRight: 6, opacity: 0.6 }} />
+          {record.name}
+        </Tag>
+      ),
     },
-
     {
       title: '优先级',
       dataIndex: 'level',
       valueType: 'select',
       valueEnum: CONFIG.API_LEVEL_ENUM,
-      width: '10%',
-      render: (_, record) => {
-        return <Tag color={'blue'}>{record.level}</Tag>;
-      },
+      width: 100,
+      render: (_, record) => (
+        <Tag
+          color={
+            CONFIG.API_LEVEL_ENUM[record.level]?.status === 'Success'
+              ? 'success'
+              : 'processing'
+          }
+          style={{ borderRadius: 6, fontSize: 12, padding: '4px 12px' }}
+        >
+          {record.level}
+        </Tag>
+      ),
     },
     {
       title: '状态',
       dataIndex: 'status',
       valueType: 'select',
       valueEnum: CONFIG.API_STATUS_ENUM,
+      width: 100,
       render: (_, record) => {
         return CONFIG.API_STATUS_ENUM[record.status].tag;
       },
@@ -111,12 +190,16 @@ const InterfaceCaseChoiceApiTable: FC<SelfProps> = ({
       title: '创建人',
       dataIndex: 'creator',
       valueType: 'select',
+      width: 120,
       renderFormItem: () => {
         return <UserSelect />;
       },
-      render: (_, record) => {
-        return <Tag>{record.creatorName}</Tag>;
-      },
+      render: (_, record) => (
+        <Tag style={styles.creatorTag}>
+          <UserOutlined style={{ marginRight: 4, opacity: 0.7 }} />
+          {record.creatorName}
+        </Tag>
+      ),
     },
   ];
 
@@ -130,14 +213,23 @@ const InterfaceCaseChoiceApiTable: FC<SelfProps> = ({
 
   return (
     <MyProTable
-      // @ts-ignore
       tableAlertOptionRender={() => {
         return (
           <Space>
             <Button
-              type={'primary'}
+              type="primary"
+              style={styles.addBtn}
+              icon={<PlusOutlined />}
               onClick={async () => {
                 await onSelect(selectedRowKeys as number[]);
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = `0 4px 16px ${token.colorPrimaryBg}`;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = `0 2px 8px ${token.colorPrimaryBg}`;
               }}
             >
               引用添加
@@ -147,7 +239,7 @@ const InterfaceCaseChoiceApiTable: FC<SelfProps> = ({
       }}
       rowSelection={rowSelection}
       columns={columns}
-      rowKey={'id'}
+      rowKey="id"
       x={1000}
       actionRef={actionRef}
       request={fetchInterface}

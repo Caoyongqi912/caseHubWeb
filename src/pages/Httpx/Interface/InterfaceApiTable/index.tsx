@@ -14,11 +14,15 @@ import { CONFIG, ModuleEnum } from '@/utils/config';
 import { fetchModulesEnum, pageData } from '@/utils/somefunc';
 import { useModel } from '@@/exports';
 import {
+  ApiOutlined,
   CopyOutlined,
-  DashOutlined,
   DeleteOutlined,
   DeliveredProcedureOutlined,
   DownOutlined,
+  EyeOutlined,
+  LinkOutlined,
+  MoreOutlined,
+  NumberOutlined,
   PlusOutlined,
 } from '@ant-design/icons';
 import {
@@ -37,9 +41,13 @@ import {
   Popconfirm,
   Space,
   Tag,
+  theme,
+  Typography,
 } from 'antd';
-import { FC, useCallback, useEffect, useRef, useState } from 'react';
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { history } from 'umi';
+
+const { Text, Paragraph } = Typography;
 
 interface SelfProps {
   currentProjectId?: number;
@@ -47,15 +55,12 @@ interface SelfProps {
   perKey: string;
 }
 
-/**
- * 接口API表格组件
- * 用于展示和管理接口API列表，支持复制、移动、删除等操作
- */
 const Index: FC<SelfProps> = ({
   currentModuleId,
   currentProjectId,
   perKey,
 }) => {
+  const { token } = theme.useToken();
   const [copyForm] = Form.useForm();
   const actionRef = useRef<ActionType>();
   const [openModal, setOpenModal] = useState(false);
@@ -64,27 +69,18 @@ const Index: FC<SelfProps> = ({
   const [copyProjectId, setCopyProjectId] = useState<number>();
   const [moduleEnum, setModuleEnum] = useState<IModuleEnum[]>([]);
   const [currentApiId, setCurrentApiId] = useState<number>();
-  const [copyOrMove, setCopyOrMove] = useState(1); // 1: 复制, 2: 移动
+  const [copyOrMove, setCopyOrMove] = useState(1);
 
-  /**
-   * 根据当前项目ID获取模块枚举
-   */
   useEffect(() => {
     if (copyProjectId) {
       fetchModulesEnum(copyProjectId, ModuleEnum.API, setModuleEnum).then();
     }
   }, [copyProjectId]);
 
-  /**
-   * 当模块或项目变化时重新加载表格数据
-   */
   useEffect(() => {
     actionRef.current?.reload();
   }, [currentModuleId, currentProjectId]);
 
-  /**
-   * 获取接口列表数据
-   */
   const fetchInterface = useCallback(
     async (params: any, sort: any) => {
       const { code, data } = await pageInterApi({
@@ -99,10 +95,118 @@ const Index: FC<SelfProps> = ({
     [currentModuleId],
   );
 
-  /**
-   * 表格列配置
-   * 定义接口列表的显示列和渲染方式
-   */
+  const styles = useMemo(
+    () => ({
+      actionBtn: {
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 4,
+        padding: '4px 8px',
+        borderRadius: 6,
+        fontSize: 13,
+        fontWeight: 500,
+        transition: 'all 0.2s ease',
+        cursor: 'pointer',
+      },
+      primaryBtn: {
+        color: token.colorPrimary,
+        backgroundColor: token.colorPrimaryBg,
+      },
+      successBtn: {
+        color: token.colorSuccess,
+        backgroundColor: token.colorSuccessBg,
+      },
+      dangerBtn: {
+        color: token.colorError,
+        backgroundColor: token.colorErrorBg,
+      },
+      warningBtn: {
+        color: token.colorWarning,
+        backgroundColor: token.colorWarningBg,
+      },
+      idTag: {
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 4,
+        fontFamily: '"SF Mono", "Fira Code", "JetBrains Mono", monospace',
+        fontSize: 12,
+        fontWeight: 700,
+        padding: '4px 10px',
+        borderRadius: 6,
+        background: `linear-gradient(135deg, ${token.colorPrimaryBg} 0%, ${token.colorPrimaryBorder} 100%)`,
+        color: token.colorPrimary,
+        border: `1px solid ${token.colorPrimaryBorder}`,
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1)',
+        letterSpacing: '0.5px',
+      },
+      nameTag: {
+        fontSize: 13,
+        fontWeight: 500,
+        padding: '4px 12px',
+        borderRadius: 6,
+        backgroundColor: token.colorBgTextActive,
+        color: token.colorText,
+        border: 'none',
+      },
+      urlText: {
+        fontFamily: 'monospace',
+        color: token.colorPrimary,
+        fontSize: 13,
+      },
+      creatorTag: {
+        fontSize: 12,
+        padding: '2px 10px',
+        borderRadius: 12,
+        backgroundColor: token.colorWarningBg,
+        color: token.colorWarningText,
+        border: `1px solid ${token.colorWarningBorder}`,
+      },
+      addBtn: {
+        height: 36,
+        borderRadius: 8,
+        fontWeight: 500,
+        boxShadow: `0 2px 8px ${token.colorPrimaryBg}`,
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+      },
+    }),
+    [token],
+  );
+
+  const ActionButton: FC<{
+    icon: React.ReactNode;
+    label: string;
+    type?: 'primary' | 'success' | 'danger' | 'warning';
+    onClick?: () => void;
+  }> = ({ icon, label, type = 'primary', onClick }) => {
+    const styleMap = {
+      primary: styles.primaryBtn,
+      success: styles.successBtn,
+      danger: styles.dangerBtn,
+      warning: styles.warningBtn,
+    };
+
+    return (
+      <a
+        onClick={onClick}
+        style={{
+          ...styles.actionBtn,
+          ...styleMap[type],
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'translateY(-1px)';
+          e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'translateY(0)';
+          e.currentTarget.style.boxShadow = 'none';
+        }}
+      >
+        {icon}
+        {label}
+      </a>
+    );
+  };
+
   const columns: ProColumns<IInterfaceAPI>[] = [
     {
       title: '接口编号',
@@ -111,21 +215,12 @@ const Index: FC<SelfProps> = ({
       fixed: 'left',
       width: 140,
       copyable: true,
-      render: (_, record) => {
-        return (
-          <Tag
-            color={'blue'}
-            style={{
-              borderRadius: '4px',
-              fontSize: '12px',
-              padding: '2px 8px',
-              fontFamily: 'monospace',
-            }}
-          >
-            {record.uid}
-          </Tag>
-        );
-      },
+      render: (_, record) => (
+        <span style={styles.idTag}>
+          <NumberOutlined style={{ fontSize: 10, opacity: 0.7 }} />
+          {record.uid}
+        </span>
+      ),
     },
     {
       title: '名称',
@@ -134,38 +229,25 @@ const Index: FC<SelfProps> = ({
       fixed: 'left',
       width: 180,
       ellipsis: true,
-      render: (_, record) => {
-        return (
-          <div
-            style={{
-              fontWeight: 500,
-            }}
-          >
-            {record.name}
-          </div>
-        );
-      },
+      render: (_, record) => (
+        <Tag style={styles.nameTag}>
+          <ApiOutlined style={{ marginRight: 6, opacity: 0.6 }} />
+          {record.name}
+        </Tag>
+      ),
     },
-
     {
       title: '路径',
       dataIndex: 'url',
       key: 'url',
       ellipsis: true,
       width: 300,
-      render: (_, record) => {
-        return (
-          <div
-            style={{
-              fontFamily: 'monospace',
-              color: '#1890ff',
-              fontSize: '13px',
-            }}
-          >
-            {record.url}
-          </div>
-        );
-      },
+      render: (_, record) => (
+        <Text style={styles.urlText} ellipsis>
+          <LinkOutlined style={{ marginRight: 6, opacity: 0.6 }} />
+          {record.url}
+        </Text>
+      ),
     },
     {
       title: '方法',
@@ -183,10 +265,10 @@ const Index: FC<SelfProps> = ({
           <Tag
             color={methodConfig?.color}
             style={{
-              borderRadius: '4px',
-              fontSize: '12px',
-              padding: '2px 10px',
-              fontWeight: 500,
+              borderRadius: 6,
+              fontSize: 12,
+              padding: '4px 12px',
+              fontWeight: 600,
             }}
           >
             {record.method}
@@ -208,11 +290,11 @@ const Index: FC<SelfProps> = ({
         const levelConfig = CONFIG.API_LEVEL_ENUM[record.level];
         return (
           <Tag
-            color={levelConfig?.status === 'Success' ? 'green' : 'blue'}
+            color={levelConfig?.status === 'Success' ? 'success' : 'processing'}
             style={{
-              borderRadius: '4px',
-              fontSize: '12px',
-              padding: '2px 8px',
+              borderRadius: 6,
+              fontSize: 12,
+              padding: '4px 12px',
             }}
           >
             {record.level}
@@ -243,20 +325,9 @@ const Index: FC<SelfProps> = ({
       renderFormItem: () => {
         return <UserSelect />;
       },
-      render: (_, record) => {
-        return (
-          <Tag
-            color={'orange'}
-            style={{
-              borderRadius: '4px',
-              fontSize: '12px',
-              padding: '2px 8px',
-            }}
-          >
-            {record.creatorName}
-          </Tag>
-        );
-      },
+      render: (_, record) => (
+        <Tag style={styles.creatorTag}>{record.creatorName}</Tag>
+      ),
     },
     {
       title: '操作',
@@ -264,100 +335,93 @@ const Index: FC<SelfProps> = ({
       key: 'option',
       width: '8%',
       fixed: 'right',
-      render: (_, record) => [
-        <a
-          key="detail"
-          onClick={() => {
-            history.push(`/interface/interApi/detail/interId=${record.id}`);
-          }}
-          style={{
-            color: '#1890ff',
-            fontWeight: 500,
-          }}
-        >
-          详情
-        </a>,
-
-        <Dropdown
-          key="more"
-          menu={{
-            items: [
-              {
-                key: '1',
-                label: '复制接口',
-                icon: <CopyOutlined />,
-                onClick: async () => {
-                  const { code } = await copyInterApiById(record.id);
-                  if (code === 0) {
-                    actionRef.current?.reload();
-                  }
+      render: (_, record) => (
+        <Space size={4}>
+          <ActionButton
+            icon={<EyeOutlined />}
+            label="详情"
+            type="primary"
+            onClick={() => {
+              history.push(`/interface/interApi/detail/interId=${record.id}`);
+            }}
+          />
+          <Dropdown
+            menu={{
+              items: [
+                {
+                  key: '1',
+                  label: '复制接口',
+                  icon: <CopyOutlined />,
+                  onClick: async () => {
+                    const { code, msg } = await copyInterApiById(record.id);
+                    if (code === 0) {
+                      message.success(msg || '复制成功');
+                      actionRef.current?.reload();
+                    }
+                  },
                 },
-              },
-              {
-                key: '3',
-                label: '复制至',
-                icon: <CopyOutlined />,
-                onClick: () => {
-                  setCurrentApiId(record.id);
-                  setCopyOrMove(1);
-                  setOpenModal(true);
+                {
+                  key: '3',
+                  label: '复制至',
+                  icon: <CopyOutlined />,
+                  onClick: () => {
+                    setCurrentApiId(record.id);
+                    setCopyOrMove(1);
+                    setOpenModal(true);
+                  },
                 },
-              },
-              {
-                key: '2',
-                label: '移动至',
-                icon: <DeliveredProcedureOutlined />,
-                onClick: () => {
-                  setCurrentApiId(record.id);
-                  setCopyOrMove(2);
-                  setOpenModal(true);
+                {
+                  key: '2',
+                  label: '移动至',
+                  icon: <DeliveredProcedureOutlined />,
+                  onClick: () => {
+                    setCurrentApiId(record.id);
+                    setCopyOrMove(2);
+                    setOpenModal(true);
+                  },
                 },
-              },
-
-              {
-                type: 'divider',
-              },
-              {
-                key: '4',
-                icon: <DeleteOutlined />,
-                label: (
-                  <Popconfirm
-                    title={'确认删除？'}
-                    okText={'确认'}
-                    cancelText={'点错了'}
-                    onConfirm={async () => {
-                      const { code } = await removeInterApiById(record.id);
-                      if (code === 0) {
-                        actionRef.current?.reload();
-                      }
-                    }}
-                  >
-                    <a style={{ color: '#ff4d4f' }}>删除</a>
-                  </Popconfirm>
-                ),
-              },
-            ],
-          }}
-        >
-          <a
-            key="dropdown"
-            onClick={(e) => e.preventDefault()}
-            style={{
-              color: '#8c8c8c',
+                {
+                  type: 'divider',
+                },
+                {
+                  key: '4',
+                  icon: <DeleteOutlined />,
+                  danger: true,
+                  label: (
+                    <Popconfirm
+                      title="确认删除？"
+                      description="删除后数据将无法恢复"
+                      okText="确认删除"
+                      cancelText="取消"
+                      okButtonProps={{ danger: true }}
+                      onConfirm={async () => {
+                        const { code, msg } = await removeInterApiById(
+                          record.id,
+                        );
+                        if (code === 0) {
+                          message.success(msg || '删除成功');
+                          actionRef.current?.reload();
+                        }
+                      }}
+                    >
+                      <a style={{ color: token.colorError }}>删除</a>
+                    </Popconfirm>
+                  ),
+                },
+              ],
             }}
           >
-            <Space>
-              <DashOutlined />
-            </Space>
-          </a>
-        </Dropdown>,
-      ],
+            <a onClick={(e) => e.preventDefault()}>
+              <Space>
+                <MoreOutlined />
+              </Space>
+            </a>
+          </Dropdown>
+        </Space>
+      ),
     },
   ];
 
-  /**
-   * 复制/移动接口模态框确认操作
-   */
   return (
     <>
       <Modal
@@ -393,51 +457,25 @@ const Index: FC<SelfProps> = ({
           }
         }}
         onCancel={() => setOpenModal(false)}
-        title={copyOrMove === 1 ? '复制接口' : '移动接口'}
+        title={
+          <span style={{ fontWeight: 600 }}>
+            {copyOrMove === 1 ? '复制接口' : '移动接口'}
+          </span>
+        }
         width={600}
-        okText="确认"
-        cancelText="取消"
-        okButtonProps={{
-          style: {
-            borderRadius: '6px',
-            boxShadow: '0 2px 0 rgba(24, 144, 255, 0.2)',
-          },
-        }}
-        cancelButtonProps={{
-          style: {
-            borderRadius: '6px',
-          },
-        }}
-        styles={{
-          body: {
-            padding: '24px',
-          },
-          header: {
-            borderBottom: '1px solid #f0f0f0',
-            padding: '16px 24px',
-          },
-        }}
       >
-        <ProForm
-          submitter={false}
-          form={copyForm}
-          layout="vertical"
-          style={{
-            maxWidth: '100%',
-          }}
-        >
+        <ProForm submitter={false} form={copyForm} layout="vertical">
           <ProFormSelect
-            width={'md'}
+            width="md"
             options={projects}
-            label={'项目'}
-            name={'project_id'}
-            required={true}
+            label="项目"
+            name="project_id"
+            required
             onChange={(value) => {
               setCopyProjectId(value as number);
             }}
             fieldProps={{
               placeholder: '请选择目标项目',
-              size: 'large',
             }}
           />
           <ProFormTreeSelect
@@ -452,49 +490,46 @@ const Index: FC<SelfProps> = ({
               },
               filterTreeNode: true,
               placeholder: '请选择目标模块',
-              size: 'large',
             }}
-            width={'md'}
+            width="md"
           />
         </ProForm>
       </Modal>
       <MyProTable
         persistenceKey={perKey}
         columns={columns}
-        rowKey={'id'}
+        rowKey="id"
         x={1500}
         actionRef={actionRef}
         request={fetchInterface}
         toolBarRender={() => [
           <Button
+            key="add"
             hidden={currentModuleId === undefined}
-            type={'primary'}
+            type="primary"
+            style={styles.addBtn}
+            icon={<PlusOutlined />}
             onClick={() => {
               window.open(
                 `/interface/interApi/detail/projectId=${currentProjectId}&moduleId=${currentModuleId}`,
               );
             }}
-            style={{
-              borderRadius: '6px',
-              boxShadow: '0 2px 0 rgba(24, 144, 255, 0.2)',
-              transition: 'all 0.3s ease',
-            }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow =
-                '0 4px 8px rgba(24, 144, 255, 0.3)';
+              e.currentTarget.style.boxShadow = `0 4px 16px ${token.colorPrimaryBg}`;
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow =
-                '0 2px 0 rgba(24, 144, 255, 0.2)';
+              e.currentTarget.style.boxShadow = `0 2px 8px ${token.colorPrimaryBg}`;
             }}
           >
-            <PlusOutlined />
             添加接口
           </Button>,
           <Button
-            type={'primary'}
+            key="export"
+            type="primary"
+            style={styles.addBtn}
+            icon={<DownOutlined />}
             onClick={async () => {
               if (currentModuleId) {
                 await outPutInter2Yaml(currentModuleId);
@@ -502,23 +537,15 @@ const Index: FC<SelfProps> = ({
                 message.warning('请选择模块');
               }
             }}
-            style={{
-              borderRadius: '6px',
-              boxShadow: '0 2px 0 rgba(24, 144, 255, 0.2)',
-              transition: 'all 0.3s ease',
-            }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow =
-                '0 4px 8px rgba(24, 144, 255, 0.3)';
+              e.currentTarget.style.boxShadow = `0 4px 16px ${token.colorPrimaryBg}`;
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow =
-                '0 2px 0 rgba(24, 144, 255, 0.2)';
+              e.currentTarget.style.boxShadow = `0 2px 8px ${token.colorPrimaryBg}`;
             }}
           >
-            <DownOutlined />
             接口导出
           </Button>,
         ]}

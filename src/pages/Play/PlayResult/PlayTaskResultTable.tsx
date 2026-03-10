@@ -11,10 +11,30 @@ import { IJob } from '@/pages/Project/types';
 import { CONFIG, ModuleEnum } from '@/utils/config';
 import { fetchModulesEnum, pageData } from '@/utils/somefunc';
 import { history } from '@@/core/history';
+import {
+  ClearOutlined,
+  ClockCircleOutlined,
+  DeleteOutlined,
+  EyeOutlined,
+  FileTextOutlined,
+  NumberOutlined,
+  ScheduleOutlined,
+  UserOutlined,
+} from '@ant-design/icons';
 import { ActionType, ProColumns } from '@ant-design/pro-components';
-import { Button, message, Space, Tag } from 'antd';
+import {
+  Button,
+  message,
+  Popconfirm,
+  Space,
+  Tag,
+  theme,
+  Typography,
+} from 'antd';
 import dayjs from 'dayjs';
-import { FC, useCallback, useEffect, useRef, useState } from 'react';
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+const { Text } = Typography;
 
 interface SelfProps {
   taskId?: string;
@@ -22,12 +42,14 @@ interface SelfProps {
 }
 
 const PlayTaskResultTable: FC<SelfProps> = ({ taskId, job }) => {
-  const actionRef = useRef<ActionType>(); //Table action 的引用，便于自定义触发
+  const { token } = theme.useToken();
+  const actionRef = useRef<ActionType>();
   const [selectProjectId, setSelectProjectId] = useState<number>();
   const [showSearch, setShowSearch] = useState(true);
 
   const [projectEnumMap, setProjectEnumMap] = useState<IObjGet>({});
   const [moduleEnum, setModuleEnum] = useState<IModuleEnum[]>([]);
+
   useEffect(() => {
     if (taskId) {
       setShowSearch(false);
@@ -62,20 +84,141 @@ const PlayTaskResultTable: FC<SelfProps> = ({ taskId, job }) => {
     },
     [taskId],
   );
+
+  const styles = useMemo(
+    () => ({
+      actionBtn: {
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 4,
+        padding: '4px 8px',
+        borderRadius: 6,
+        fontSize: 13,
+        fontWeight: 500,
+        transition: 'all 0.2s ease',
+        cursor: 'pointer',
+      },
+      primaryBtn: {
+        color: token.colorPrimary,
+        backgroundColor: token.colorPrimaryBg,
+      },
+      dangerBtn: {
+        color: token.colorError,
+        backgroundColor: token.colorErrorBg,
+      },
+      idTag: {
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 4,
+        fontFamily: '"SF Mono", "Fira Code", "JetBrains Mono", monospace',
+        fontSize: 12,
+        fontWeight: 700,
+        padding: '4px 10px',
+        borderRadius: 6,
+        background: `linear-gradient(135deg, ${token.colorPrimaryBg} 0%, ${token.colorPrimaryBorder} 100%)`,
+        color: token.colorPrimary,
+        border: `1px solid ${token.colorPrimaryBorder}`,
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1)',
+        letterSpacing: '0.5px',
+        cursor: 'pointer',
+        transition: 'all 0.2s ease',
+      },
+      nameTag: {
+        fontSize: 13,
+        fontWeight: 500,
+        padding: '4px 12px',
+        borderRadius: 6,
+        backgroundColor: token.colorBgTextActive,
+        color: token.colorText,
+        border: 'none',
+        cursor: 'pointer',
+        transition: 'all 0.2s ease',
+      },
+      userTag: {
+        fontSize: 12,
+        padding: '2px 10px',
+        borderRadius: 12,
+        backgroundColor: token.colorWarningBg,
+        color: token.colorWarningText,
+        border: `1px solid ${token.colorWarningBorder}`,
+      },
+      timeTag: {
+        fontSize: 12,
+        padding: '2px 10px',
+        borderRadius: 6,
+        backgroundColor: token.colorInfoBg,
+        color: token.colorInfo,
+        border: `1px solid ${token.colorInfoBorder}`,
+        fontFamily: 'monospace',
+      },
+      clearBtn: {
+        height: 36,
+        borderRadius: 8,
+        fontWeight: 500,
+        boxShadow: `0 2px 8px ${token.colorErrorBg}`,
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+      },
+    }),
+    [token],
+  );
+
+  const ActionButton: FC<{
+    icon: React.ReactNode;
+    label: string;
+    type?: 'primary' | 'danger';
+    onClick?: () => void;
+  }> = ({ icon, label, type = 'primary', onClick }) => {
+    const styleMap = {
+      primary: styles.primaryBtn,
+      danger: styles.dangerBtn,
+    };
+
+    return (
+      <a
+        onClick={onClick}
+        style={{
+          ...styles.actionBtn,
+          ...styleMap[type],
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'translateY(-1px)';
+          e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'translateY(0)';
+          e.currentTarget.style.boxShadow = 'none';
+        }}
+      >
+        {icon}
+        {label}
+      </a>
+    );
+  };
+
   const columns: ProColumns<IPlayTaskResult>[] = [
     {
       title: '报告ID',
       dataIndex: 'uid',
       fixed: 'left',
-      width: '10%',
-      renderText: (text, record) => (
-        <a
+      width: 120,
+      render: (_, record) => (
+        <span
+          style={styles.idTag}
           onClick={() => {
             history.push(`/report/history/uiTask/detail/uid=${record.id}`);
           }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = token.colorPrimary;
+            e.currentTarget.style.color = token.colorWhite;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = `linear-gradient(135deg, ${token.colorPrimaryBg} 0%, ${token.colorPrimaryBorder} 100%)`;
+            e.currentTarget.style.color = token.colorPrimary;
+          }}
         >
-          {text}
-        </a>
+          <NumberOutlined style={{ fontSize: 10, opacity: 0.7 }} />
+          {record.uid}
+        </span>
       ),
     },
     {
@@ -96,9 +239,6 @@ const PlayTaskResultTable: FC<SelfProps> = ({ taskId, job }) => {
       hideInTable: true,
       valueType: 'treeSelect',
       fieldProps: {
-        // onSelect: (value: number) => {
-        //   setSelectModuleId(value);
-        // },
         treeData: moduleEnum,
         fieldNames: {
           label: 'title',
@@ -109,22 +249,35 @@ const PlayTaskResultTable: FC<SelfProps> = ({ taskId, job }) => {
       title: '任务名称',
       dataIndex: 'task_name',
       fixed: 'left',
-      width: '14%',
-      renderText: (text, record) => (
-        <a
+      width: 200,
+      render: (_, record) => (
+        <Tag
+          style={styles.nameTag}
           onClick={() => {
             history.push(`/ui/task/detail/taskId=${record.task_id}`);
           }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = token.colorPrimaryBg;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = token.colorBgTextActive;
+          }}
         >
-          {text}
-        </a>
+          <FileTextOutlined style={{ marginRight: 6, opacity: 0.6 }} />
+          {record.task_name}
+        </Tag>
       ),
     },
     {
       title: '执行人',
       dataIndex: 'starter_name',
-      width: '10%',
-      renderText: (text) => <Tag color={'blue'}>{text}</Tag>,
+      width: 120,
+      render: (_, record) => (
+        <Tag style={styles.userTag}>
+          <UserOutlined style={{ marginRight: 4, opacity: 0.7 }} />
+          {record.starter_name}
+        </Tag>
+      ),
     },
     {
       title: '执行日期',
@@ -147,6 +300,7 @@ const PlayTaskResultTable: FC<SelfProps> = ({ taskId, job }) => {
       title: '运行状态',
       dataIndex: 'status',
       valueType: 'select',
+      width: 100,
       valueEnum: CONFIG.UI_STATUS_ENUM,
       render: (_, record) => {
         return CONFIG.UI_STATUS_ENUM[record.status]?.tag;
@@ -156,6 +310,7 @@ const PlayTaskResultTable: FC<SelfProps> = ({ taskId, job }) => {
       title: '运行结果',
       dataIndex: 'result',
       valueType: 'select',
+      width: 100,
       valueEnum: CONFIG.UI_RESULT_ENUM,
       render: (_, record) => {
         return CONFIG.UI_RESULT_ENUM[record.result]?.tag;
@@ -165,30 +320,51 @@ const PlayTaskResultTable: FC<SelfProps> = ({ taskId, job }) => {
       title: '用时',
       dataIndex: 'total_usetime',
       hideInSearch: true,
-      renderText: (text) => <Tag color={'blue'}>{text}</Tag>,
+      width: 120,
+      render: (_, record) => (
+        <Tag style={styles.timeTag}>
+          <ClockCircleOutlined style={{ marginRight: 4, opacity: 0.7 }} />
+          {record.total_usetime}
+        </Tag>
+      ),
     },
     {
       title: '执行时间',
       dataIndex: 'start_time',
       hideInSearch: true,
-      render: (_, record) => <Tag color={'blue'}>{record.start_time}</Tag>,
+      width: 180,
+      render: (_, record) => (
+        <Text
+          type="secondary"
+          style={{ fontSize: 13, fontFamily: 'monospace' }}
+        >
+          <ScheduleOutlined style={{ marginRight: 6, opacity: 0.6 }} />
+          {record.start_time}
+        </Text>
+      ),
     },
     {
       title: '操作',
       valueType: 'option',
       fixed: 'right',
-      width: '10%',
+      width: 150,
       render: (_, record) => (
-        <Space>
-          <a
+        <Space size={4}>
+          <ActionButton
+            icon={<EyeOutlined />}
+            label="详情"
+            type="primary"
             onClick={() => {
               history.push(`/ui/report/detail/resultId=${record.id}`);
             }}
-          >
-            详情
-          </a>
-          <a
-            onClick={async () => {
+          />
+          <Popconfirm
+            title="确认删除？"
+            description="删除后数据将无法恢复"
+            okText="确认删除"
+            cancelText="取消"
+            okButtonProps={{ danger: true }}
+            onConfirm={async () => {
               const { code, msg } = await removePlayTaskResultById({
                 resultId: record.uid,
               });
@@ -198,8 +374,12 @@ const PlayTaskResultTable: FC<SelfProps> = ({ taskId, job }) => {
               }
             }}
           >
-            删除
-          </a>
+            <ActionButton
+              icon={<DeleteOutlined />}
+              label="删除"
+              type="danger"
+            />
+          </Popconfirm>
         </Space>
       ),
     },
@@ -217,13 +397,29 @@ const PlayTaskResultTable: FC<SelfProps> = ({ taskId, job }) => {
   return (
     <MyProTable
       toolBarRender={() => [
-        <Button hidden={showSearch} type={'primary'} onClick={clearTaskResult}>
-          清空
+        <Button
+          key="clear"
+          hidden={showSearch}
+          type="primary"
+          danger
+          style={styles.clearBtn}
+          icon={<ClearOutlined />}
+          onClick={clearTaskResult}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.boxShadow = `0 4px 16px ${token.colorErrorBg}`;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = `0 2px 8px ${token.colorErrorBg}`;
+          }}
+        >
+          清空记录
         </Button>,
       ]}
       search={showSearch}
       actionRef={actionRef}
-      rowKey={'id'}
+      rowKey="id"
       columns={columns}
       request={fetchTaskData}
       x={1000}

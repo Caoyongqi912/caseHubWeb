@@ -144,7 +144,6 @@ const PlayStepDetail: FC<Props> = (props) => {
     try {
       await stepForm.validateFields();
     } catch (e) {
-      console.log(e);
       return;
     }
 
@@ -170,46 +169,113 @@ const PlayStepDetail: FC<Props> = (props) => {
     return savePlayStep(values).then(onFetchFinish);
   }, [stepForm, play_case_id, play_group_id, onFetchFinish]);
 
-  const sectionTitleStyle = {
-    fontSize: 14,
-    fontWeight: 600,
-    color: token.colorTextHeading,
-    margin: '24px 0 16px 0',
-    paddingBottom: 8,
-    borderBottom: `1px solid ${token.colorBorderSecondary}`,
+  const styles = {
+    container: {
+      padding: '28px 32px',
+      backgroundColor: token.colorBgContainer,
+      minHeight: '100%',
+    },
+    header: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 28,
+      paddingBottom: 20,
+      borderBottom: `1px solid ${token.colorBorderSecondary}`,
+    },
+    title: {
+      margin: 0,
+      fontSize: 20,
+      fontWeight: 600,
+      color: token.colorTextHeading,
+      letterSpacing: '-0.02em',
+    },
+    saveButton: {
+      height: 40,
+      paddingLeft: 28,
+      paddingRight: 28,
+      borderRadius: 8,
+      fontSize: 14,
+      fontWeight: 500,
+      boxShadow: `0 2px 8px ${token.colorPrimaryBg}`,
+      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    },
+    section: {
+      marginBottom: 32,
+    },
+    sectionHeader: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 10,
+      marginBottom: 20,
+      paddingBottom: 12,
+      borderBottom: `1px solid ${token.colorBorderSecondary}`,
+    },
+    sectionIcon: {
+      width: 4,
+      height: 18,
+      backgroundColor: token.colorPrimary,
+      borderRadius: 2,
+      boxShadow: `0 0 8px ${token.colorPrimary}40`,
+    },
+    sectionTitle: {
+      fontSize: 15,
+      fontWeight: 600,
+      color: token.colorTextHeading,
+      letterSpacing: '-0.01em',
+    },
+    formItem: {
+      marginBottom: 24,
+    },
+    label: {
+      fontSize: 14,
+      fontWeight: 500,
+      color: token.colorTextHeading,
+    },
+    fieldStyle: {
+      fontSize: 14,
+      height: 40,
+      borderRadius: 8,
+      transition: 'all 0.3s ease',
+    },
+    textareaStyle: {
+      fontSize: 14,
+      borderRadius: 8,
+      transition: 'all 0.3s ease',
+    },
+    switchGroup: {
+      display: 'flex',
+      gap: 48,
+      padding: '16px 20px',
+      backgroundColor: token.colorBgLayout,
+      borderRadius: 12,
+      border: `1px solid ${token.colorBorderSecondary}`,
+    },
   };
 
+  const SectionTitle: FC<{ title: string }> = ({ title }) => (
+    <div style={styles.sectionHeader}>
+      <div style={styles.sectionIcon} />
+      <span style={styles.sectionTitle}>{title}</span>
+    </div>
+  );
+
   return (
-    <div style={{ padding: '24px', backgroundColor: token.colorBgContainer }}>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: 24,
-        }}
-      >
-        <h2
-          style={{
-            margin: 0,
-            fontSize: 18,
-            fontWeight: 600,
-            color: token.colorTextHeading,
-          }}
-        >
-          步骤详情
-        </h2>
+    <div style={styles.container}>
+      <div style={styles.header}>
+        <h2 style={styles.title}>步骤详情</h2>
         <Button
           type="primary"
           onClick={save}
           loading={loading}
-          style={{
-            height: 36,
-            paddingLeft: 24,
-            paddingRight: 24,
-            borderRadius: 6,
-            fontSize: 14,
-            fontWeight: 500,
+          style={styles.saveButton}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-1px)';
+            e.currentTarget.style.boxShadow = `0 4px 16px ${token.colorPrimaryBg}`;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = `0 2px 8px ${token.colorPrimaryBg}`;
           }}
         >
           保存
@@ -220,313 +286,178 @@ const PlayStepDetail: FC<Props> = (props) => {
         <ProFormText name="project_id" hidden />
         <ProFormText name="module_id" hidden />
 
-        <div style={{ marginBottom: 20 }}>
-          <ProFormText
-            width="lg"
-            name="name"
-            label={
-              <span
-                style={{
-                  fontSize: 14,
-                  fontWeight: 500,
-                  color: token.colorTextHeading,
-                }}
-              >
-                步骤名称
-              </span>
-            }
-            placeholder="请输入步骤名称"
-            required
-            rules={[{ required: true, message: '步骤名称必填' }]}
-            fieldProps={{
-              style: { fontSize: 14, height: 36 },
-            }}
-          />
-        </div>
-
-        <div style={{ marginBottom: 20 }}>
-          <ProFormTextArea
-            width="lg"
-            name="description"
-            label={
-              <span
-                style={{
-                  fontSize: 14,
-                  fontWeight: 500,
-                  color: token.colorTextHeading,
-                }}
-              >
-                步骤描述
-              </span>
-            }
-            placeholder="请输入步骤描述"
-            fieldProps={{
-              rows: 3,
-              showCount: true,
-              maxLength: 500,
-              style: { fontSize: 14 },
-            }}
-          />
-        </div>
-
-        <div style={sectionTitleStyle}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div
-              style={{
-                width: 4,
-                height: 16,
-                backgroundColor: token.colorPrimary,
-                borderRadius: 2,
+        <div style={styles.section}>
+          <SectionTitle title="基本信息" />
+          <div style={styles.formItem}>
+            <ProFormText
+              width="lg"
+              name="name"
+              label={<span style={styles.label}>步骤名称</span>}
+              placeholder="请输入步骤名称"
+              required
+              rules={[{ required: true, message: '步骤名称必填' }]}
+              fieldProps={{
+                style: styles.fieldStyle,
               }}
             />
-            元素定位
-          </span>
-        </div>
-
-        <div style={{ marginBottom: 20 }}>
-          <ProFormSelect
-            name="locator"
-            label={
-              <span
-                style={{
-                  fontSize: 14,
-                  fontWeight: 500,
-                  color: token.colorTextHeading,
-                }}
-              >
-                定位器
-              </span>
-            }
-            width="lg"
-            tooltip="内置定位器，可选"
-            placeholder="可不选，直接使用 selector 定位"
-            options={locatorOptions}
-            disabled={currentMethod && currentMethod.need_locator === 0}
-            fieldProps={{
-              showSearch: true,
-              allowClear: true,
-              style: { fontSize: 14 },
-            }}
-          />
-        </div>
-
-        <div style={{ marginBottom: 20 }}>
-          <ProFormTextArea
-            width="lg"
-            name="selector"
-            label={
-              <span
-                style={{
-                  fontSize: 14,
-                  fontWeight: 500,
-                  color: token.colorTextHeading,
-                }}
-              >
-                元素选择器
-              </span>
-            }
-            placeholder="例如：#id、.class、xpath=//div[@id='test']"
-            disabled={currentMethod && currentMethod.need_locator === 0}
-            required={currentMethod && currentMethod.need_locator === 1}
-            rules={[
-              {
-                required: currentMethod && currentMethod.need_locator === 1,
-                message: '该操作需要元素选择器',
-              },
-            ]}
-            fieldProps={{
-              rows: 3,
-              showCount: true,
-              style: { fontSize: 14 },
-            }}
-          />
-        </div>
-
-        <div style={sectionTitleStyle}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div
-              style={{
-                width: 4,
-                height: 16,
-                backgroundColor: token.colorPrimary,
-                borderRadius: 2,
+          </div>
+          <div style={styles.formItem}>
+            <ProFormTextArea
+              width="lg"
+              name="description"
+              label={<span style={styles.label}>步骤描述</span>}
+              placeholder="请输入步骤描述"
+              fieldProps={{
+                rows: 3,
+                showCount: true,
+                maxLength: 500,
+                style: styles.textareaStyle,
               }}
             />
-            操作配置
-          </span>
+          </div>
         </div>
 
-        <div style={{ marginBottom: 20 }}>
-          <ProFormSelect
-            width="lg"
-            name="method"
-            label={
-              <span
-                style={{
-                  fontSize: 14,
-                  fontWeight: 500,
-                  color: token.colorTextHeading,
-                }}
-              >
-                操作方法
-              </span>
-            }
-            placeholder="请选择操作方法"
-            options={methodEnum}
-            required
-            rules={[{ required: true, message: '步骤方法必选' }]}
-            fieldProps={{
-              showSearch: true,
-              style: { fontSize: 14 },
-            }}
-          />
-        </div>
-
-        <div style={{ marginBottom: 20 }}>
-          <ProFormTextArea
-            width="lg"
-            name="value"
-            label={
-              <span
-                style={{
-                  fontSize: 14,
-                  fontWeight: 500,
-                  color: token.colorTextHeading,
-                }}
-              >
-                输入值
-              </span>
-            }
-            tooltip="用于输入值，或者用于 expect 校验的预期值"
-            placeholder="请输入值"
-            disabled={currentMethod && currentMethod.need_value === 0}
-            required={currentMethod && currentMethod.need_value === 1}
-            rules={[
-              {
-                required: currentMethod && currentMethod.need_value === 1,
-                message: '该操作需要输入值',
-              },
-            ]}
-            fieldProps={{
-              rows: 3,
-              showCount: true,
-              style: { fontSize: 14 },
-            }}
-          />
-        </div>
-
-        <div style={{ marginBottom: 20 }}>
-          <ProFormTextArea
-            width="lg"
-            name="key"
-            label={
-              <span
-                style={{
-                  fontSize: 14,
-                  fontWeight: 500,
-                  color: token.colorTextHeading,
-                }}
-              >
-                变量名
-              </span>
-            }
-            tooltip="用于存储操作结果的变量名"
-            placeholder="请输入变量名"
-            disabled={currentMethod && currentMethod.need_key === 0}
-            required={currentMethod && currentMethod.need_key === 1}
-            rules={[
-              {
-                required: currentMethod && currentMethod.need_key === 1,
-                message: '该操作需要变量名',
-              },
-            ]}
-            fieldProps={{
-              rows: 2,
-              style: { fontSize: 14 },
-            }}
-          />
-        </div>
-
-        <div style={sectionTitleStyle}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div
-              style={{
-                width: 4,
-                height: 16,
-                backgroundColor: token.colorPrimary,
-                borderRadius: 2,
+        <div style={styles.section}>
+          <SectionTitle title="元素定位" />
+          <div style={styles.formItem}>
+            <ProFormSelect
+              name="locator"
+              label={<span style={styles.label}>定位器</span>}
+              width="lg"
+              tooltip="内置定位器，可选"
+              placeholder="可不选，直接使用 selector 定位"
+              options={locatorOptions}
+              disabled={currentMethod && currentMethod.need_locator === 0}
+              fieldProps={{
+                showSearch: true,
+                allowClear: true,
+                style: styles.fieldStyle,
               }}
             />
-            高级选项
-          </span>
-        </div>
-
-        <div style={{ marginBottom: 20 }}>
-          <ProFormTextArea
-            width="lg"
-            name="iframe_name"
-            label={
-              <span
-                style={{
-                  fontSize: 14,
-                  fontWeight: 500,
-                  color: token.colorTextHeading,
-                }}
-              >
-                IFrame 定位
-              </span>
-            }
-            tooltip="如果目标元素在 iframe 中，请输入 iframe 的定位信息"
-            placeholder="例如：#iframe-id 或 iframe[name='frameName']"
-            disabled={currentMethod && currentMethod.need_locator === 0}
-            fieldProps={{
-              rows: 3,
-              style: { fontSize: 14 },
-            }}
-          />
-        </div>
-
-        <div style={sectionTitleStyle}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div
-              style={{
-                width: 4,
-                height: 16,
-                backgroundColor: token.colorPrimary,
-                borderRadius: 2,
+          </div>
+          <div style={styles.formItem}>
+            <ProFormTextArea
+              width="lg"
+              name="selector"
+              label={<span style={styles.label}>元素选择器</span>}
+              placeholder="例如：#id、.class、xpath=//div[@id='test']"
+              disabled={currentMethod && currentMethod.need_locator === 0}
+              required={currentMethod && currentMethod.need_locator === 1}
+              rules={[
+                {
+                  required: currentMethod && currentMethod.need_locator === 1,
+                  message: '该操作需要元素选择器',
+                },
+              ]}
+              fieldProps={{
+                rows: 3,
+                showCount: true,
+                style: styles.textareaStyle,
               }}
             />
-            其他
-          </span>
+          </div>
         </div>
 
-        <div style={{ marginBottom: 20 }}>
-          <ProForm.Group>
+        <div style={styles.section}>
+          <SectionTitle title="操作配置" />
+          <div style={styles.formItem}>
+            <ProFormSelect
+              width="lg"
+              name="method"
+              label={<span style={styles.label}>操作方法</span>}
+              placeholder="请选择操作方法"
+              options={methodEnum}
+              required
+              rules={[{ required: true, message: '步骤方法必选' }]}
+              fieldProps={{
+                showSearch: true,
+                style: styles.fieldStyle,
+              }}
+            />
+          </div>
+          <div style={styles.formItem}>
+            <ProFormTextArea
+              width="lg"
+              name="value"
+              label={<span style={styles.label}>输入值</span>}
+              tooltip="用于输入值，或者用于 expect 校验的预期值"
+              placeholder="请输入值"
+              disabled={currentMethod && currentMethod.need_value === 0}
+              required={currentMethod && currentMethod.need_value === 1}
+              rules={[
+                {
+                  required: currentMethod && currentMethod.need_value === 1,
+                  message: '该操作需要输入值',
+                },
+              ]}
+              fieldProps={{
+                rows: 3,
+                showCount: true,
+                style: styles.textareaStyle,
+              }}
+            />
+          </div>
+          <div style={styles.formItem}>
+            <ProFormTextArea
+              width="lg"
+              name="key"
+              label={<span style={styles.label}>变量名</span>}
+              tooltip="用于存储操作结果的变量名"
+              placeholder="请输入变量名"
+              disabled={currentMethod && currentMethod.need_key === 0}
+              required={currentMethod && currentMethod.need_key === 1}
+              rules={[
+                {
+                  required: currentMethod && currentMethod.need_key === 1,
+                  message: '该操作需要变量名',
+                },
+              ]}
+              fieldProps={{
+                rows: 2,
+                style: styles.textareaStyle,
+              }}
+            />
+          </div>
+        </div>
+
+        <div style={styles.section}>
+          <SectionTitle title="高级选项" />
+          <div style={styles.formItem}>
+            <ProFormTextArea
+              width="lg"
+              name="iframe_name"
+              label={<span style={styles.label}>IFrame 定位</span>}
+              tooltip="如果目标元素在 iframe 中，请输入 iframe 的定位信息"
+              placeholder="例如：#iframe-id 或 iframe[name='frameName']"
+              disabled={currentMethod && currentMethod.need_locator === 0}
+              fieldProps={{
+                rows: 3,
+                style: styles.textareaStyle,
+              }}
+            />
+          </div>
+        </div>
+
+        <div style={styles.section}>
+          <SectionTitle title="其他设置" />
+          <div style={styles.switchGroup}>
             <ProFormSwitch
               name="new_page"
               label={
-                <span style={{ fontSize: 14, color: token.colorTextHeading }}>
+                <span style={{ ...styles.label, fontSize: 13 }}>
                   打开新页面
                 </span>
               }
               tooltip="操作是否会打开新的浏览器页面"
-              fieldProps={{
-                style: { fontSize: 14 },
-              }}
             />
             <ProFormSwitch
               name="is_ignore"
               label={
-                <span style={{ fontSize: 14, color: token.colorTextHeading }}>
-                  忽略异常
-                </span>
+                <span style={{ ...styles.label, fontSize: 13 }}>忽略异常</span>
               }
               tooltip="执行失败时是否继续执行后续步骤"
-              fieldProps={{
-                style: { fontSize: 14 },
-              }}
             />
-          </ProForm.Group>
+          </div>
         </div>
       </ProForm>
     </div>
