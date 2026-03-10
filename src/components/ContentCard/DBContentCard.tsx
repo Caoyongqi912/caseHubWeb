@@ -9,9 +9,11 @@ import MyDrawer from '@/components/MyDrawer';
 import { IBeforeSQLExtract } from '@/pages/Httpx/types';
 import { IDBConfig } from '@/pages/Project/types';
 import {
-  ConsoleSqlOutlined,
+  DatabaseOutlined,
   EditOutlined,
+  PlayCircleOutlined,
   QuestionCircleOutlined,
+  SaveOutlined,
 } from '@ant-design/icons';
 import {
   EditableFormInstance,
@@ -20,7 +22,9 @@ import {
 } from '@ant-design/pro-components';
 import { ProColumns } from '@ant-design/pro-table/lib/typing';
 import {
+  Alert,
   Button,
+  Divider,
   Form,
   Input,
   message,
@@ -28,12 +32,14 @@ import {
   Select,
   Space,
   Tag,
+  theme,
   Typography,
 } from 'antd';
-import React, { FC, useEffect, useRef, useState } from 'react';
+import React, { FC, useEffect, useMemo, useRef, useState } from 'react';
 import Handler from '../DnDDraggable/handler';
 
 const { Text, Paragraph } = Typography;
+const { useToken } = theme;
 
 /**
  * DB内容信息接口
@@ -74,25 +80,28 @@ interface Props {
  */
 const columns: ProColumns<IBeforeSQLExtract>[] = [
   {
-    title: 'Key',
+    title: '变量名',
     dataIndex: 'key',
+    width: '40%',
     formItemProps: {
       required: true,
       rules: [
         {
           required: true,
-          message: 'Key 必填',
+          message: '变量名必填',
         },
       ],
     },
   },
   {
-    title: 'JsonPath表达',
+    title: 'JsonPath 表达式',
     dataIndex: 'jp',
+    width: '40%',
   },
   {
-    title: 'Opt',
+    title: '操作',
     valueType: 'option',
+    width: '20%',
     fixed: 'right',
     render: (_, record, __, action) => {
       return [
@@ -115,6 +124,7 @@ const columns: ProColumns<IBeforeSQLExtract>[] = [
  */
 const DBContentCard: FC<Props> = (props) => {
   const [form] = Form.useForm();
+  const { token } = useToken();
   const timeoutRef = useRef<any>(null);
 
   const {
@@ -242,26 +252,37 @@ const DBContentCard: FC<Props> = (props) => {
     }, 3000);
   };
 
-  const DB_NAME = () => {
+  const DB_NAME = useMemo(() => {
     if (dbTextName && !showDBInput) {
       return (
-        <>
-          <Text>{dbTextName}</Text>
+        <Space size={8}>
+          <Text
+            strong
+            style={{
+              fontSize: '14px',
+              color: token.colorText,
+            }}
+          >
+            {dbTextName}
+          </Text>
           {showEditIcon && (
             <EditOutlined
-              style={{ marginLeft: 10 }}
+              style={{
+                color: token.colorPrimary,
+                cursor: 'pointer',
+              }}
               onClick={(event) => {
                 event.stopPropagation();
                 setShowDBInput(true);
               }}
             />
           )}
-        </>
+        </Space>
       );
     } else {
       return (
         <Input
-          style={{ width: '100%' }}
+          style={{ width: '100%', maxWidth: '300px' }}
           variant={'outlined'}
           onChange={(e) => {
             e.stopPropagation();
@@ -275,7 +296,7 @@ const DBContentCard: FC<Props> = (props) => {
         />
       );
     }
-  };
+  }, [dbTextName, showDBInput, showEditIcon, token]);
 
   const handleTry = async () => {
     if (!currentDBId) {
@@ -305,6 +326,16 @@ const DBContentCard: FC<Props> = (props) => {
         collapsible
         hoverable
         defaultCollapsed
+        style={{
+          borderRadius: token.borderRadiusLG,
+          boxShadow: showOption
+            ? `0 4px 12px ${token.colorPrimaryBg}`
+            : `0 1px 3px ${token.colorBgLayout}`,
+          transition: 'all 0.3s ease',
+          borderColor: showOption
+            ? token.colorPrimaryBorder
+            : token.colorBorder,
+        }}
         extra={extra}
         onMouseEnter={() => {
           setShowOption(true);
@@ -319,158 +350,207 @@ const DBContentCard: FC<Props> = (props) => {
         onCollapse={handleCollapse}
         collapsibleIconRender={({}) => {
           return (
-            <Space>
+            <Space size={8} align="center">
               <Handler id={id} step={step} />
-              <Tag color={'purple-inverse'} icon={<ConsoleSqlOutlined />} />
-              <Tag color={'purple-inverse'}>SQL</Tag>
-              <div style={{ marginLeft: 10 }}>{DB_NAME()}</div>
+              <Tag
+                icon={<DatabaseOutlined />}
+                style={{
+                  background: '#f3e8ff',
+                  color: '#9333ea',
+                  border: '1px solid #9333ea20',
+                  fontWeight: 600,
+                  fontSize: '12px',
+                  padding: '2px 8px',
+                  borderRadius: token.borderRadiusSM,
+                }}
+              >
+                DB
+              </Tag>
+              {DB_NAME}
             </Space>
           );
         }}
       >
         <ProCard
-          title={
-            <Select
-              placeholder={'请选择数据库'}
-              disabled={false}
-              value={currentDBId}
-              options={dbOptions}
-              onChange={(value: number) => {
-                setCurrentDBId(value);
-                form.setFieldsValue({
-                  db_id: value,
-                });
-              }}
-            />
-          }
-          subTitle={
-            <Popover
-              content={
-                <Paragraph>
-                  <ul>
-                    <li>
-                      <Text>仅支持一条SQL</Text>
-                    </li>
-                    <li>
-                      变量查询
-                      <ul>
-                        <li>
-                          <Text code>select name form table .. </Text>
-                        </li>
-                        <li>
-                          <Text>
-                            name将被处理为变量名，对应的值是搜索返回的第一个
-                          </Text>
-                        </li>
-                      </ul>
-                    </li>
-                    <li>
-                      使用as
-                      <ul>
-                        <li>
-                          <Text code>
-                            select username as u,password as p form table ..{' '}
-                          </Text>
-                        </li>
-                        <li>
-                          <Text>
-                            u,p 将被处理为变量名，对应的值是搜索返回的第一个
-                          </Text>
-                        </li>
-                      </ul>
-                    </li>
-                  </ul>
-                  <ul>
-                    <li>
-                      <Text strong>{'支持 上文 变量{{xx}} 写入SQL'}</Text>
-                      <ul>
-                        <li>
-                          <Text code>
-                            {'select * from table where id = {{ID}}'}
-                          </Text>
-                        </li>
-                      </ul>
-                    </li>
-                  </ul>
-                  <ul>
-                    <li>
-                      {'使用Oracle 注意⚠️'}
-                      <li>
-                        <Text>
-                          Oracle
-                          返回变量字段名皆为大写，设置变量名需大写，否则无法获取到变量值。
-                        </Text>
-                      </li>
-                    </li>
-                  </ul>
-                </Paragraph>
-              }
-            >
-              <Text type="secondary">
-                在SQL语法中设置与使用变量
-                <QuestionCircleOutlined />
-              </Text>
-            </Popover>
-          }
-          extra={
-            <Space>
-              {canTry && (
-                <Button disabled={false} type={'primary'} onClick={handleTry}>
-                  Try
-                  <Popover content={'SQL 不支持变量的调试'}>
-                    <QuestionCircleOutlined />
-                  </Popover>
-                </Button>
-              )}
-            </Space>
-          }
+          style={{
+            background: token.colorBgContainer,
+            borderRadius: token.borderRadius,
+            padding: '16px',
+          }}
         >
-          {saveScript && <p style={{ color: 'grey' }}>已保存! </p>}
-          <AceCodeEditor
-            value={sqlValue}
-            onChange={onDBScriptChange}
-            height={'20vh'}
-            _mode={'mysql'}
-          />
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '16px',
+            }}
+          >
+            <Space size="middle">
+              <Select
+                placeholder={'请选择数据库'}
+                disabled={false}
+                value={currentDBId}
+                options={dbOptions}
+                style={{ minWidth: '200px' }}
+                onChange={(value: number) => {
+                  setCurrentDBId(value);
+                  form.setFieldsValue({
+                    db_id: value,
+                  });
+                }}
+              />
+              <Popover
+                content={
+                  <Paragraph style={{ maxWidth: '400px' }}>
+                    <ul style={{ paddingLeft: '20px', margin: 0 }}>
+                      <li>
+                        <Text strong>仅支持一条SQL</Text>
+                      </li>
+                      <li>
+                        变量查询
+                        <ul style={{ paddingLeft: '20px' }}>
+                          <li>
+                            <Text code>select name from table ...</Text>
+                          </li>
+                          <li>
+                            <Text type="secondary">
+                              name将被处理为变量名，对应的值是搜索返回的第一个
+                            </Text>
+                          </li>
+                        </ul>
+                      </li>
+                      <li>
+                        使用 as
+                        <ul style={{ paddingLeft: '20px' }}>
+                          <li>
+                            <Text code>
+                              select username as u, password as p from table ...
+                            </Text>
+                          </li>
+                          <li>
+                            <Text type="secondary">
+                              u, p 将被处理为变量名，对应的值是搜索返回的第一个
+                            </Text>
+                          </li>
+                        </ul>
+                      </li>
+                      <li>
+                        <Text strong>支持上文变量 {'{{xx}}'} 写入SQL</Text>
+                        <ul style={{ paddingLeft: '20px' }}>
+                          <li>
+                            <Text code>
+                              select * from table where id = {'{{ID}}'}
+                            </Text>
+                          </li>
+                        </ul>
+                      </li>
+                      <li>
+                        <Text type="warning">使用 Oracle 注意⚠️</Text>
+                        <ul style={{ paddingLeft: '20px' }}>
+                          <li>
+                            <Text type="secondary">
+                              Oracle
+                              返回变量字段名皆为大写，设置变量名需大写，否则无法获取到变量值
+                            </Text>
+                          </li>
+                        </ul>
+                      </li>
+                    </ul>
+                  </Paragraph>
+                }
+              >
+                <Button type="link" icon={<QuestionCircleOutlined />}>
+                  帮助
+                </Button>
+              </Popover>
+            </Space>
+            {canTry && (
+              <Button
+                type="primary"
+                icon={<PlayCircleOutlined />}
+                onClick={handleTry}
+              >
+                执行测试
+              </Button>
+            )}
+          </div>
+          {saveScript && (
+            <Alert
+              message="已自动保存"
+              type="success"
+              icon={<SaveOutlined />}
+              showIcon
+              closable
+              style={{ marginBottom: '12px' }}
+            />
+          )}
+          <div
+            style={{
+              border: `1px solid ${token.colorBorder}`,
+              borderRadius: token.borderRadius,
+              overflow: 'hidden',
+            }}
+          >
+            <AceCodeEditor
+              value={sqlValue}
+              onChange={onDBScriptChange}
+              height={'25vh'}
+              _mode={'mysql'}
+            />
+          </div>
         </ProCard>
+        <Divider style={{ margin: '16px 0' }} />
         <ProCard
-          extra={
+          style={{
+            background: token.colorBgContainer,
+            borderRadius: token.borderRadius,
+            padding: '16px',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '12px',
+            }}
+          >
+            <Text strong style={{ fontSize: '14px' }}>
+              提取结果到变量
+            </Text>
             <Popover
               content={
-                <Paragraph>
-                  <ul>
+                <Paragraph style={{ maxWidth: '400px' }}>
+                  <ul style={{ paddingLeft: '20px', margin: 0 }}>
                     <li>
                       <Text code>
-                        {`查询 SQL 语句返回结果一般为数组格式，如:
-          [{ "id":1,"name":"jack"}]`}{' '}
+                        {`查询 SQL 语句返回结果一般为数组格式，如: [{"id":1,"name":"jack"}]`}
                       </Text>
-                      <ul>
+                      <ul style={{ paddingLeft: '20px' }}>
                         <li>
-                          <Text>
-                            JSONPath
-                            $[0]表示读取第一条记录的整个对象值;$[0].name
+                          <Text type="secondary">
+                            JSONPath: $[0]
+                            表示读取第一条记录的整个对象值；$[0].name
                             表示读取第一条记录的 name 字段
                           </Text>
                         </li>
                       </ul>
                     </li>
-
                     <li>
-                      <Text code>
-                        {'如果返回 一个单字符串 则不需要传递jsonpath '}
+                      <Text type="secondary">
+                        如果返回一个单字符串则不需要传递 jsonpath
                       </Text>
                     </li>
                   </ul>
                 </Paragraph>
               }
             >
-              <Text type={'secondary'}>
-                提取结果到变量
-                <QuestionCircleOutlined />
-              </Text>
+              <Button type="link" icon={<QuestionCircleOutlined />}>
+                帮助
+              </Button>
             </Popover>
-          }
-        >
+          </div>
           <EditableProTable<IBeforeSQLExtract>
             rowKey={'id'}
             search={false}
@@ -482,6 +562,11 @@ const DBContentCard: FC<Props> = (props) => {
               record: () => ({
                 id: Date.now(),
               }),
+              creatorButtonText: '添加变量提取',
+            }}
+            style={{
+              border: `1px solid ${token.colorBorder}`,
+              borderRadius: token.borderRadius,
             }}
             editable={{
               type: 'multiple',

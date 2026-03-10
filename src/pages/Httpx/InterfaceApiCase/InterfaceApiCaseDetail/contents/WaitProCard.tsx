@@ -1,13 +1,15 @@
 import { updateCaseContent } from '@/api/inter/interCase';
 import Handler from '@/components/DnDDraggable/handler';
 import CardExtraOption from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/CardExtraOption';
+import { TagConfig } from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/tagConfig';
 import { IInterfaceCaseContent } from '@/pages/Httpx/types';
-import { EditOutlined, FieldTimeOutlined } from '@ant-design/icons';
+import { ClockCircleOutlined, EditOutlined } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
-import { InputNumber, Space, Tag, Typography } from 'antd';
-import { FC, useEffect, useState } from 'react';
+import { InputNumber, Space, Tag, theme, Typography } from 'antd';
+import { FC, useEffect, useMemo, useState } from 'react';
 
 const { Text } = Typography;
+const { useToken } = theme;
 
 interface Props {
   id: number;
@@ -18,6 +20,7 @@ interface Props {
 }
 
 const WaitProCard: FC<Props> = (props) => {
+  const { token } = useToken();
   const { step, id, caseId, caseContent, callback } = props;
   const [showOption, setShowOption] = useState(false);
   const [showWaitInput, setShowWaitInput] = useState(true);
@@ -30,6 +33,7 @@ const WaitProCard: FC<Props> = (props) => {
       setShowWaitInput(false);
     }
   }, [caseContent]);
+
   const updateWaitTime = async (value: number | undefined) => {
     if (value) {
       const { code, data } = await updateCaseContent({
@@ -46,22 +50,37 @@ const WaitProCard: FC<Props> = (props) => {
     }
   };
 
-  const WAIT = () => {
+  const WAIT = useMemo(() => {
     if (waitTime && !showWaitInput) {
       return (
-        <>
-          <Text style={{ marginRight: 10 }}>
-            {waitTime} <Text type={'warning'}>s</Text>
+        <Space size={8}>
+          <Text
+            strong
+            style={{
+              fontSize: '14px',
+              color: token.colorText,
+            }}
+          >
+            {waitTime}
+            <Text type={'warning'} style={{ fontSize: '12px' }}>
+              s
+            </Text>
           </Text>
           {showEditIcon && (
-            <EditOutlined onClick={() => setShowWaitInput(true)} />
+            <EditOutlined
+              style={{
+                color: token.colorPrimary,
+                cursor: 'pointer',
+              }}
+              onClick={() => setShowWaitInput(true)}
+            />
           )}
-        </>
+        </Space>
       );
     } else {
       return (
         <InputNumber
-          style={{ width: '100%' }}
+          style={{ width: '100%', maxWidth: '150px' }}
           value={waitTime}
           min={0}
           max={10}
@@ -74,13 +93,46 @@ const WaitProCard: FC<Props> = (props) => {
         />
       );
     }
-  };
+  }, [waitTime, showWaitInput, showEditIcon, token]);
+
+  const cardTitle = useMemo(
+    () => (
+      <Space size={8} align="center">
+        <Handler id={id} step={step} />
+        <Tag
+          icon={<ClockCircleOutlined />}
+          style={{
+            background: TagConfig.WAIT.bgColor,
+            color: TagConfig.WAIT.color,
+            border: `1px solid ${TagConfig.WAIT.borderColor}`,
+            fontWeight: 600,
+            fontSize: '12px',
+            padding: '2px 8px',
+            borderRadius: token.borderRadiusSM,
+          }}
+        >
+          {TagConfig.WAIT.label}
+        </Tag>
+        {WAIT}
+      </Space>
+    ),
+    [id, step, WAIT, token],
+  );
   return (
     <ProCard
       bordered
       collapsible={false}
       hoverable
       defaultCollapsed
+      style={{
+        marginBottom: 12,
+        borderRadius: token.borderRadiusLG,
+        boxShadow: showOption
+          ? `0 4px 12px ${token.colorPrimaryBg}`
+          : `0 1px 3px ${token.colorBgLayout}`,
+        transition: 'all 0.3s ease',
+        borderColor: showOption ? token.colorPrimaryBorder : token.colorBorder,
+      }}
       onMouseEnter={() => {
         setShowOption(true);
         setShowEditIcon(true);
@@ -97,14 +149,8 @@ const WaitProCard: FC<Props> = (props) => {
           caseId={caseId}
         />
       }
-      title={
-        <Space>
-          <Handler id={id} step={step} />
-          <Tag color={'orange-inverse'} icon={<FieldTimeOutlined />} />
-          {WAIT()}
-        </Space>
-      }
-    ></ProCard>
+      title={cardTitle}
+    />
   );
 };
 

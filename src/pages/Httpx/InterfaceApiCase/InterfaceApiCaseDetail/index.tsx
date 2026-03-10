@@ -88,10 +88,7 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
   const [activeKey, setActiveKey] = useState('2'); // 默认选中步骤标签
   const [emptyApi, setEmptyApi] = useState<IInterfaceAPI>();
   const [isLoopModalOpen, setIsLoopModalOpen] = useState(false);
-  // 固定配置，不再根据屏幕尺寸动态调整
-  const config = {
-    cardPadding: 24,
-  };
+
   // 防抖处理，避免频繁重渲染
   const handleResize = useCallback(
     debounce(({ width }) => {
@@ -493,7 +490,7 @@ const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
     });
     if (code === 0) {
       message.success(msg);
-      refresh();
+      await refresh();
     }
   };
   return (

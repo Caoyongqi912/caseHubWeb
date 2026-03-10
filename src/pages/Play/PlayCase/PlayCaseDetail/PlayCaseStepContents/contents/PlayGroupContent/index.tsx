@@ -4,10 +4,11 @@ import ContentExtra from '@/pages/Play/PlayCase/PlayCaseDetail/PlayCaseStepConte
 import GroupTable from '@/pages/Play/PlayCase/PlayCaseDetail/PlayCaseStepContents/contents/PlayGroupContent/GroupTable';
 import { GroupOutlined } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
-import { Space, Tag, Typography } from 'antd';
-import { FC, useState } from 'react';
+import { Space, Tag, theme, Typography } from 'antd';
+import { FC, useMemo, useState } from 'react';
 
 const { Text } = Typography;
+const { useToken } = theme;
 
 interface Props {
   id: number;
@@ -18,9 +19,49 @@ interface Props {
 }
 
 const Index: FC<Props> = (props) => {
+  const { token } = useToken();
   const { id, step, caseId, stepContent, callback } = props;
   const [showOption, setShowOption] = useState(false);
   const [collapsed, setCollapsed] = useState(true);
+
+  const groupTitle = useMemo(
+    () => (
+      <Space size={8} align="center">
+        <Handler id={id} step={step} />
+        <Tag
+          icon={<GroupOutlined />}
+          style={{
+            background: '#e0f2fe',
+            color: '#3b82f6',
+            border: '1px solid #3b82f620',
+            fontWeight: 600,
+            fontSize: '12px',
+            padding: '2px 8px',
+            borderRadius: token.borderRadiusSM,
+          }}
+        >
+          分组
+        </Tag>
+        {stepContent.content_name && (
+          <Text
+            strong
+            style={{
+              fontSize: '14px',
+              color: token.colorText,
+            }}
+          >
+            {stepContent.content_name}
+          </Text>
+        )}
+        {stepContent.content_desc && (
+          <Text type={'secondary'} style={{ fontSize: '12px' }}>
+            {stepContent.content_desc}
+          </Text>
+        )}
+      </Space>
+    ),
+    [id, step, stepContent, token],
+  );
 
   return (
     <div>
@@ -29,6 +70,16 @@ const Index: FC<Props> = (props) => {
         collapsible
         hoverable
         defaultCollapsed
+        style={{
+          borderRadius: token.borderRadiusLG,
+          boxShadow: showOption
+            ? `0 4px 12px ${token.colorPrimaryBg}`
+            : `0 1px 3px ${token.colorBgLayout}`,
+          transition: 'all 0.3s ease',
+          borderColor: showOption
+            ? token.colorPrimaryBorder
+            : token.colorBorder,
+        }}
         bodyStyle={{ padding: 0 }}
         onMouseEnter={() => {
           setShowOption(true);
@@ -48,15 +99,7 @@ const Index: FC<Props> = (props) => {
           />
         }
         collapsibleIconRender={({}) => {
-          return (
-            <Space>
-              <Handler id={id} step={step} />
-              <Tag color={'blue-inverse'} icon={<GroupOutlined />} />
-              <Tag color={'blue-inverse'}>组</Tag>
-              <Text strong>{stepContent.content_name}</Text>
-              <Text type={'secondary'}>{stepContent.content_desc}</Text>
-            </Space>
-          );
+          return groupTitle;
         }}
       >
         {!collapsed && (

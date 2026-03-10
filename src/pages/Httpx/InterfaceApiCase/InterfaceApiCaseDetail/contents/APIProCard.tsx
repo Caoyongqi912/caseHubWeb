@@ -2,14 +2,18 @@ import Handler from '@/components/DnDDraggable/handler';
 import MyDrawer from '@/components/MyDrawer';
 import InterfaceApiDetail from '@/pages/Httpx/Interface/InterfaceApiDetail';
 import CardExtraOption from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/CardExtraOption';
+import {
+  HttpMethod,
+  TagConfig,
+} from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/tagConfig';
 import { IInterfaceCaseContent } from '@/pages/Httpx/types';
 import { ApiOutlined } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
-import { Space, Tag, Typography } from 'antd';
-import { BaseType } from 'antd/es/typography/Base';
-import { FC, useEffect, useState } from 'react';
+import { Space, Tag, theme, Typography } from 'antd';
+import { FC, useEffect, useMemo, useState } from 'react';
 
 const { Text } = Typography;
+const { useToken } = theme;
 
 interface Props {
   id: number;
@@ -20,21 +24,14 @@ interface Props {
   open?: boolean;
 }
 
-const TextType: { [key: string]: string } = {
-  GET: 'success',
-  POST: 'warning',
-  PUT: 'warning',
-  DELETE: 'danger',
-};
-
 const ApiProCard: FC<Props> = (props) => {
   const { open = false, step, caseId, id, caseContent, callback } = props;
+  const { token } = useToken();
   const [showAPIDetail, setShowAPIDetail] = useState(false);
   const [showOption, setShowOption] = useState(false);
 
   useEffect(() => {
     if (open) {
-      console.log('======', open);
       setShowAPIDetail(open);
     }
   }, [open]);
@@ -43,6 +40,81 @@ const ApiProCard: FC<Props> = (props) => {
     setShowAPIDetail(false);
     callback && callback();
   };
+
+  const methodConfig = useMemo(() => {
+    const method = (caseContent.content_desc?.toUpperCase() ||
+      'GET') as HttpMethod;
+    return TagConfig.API[method] || TagConfig.API.GET;
+  }, [caseContent.content_desc]);
+
+  const visibilityConfig = useMemo(() => {
+    return caseContent.is_common_api === 1
+      ? TagConfig.VISIBILITY.PUBLIC
+      : TagConfig.VISIBILITY.PRIVATE;
+  }, [caseContent.is_common_api]);
+
+  const VisibilityIcon = useMemo(() => {
+    return visibilityConfig.icon;
+  }, [visibilityConfig]);
+
+  const cardTitle = useMemo(
+    () => (
+      <Space size={8} align="center">
+        <Handler id={id} step={step} />
+        <Tag
+          icon={<ApiOutlined />}
+          style={{
+            background: methodConfig.bgColor,
+            color: methodConfig.color,
+            border: `1px solid ${methodConfig.borderColor}`,
+            fontWeight: 600,
+            fontSize: '12px',
+            padding: '2px 8px',
+            borderRadius: token.borderRadiusSM,
+          }}
+        >
+          {methodConfig.label}
+        </Tag>
+        <Tag
+          icon={<VisibilityIcon />}
+          style={{
+            background: visibilityConfig.bgColor,
+            color: visibilityConfig.color,
+            border: `1px solid ${visibilityConfig.borderColor}`,
+            fontWeight: 500,
+            fontSize: '12px',
+            padding: '2px 8px',
+            borderRadius: token.borderRadiusSM,
+          }}
+        >
+          {visibilityConfig.label}
+        </Tag>
+        <Text
+          strong
+          style={{
+            fontSize: '14px',
+            color: token.colorText,
+            maxWidth: '400px',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {caseContent.content_name}
+        </Text>
+      </Space>
+    ),
+    [
+      id,
+      step,
+      caseContent,
+      methodConfig,
+      visibilityConfig,
+      VisibilityIcon,
+      token,
+    ],
+  );
+
   return (
     <>
       <MyDrawer
@@ -61,33 +133,28 @@ const ApiProCard: FC<Props> = (props) => {
         collapsible={false}
         hoverable
         defaultCollapsed
+        style={{
+          borderRadius: token.borderRadiusLG,
+          boxShadow: showOption
+            ? `0 4px 12px ${token.colorPrimaryBg}`
+            : `0 1px 3px ${token.colorBgLayout}`,
+          transition: 'all 0.3s ease',
+          cursor: 'pointer',
+          borderColor: showOption
+            ? token.colorPrimaryBorder
+            : token.colorBorder,
+        }}
+        bodyStyle={{
+          padding: 0,
+        }}
         onMouseEnter={() => {
           setShowOption(true);
         }}
         onMouseLeave={() => {
           setShowOption(false);
         }}
-        title={
-          <Space>
-            <Handler id={id} step={step} />
-            <Tag color={'gold-inverse'} icon={<ApiOutlined />}></Tag>
-            {caseContent.is_common_api === 1 ? (
-              <Tag color={'#059669'}>共</Tag>
-            ) : (
-              <Tag color={'#DC2626'}>私</Tag>
-            )}
-            {caseContent.content_desc && (
-              <Text
-                strong
-                type={TextType[caseContent.content_desc] as BaseType}
-              >
-                {caseContent.content_desc}
-              </Text>
-            )}
-            <Text strong>{caseContent.content_name}</Text>
-          </Space>
-        }
-        collapsibleIconRender={({ collapsed }) => {
+        title={cardTitle}
+        collapsibleIconRender={() => {
           return null;
         }}
         extra={

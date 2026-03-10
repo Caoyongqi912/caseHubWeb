@@ -14,18 +14,35 @@ import InterfaceCaseChoiceApiTable from '@/pages/Httpx/InterfaceApiCaseResult/In
 import { IInterfaceAPI, IInterfaceCaseContent } from '@/pages/Httpx/types';
 import { CONFIG } from '@/utils/config';
 import { queryData } from '@/utils/somefunc';
-import { SelectOutlined } from '@ant-design/icons';
+import {
+  DeleteOutlined,
+  PlusOutlined,
+  SelectOutlined,
+} from '@ant-design/icons';
 import {
   ActionType,
   DragSortTable,
-  ProCard,
   ProColumns,
-  ProForm,
-  ProFormSelect,
-  ProFormText,
 } from '@ant-design/pro-components';
-import { Button, Dropdown, Form, MenuProps, message, Space, Tag } from 'antd';
+import {
+  Button,
+  Divider,
+  Dropdown,
+  Form,
+  Input,
+  MenuProps,
+  message,
+  Popconfirm,
+  Select,
+  Space,
+  Tag,
+  theme,
+  Typography,
+} from 'antd';
 import React, { FC, useCallback, useEffect, useRef, useState } from 'react';
+
+const { Text } = Typography;
+const { useToken } = theme;
 
 interface SelfProps {
   case_id: number;
@@ -54,12 +71,13 @@ const ApiCondition: FC<SelfProps> = ({
   case_id,
   caseContent,
 }) => {
+  const { token } = useToken();
   const timeoutRef = useRef<any>(null);
   const [conditionForm] = Form.useForm();
   const [choiceGroupOpen, setChoiceGroupOpen] = useState(false);
   const [choiceOpen, setChoiceOpen] = useState(false);
   const [conditionAPI, setConditionAPI] = useState<IInterfaceAPI[]>([]);
-  const actionRef = useRef<ActionType>(); //Table action 的引用，便于自定义触发
+  const actionRef = useRef<ActionType>();
   const [showAPIDetail, setShowAPIDetail] = useState(false);
   const [currentApiId, setCurrentApiId] = useState<number>();
   const [showValueInput, setShowValueInput] = useState(true);
@@ -121,13 +139,14 @@ const ApiCondition: FC<SelfProps> = ({
       title: '排序',
       dataIndex: 'sort',
       className: 'drag-visible',
-      width: '5%',
+      width: 60,
+      align: 'center',
     },
     {
       title: '接口编号',
       dataIndex: 'uid',
       key: 'uid',
-      width: '10%',
+      width: 120,
       render: (_, record) => {
         return (
           <a
@@ -145,23 +164,36 @@ const ApiCondition: FC<SelfProps> = ({
       title: '名称',
       dataIndex: 'name',
       key: 'name',
-      width: '15%',
+      ellipsis: true,
     },
     {
       title: '优先级',
       dataIndex: 'level',
       valueType: 'select',
       valueEnum: CONFIG.API_LEVEL_ENUM,
-      width: '10%',
+      width: 100,
+      align: 'center',
       render: (_, record) => {
-        return <Tag color={'blue'}>{record.level}</Tag>;
+        return (
+          <Tag
+            style={{
+              background: token.colorPrimaryBg,
+              color: token.colorPrimary,
+              border: `1px solid ${token.colorPrimaryBorder}`,
+              borderRadius: token.borderRadiusSM,
+            }}
+          >
+            {record.level}
+          </Tag>
+        );
       },
     },
     {
       title: '状态',
       dataIndex: 'status',
       valueType: 'select',
-      width: '10%',
+      width: 100,
+      align: 'center',
       valueEnum: CONFIG.API_STATUS_ENUM,
       render: (_, record) => {
         return CONFIG.API_STATUS_ENUM[record.status].tag;
@@ -170,19 +202,39 @@ const ApiCondition: FC<SelfProps> = ({
     {
       title: '创建人',
       dataIndex: 'creatorName',
-      width: '10%',
+      width: 100,
+      align: 'center',
       render: (_, record) => {
-        return <Tag>{record.creatorName}</Tag>;
+        return (
+          <Tag
+            style={{
+              background: token.colorBgLayout,
+              border: `1px solid ${token.colorBorder}`,
+              borderRadius: token.borderRadiusSM,
+            }}
+          >
+            {record.creatorName}
+          </Tag>
+        );
       },
     },
     {
       title: '操作',
       valueType: 'option',
       key: 'option',
-      width: '10%',
+      width: 80,
+      align: 'center',
       render: (_, record) => {
         return (
-          <a onClick={async () => await removeAssociation(record.id)}>移除</a>
+          <Popconfirm
+            title="确认移除"
+            description="确定要移除这个接口吗？"
+            onConfirm={async () => await removeAssociation(record.id)}
+            okText="确定"
+            cancelText="取消"
+          >
+            <Button type="text" danger size="small" icon={<DeleteOutlined />} />
+          </Popconfirm>
         );
       },
     },
@@ -192,7 +244,7 @@ const ApiCondition: FC<SelfProps> = ({
     {
       key: 'choice_common',
       label: '选择公共API',
-      icon: <SelectOutlined style={{ color: 'blue' }} />,
+      icon: <SelectOutlined style={{ color: token.colorPrimary }} />,
       onClick: () => setChoiceOpen(true),
     },
   ];
@@ -210,57 +262,72 @@ const ApiCondition: FC<SelfProps> = ({
     }, 2000);
   };
   const formRender = (
-    <ProForm
-      form={conditionForm}
-      onValuesChange={onValuesChange}
-      submitter={false}
-      style={{ padding: 30 }}
+    <div
+      style={{
+        padding: '16px',
+        background: token.colorBgContainer,
+        borderRadius: token.borderRadius,
+        border: `1px solid ${token.colorBorder}`,
+      }}
     >
-      <Space>
-        判断条件
-        <ProFormText
-          noStyle
-          name={'condition_key'}
-          placeholder={'条件值，支持{{变量名}}'}
-          rules={[{ required: true, message: '变量名不能为空 !' }]}
-          required={true}
-          fieldProps={{
-            onChange: (e: any) => {
-              setKey(e.target.value);
-            },
-          }}
-        />
-        <ProFormSelect
-          noStyle
-          name={'condition_operator'}
-          required={true}
-          initialValue={1}
-          rules={[{ required: true, message: '条件不能为空 !' }]}
-          onChange={(_: any, option: any) => {
-            setOperator(option.label);
-            if (option.value === 3 || option.value === 4) {
-              setShowValueInput(false);
-            } else {
-              setShowValueInput(true);
-            }
-          }}
-          options={AssertOption}
-        />
-        {showValueInput && (
-          <ProFormText
-            noStyle
-            placeholder={'输入比较值'}
-            name={'condition_value'}
-            rules={[{ required: true, message: '比较值不能为空 !' }]}
-            fieldProps={{
-              onChange: (e: any) => {
-                setValue(e.target.value);
-              },
-            }}
-          />
-        )}
-      </Space>
-    </ProForm>
+      <Form
+        form={conditionForm}
+        onValuesChange={onValuesChange}
+        layout="inline"
+      >
+        <Space size="middle" align="center" wrap>
+          <Text strong style={{ fontSize: '14px', color: token.colorText }}>
+            判断条件
+          </Text>
+          <Form.Item
+            name={'condition_key'}
+            rules={[{ required: true, message: '变量名不能为空' }]}
+            style={{ marginBottom: 0 }}
+          >
+            <Input
+              placeholder="条件值，支持{{变量名}}"
+              style={{ width: '200px' }}
+              onChange={(e) => {
+                setKey(e.target.value);
+              }}
+            />
+          </Form.Item>
+          <Form.Item
+            name={'condition_operator'}
+            rules={[{ required: true, message: '条件不能为空' }]}
+            style={{ marginBottom: 0 }}
+          >
+            <Select
+              style={{ width: '120px' }}
+              options={AssertOption}
+              onChange={(_: any, option: any) => {
+                setOperator(option.label);
+                if (option.value === 3 || option.value === 4) {
+                  setShowValueInput(false);
+                } else {
+                  setShowValueInput(true);
+                }
+              }}
+            />
+          </Form.Item>
+          {showValueInput && (
+            <Form.Item
+              name={'condition_value'}
+              rules={[{ required: true, message: '比较值不能为空' }]}
+              style={{ marginBottom: 0 }}
+            >
+              <Input
+                placeholder="输入比较值"
+                style={{ width: '200px' }}
+                onChange={(e) => {
+                  setValue(e.target.value);
+                }}
+              />
+            </Form.Item>
+          )}
+        </Space>
+      </Form>
+    </div>
   );
 
   const selectInterface2Condition = async (values: number[]) => {
@@ -276,16 +343,40 @@ const ApiCondition: FC<SelfProps> = ({
   };
   return (
     <>
-      <ProCard
-        actions={
-          <Dropdown arrow menu={{ items }} placement="top">
-            <Button>添加</Button>
-          </Dropdown>
-        }
+      <div
+        style={{
+          background: token.colorBgContainer,
+          borderRadius: token.borderRadius,
+          padding: '16px',
+        }}
       >
+        {formRender}
+        <Divider style={{ margin: '16px 0' }} />
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '12px',
+          }}
+        >
+          <Text strong style={{ fontSize: '14px' }}>
+            条件接口列表
+          </Text>
+          <Dropdown arrow menu={{ items }} placement="bottomRight">
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              style={{
+                borderRadius: token.borderRadius,
+              }}
+            >
+              添加接口
+            </Button>
+          </Dropdown>
+        </div>
         <DragSortTable
           actionRef={actionRef}
-          headerTitle={formRender}
           columns={columns}
           options={false}
           rowKey="id"
@@ -295,8 +386,12 @@ const ApiCondition: FC<SelfProps> = ({
           dataSource={conditionAPI}
           dragSortKey="sort"
           onDragSortEnd={handleDragSortEnd}
+          style={{
+            border: `1px solid ${token.colorBorder}`,
+            borderRadius: token.borderRadius,
+          }}
         />
-      </ProCard>
+      </div>
       <MyDrawer width={'75%'} open={showAPIDetail} setOpen={setShowAPIDetail}>
         <InterfaceApiDetail interfaceId={currentApiId} callback={() => {}} />;
       </MyDrawer>

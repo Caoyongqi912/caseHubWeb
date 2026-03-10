@@ -1,12 +1,23 @@
 import AceCodeEditor from '@/components/CodeEditor/AceCodeEditor';
 import Handler from '@/components/DnDDraggable/handler';
-import { EditOutlined, PythonOutlined } from '@ant-design/icons';
+import { CodeOutlined, EditOutlined, SaveOutlined } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
-import { Divider, Input, List, Space, Tag, Typography } from 'antd';
+import {
+  Alert,
+  Button,
+  Divider,
+  Input,
+  List,
+  Space,
+  Tag,
+  theme,
+  Typography,
+} from 'antd';
 import React, { FC, useEffect, useRef, useState } from 'react';
 import InfiniteScroll from 'react-infinite-scroll-component';
 
 const { Text } = Typography;
+const { useToken } = theme;
 
 /**
  * 脚本内容信息接口
@@ -140,6 +151,7 @@ const ScriptContentChild: FC<ScriptContentChildProps> = ({
   onChange,
   isSave,
 }) => {
+  const { token } = useToken();
   const [scriptData, setScriptData] = useState('');
 
   useEffect(() => {
@@ -159,51 +171,97 @@ const ScriptContentChild: FC<ScriptContentChildProps> = ({
   };
 
   return (
-    <ProCard
-      style={{ height: '100%' }}
-      bodyStyle={{ padding: 30 }}
-      split="vertical"
-    >
-      <ProCard
-        bordered
-        title={isSave && <p style={{ color: 'grey' }}>已保存! </p>}
-        colSpan={'80%'}
-      >
-        <AceCodeEditor
-          value={script_text}
-          onChange={onChange}
-          height={'30vh'}
-          _mode={'python'}
+    <div style={{ padding: '16px' }}>
+      {isSave && (
+        <Alert
+          message="已自动保存"
+          type="success"
+          icon={<SaveOutlined />}
+          showIcon
+          closable
+          style={{ marginBottom: '12px' }}
         />
-      </ProCard>
-      <ProCard style={{ height: '30vh', overflow: 'auto' }}>
-        <InfiniteScroll
-          dataLength={ScriptList.length}
-          hasMore={false}
-          endMessage={<Divider plain>It is all, nothing more 🤐</Divider>}
-          scrollableTarget="scrollableDiv"
-          loader={false}
-          next={() => {}}
+      )}
+      <div style={{ display: 'flex', gap: '16px', height: '35vh' }}>
+        <div style={{ flex: '1' }}>
+          <div
+            style={{
+              border: `1px solid ${token.colorBorder}`,
+              borderRadius: token.borderRadius,
+              overflow: 'hidden',
+              height: '100%',
+            }}
+          >
+            <AceCodeEditor
+              value={script_text}
+              onChange={onChange}
+              height={'35vh'}
+              _mode={'python'}
+            />
+          </div>
+        </div>
+        <div
+          style={{
+            width: '300px',
+            border: `1px solid ${token.colorBorder}`,
+            borderRadius: token.borderRadius,
+            overflow: 'auto',
+            background: token.colorBgContainer,
+          }}
+          id="scrollableDiv"
         >
-          <List
-            itemLayout="horizontal"
-            dataSource={ScriptList}
-            renderItem={(item, index) => (
-              <List.Item>
-                <List.Item.Meta
-                  title={
-                    <a onClick={() => useDemoScript(item.value)}>
-                      {item.label}
-                    </a>
-                  }
-                  description={item.desc || ''}
-                />
-              </List.Item>
-            )}
-          />
-        </InfiniteScroll>
-      </ProCard>
-    </ProCard>
+          <div
+            style={{
+              padding: '12px 16px',
+              borderBottom: `1px solid ${token.colorBorder}`,
+            }}
+          >
+            <Text strong style={{ fontSize: '14px' }}>
+              脚本示例
+            </Text>
+          </div>
+          <InfiniteScroll
+            dataLength={ScriptList.length}
+            hasMore={false}
+            endMessage={
+              <Divider plain style={{ margin: '12px 0' }}>
+                <Text type="secondary" style={{ fontSize: '12px' }}>
+                  没有更多示例了
+                </Text>
+              </Divider>
+            }
+            scrollableTarget="scrollableDiv"
+            loader={false}
+            next={() => {}}
+          >
+            <List
+              itemLayout="horizontal"
+              dataSource={ScriptList}
+              renderItem={(item) => (
+                <List.Item style={{ padding: '8px 16px' }}>
+                  <List.Item.Meta
+                    title={
+                      <Button
+                        type="link"
+                        onClick={() => useDemoScript(item.value)}
+                        style={{ padding: 0, height: 'auto' }}
+                      >
+                        {item.label}
+                      </Button>
+                    }
+                    description={
+                      <Text type="secondary" style={{ fontSize: '12px' }}>
+                        {typeof item.desc === 'string' ? item.desc : item.desc}
+                      </Text>
+                    }
+                  />
+                </List.Item>
+              )}
+            />
+          </InfiniteScroll>
+        </div>
+      </div>
+    </div>
   );
 };
 
@@ -212,6 +270,7 @@ const ScriptContentChild: FC<ScriptContentChildProps> = ({
  * 用于显示和管理脚本步骤内容，支持Python脚本编辑和示例插入
  */
 const ScriptContentCard: FC<Props> = (props) => {
+  const { token } = useToken();
   const timeoutRef = useRef<any>(null);
 
   const {
@@ -286,23 +345,34 @@ const ScriptContentCard: FC<Props> = (props) => {
   const SCRIPT = () => {
     if (scriptTextName && !showScriptInput) {
       return (
-        <>
-          <Text>{scriptTextName}</Text>
+        <Space size={8}>
+          <Text
+            strong
+            style={{
+              fontSize: '14px',
+              color: token.colorText,
+            }}
+          >
+            {scriptTextName}
+          </Text>
           {showEditIcon && (
             <EditOutlined
-              style={{ marginLeft: 10 }}
+              style={{
+                color: token.colorPrimary,
+                cursor: 'pointer',
+              }}
               onClick={(event) => {
                 event.stopPropagation();
                 setShowScriptInput(true);
               }}
             />
           )}
-        </>
+        </Space>
       );
     } else {
       return (
         <Input
-          style={{ width: '100%' }}
+          style={{ width: '100%', maxWidth: '300px' }}
           variant={'outlined'}
           onChange={(e) => {
             e.stopPropagation();
@@ -326,6 +396,14 @@ const ScriptContentCard: FC<Props> = (props) => {
       collapsible
       hoverable
       defaultCollapsed
+      style={{
+        borderRadius: token.borderRadiusLG,
+        boxShadow: showOption
+          ? `0 4px 12px ${token.colorPrimaryBg}`
+          : `0 1px 3px ${token.colorBgLayout}`,
+        transition: 'all 0.3s ease',
+        borderColor: showOption ? token.colorPrimaryBorder : token.colorBorder,
+      }}
       extra={extra}
       onMouseEnter={() => {
         setShowOption(true);
@@ -339,11 +417,23 @@ const ScriptContentCard: FC<Props> = (props) => {
       }}
       collapsibleIconRender={() => {
         return (
-          <Space>
+          <Space size={8} align="center">
             <Handler id={id} step={step} />
-            <Tag color={'geekblue-inverse'} icon={<PythonOutlined />} />
-            <Tag color={'geekblue-inverse'}>脚本</Tag>
-            <div style={{ marginLeft: 10 }}>{SCRIPT()}</div>
+            <Tag
+              icon={<CodeOutlined />}
+              style={{
+                background: '#eff6ff',
+                color: '#2563eb',
+                border: '1px solid #2563eb20',
+                fontWeight: 600,
+                fontSize: '12px',
+                padding: '2px 8px',
+                borderRadius: token.borderRadiusSM,
+              }}
+            >
+              Script
+            </Tag>
+            {SCRIPT}
           </Space>
         );
       }}
