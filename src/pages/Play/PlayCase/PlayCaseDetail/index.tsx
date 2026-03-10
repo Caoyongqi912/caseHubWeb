@@ -230,7 +230,26 @@ const Index = () => {
         </span>
       ),
       children: (
-        <ProCard>
+        <div
+          style={{
+            height: 'calc(120vh - 280px)',
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            padding: '12px 16px',
+            background: 'transparent',
+            borderRadius: 12,
+            border: '1px solid rgba(0, 0, 0, 0.1)',
+            transition: 'box-shadow 0.2s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.boxShadow =
+              '0 4px 12px rgba(24, 144, 255, 0.2)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
+            e.currentTarget.style.borderColor = 'rgba(24, 144, 255, 0.3)';
+          }}
+        >
           {uiSteps.length > 0 ? (
             <DnDDraggable
               items={uiStepsContent}
@@ -240,7 +259,7 @@ const Index = () => {
           ) : (
             <Empty description={'暂无数据'} />
           )}
-        </ProCard>
+        </div>
       ),
     },
     {
