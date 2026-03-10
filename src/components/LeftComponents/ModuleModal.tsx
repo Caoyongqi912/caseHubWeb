@@ -1,6 +1,7 @@
+import { EditOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { ModalForm, ProFormText } from '@ant-design/pro-components';
 import { Form, theme } from 'antd';
-import { FC } from 'react';
+import { FC, useMemo } from 'react';
 import {
   borderRadius,
   shadows,
@@ -22,6 +23,35 @@ const ModuleModal: FC<SelfProps> = ({ title, open, onFinish, setOpen }) => {
   const [form] = Form.useForm<{ title: string }>();
   const { token } = useToken();
 
+  const styles = useMemo(
+    () => ({
+      modalContent: {
+        padding: `${spacing.xxl}px ${spacing.xxl}px ${spacing.lg}px`,
+      },
+      modalBody: {
+        borderRadius: borderRadius.xl,
+        boxShadow: shadows.xl,
+        overflow: 'hidden',
+      },
+      infoBox: {
+        marginBottom: spacing.xl,
+        padding: `${spacing.md}px ${spacing.lg}px`,
+        background: `linear-gradient(135deg, ${token.colorInfoBg} 0%, ${token.colorInfoBgHover} 100%)`,
+        borderRadius: borderRadius.lg,
+        borderLeft: `3px solid ${token.colorInfo}`,
+      },
+      footer: {
+        display: 'flex',
+        justifyContent: 'flex-end',
+        gap: spacing.md,
+        paddingTop: spacing.lg,
+        borderTop: `1px solid ${token.colorBorderSecondary}`,
+        marginTop: spacing.lg,
+      },
+    }),
+    [token],
+  );
+
   return (
     <ModalForm
       open={open}
@@ -37,12 +67,23 @@ const ModuleModal: FC<SelfProps> = ({ title, open, onFinish, setOpen }) => {
         >
           <div
             style={{
-              width: 4,
-              height: 20,
-              background: `linear-gradient(180deg, ${token.colorPrimary} 0%, ${token.colorPrimaryBg} 100%)`,
-              borderRadius: borderRadius.xs,
+              width: 36,
+              height: 36,
+              borderRadius: borderRadius.lg,
+              background: `linear-gradient(135deg, ${token.colorPrimary} 0%, ${token.colorPrimaryHover} 100%)`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: shadows.sm,
             }}
-          />
+          >
+            <EditOutlined
+              style={{
+                fontSize: typography.fontSize.md,
+                color: '#fff',
+              }}
+            />
+          </div>
           <span
             style={{
               fontSize: typography.fontSize.lg,
@@ -60,13 +101,8 @@ const ModuleModal: FC<SelfProps> = ({ title, open, onFinish, setOpen }) => {
         onCancel: () => setOpen(false),
         centered: true,
         styles: {
-          body: {
-            padding: `${spacing.xxl}px ${spacing.xxl}px ${spacing.lg}px`,
-          },
-          content: {
-            borderRadius: borderRadius.xl,
-            boxShadow: shadows.xl,
-          },
+          body: styles.modalContent,
+          content: styles.modalBody,
         },
       }}
       submitter={{
@@ -79,6 +115,7 @@ const ModuleModal: FC<SelfProps> = ({ title, open, onFinish, setOpen }) => {
             ...styleHelpers.buttonPrimary(token),
             height: 40,
             padding: `0 ${spacing.xl}px`,
+            fontSize: typography.fontSize.base,
           },
         },
         resetButtonProps: {
@@ -86,37 +123,39 @@ const ModuleModal: FC<SelfProps> = ({ title, open, onFinish, setOpen }) => {
             borderRadius: borderRadius.md,
             height: 40,
             padding: `0 ${spacing.xl}px`,
+            fontSize: typography.fontSize.base,
             ...styleHelpers.transition(['background-color', 'border-color']),
           },
         },
-        style: {
-          display: 'flex',
-          justifyContent: 'flex-end',
-          gap: spacing.md,
-          paddingTop: spacing.lg,
-          borderTop: `1px solid ${token.colorBorderSecondary}`,
-          marginTop: spacing.lg,
-        },
+        //@ts-ignore
+        style: styles.footer,
       }}
     >
-      <div
-        style={{
-          marginBottom: spacing.xl,
-          padding: `${spacing.md}px ${spacing.lg}px`,
-          background: token.colorInfoBg,
-          borderRadius: borderRadius.md,
-          borderLeft: `3px solid ${token.colorInfo}`,
-        }}
-      >
-        <span
+      <div style={styles.infoBox}>
+        <div
           style={{
-            fontSize: typography.fontSize.sm,
-            color: token.colorInfoText,
-            lineHeight: typography.lineHeight.normal,
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: spacing.sm,
           }}
         >
-          请输入模块名称，建议使用简洁明确的命名方式
-        </span>
+          <InfoCircleOutlined
+            style={{
+              fontSize: typography.fontSize.md,
+              color: token.colorInfo,
+              marginTop: 2,
+            }}
+          />
+          <span
+            style={{
+              fontSize: typography.fontSize.sm,
+              color: token.colorInfoText,
+              lineHeight: typography.lineHeight.normal,
+            }}
+          >
+            请输入模块名称，建议使用简洁明确的命名方式
+          </span>
+        </div>
       </div>
       <ProFormText
         width="lg"
@@ -137,6 +176,7 @@ const ModuleModal: FC<SelfProps> = ({ title, open, onFinish, setOpen }) => {
           style: {
             borderRadius: borderRadius.md,
             fontSize: typography.fontSize.base,
+            height: 44,
           },
           size: 'large',
         }}

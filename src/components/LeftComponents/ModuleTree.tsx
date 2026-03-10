@@ -19,6 +19,9 @@ import {
   DeleteOutlined,
   EditOutlined,
   ExclamationCircleOutlined,
+  FileTextOutlined,
+  FolderOpenOutlined,
+  FolderOutlined,
   MoreOutlined,
   PlusOutlined,
   SearchOutlined,
@@ -97,6 +100,47 @@ const ModuleTree: FC<IProps> = (props) => {
   const [searchValue, setSearchValue] = useState('');
   const [autoExpandParent, setAutoExpandParent] = useState(true);
 
+  const styles = useMemo(
+    () => ({
+      headerCard: {
+        marginBottom: spacing.lg,
+        borderRadius: borderRadius.xl,
+        border: `1px solid ${token.colorBorder}`,
+        boxShadow: shadows.card,
+        background: `linear-gradient(135deg, ${token.colorBgContainer} 0%, ${token.colorPrimaryBg} 100%)`,
+        overflow: 'hidden',
+        position: 'relative' as const,
+      },
+      treeCard: {
+        borderRadius: borderRadius.xl,
+        border: `1px solid ${token.colorBorder}`,
+        boxShadow: shadows.card,
+        background: token.colorBgContainer,
+      },
+      treeItem: {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        width: '100%',
+        borderRadius: borderRadius.sm,
+        margin: '2px 0',
+        cursor: 'pointer',
+        padding: `${spacing.xs}px ${spacing.sm}px`,
+        minHeight: 36,
+      },
+      actionBtn: {
+        borderRadius: borderRadius.round,
+        width: 24,
+        height: 24,
+        minWidth: 24,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      },
+    }),
+    [token],
+  );
+
   useEffect(() => {
     if (currentProjectId) {
       queryTreeModuleByProject(currentProjectId, moduleType).then(
@@ -170,6 +214,7 @@ const ModuleTree: FC<IProps> = (props) => {
                   padding: `0 ${spacing.xs}px`,
                   borderRadius: borderRadius.xs,
                   fontWeight: typography.fontWeight.semibold,
+                  background: token.colorPrimaryBg,
                 }}
               >
                 {searchValue}
@@ -235,6 +280,9 @@ const ModuleTree: FC<IProps> = (props) => {
           setHandleModule(Handle.EditModule);
         },
         icon: <EditOutlined style={{ color: token.colorPrimary }} />,
+      },
+      {
+        type: 'divider',
       },
       {
         key: '2',
@@ -315,17 +363,9 @@ const ModuleTree: FC<IProps> = (props) => {
     return (
       <div
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          width: '100%',
-          borderRadius: borderRadius.sm,
-          margin: '2px 0',
-          cursor: 'pointer',
-          padding: `${spacing.xs}px ${spacing.sm}px`,
-          minHeight: 32,
+          ...styles.treeItem,
           background: isSelected
-            ? token.colorPrimaryBg
+            ? `linear-gradient(135deg, ${token.colorPrimaryBg} 0%, ${token.colorPrimaryBgHover} 100%)`
             : isHovered
             ? token.colorFillAlter
             : 'transparent',
@@ -350,6 +390,23 @@ const ModuleTree: FC<IProps> = (props) => {
             gap: spacing.sm,
           }}
         >
+          {tree.children && tree.children.length > 0 ? (
+            <FolderOutlined
+              style={{
+                fontSize: typography.fontSize.sm,
+                color: isSelected ? token.colorPrimary : token.colorWarning,
+              }}
+            />
+          ) : (
+            <FileTextOutlined
+              style={{
+                fontSize: typography.fontSize.sm,
+                color: isSelected
+                  ? token.colorPrimary
+                  : token.colorTextSecondary,
+              }}
+            />
+          )}
           <Text
             strong
             style={{
@@ -368,8 +425,11 @@ const ModuleTree: FC<IProps> = (props) => {
               style={{
                 fontSize: typography.fontSize.xs,
                 fontWeight: typography.fontWeight.medium,
-                backgroundColor: token.colorInfoBg,
-                color: token.colorInfoText,
+                backgroundColor: isSelected
+                  ? token.colorPrimary
+                  : token.colorInfoBg,
+                color: isSelected ? '#fff' : token.colorInfoText,
+                boxShadow: shadows.xs,
               }}
             />
           )}
@@ -395,21 +455,17 @@ const ModuleTree: FC<IProps> = (props) => {
                   setOpen(true);
                 }}
                 style={{
+                  ...styles.actionBtn,
                   color: token.colorPrimary,
-                  borderRadius: borderRadius.round,
-                  width: 22,
-                  height: 22,
-                  minWidth: 22,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
                   ...styleHelpers.transition(['background-color', 'color']),
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.backgroundColor = token.colorPrimaryBg;
+                  e.currentTarget.style.transform = 'scale(1.1)';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.transform = 'scale(1)';
                 }}
               />
             </Tooltip>
@@ -424,13 +480,7 @@ const ModuleTree: FC<IProps> = (props) => {
                 icon={<MoreOutlined />}
                 onClick={(e) => e.stopPropagation()}
                 style={{
-                  borderRadius: borderRadius.round,
-                  width: 22,
-                  height: 22,
-                  minWidth: 22,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  ...styles.actionBtn,
                   ...styleHelpers.transition(['background-color', 'color']),
                 }}
                 onMouseEnter={(e) => {
@@ -531,16 +581,19 @@ const ModuleTree: FC<IProps> = (props) => {
           >
             <ProCard
               size="small"
-              style={{
-                marginBottom: spacing.lg,
-                borderRadius: borderRadius.xl,
-                borderLeft: `4px solid ${token.colorPrimary}`,
-                border: `1px solid ${token.colorBorder}`,
-                boxShadow: shadows.card,
-                ...styleHelpers.transition(['box-shadow']),
-              }}
+              style={styles.headerCard}
               bodyStyle={{ padding: spacing.lg }}
             >
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: 3,
+                  background: `linear-gradient(90deg, ${token.colorPrimary} 0%, ${token.colorPrimaryBg} 100%)`,
+                }}
+              />
               <Space
                 direction="vertical"
                 style={{ width: '100%' }}
@@ -562,12 +615,23 @@ const ModuleTree: FC<IProps> = (props) => {
                   >
                     <div
                       style={{
-                        width: 4,
-                        height: 16,
-                        background: `linear-gradient(180deg, ${token.colorPrimary} 0%, ${token.colorPrimaryBg} 100%)`,
-                        borderRadius: borderRadius.xs,
+                        width: 32,
+                        height: 32,
+                        borderRadius: borderRadius.lg,
+                        background: `linear-gradient(135deg, ${token.colorPrimary} 0%, ${token.colorPrimaryHover} 100%)`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: shadows.sm,
                       }}
-                    />
+                    >
+                      <FolderOpenOutlined
+                        style={{
+                          fontSize: typography.fontSize.md,
+                          color: '#fff',
+                        }}
+                      />
+                    </div>
                     <Text
                       strong
                       style={{
@@ -592,8 +656,11 @@ const ModuleTree: FC<IProps> = (props) => {
                         style={{
                           ...styleHelpers.buttonPrimary(token),
                           padding: `0 ${spacing.md}px`,
-                          height: 28,
+                          height: 30,
                           fontSize: typography.fontSize.xs,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: spacing.xs,
                         }}
                       >
                         新建
@@ -625,11 +692,7 @@ const ModuleTree: FC<IProps> = (props) => {
                 maxHeight: 'calc(100vh - 350px)',
                 overflowY: 'auto',
               }}
-              style={{
-                borderRadius: borderRadius.xl,
-                border: `1px solid ${token.colorBorder}`,
-                boxShadow: shadows.card,
-              }}
+              style={styles.treeCard}
             >
               <Tree
                 showLine={{ showLeafIcon: false }}
@@ -666,15 +729,20 @@ const ModuleTree: FC<IProps> = (props) => {
                     fontWeight: typography.fontWeight.medium,
                     color: token.colorTextSecondary,
                     borderRadius: `0 0 ${borderRadius.md}px ${borderRadius.md}px`,
-                    background: token.colorFillAlter,
+                    background: `linear-gradient(135deg, ${token.colorFillAlter} 0%, ${token.colorBgContainer} 100%)`,
                   }}
                 >
-                  共 {modules.length} 个模块 •{' '}
-                  {
-                    modules.filter((m) => m.children && m.children.length > 0)
-                      .length
-                  }{' '}
-                  个文件夹
+                  <Space split={<span>•</span>} size={spacing.sm}>
+                    <span>共 {modules.length} 个模块</span>
+                    <span>
+                      {
+                        modules.filter(
+                          (m) => m.children && m.children.length > 0,
+                        ).length
+                      }{' '}
+                      个文件夹
+                    </span>
+                  </Space>
                 </div>
               )}
             </ProCard>

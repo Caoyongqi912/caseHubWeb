@@ -1,11 +1,22 @@
 import { insertModule } from '@/api/base';
 import ModuleModal from '@/components/LeftComponents/ModuleModal';
+import {
+  ApartmentOutlined,
+  FolderAddOutlined,
+  PlusOutlined,
+} from '@ant-design/icons';
 import { Button, Empty, message, theme, Typography } from 'antd';
-import { FC, useState } from 'react';
-import { borderRadius, spacing, styleHelpers, typography } from './styles';
+import { FC, useMemo, useState } from 'react';
+import {
+  borderRadius,
+  shadows,
+  spacing,
+  styleHelpers,
+  typography,
+} from './styles';
 
 const { useToken } = theme;
-const { Text } = Typography;
+const { Text, Title } = Typography;
 
 export interface IProps {
   currentProjectId?: number;
@@ -20,6 +31,41 @@ const EmptyModule: FC<IProps> = ({
 }) => {
   const [open, setOpen] = useState(false);
   const { token } = useToken();
+
+  const styles = useMemo(
+    () => ({
+      container: {
+        display: 'flex',
+        flexDirection: 'column' as const,
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: `${spacing.xxxl}px ${spacing.lg}px`,
+        minHeight: 'calc(100vh - 200px)',
+        background: `linear-gradient(135deg, ${token.colorBgContainer} 0%, ${token.colorBgLayout} 100%)`,
+        borderRadius: borderRadius.xl,
+        position: 'relative' as const,
+        overflow: 'hidden',
+      },
+      content: {
+        position: 'relative' as const,
+        zIndex: 1,
+        textAlign: 'center' as const,
+        maxWidth: 400,
+      },
+      featureItem: {
+        padding: `${spacing.md}px ${spacing.lg}px`,
+        background: token.colorFillAlter,
+        borderRadius: borderRadius.lg,
+        border: `1px dashed ${token.colorBorder}`,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: spacing.sm,
+        ...styleHelpers.transition(['background-color', 'border-color']),
+      },
+    }),
+    [token],
+  );
 
   const onFinish = async (value: { title: string }) => {
     if (currentProjectId) {
@@ -45,29 +91,29 @@ const EmptyModule: FC<IProps> = ({
         onFinish={onFinish}
         setOpen={setOpen}
       />
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: `${spacing.xxxl}px ${spacing.lg}px`,
-          minHeight: 'calc(100vh - 200px)',
-          background: `linear-gradient(135deg, ${token.colorBgContainer} 0%, ${token.colorBgLayout} 100%)`,
-          borderRadius: borderRadius.xl,
-          position: 'relative',
-          overflow: 'hidden',
-        }}
-      >
+      <div style={styles.container}>
         <div
           style={{
             position: 'absolute',
-            top: -50,
-            right: -50,
-            width: 200,
-            height: 200,
+            top: -80,
+            right: -80,
+            width: 250,
+            height: 250,
             borderRadius: '50%',
             background: `radial-gradient(circle, ${token.colorPrimaryBg} 0%, transparent 70%)`,
+            opacity: 0.4,
+            pointerEvents: 'none',
+          }}
+        />
+        <div
+          style={{
+            position: 'absolute',
+            bottom: -60,
+            left: -60,
+            width: 180,
+            height: 180,
+            borderRadius: '50%',
+            background: `radial-gradient(circle, ${token.colorInfoBg} 0%, transparent 70%)`,
             opacity: 0.3,
             pointerEvents: 'none',
           }}
@@ -75,43 +121,60 @@ const EmptyModule: FC<IProps> = ({
         <div
           style={{
             position: 'absolute',
-            bottom: -50,
-            left: -50,
-            width: 150,
-            height: 150,
+            top: '40%',
+            right: '5%',
+            width: 80,
+            height: 80,
             borderRadius: '50%',
-            background: `radial-gradient(circle, ${token.colorInfoBg} 0%, transparent 70%)`,
+            background: `radial-gradient(circle, ${token.colorWarningBg} 0%, transparent 70%)`,
             opacity: 0.2,
             pointerEvents: 'none',
           }}
         />
-        <div
-          style={{
-            position: 'relative',
-            zIndex: 1,
-            textAlign: 'center',
-            maxWidth: 400,
-          }}
-        >
+
+        <div style={styles.content}>
+          <div
+            style={{
+              width: 80,
+              height: 80,
+              borderRadius: borderRadius.xxl,
+              background: `linear-gradient(135deg, ${token.colorPrimaryBg} 0%, ${token.colorPrimary} 100%)`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto',
+              marginBottom: spacing.xl,
+              boxShadow: shadows.lg,
+            }}
+          >
+            <FolderAddOutlined
+              style={{
+                fontSize: 36,
+                color: '#fff',
+              }}
+            />
+          </div>
+
           <Empty
             image={Empty.PRESENTED_IMAGE_SIMPLE}
             imageStyle={{
-              height: 120,
+              height: 80,
               marginBottom: spacing.lg,
+              opacity: 0.6,
             }}
             description={
               <div style={{ marginTop: spacing.md }}>
-                <Text
+                <Title
+                  level={4}
                   style={{
-                    fontSize: typography.fontSize.lg,
+                    margin: 0,
                     color: token.colorText,
                     fontWeight: typography.fontWeight.semibold,
-                    display: 'block',
                     marginBottom: spacing.sm,
                   }}
                 >
                   还没有目录
-                </Text>
+                </Title>
                 <Text
                   type="secondary"
                   style={{
@@ -129,47 +192,60 @@ const EmptyModule: FC<IProps> = ({
           <Button
             type="primary"
             size="large"
+            icon={<PlusOutlined />}
             onClick={() => setOpen(true)}
             style={{
               ...styleHelpers.buttonPrimary(token),
-              height: 44,
+              height: 48,
               padding: `0 ${spacing.xxxl}px`,
-              fontSize: typography.fontSize.base,
+              fontSize: typography.fontSize.md,
               marginTop: spacing.xl,
+              borderRadius: borderRadius.lg,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: spacing.sm,
             }}
           >
             去创建
           </Button>
           <div
             style={{
-              marginTop: spacing.xl,
-              padding: `${spacing.md}px ${spacing.lg}px`,
-              background: token.colorFillAlter,
-              borderRadius: borderRadius.md,
-              border: `1px dashed ${token.colorBorder}`,
+              marginTop: spacing.xxl,
+              display: 'flex',
+              justifyContent: 'center',
             }}
           >
-            <Text
+            <div
               style={{
-                fontSize: typography.fontSize.xs,
-                color: token.colorTextSecondary,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: spacing.xs,
+                ...styles.featureItem,
+                maxWidth: 260,
               }}
             >
-              <span
+              <div
                 style={{
-                  display: 'inline-block',
-                  width: 6,
-                  height: 6,
-                  borderRadius: '50%',
-                  background: token.colorPrimary,
+                  width: 28,
+                  height: 28,
+                  borderRadius: borderRadius.round,
+                  background: `linear-gradient(135deg, ${token.colorPrimary} 0%, ${token.colorPrimaryActive} 100%)`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
                 }}
-              />
-              支持多层级目录结构
-            </Text>
+              >
+                <ApartmentOutlined
+                  style={{ fontSize: typography.fontSize.sm, color: '#fff' }}
+                />
+              </div>
+              <Text
+                style={{
+                  fontSize: typography.fontSize.sm,
+                  color: token.colorTextSecondary,
+                }}
+              >
+                支持多层级目录结构
+              </Text>
+            </div>
           </div>
         </div>
       </div>

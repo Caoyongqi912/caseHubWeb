@@ -1,7 +1,8 @@
 import { IProject } from '@/api';
 import {
+  CheckCircleOutlined,
   CloseOutlined,
-  ProjectTwoTone,
+  ProjectOutlined,
   SearchOutlined,
 } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
@@ -14,7 +15,7 @@ import {
   Tooltip,
   Typography,
 } from 'antd';
-import { FC, useState } from 'react';
+import { FC, useMemo, useState } from 'react';
 import {
   borderRadius,
   shadows,
@@ -40,12 +41,48 @@ const ProjectSelect: FC<IProps> = ({
   const [searchValue, setSearchValue] = useState('');
   const { token } = useToken();
 
-  const currentProject = currentProjectId
-    ? projects.find((item) => item.id === currentProjectId)
-    : null;
+  const styles = useMemo(
+    () => ({
+      projectCard: {
+        width: '100%',
+        marginBottom: spacing.sm,
+        borderRadius: borderRadius.xl,
+        border: `1px solid ${token.colorBorder}`,
+        boxShadow: shadows.card,
+        background: `linear-gradient(135deg, ${token.colorBgContainer} 0%, ${token.colorPrimaryBg} 100%)`,
+        cursor: 'default',
+        overflow: 'hidden',
+        position: 'relative' as const,
+      },
+      selectCard: {
+        marginBottom: spacing.lg,
+        borderRadius: borderRadius.xl,
+        border: `1px solid ${token.colorBorder}`,
+        boxShadow: shadows.card,
+        background: token.colorBgContainer,
+      },
+      avatar: {
+        background: `linear-gradient(135deg, ${token.colorPrimary} 0%, ${token.colorPrimaryHover} 100%)`,
+        color: token.colorBgContainer,
+        fontSize: typography.fontSize.md,
+        fontWeight: typography.fontWeight.semibold,
+        boxShadow: shadows.sm,
+      },
+      indicator: {
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: spacing.xs,
+        padding: `${spacing.xs}px ${spacing.sm}px`,
+        borderRadius: borderRadius.md,
+        fontSize: typography.fontSize.xs,
+        fontWeight: typography.fontWeight.medium,
+      },
+    }),
+    [token],
+  );
 
-  const renderOption = (item: IProject) => {
-    const projectColors = [
+  const projectColors = useMemo(
+    () => [
       token.colorPrimary,
       token.colorSuccess,
       token.colorInfo,
@@ -53,24 +90,34 @@ const ProjectSelect: FC<IProps> = ({
       token.colorError,
       '#13c2c2',
       '#eb2f96',
-    ];
-    const colorIndex = item.id ? item.id % projectColors.length : 0;
+      '#722ed1',
+    ],
+    [token],
+  );
+
+  const getProjectColor = (id: number | undefined) => {
+    const colorIndex = id ? id % projectColors.length : 0;
+    return projectColors[colorIndex];
+  };
+
+  const renderOption = (item: IProject) => {
+    const color = getProjectColor(item.id);
 
     return {
       label: (
         <div
           style={{
             width: '100%',
-            padding: `${spacing.md}px ${spacing.xs}px`,
-            ...styleHelpers.transition(['background-color', 'transform']),
+            padding: `${spacing.sm}px ${spacing.xs}px`,
             borderRadius: borderRadius.md,
+            ...styleHelpers.transition(['background-color', 'transform']),
           }}
         >
           <Space align="center" size={spacing.md} style={{ width: '100%' }}>
             <Avatar
-              size="default"
+              size={36}
               style={{
-                backgroundColor: projectColors[colorIndex],
+                background: `linear-gradient(135deg, ${color} 0%, ${color}dd 100%)`,
                 color: token.colorBgContainer,
                 fontSize: typography.fontSize.sm,
                 fontWeight: typography.fontWeight.semibold,
@@ -125,36 +172,30 @@ const ProjectSelect: FC<IProps> = ({
     )
     .map(renderOption);
 
+  const currentProject = currentProjectId
+    ? projects.find((item) => item.id === currentProjectId)
+    : null;
+
   if (currentProject) {
-    const projectColors = [
-      token.colorPrimary,
-      token.colorSuccess,
-      token.colorInfo,
-      token.colorWarning,
-      token.colorError,
-      '#13c2c2',
-      '#eb2f96',
-    ];
-    const colorIndex = currentProject.id
-      ? currentProject.id % projectColors.length
-      : 0;
+    const color = getProjectColor(currentProject.id);
 
     return (
       <ProCard
         size="small"
-        style={{
-          width: '100%',
-          marginBottom: spacing.sm,
-          borderRadius: borderRadius.xl,
-          borderLeft: `4px solid ${token.colorPrimary}`,
-          border: `1px solid ${token.colorBorder}`,
-          boxShadow: shadows.card,
-          ...styleHelpers.transition(['box-shadow', 'transform']),
-          cursor: 'default',
-        }}
+        style={styles.projectCard}
         bodyStyle={{ padding: spacing.lg }}
         hoverable={false}
       >
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 3,
+            background: `linear-gradient(90deg, ${color} 0%, ${color}80 50%, ${color} 100%)`,
+          }}
+        />
         <div
           style={{
             display: 'flex',
@@ -165,13 +206,13 @@ const ProjectSelect: FC<IProps> = ({
         >
           <Space align="center" size={spacing.md}>
             <Avatar
-              size="large"
+              size={44}
               style={{
-                backgroundColor: projectColors[colorIndex],
+                background: `linear-gradient(135deg, ${color} 0%, ${color}dd 100%)`,
                 color: token.colorBgContainer,
-                fontSize: typography.fontSize.md,
-                fontWeight: typography.fontWeight.semibold,
-                boxShadow: shadows.sm,
+                fontSize: typography.fontSize.lg,
+                fontWeight: typography.fontWeight.bold,
+                boxShadow: shadows.md,
               }}
             >
               {currentProject.title?.charAt(0).toUpperCase()}
@@ -182,8 +223,8 @@ const ProjectSelect: FC<IProps> = ({
                 style={{
                   margin: 0,
                   fontWeight: typography.fontWeight.semibold,
-                  color: token.colorPrimary,
-                  fontSize: typography.fontSize.base,
+                  color: token.colorText,
+                  fontSize: typography.fontSize.md,
                   lineHeight: typography.lineHeight.tight,
                 }}
               >
@@ -213,7 +254,28 @@ const ProjectSelect: FC<IProps> = ({
               icon={<CloseOutlined />}
               onClick={() => onProjectChange(undefined)}
               style={{
-                ...styleHelpers.iconButton(token),
+                borderRadius: borderRadius.round,
+                width: 32,
+                height: 32,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: token.colorTextSecondary,
+                ...styleHelpers.transition([
+                  'background-color',
+                  'color',
+                  'transform',
+                ]),
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = token.colorErrorBg;
+                e.currentTarget.style.color = token.colorError;
+                e.currentTarget.style.transform = 'rotate(90deg)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.color = token.colorTextSecondary;
+                e.currentTarget.style.transform = 'rotate(0deg)';
               }}
             />
           </Tooltip>
@@ -225,32 +287,26 @@ const ProjectSelect: FC<IProps> = ({
   return (
     <ProCard
       size="small"
-      style={{
-        marginBottom: spacing.lg,
-        borderRadius: borderRadius.xl,
-        border: `1px solid ${token.colorBorder}`,
-        boxShadow: shadows.card,
-        ...styleHelpers.transition(['box-shadow']),
-      }}
+      style={styles.selectCard}
       bodyStyle={{ padding: `${spacing.xl}px ${spacing.lg}px` }}
     >
       <Space direction="vertical" style={{ width: '100%' }} size={spacing.lg}>
         <Space align="center" size={spacing.md}>
           <div
             style={{
-              width: 32,
-              height: 32,
-              borderRadius: borderRadius.md,
+              width: 36,
+              height: 36,
+              borderRadius: borderRadius.lg,
               background: `linear-gradient(135deg, ${token.colorPrimaryBg} 0%, ${token.colorPrimary} 100%)`,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              boxShadow: shadows.sm,
             }}
           >
-            <ProjectTwoTone
-              twoToneColor={token.colorPrimary}
+            <ProjectOutlined
               style={{
-                fontSize: typography.fontSize.xl,
+                fontSize: typography.fontSize.lg,
                 color: token.colorBgContainer,
               }}
             />
@@ -300,9 +356,10 @@ const ProjectSelect: FC<IProps> = ({
           onSearch={setSearchValue}
           filterOption={false}
           dropdownStyle={{
-            borderRadius: borderRadius.md,
+            borderRadius: borderRadius.lg,
             padding: `${spacing.sm}px 0`,
             boxShadow: shadows.dropdown,
+            border: `1px solid ${token.colorBorderSecondary}`,
           }}
           dropdownRender={(menu) => (
             <div>
@@ -314,10 +371,13 @@ const ProjectSelect: FC<IProps> = ({
                     color: token.colorTextSecondary,
                     fontWeight: typography.fontWeight.medium,
                     borderBottom: `1px solid ${token.colorBorder}`,
-                    backgroundColor: token.colorBgContainer,
+                    backgroundColor: token.colorBgLayout,
                   }}
                 >
-                  搜索结果 ({filteredOptions.length})
+                  <Space>
+                    <SearchOutlined />
+                    搜索结果 ({filteredOptions.length})
+                  </Space>
                 </div>
               )}
               {menu}
@@ -329,7 +389,7 @@ const ProjectSelect: FC<IProps> = ({
                     color: token.colorTextSecondary,
                     textAlign: 'center',
                     borderTop: `1px solid ${token.colorBorder}`,
-                    backgroundColor: token.colorBgContainer,
+                    backgroundColor: token.colorBgLayout,
                   }}
                 >
                   共有 {projects.length} 个项目
@@ -347,7 +407,7 @@ const ProjectSelect: FC<IProps> = ({
             style={{
               padding: `${spacing.md}px ${spacing.lg}px`,
               background: `linear-gradient(135deg, ${token.colorSuccessBg} 0%, ${token.colorSuccessBgHover} 100%)`,
-              borderRadius: borderRadius.md,
+              borderRadius: borderRadius.lg,
               border: `1px solid ${token.colorSuccessBorder}`,
               display: 'flex',
               alignItems: 'center',
@@ -359,15 +419,15 @@ const ProjectSelect: FC<IProps> = ({
                 width: 24,
                 height: 24,
                 borderRadius: borderRadius.round,
-                background: token.colorSuccess,
+                background: `linear-gradient(135deg, ${token.colorSuccess} 0%, ${token.colorSuccessActive} 100%)`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                boxShadow: shadows.sm,
               }}
             >
-              <ProjectTwoTone
-                twoToneColor={token.colorBgContainer}
-                style={{ fontSize: typography.fontSize.sm }}
+              <CheckCircleOutlined
+                style={{ fontSize: typography.fontSize.sm, color: '#fff' }}
               />
             </div>
             <Text

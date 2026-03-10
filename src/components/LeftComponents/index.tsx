@@ -5,7 +5,7 @@ import ModuleTree from '@/components/LeftComponents/ModuleTree';
 import ProjectSelect from '@/components/LeftComponents/ProjectSelect';
 import { ProCard } from '@ant-design/pro-components';
 import { Space, theme } from 'antd';
-import { FC, useEffect, useState } from 'react';
+import { FC, useEffect, useMemo, useState } from 'react';
 import {
   borderRadius,
   responsive,
@@ -29,6 +29,34 @@ const Index: FC<SelfProps> = (props) => {
   const [projects, setProjects] = useState<IProject[]>([]);
   const { token } = useToken();
 
+  const styles = useMemo(
+    () => ({
+      container: {
+        height: 'auto',
+        width: '100%',
+        borderRadius: borderRadius.xl,
+        boxShadow: shadows.card,
+        background: token.colorBgContainer,
+        ...styleHelpers.transition(['box-shadow']),
+        overflow: 'hidden',
+        position: 'relative' as const,
+      },
+      body: {
+        minHeight: '80vh',
+        padding: spacing.md,
+        [responsive.mobile]: {
+          padding: spacing.sm,
+        },
+      },
+      decorativeCircle: {
+        position: 'absolute' as const,
+        borderRadius: '50%',
+        pointerEvents: 'none' as const,
+      },
+    }),
+    [token],
+  );
+
   useEffect(() => {
     queryProject().then(async ({ data }) => {
       if (data && data.length > 0) {
@@ -39,28 +67,35 @@ const Index: FC<SelfProps> = (props) => {
   }, []);
 
   return (
-    <ProCard
-      style={{
-        height: 'auto',
-        width: '100%',
-        borderRadius: borderRadius.xl,
-        boxShadow: shadows.card,
-        background: token.colorBgContainer,
-        ...styleHelpers.transition(['box-shadow']),
-      }}
-      bodyStyle={{
-        minHeight: '80vh',
-        padding: spacing.md,
-        [responsive.mobile]: {
-          padding: spacing.sm,
-        },
-      }}
-    >
+    <ProCard style={styles.container} bodyStyle={styles.body}>
+      <div
+        style={{
+          ...styles.decorativeCircle,
+          top: -40,
+          right: -40,
+          width: 120,
+          height: 120,
+          background: `radial-gradient(circle, ${token.colorPrimaryBg} 0%, transparent 70%)`,
+          opacity: 0.5,
+        }}
+      />
+      <div
+        style={{
+          ...styles.decorativeCircle,
+          bottom: '20%',
+          left: -30,
+          width: 80,
+          height: 80,
+          background: `radial-gradient(circle, ${token.colorInfoBg} 0%, transparent 70%)`,
+          opacity: 0.4,
+        }}
+      />
+
       {projects.length > 0 ? (
         <Space
           direction={'vertical'}
           size={spacing.md}
-          style={{ width: '100%' }}
+          style={{ width: '100%', position: 'relative', zIndex: 1 }}
         >
           <ProjectSelect
             projects={projects}
