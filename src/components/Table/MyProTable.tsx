@@ -76,7 +76,7 @@ const MyProTable: FC<SelfProps> = (props) => {
         dataSource={dataSource}
         columns={columns}
         actionRef={actionRef}
-        cardBordered
+        // cardBordered
         scroll={{ x: 'max-content' }}
         request={request}
         editable={{

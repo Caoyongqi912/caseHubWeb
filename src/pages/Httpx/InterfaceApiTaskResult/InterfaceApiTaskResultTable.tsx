@@ -10,20 +10,15 @@ import { IInterfaceTaskResult } from '@/pages/Httpx/types';
 import { IJob } from '@/pages/Project/types';
 import { ModuleEnum } from '@/utils/config';
 import { fetchModulesEnum, pageData } from '@/utils/somefunc';
-import { ActionType, ProColumns } from '@ant-design/pro-components';
 import {
-  Button,
   CheckCircleOutlined,
   ClearOutlined,
   CloseCircleOutlined,
   DeleteOutlined,
   EyeOutlined,
-  message,
-  Popconfirm,
-  Space,
-  Tag,
-  theme,
-} from 'antd';
+} from '@ant-design/icons';
+import { ActionType, ProColumns } from '@ant-design/pro-components';
+import { Button, message, Popconfirm, Space, Tag, theme } from 'antd';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 interface SelfProps {
@@ -38,7 +33,6 @@ const InterfaceApiTaskResultTable: FC<SelfProps> = ({ apiCaseTaskId, job }) => {
   const [projectEnumMap, setProjectEnumMap] = useState<IObjGet>({});
   const [moduleEnum, setModuleEnum] = useState<IModuleEnum[]>([]);
   const [selectProjectId, setSelectProjectId] = useState<number>();
-  const [selectModuleId, setSelectModuleId] = useState<number>();
 
   useEffect(() => {
     if (apiCaseTaskId) {
@@ -72,7 +66,7 @@ const InterfaceApiTaskResultTable: FC<SelfProps> = ({ apiCaseTaskId, job }) => {
       const { code, data } = await pageInterTaskResult(searchData);
       return pageData(code, data);
     },
-    [apiCaseTaskId],
+    [apiCaseTaskId, job],
   );
 
   const styles = useMemo(
@@ -191,7 +185,6 @@ const InterfaceApiTaskResultTable: FC<SelfProps> = ({ apiCaseTaskId, job }) => {
       fieldProps: {
         onSelect: (value: number) => {
           setSelectProjectId(value);
-          setSelectModuleId(undefined);
         },
       },
     },
@@ -201,9 +194,6 @@ const InterfaceApiTaskResultTable: FC<SelfProps> = ({ apiCaseTaskId, job }) => {
       hideInTable: true,
       valueType: 'treeSelect',
       fieldProps: {
-        onSelect: (value: number) => {
-          setSelectModuleId(value);
-        },
         treeData: moduleEnum,
         fieldNames: {
           label: 'title',
@@ -371,14 +361,6 @@ const InterfaceApiTaskResultTable: FC<SelfProps> = ({ apiCaseTaskId, job }) => {
     },
   ];
 
-  const removeTaskResult = async (resultId: number) => {
-    const { code, msg } = await removeInterTaskResultDetail(resultId);
-    if (code === 0) {
-      message.success(msg);
-      actionRef.current?.reload();
-    }
-  };
-
   const removeTaskResults = async () => {
     if (apiCaseTaskId) {
       const { code, msg } = await removeAllTaskResults(apiCaseTaskId);
@@ -415,7 +397,6 @@ const InterfaceApiTaskResultTable: FC<SelfProps> = ({ apiCaseTaskId, job }) => {
 
   return (
     <MyProTable
-      polling={apiCaseTaskId ? false : 2}
       rowKey="uid"
       actionRef={actionRef}
       request={fetchResults}

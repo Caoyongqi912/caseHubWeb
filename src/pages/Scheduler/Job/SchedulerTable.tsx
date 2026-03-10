@@ -11,10 +11,31 @@ import TasksFiled from '@/pages/Scheduler/Job/TableField/TasksFiled';
 import TriggerType from '@/pages/Scheduler/Job/TableField/TriggerType';
 import { ModuleEnum } from '@/utils/config';
 import { pageData } from '@/utils/somefunc';
-import { PlusOutlined } from '@ant-design/icons';
+import {
+  ApiOutlined,
+  DeleteOutlined,
+  DesktopOutlined,
+  EditOutlined,
+  EnvironmentOutlined,
+  HistoryOutlined,
+  NumberOutlined,
+  PlusOutlined,
+  ScheduleOutlined,
+  UserOutlined,
+} from '@ant-design/icons';
 import { ActionType, ModalForm, ProColumns } from '@ant-design/pro-components';
-import { Button, Space, Tag } from 'antd';
-import React, { FC, useCallback, useEffect, useRef, useState } from 'react';
+import { Button, message, Popconfirm, Space, theme, Typography } from 'antd';
+import React, {
+  FC,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+
+const { useToken } = theme;
+const { Text } = Typography;
 
 interface SelfProps {
   currentProjectId?: number;
@@ -23,12 +44,132 @@ interface SelfProps {
 }
 
 const SchedulerTable: FC<SelfProps> = (props) => {
-  const actionRef = useRef<ActionType>(); //Table action 的引用，便于自定义触发
+  const { token } = useToken();
+  const actionRef = useRef<ActionType>();
   const { currentProjectId, currentModuleId, perKey } = props;
   const [modalVisit, setModalVisit] = useState(false);
   const [currentJob, setCurrentJob] = useState<IJob>();
   const [expandedRowKeys, setExpandedRowKeys] = useState<React.Key[]>([]);
   const [openTaskHistory, setOpenTaskHistory] = useState(false);
+
+  const styles = useMemo(
+    () => ({
+      idTag: {
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 4,
+        fontFamily: '"SF Mono", "Fira Code", "JetBrains Mono", monospace',
+        fontSize: 12,
+        fontWeight: 700,
+        padding: '4px 10px',
+        borderRadius: 6,
+        background: `linear-gradient(135deg, ${token.colorPrimaryBg} 0%, ${token.colorPrimaryBorder} 100%)`,
+        color: token.colorPrimary,
+        border: `1px solid ${token.colorPrimaryBorder}`,
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1)',
+        letterSpacing: '0.5px',
+      },
+      nameTag: {
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 6,
+        padding: '4px 12px',
+        borderRadius: 6,
+        backgroundColor: token.colorBgTextActive,
+        color: token.colorText,
+        fontSize: 13,
+        fontWeight: 500,
+        border: 'none',
+      },
+      typeTag: {
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 4,
+        padding: '4px 12px',
+        borderRadius: 6,
+        fontWeight: 500,
+        fontSize: 12,
+      },
+      envTag: {
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 4,
+        padding: '4px 10px',
+        borderRadius: 6,
+        fontSize: 12,
+        fontWeight: 500,
+      },
+      userTag: {
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 4,
+        padding: '4px 12px',
+        borderRadius: 16,
+        background: `linear-gradient(135deg, ${token.colorWarningBg} 0%, ${token.colorWarningBorder} 100%)`,
+        color: token.colorWarningText,
+        fontWeight: 500,
+        fontSize: 12,
+        border: `1px solid ${token.colorWarningBorder}`,
+      },
+      addBtn: {
+        height: 36,
+        padding: '0 16px',
+        borderRadius: 8,
+        fontWeight: 500,
+        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+      },
+    }),
+    [token],
+  );
+
+  const ActionButton: FC<{
+    icon: React.ReactNode;
+    label: string;
+    type?: 'primary' | 'success' | 'danger' | 'warning';
+    onClick?: () => void;
+  }> = ({ icon, label, type = 'primary', onClick }) => {
+    const colors = useMemo(
+      () => ({
+        primary: { color: token.colorPrimary, bg: token.colorPrimaryBg },
+        success: { color: token.colorSuccess, bg: token.colorSuccessBg },
+        danger: { color: token.colorError, bg: token.colorErrorBg },
+        warning: { color: token.colorWarning, bg: token.colorWarningBg },
+      }),
+      [token],
+    );
+
+    return (
+      <span
+        onClick={onClick}
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 4,
+          padding: '4px 8px',
+          borderRadius: 6,
+          fontSize: 13,
+          fontWeight: 500,
+          cursor: 'pointer',
+          color: colors[type].color,
+          backgroundColor: colors[type].bg,
+          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'translateY(-1px)';
+          e.currentTarget.style.boxShadow = `0 2px 8px ${colors[type].bg}`;
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'translateY(0)';
+          e.currentTarget.style.boxShadow = 'none';
+        }}
+      >
+        {icon}
+        {label}
+      </span>
+    );
+  };
+
   const columns: ProColumns<IJob>[] = [
     {
       title: '任务ID',
@@ -36,34 +177,58 @@ const SchedulerTable: FC<SelfProps> = (props) => {
       copyable: true,
       fixed: 'left',
       width: '10%',
-      render: (_, record) => <Tag color={'blue-inverse'}>{record.uid}</Tag>,
+      render: (_, record) => (
+        <span style={styles.idTag}>
+          <NumberOutlined style={{ fontSize: 11 }} />
+          {record.uid}
+        </span>
+      ),
     },
     {
       title: '任务名称',
       dataIndex: 'job_name',
       ellipsis: true,
       fixed: 'left',
-      width: '10%',
+      width: '12%',
       render: (_, record) => (
-        <Tag color={'blue-inverse'}>{record.job_name}</Tag>
+        <span style={styles.nameTag}>
+          <ScheduleOutlined
+            style={{ fontSize: 12, color: token.colorPrimary }}
+          />
+          {record.job_name}
+        </span>
       ),
     },
-
     {
       title: '任务类型',
       dataIndex: 'job_type',
-      width: '10%',
+      width: '8%',
       valueEnum: {
-        1: {
-          text: 'API',
-        },
-        2: {
-          text: 'UI',
-        },
+        1: { text: 'API' },
+        2: { text: 'UI' },
       },
-      render: (_, record) => (
-        <Tag color={'blue'}>{record.job_type === 1 ? 'API' : 'UI'}</Tag>
-      ),
+      render: (_, record) => {
+        const isApi = record.job_type === 1;
+        return (
+          <span
+            style={{
+              ...styles.typeTag,
+              backgroundColor: isApi ? token.colorInfoBg : token.colorSuccessBg,
+              border: `1px solid ${
+                isApi ? token.colorInfoBorder : token.colorSuccessBorder
+              }`,
+              color: isApi ? token.colorInfoText : token.colorSuccessText,
+            }}
+          >
+            {isApi ? (
+              <ApiOutlined style={{ fontSize: 11 }} />
+            ) : (
+              <DesktopOutlined style={{ fontSize: 11 }} />
+            )}
+            {isApi ? 'API' : 'UI'}
+          </span>
+        );
+      },
     },
     {
       title: '环境',
@@ -71,27 +236,39 @@ const SchedulerTable: FC<SelfProps> = (props) => {
       search: false,
       width: '8%',
       render: (_, record) => {
-        if (record.job_env_name) {
-          return <Tag color={'blue'}>{record.job_env_name}</Tag>;
-        } else {
-          return <Tag color={'blue'}>无</Tag>;
-        }
+        const hasEnv = !!record.job_env_name;
+        return (
+          <span
+            style={{
+              ...styles.envTag,
+              backgroundColor: hasEnv
+                ? token.colorPrimaryBg
+                : token.colorFillAlter,
+              border: `1px solid ${
+                hasEnv ? token.colorPrimaryBorder : token.colorBorderSecondary
+              }`,
+              color: hasEnv ? token.colorPrimary : token.colorTextSecondary,
+            }}
+          >
+            <EnvironmentOutlined style={{ fontSize: 11 }} />
+            {record.job_env_name || '无'}
+          </span>
+        );
       },
     },
     {
       title: '执行信息',
       dataIndex: 'job_trigger_type',
-      width: '20%',
+      width: '18%',
       search: false,
       render: (_, record) => (
         <TriggerType record={record} callback={reloadTable} />
       ),
     },
-
     {
       title: '参数',
       dataIndex: 'job_kwargs',
-      width: '20%',
+      width: '18%',
       search: false,
       render: (text, record) => (
         <JobParams callback={reloadTable} text={text} record={record} />
@@ -100,8 +277,7 @@ const SchedulerTable: FC<SelfProps> = (props) => {
     {
       title: '通知',
       dataIndex: 'job_notify_on',
-      width: '20%',
-
+      width: '14%',
       search: false,
       render: (_, record) => {
         return <Notify record={record} callback={reloadTable} />;
@@ -111,45 +287,61 @@ const SchedulerTable: FC<SelfProps> = (props) => {
       title: '创建人',
       dataIndex: 'creatorName',
       width: '10%',
-      render: (_, record) => <Tag color={'geekblue'}>{record.creatorName}</Tag>,
+      render: (_, record) => (
+        <span style={styles.userTag}>
+          <UserOutlined style={{ fontSize: 11 }} />
+          {record.creatorName}
+        </span>
+      ),
     },
     {
       title: '操作',
       valueType: 'option',
       key: 'option',
-      width: '10%',
+      width: '20%',
       fixed: 'right',
       render: (_, record) => (
-        <Space>
-          <a
+        <Space size={4}>
+          <ActionButton
+            icon={<EditOutlined style={{ fontSize: 12 }} />}
+            label="编辑"
             type="primary"
             onClick={() => {
               setCurrentJob(record);
               setModalVisit(true);
             }}
-          >
-            编辑
-          </a>
-          <a
+          />
+          <ActionButton
+            icon={<HistoryOutlined style={{ fontSize: 12 }} />}
+            label="历史"
+            type="warning"
             onClick={() => {
               setCurrentJob(record);
               setOpenTaskHistory(true);
             }}
-          >
-            执行历史
-          </a>
-          <a
-            onClick={async () => {
-              const { code } = await remove_aps_job({
+          />
+          <Popconfirm
+            title="确认删除？"
+            description="删除后数据将无法恢复"
+            okText="确认删除"
+            cancelText="取消"
+            okButtonProps={{ danger: true }}
+            onConfirm={async () => {
+              const { code, msg } = await remove_aps_job({
                 job_id: record.uid,
               });
               if (code === 0) {
+                message.success(msg || '删除成功');
                 reloadTable();
               }
             }}
           >
-            删除
-          </a>
+            <ActionButton
+              icon={<DeleteOutlined style={{ fontSize: 12 }} />}
+              label="删除"
+              type="danger"
+            />
+          </Popconfirm>
         </Space>
       ),
     },
@@ -202,6 +394,18 @@ const SchedulerTable: FC<SelfProps> = (props) => {
           return true;
         }}
         onOpenChange={setModalVisit}
+        title={
+          <span style={{ fontSize: 16, fontWeight: 600 }}>
+            {currentJob ? '编辑任务' : '添加任务'}
+          </span>
+        }
+        modalProps={{
+          centered: true,
+          styles: {
+            body: { padding: '24px 24px 12px' },
+            content: { borderRadius: 12 },
+          },
+        }}
       >
         <JobForm
           currentJob={currentJob}
@@ -234,14 +438,24 @@ const SchedulerTable: FC<SelfProps> = (props) => {
         request={fetchJobData}
         toolBarRender={() => [
           <Button
+            key="add"
             hidden={currentModuleId === undefined}
             type="primary"
+            icon={<PlusOutlined />}
             onClick={() => {
               setCurrentJob(undefined);
               setModalVisit(true);
             }}
+            style={styles.addBtn}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+            }}
           >
-            <PlusOutlined />
             添加任务
           </Button>,
         ]}
@@ -249,4 +463,5 @@ const SchedulerTable: FC<SelfProps> = (props) => {
     </>
   );
 };
+
 export default SchedulerTable;
