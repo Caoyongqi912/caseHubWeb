@@ -4,7 +4,7 @@ import MyProTable from '@/components/Table/MyProTable';
 import InterfaceApiTaskResultTable from '@/pages/Httpx/InterfaceApiTaskResult/InterfaceApiTaskResultTable';
 import PlayTaskResultTable from '@/pages/Play/PlayResult/PlayTaskResultTable';
 import { IJob } from '@/pages/Project/types';
-import JobForm from '@/pages/Scheduler/Job/JobForm';
+import JobDrawerForm from '@/pages/Scheduler/Job/JobDrawerForm';
 import JobParams from '@/pages/Scheduler/Job/TableField/JobParams';
 import Notify from '@/pages/Scheduler/Job/TableField/Notify';
 import TasksFiled from '@/pages/Scheduler/Job/TableField/TasksFiled';
@@ -13,17 +13,14 @@ import { ModuleEnum } from '@/utils/config';
 import { pageData } from '@/utils/somefunc';
 import {
   ApiOutlined,
-  DeleteOutlined,
   DesktopOutlined,
-  EditOutlined,
   EnvironmentOutlined,
-  HistoryOutlined,
   NumberOutlined,
   PlusOutlined,
   ScheduleOutlined,
   UserOutlined,
 } from '@ant-design/icons';
-import { ActionType, ModalForm, ProColumns } from '@ant-design/pro-components';
+import { ActionType, ProColumns } from '@ant-design/pro-components';
 import { Button, message, Popconfirm, Space, theme, Typography } from 'antd';
 import React, {
   FC,
@@ -47,7 +44,7 @@ const SchedulerTable: FC<SelfProps> = (props) => {
   const { token } = useToken();
   const actionRef = useRef<ActionType>();
   const { currentProjectId, currentModuleId, perKey } = props;
-  const [modalVisit, setModalVisit] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [currentJob, setCurrentJob] = useState<IJob>();
   const [expandedRowKeys, setExpandedRowKeys] = useState<React.Key[]>([]);
   const [openTaskHistory, setOpenTaskHistory] = useState(false);
@@ -124,11 +121,10 @@ const SchedulerTable: FC<SelfProps> = (props) => {
   );
 
   const ActionButton: FC<{
-    icon: React.ReactNode;
     label: string;
     type?: 'primary' | 'success' | 'danger' | 'warning';
     onClick?: () => void;
-  }> = ({ icon, label, type = 'primary', onClick }) => {
+  }> = ({ label, type = 'primary', onClick }) => {
     const colors = useMemo(
       () => ({
         primary: { color: token.colorPrimary, bg: token.colorPrimaryBg },
@@ -164,7 +160,6 @@ const SchedulerTable: FC<SelfProps> = (props) => {
           e.currentTarget.style.boxShadow = 'none';
         }}
       >
-        {icon}
         {label}
       </span>
     );
@@ -286,7 +281,6 @@ const SchedulerTable: FC<SelfProps> = (props) => {
     {
       title: '创建人',
       dataIndex: 'creatorName',
-      width: '10%',
       render: (_, record) => (
         <span style={styles.userTag}>
           <UserOutlined style={{ fontSize: 11 }} />
@@ -303,16 +297,14 @@ const SchedulerTable: FC<SelfProps> = (props) => {
       render: (_, record) => (
         <Space size={4}>
           <ActionButton
-            icon={<EditOutlined style={{ fontSize: 12 }} />}
             label="编辑"
             type="primary"
             onClick={() => {
               setCurrentJob(record);
-              setModalVisit(true);
+              setDrawerOpen(true);
             }}
           />
           <ActionButton
-            icon={<HistoryOutlined style={{ fontSize: 12 }} />}
             label="历史"
             type="warning"
             onClick={() => {
@@ -336,11 +328,7 @@ const SchedulerTable: FC<SelfProps> = (props) => {
               }
             }}
           >
-            <ActionButton
-              icon={<DeleteOutlined style={{ fontSize: 12 }} />}
-              label="删除"
-              type="danger"
-            />
+            <ActionButton label="删除" type="danger" />
           </Popconfirm>
         </Space>
       ),
@@ -351,11 +339,11 @@ const SchedulerTable: FC<SelfProps> = (props) => {
     reloadTable();
   }, [currentModuleId, currentProjectId]);
 
-  const reloadTable = () => {
+  function reloadTable() {
     actionRef.current?.reload();
     setExpandedRowKeys([]);
-    setModalVisit(false);
-  };
+    setDrawerOpen(false);
+  }
 
   const fetchJobData = useCallback(
     async (values: any) => {
@@ -386,34 +374,16 @@ const SchedulerTable: FC<SelfProps> = (props) => {
           <PlayTaskResultTable job={currentJob} />
         )}
       </MyDrawer>
-      <ModalForm
-        size={'small'}
-        open={modalVisit}
-        submitter={false}
-        onFinish={async () => {
-          return true;
-        }}
-        onOpenChange={setModalVisit}
-        title={
-          <span style={{ fontSize: 16, fontWeight: 600 }}>
-            {currentJob ? '编辑任务' : '添加任务'}
-          </span>
-        }
-        modalProps={{
-          centered: true,
-          styles: {
-            body: { padding: '24px 24px 12px' },
-            content: { borderRadius: 12 },
-          },
-        }}
-      >
-        <JobForm
+
+      <MyDrawer open={drawerOpen} setOpen={setDrawerOpen} width={'60%'}>
+        <JobDrawerForm
           currentJob={currentJob}
           callback={reloadTable}
           currentProjectId={currentProjectId}
           currentModuleId={currentModuleId}
         />
-      </ModalForm>
+      </MyDrawer>
+
       <MyProTable
         expandable={{
           fixed: 'left',
@@ -425,7 +395,6 @@ const SchedulerTable: FC<SelfProps> = (props) => {
             return <TasksFiled job_uid={record.uid} type={record.job_type} />;
           },
         }}
-        x={1500}
         persistenceKey={perKey}
         actionRef={actionRef}
         columns={columns}
@@ -444,7 +413,7 @@ const SchedulerTable: FC<SelfProps> = (props) => {
             icon={<PlusOutlined />}
             onClick={() => {
               setCurrentJob(undefined);
-              setModalVisit(true);
+              setDrawerOpen(true);
             }}
             style={styles.addBtn}
             onMouseEnter={(e) => {

@@ -1,22 +1,17 @@
 import { update_aps_job } from '@/api/base/aps';
 import AceCodeEditor from '@/components/CodeEditor/AceCodeEditor';
 import { IJob } from '@/pages/Project/types';
-import { EditOutlined, EyeOutlined, SettingOutlined } from '@ant-design/icons';
-import { ProCard } from '@ant-design/pro-components';
 import {
-  Button,
-  Col,
-  message,
-  Modal,
-  Row,
-  Space,
-  Tag,
-  Tooltip,
-  Typography,
-} from 'antd';
+  CodeOutlined,
+  EditOutlined,
+  SettingOutlined,
+  UnorderedListOutlined,
+} from '@ant-design/icons';
+import { Button, message, Modal, Radio, theme, Typography } from 'antd';
 import { FC, ReactNode, useMemo, useRef, useState } from 'react';
 
-const { Text, Link } = Typography;
+const { Text } = Typography;
+const { useToken } = theme;
 
 interface Props {
   text: ReactNode;
@@ -25,14 +20,15 @@ interface Props {
 }
 
 const JobParams: FC<Props> = ({ text, record, callback }) => {
+  const { token } = useToken();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editable, setEditable] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editValue, setEditValue] = useState('');
   const [showError, setShowError] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const [viewMode, setViewMode] = useState<'list' | 'editor'>('list');
   const timeoutRef = useRef<any>(null);
 
-  // 解析参数数据
   const params = useMemo(() => {
     try {
       let data = text;
@@ -40,527 +36,499 @@ const JobParams: FC<Props> = ({ text, record, callback }) => {
         data = JSON.parse(data);
       }
       return data;
-    } catch (error) {
+    } catch {
       return null;
     }
   }, [text]);
 
-  const getParamsInfo = useMemo(() => {
-    if (!params) {
-      return {
-        type: 'empty' as const,
-        count: 0,
-        hasMore: false,
-      };
-    }
-
-    // 判断类型和数量
-    const isArray = Array.isArray(params);
-    const totalCount = isArray ? params.length : Object.keys(params).length;
-
-    // 判断是否为键值对格式
-    let isKeyValue = false;
-    if (isArray && params.length > 0) {
-      const firstItem = params[0];
-      isKeyValue =
-        firstItem?.key !== undefined && firstItem?.value !== undefined;
-    }
-
-    return {
-      type: isKeyValue ? 'keyValue' : isArray ? 'array' : 'object',
-      count: totalCount,
-      hasMore: totalCount > 3,
-      isKeyValue,
-      isObject: !isArray,
-    };
-  }, [params]);
-  // 获取参数数量
-  const paramCount = useMemo(() => {
-    if (!params) return '0 个参数';
-    if (Array.isArray(params)) return `${params.length} 个参数`;
-    if (typeof params === 'object')
-      return `${Object.keys(params).length} 个参数`;
-    return '0 个参数';
-  }, [params]);
-
-  // 格式化显示的文本（截断过长文本）
-  const formatText = (text: any, maxLength = 15) => {
-    const str = String(text);
-    if (str.length <= maxLength) return str;
-    return str.slice(0, maxLength) + '...';
-  };
-
-  // 获取前3行数据
-  const firstParams = useMemo(() => {
+  const paramsList = useMemo(() => {
     if (!params) return [];
     if (Array.isArray(params)) {
-      return params.slice(0, 3);
+      return params
+        .filter(
+          (item: any) => item && typeof item === 'object' && 'key' in item,
+        )
+        .map((item: any) => ({
+          key: String(item.key ?? ''),
+          value: item.value,
+        }));
     }
     if (typeof params === 'object') {
-      return Object.entries(params).slice(0, 3);
+      return Object.entries(params).map(([key, value]) => ({ key, value }));
     }
     return [];
   }, [params]);
 
-  // 是否有更多数据
-  const hasMoreData = useMemo(() => {
-    if (!params) return false;
-    if (Array.isArray(params)) return params.length > 3;
-    if (typeof params === 'object') return Object.keys(params).length > 3;
-    return false;
-  }, [params]);
+  const paramsCount = paramsList.length;
 
-  // 渲染键值对项
-  const renderKeyValueItem = (item: any, index: number) => {
-    const keyText = formatText(item.key, 6);
-    const valueText = formatText(item.value, 12);
+  const styles = useMemo(
+    () => ({
+      container: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        padding: '4px 8px',
+        borderRadius: 8,
+        background: hovered ? token.colorPrimaryBg : 'transparent',
+        cursor: 'pointer',
+        transition: 'all 0.2s',
+      },
+      iconBox: {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 28,
+        height: 28,
+        borderRadius: 8,
+        background: 'linear-gradient(135deg, #722ed1 0%, #9254de 100%)',
+        boxShadow: '0 2px 8px rgba(114, 46, 209, 0.35)',
+        flexShrink: 0,
+      },
+      contentBox: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: 6,
+      },
+      label: {
+        fontSize: 12,
+        color: token.colorTextSecondary,
+        fontWeight: 500,
+      },
+      countBadge: {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minWidth: 20,
+        height: 20,
+        padding: '0 6px',
+        borderRadius: 10,
+        background: 'linear-gradient(135deg, #722ed1 0%, #9254de 100%)',
+        color: '#fff',
+        fontSize: 11,
+        fontWeight: 600,
+      },
+      emptyBtn: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        padding: '4px 10px',
+        borderRadius: 8,
+        background: hovered ? token.colorPrimaryBg : token.colorFillAlter,
+        border: `1px dashed ${token.colorBorderSecondary}`,
+        cursor: 'pointer',
+        transition: 'all 0.2s',
+      },
+      emptyIcon: {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 24,
+        height: 24,
+        borderRadius: 6,
+        background: token.colorFillSecondary,
+      },
+      emptyText: {
+        fontSize: 12,
+        color: token.colorTextSecondary,
+      },
+      modalContent: {
+        display: 'flex',
+        flexDirection: 'column' as const,
+        gap: 16,
+        minHeight: 400,
+      },
+      listContainer: {
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column' as const,
+        gap: 8,
+      },
+      listTitle: {
+        fontSize: 14,
+        fontWeight: 600,
+        color: token.colorText,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+      },
+      listCount: {
+        padding: '4px 12px',
+        borderRadius: 6,
+        background: 'linear-gradient(135deg, #722ed1 0%, #531dab 100%)',
+        color: '#fff',
+        fontSize: 12,
+        fontWeight: 600,
+      },
+      paramRow: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        padding: '8px 12px',
+        borderRadius: 6,
+        background: token.colorBgContainer,
+        border: `1px solid ${token.colorBorderSecondary}`,
+      },
+      paramIndex: {
+        width: 24,
+        height: 24,
+        borderRadius: 6,
+        background: 'linear-gradient(135deg, #722ed1 0%, #531dab 100%)',
+        color: '#fff',
+        fontSize: 12,
+        fontWeight: 600,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0,
+      },
+      paramContent: {
+        flex: 1,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        fontSize: 13,
+      },
+      paramKeyBox: {
+        padding: '4px 12px',
+        borderRadius: 6,
+        background: token.colorFillAlter,
+        border: `1px solid ${token.colorBorderSecondary}`,
+        color: '#722ed1',
+        fontSize: 13,
+        fontWeight: 600,
+        fontFamily: 'monospace',
+      },
+      paramValueBox: {
+        flex: 1,
+        padding: '4px 12px',
+        borderRadius: 6,
+        background: token.colorFillAlter,
+        border: `1px solid ${token.colorBorderSecondary}`,
+        color: token.colorText,
+        fontSize: 13,
+        fontFamily: 'monospace',
+      },
+      editorContainer: {
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column' as const,
+      },
+      editorHeader: {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '12px 16px',
+        background: token.colorFillAlter,
+        borderRadius: 8,
+        border: `1px solid ${token.colorBorderSecondary}`,
+      },
+      viewToggle: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+      },
+      viewToggleLabel: {
+        fontSize: 13,
+        color: token.colorText,
+      },
+    }),
+    [token, hovered],
+  );
 
-    return (
-      <Row
-        key={index}
-        align="middle"
-        style={{
-          padding: '1px 0',
-          minHeight: '20px',
-          fontSize: '11px',
-          width: '100%',
-        }}
-      >
-        {/* Key列 - 固定宽度 */}
-        <Col
-          flex="80px"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
-            overflow: 'hidden',
-          }}
-        >
-          <Tooltip title={item.key}>
-            <Tag
-              color="purple"
-              style={{
-                margin: 0,
-                width: '100%',
-                fontSize: '10px',
-                height: '18px',
-                lineHeight: '16px',
-                padding: '0 4px',
-                overflow: 'hidden',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <span
-                style={{
-                  display: 'inline-block',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  width: '100%',
-                  textAlign: 'center',
-                }}
-              >
-                {keyText}
-              </span>
-            </Tag>
-          </Tooltip>
-          <span
-            style={{
-              color: '#bfbfbf',
-              flexShrink: 0,
-            }}
-          >
-            :
-          </span>
-        </Col>
-
-        {/* Value列 - 自适应宽度 */}
-        <Col
-          flex="auto"
-          style={{
-            overflow: 'hidden',
-            paddingLeft: '4px',
-          }}
-        >
-          <Tooltip title={item.value}>
-            <Text
-              ellipsis={{ tooltip: item.value }}
-              style={{
-                display: 'block',
-                margin: 0,
-                fontSize: '11px',
-                lineHeight: '18px',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {valueText}
-            </Text>
-          </Tooltip>
-        </Col>
-      </Row>
-    );
+  const handleOpenModal = (editMode: boolean = false) => {
+    setIsModalOpen(true);
+    setIsEditMode(editMode);
+    if (editMode) {
+      setEditValue(params ? JSON.stringify(params, null, 2) : '[]');
+    }
   };
-  // 渲染对象键值对
-  const renderObjectItem = ([key, value]: [string, any], index: number) => {
-    const keyText = formatText(key, 12);
-    const valueText = formatText(value, 30);
 
-    return (
-      <Row
-        key={index}
-        align="middle"
-        gutter={[4, 0]}
-        style={{
-          padding: '1px 0',
-          minHeight: '20px',
-          fontSize: '11px',
-        }}
-      >
-        <Col
-          flex="none"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            height: '18px',
-          }}
-        >
-          <Tooltip title={key}>
-            <Tag
-              color="blue"
-              style={{
-                margin: 0,
-                maxWidth: '80px',
-                fontSize: '10px',
-                height: '18px',
-                lineHeight: '16px',
-                padding: '0 4px',
-                overflow: 'hidden',
-                display: 'inline-flex',
-                alignItems: 'center',
-              }}
-            >
-              <span
-                style={{
-                  display: 'inline-block',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  maxWidth: '70px',
-                }}
-              >
-                {keyText}
-              </span>
-            </Tag>
-          </Tooltip>
-          <span
-            style={{
-              margin: '0 4px',
-              color: '#bfbfbf',
-              flexShrink: 0,
-            }}
-          >
-            :
-          </span>
-        </Col>
-        <Col flex="auto" style={{ overflow: 'hidden' }}>
-          <Tooltip title={value}>
-            <Text
-              ellipsis={{ tooltip: value }}
-              style={{
-                display: 'block',
-                margin: 0,
-                fontSize: '11px',
-                lineHeight: '18px',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {valueText}
-            </Text>
-          </Tooltip>
-        </Col>
-      </Row>
-    );
-  };
-  const renderSimpleItem = (item: any, index: number) => {
-    const text = formatText(item, 30);
-
-    return (
-      <div
-        key={index}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          padding: '1px 0',
-          minHeight: '20px',
-          fontSize: '11px',
-        }}
-      >
-        <Tooltip title={item}>
-          <Text
-            ellipsis={{ tooltip: item }}
-            style={{
-              margin: 0,
-              fontSize: '11px',
-              lineHeight: '18px',
-              paddingLeft: '20px', // 为了对齐，添加左边距
-              flex: 1,
-              wordBreak: 'break-all',
-            }}
-          >
-            {text}
-          </Text>
-        </Tooltip>
-      </div>
-    );
-  };
-  // 渲染前三行数据
-  const renderFirstThree = () => {
-    if (!firstParams.length) return null;
-    const { type } = getParamsInfo;
-
-    return (
-      <ProCard size={'small'}>
-        {firstParams.map((item, index) => {
-          console.log('=====', type);
-          switch (type) {
-            case 'keyValue':
-              return renderKeyValueItem(item, index);
-            case 'object':
-              return renderObjectItem(item as [string, any], index);
-            default:
-              return renderSimpleItem(item, index);
-          }
-        })}
-
-        {getParamsInfo.hasMore && (
-          <div
-            style={{
-              padding: '2px 0',
-              fontSize: '10px',
-              color: '#8c8c8c',
-              textAlign: 'center',
-            }}
-          >
-            ...还有{getParamsInfo.count - 3}个参数
-          </div>
-        )}
-      </ProCard>
+  const validateParamsFormat = (data: any): boolean => {
+    if (!Array.isArray(data)) return false;
+    return data.every(
+      (item) =>
+        item &&
+        typeof item === 'object' &&
+        'key' in item &&
+        'value' in item &&
+        typeof item.key === 'string',
     );
   };
 
-  // 处理保存编辑
   const handleSaveEdit = async () => {
     clearTimeout(timeoutRef.current);
-
     try {
       const parsedValue = JSON.parse(editValue);
-      // @ts-ignore
+      if (!validateParamsFormat(parsedValue)) {
+        message.error(
+          '格式错误：必须是 [{key: "参数名", value: "参数值"}, ...] 格式',
+        );
+        return;
+      }
       const { code } = await update_aps_job({
         job_kwargs: parsedValue,
         uid: record.uid,
-      });
+      } as any);
       if (code === 0) {
         setIsEditMode(false);
         setIsModalOpen(false);
         setShowError(false);
-        message.success('参数保存成功');
+        message.success('保存成功');
         callback();
       }
-    } catch (error) {
+    } catch {
       setShowError(true);
-      timeoutRef.current = setTimeout(() => {
-        setShowError(false);
-      }, 3000);
+      timeoutRef.current = setTimeout(() => setShowError(false), 3000);
     }
   };
 
-  return (
-    <>
-      {!params ? (
-        <ProCard
-          size="small"
-          layout="center"
-          style={{
-            borderRadius: '6px',
-            cursor: 'pointer',
-            height: '50px',
-          }}
-          bodyStyle={{
-            padding: '8px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+  const renderParamList = () => {
+    if (!paramsList.length) return null;
+    return paramsList.map((item, index) => (
+      <div key={index} style={styles.paramRow}>
+        <div style={styles.paramIndex}>{index + 1}</div>
+        <div style={styles.paramContent}>
+          <div style={styles.paramKeyBox}>{item.key}</div>
+          <div style={styles.paramValueBox}>{String(item.value)}</div>
+        </div>
+      </div>
+    ));
+  };
+
+  if (paramsCount === 0) {
+    return (
+      <>
+        <div
+          style={styles.emptyBtn}
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleOpenModal(true);
           }}
         >
-          <Space direction="vertical" align="center" size={2}>
-            <Text type="secondary" style={{ fontSize: '10px' }}>
-              无参数配置
-            </Text>
-            <Link
-              style={{ fontSize: '12px' }}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setIsModalOpen(true);
-                setEditable(true);
-              }}
-            >
-              添加
-            </Link>
-          </Space>
-        </ProCard>
-      ) : (
-        <>
-          {/* 参数展示卡片 */}
-          <ProCard
-            size={'small'}
-            split={'horizontal'}
+          <div style={styles.emptyIcon}>
+            <CodeOutlined
+              style={{ fontSize: 11, color: token.colorTextSecondary }}
+            />
+          </div>
+          <span style={styles.emptyText}>无参数</span>
+          <EditOutlined
             style={{
-              padding: '3px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '8px',
+              fontSize: 10,
+              color: token.colorTextSecondary,
+              marginLeft: 'auto',
             }}
-          >
-            {/* 标题区域 */}
-            <Tag
-              icon={<SettingOutlined />}
-              color="#722ed1"
-              style={{
-                fontSize: '11px',
-                flex: 1,
-                fontWeight: 500,
-                marginBottom: '4px',
-              }}
-            >
-              {paramCount}
-            </Tag>
-            {/* 参数内容 */}
-            {renderFirstThree()}
+          />
+        </div>
 
-            {/* 查看更多按钮 */}
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'center',
-                marginTop: '6px',
-              }}
-            >
-              <a
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setIsModalOpen(true);
-                  setEditable(true);
-                }}
-                style={{
-                  fontSize: '10px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '2px',
-                }}
-              >
-                <EyeOutlined style={{ fontSize: '10px' }} />
-                {hasMoreData ? '查看全部' : '查看详情'}
-                {editable && '/编辑'}
-              </a>
-            </div>
-          </ProCard>
-        </>
-      )}
-
-      {/* 模态框 */}
-      <>
         <Modal
-          title={'参数详情'}
+          title="参数配置"
           open={isModalOpen}
           onCancel={() => {
             setIsModalOpen(false);
             setIsEditMode(false);
             setShowError(false);
           }}
-          footer={
-            isEditMode
-              ? [
-                  <Button
-                    key="cancel"
-                    onClick={() => {
-                      setIsEditMode(false);
-                      setShowError(false);
-                    }}
-                  >
-                    取消编辑
-                  </Button>,
-                  <Button key="save" type="primary" onClick={handleSaveEdit}>
-                    保存
-                  </Button>,
-                ]
-              : [
-                  <Button key="close" onClick={() => setIsModalOpen(false)}>
-                    关闭
-                  </Button>,
-                  <Button
-                    key="edit"
-                    type="primary"
-                    icon={<EditOutlined />}
-                    onClick={() => {
-                      setEditable(true);
-                      setEditValue(JSON.stringify(params, null, 2));
-                      setIsEditMode(true);
-                    }}
-                  >
-                    编辑
-                  </Button>,
-                ]
-          }
+          footer={[
+            <Button
+              key="cancel"
+              onClick={() => {
+                setIsModalOpen(false);
+                setShowError(false);
+              }}
+            >
+              取消
+            </Button>,
+            <Button key="save" type="primary" onClick={handleSaveEdit}>
+              保存
+            </Button>,
+          ]}
           width={800}
           destroyOnClose
         >
-          <div style={{ marginTop: '12px' }}>
-            {showError ? (
+          <div style={styles.modalContent}>
+            <div style={styles.editorHeader}>
+              <div style={styles.listTitle}>
+                <CodeOutlined
+                  style={{ fontSize: 14, color: token.colorPrimary }}
+                />
+                <span>JSON 编辑器</span>
+              </div>
+            </div>
+            {showError && (
               <div
                 style={{
                   color: '#ff4d4f',
-                  marginBottom: '8px',
-                  padding: '8px',
-                  backgroundColor: '#fff2f0',
-                  borderRadius: '4px',
-                  border: '1px solid #ffccc7',
-                  fontSize: '13px',
+                  padding: 8,
+                  background: '#fff2f0',
+                  borderRadius: 4,
+                  fontSize: 13,
                 }}
               >
                 JSON格式错误，请检查语法
               </div>
-            ) : (
-              <Text type={'secondary'}>{`格式要求：[{key:xx,value:xx}]`} </Text>
             )}
-            {isEditMode ? (
+            <Text
+              type="secondary"
+              style={{ marginBottom: 8, display: 'block' }}
+            >
+              格式要求：[&#123;"key": "参数名", "value": "参数值"&#125;]
+            </Text>
+            <AceCodeEditor
+              readonly={false}
+              _mode="json"
+              value={editValue}
+              onChange={(value) => {
+                setEditValue(value);
+                setShowError(false);
+              }}
+              height="350px"
+            />
+          </div>
+        </Modal>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <div
+        style={styles.container}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          handleOpenModal(false);
+        }}
+      >
+        <div style={styles.iconBox}>
+          <SettingOutlined style={{ fontSize: 13, color: '#fff' }} />
+        </div>
+        <div style={styles.contentBox}>
+          <span style={styles.label}>参数 x</span>
+          <span style={styles.countBadge}>{paramsCount}</span>
+        </div>
+      </div>
+
+      <Modal
+        title="参数详情"
+        open={isModalOpen}
+        onCancel={() => {
+          setIsModalOpen(false);
+          setIsEditMode(false);
+          setShowError(false);
+        }}
+        footer={
+          isEditMode
+            ? [
+                <Button
+                  key="cancel"
+                  onClick={() => {
+                    setIsEditMode(false);
+                    setShowError(false);
+                  }}
+                >
+                  取消
+                </Button>,
+                <Button key="save" type="primary" onClick={handleSaveEdit}>
+                  保存
+                </Button>,
+              ]
+            : [
+                <Button key="close" onClick={() => setIsModalOpen(false)}>
+                  关闭
+                </Button>,
+                <Button
+                  key="edit"
+                  type="primary"
+                  icon={<EditOutlined />}
+                  onClick={() => {
+                    setEditValue(JSON.stringify(params, null, 2));
+                    setIsEditMode(true);
+                  }}
+                >
+                  编辑
+                </Button>,
+              ]
+        }
+        width={800}
+        destroyOnClose
+      >
+        <div style={styles.modalContent}>
+          <div style={styles.editorHeader}>
+            <div style={styles.listTitle}>
+              {viewMode === 'list' ? (
+                <UnorderedListOutlined
+                  style={{ fontSize: 14, color: token.colorPrimary }}
+                />
+              ) : (
+                <CodeOutlined
+                  style={{ fontSize: 14, color: token.colorPrimary }}
+                />
+              )}
+              <span>{viewMode === 'list' ? '参数列表' : 'JSON 编辑器'}</span>
+            </div>
+            <div style={styles.viewToggle}>
+              <span style={styles.viewToggleLabel}>视图：</span>
+              <Radio.Group
+                value={viewMode}
+                onChange={(e) => setViewMode(e.target.value)}
+                optionType="button"
+                buttonStyle="solid"
+                size="small"
+              >
+                <Radio.Button value="list">列表</Radio.Button>
+                <Radio.Button value="editor">编辑器</Radio.Button>
+              </Radio.Group>
+              {viewMode === 'list' && (
+                <span style={styles.listCount}>{paramsCount}</span>
+              )}
+            </div>
+          </div>
+
+          {viewMode === 'list' ? (
+            <div style={styles.listContainer}>{renderParamList()}</div>
+          ) : (
+            <div style={styles.editorContainer}>
+              {showError && (
+                <div
+                  style={{
+                    color: '#ff4d4f',
+                    marginBottom: 8,
+                    padding: 8,
+                    background: '#fff2f0',
+                    borderRadius: 4,
+                    fontSize: 13,
+                  }}
+                >
+                  JSON格式错误，请检查语法
+                </div>
+              )}
+              {!showError && !isEditMode && (
+                <Text
+                  type="secondary"
+                  style={{ marginBottom: 8, display: 'block' }}
+                >
+                  格式要求：[&#123;"key": "参数名", "value": "参数值"&#125;]
+                </Text>
+              )}
               <AceCodeEditor
+                readonly={!isEditMode}
                 _mode="json"
-                value={editValue}
+                value={isEditMode ? editValue : JSON.stringify(params, null, 2)}
                 onChange={(value) => {
                   setEditValue(value);
                   setShowError(false);
                 }}
-                height="400px"
+                height="350px"
               />
-            ) : (
-              <AceCodeEditor
-                readonly={true}
-                _mode="json"
-                value={JSON.stringify(params, null, 2)}
-                height="400px"
-              />
-            )}
-          </div>
-        </Modal>
-      </>
+            </div>
+          )}
+        </div>
+      </Modal>
     </>
   );
 };
