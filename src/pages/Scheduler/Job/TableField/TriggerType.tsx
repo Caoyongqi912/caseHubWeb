@@ -2,7 +2,6 @@ import { IObjGet } from '@/api';
 import { switch_job, update_aps_job } from '@/api/base/aps';
 import MyModal from '@/components/MyModal';
 import { IJob } from '@/pages/Project/types';
-import TriggerTypeForm from '@/pages/Scheduler/Job/JobForm/TriggerTypeForm';
 import {
   CheckCircleOutlined,
   ClockCircleOutlined,
@@ -10,8 +9,19 @@ import {
   FieldTimeOutlined,
   SyncOutlined,
 } from '@ant-design/icons';
-import { Form, Switch, theme, Tooltip, Typography } from 'antd';
-import { FC, useMemo, useState } from 'react';
+import {
+  DatePicker,
+  Form,
+  InputNumber,
+  message,
+  Select,
+  Switch,
+  theme,
+  Tooltip,
+  Typography,
+} from 'antd';
+import moment from 'moment';
+import { FC, useEffect, useMemo, useState } from 'react';
 
 const { Text } = Typography;
 const { useToken } = theme;
@@ -59,15 +69,22 @@ const TRIGGER_CONFIG: Record<number, any> = {
   },
 };
 
-const TriggerType: FC<{
-  record: IJob;
-  callback: () => void;
-}> = ({ record, callback }) => {
+const TriggerType: FC<{ record: IJob; callback: () => void }> = ({
+  record,
+  callback,
+}) => {
   const { token } = useToken();
   const [form] = Form.useForm();
   const [hovered, setHovered] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [triggerType, setTriggerType] = useState(record.job_trigger_type ?? 1);
 
-  const triggerType = record.job_trigger_type;
+  useEffect(() => {
+    if (!record) return;
+    form.setFieldsValue(record);
+    setTriggerType(record.job_trigger_type ?? 1);
+  }, [record, form]);
+
   const config = TRIGGER_CONFIG[triggerType] || TRIGGER_CONFIG[1];
 
   const styles = useMemo(
@@ -175,13 +192,27 @@ const TriggerType: FC<{
         boxShadow: `0 2px 6px ${token.colorPrimary}30`,
         transition: 'all 0.2s',
       },
+      formItem: {
+        marginBottom: 16,
+      },
+      formLabel: {
+        marginBottom: 8,
+        fontWeight: 500,
+        color: token.colorText,
+      },
+      formRow: {
+        display: 'flex',
+        gap: 16,
+      },
+      formRowItem: {
+        flex: 1,
+      },
     }),
     [token, config, triggerType, record.job_enabled],
   );
 
   const formatNextRunTime = (time: string) => {
     if (!time) return { display: '无计划', short: '-', isFuture: false };
-
     const date = new Date(time);
     const now = new Date();
     const diffMs = date.getTime() - now.getTime();
@@ -217,15 +248,169 @@ const TriggerType: FC<{
   const nextRunInfo = formatNextRunTime(record.next_run_time || '');
 
   const updateJobTrigger = async (values: any) => {
-    const { code } = await update_aps_job({
-      ...values,
-      uid: record.uid,
-    });
+    const { code } = await update_aps_job({ ...values, uid: record.uid });
     if (code === 0) {
+      message.success('保存成功');
       callback();
     }
     return true;
   };
+
+  const renderForm = () => (
+    <>
+      <div style={styles.formRow}>
+        <div style={styles.formRowItem}>
+          <div style={styles.formLabel}>触发类型</div>
+          <Select
+            value={triggerType}
+            onChange={(value) => {
+              setTriggerType(value);
+              form.setFieldsValue({ job_trigger_type: value });
+            }}
+            options={[
+              { label: '单次执行', value: 1 },
+              { label: '周期执行', value: 2 },
+              { label: '固定频率', value: 3 },
+            ]}
+          />
+          <Form.Item name="job_trigger_type" noStyle>
+            <input type="hidden" />
+          </Form.Item>
+        </div>
+
+        <div style={styles.formRowItem}>
+          <div style={styles.formLabel}>执行策略</div>
+          <Select
+            defaultValue={record.job_execute_strategy ?? 2}
+            onChange={(value) =>
+              form.setFieldsValue({ job_execute_strategy: value })
+            }
+            options={[
+              { label: '并行执行', value: 2 },
+              { label: '跳过执行', value: 1 },
+              { label: '等待执行', value: 3 },
+            ]}
+          />
+          <Form.Item name="job_execute_strategy" noStyle>
+            <input type="hidden" />
+          </Form.Item>
+        </div>
+      </div>
+
+      {triggerType === 1 && (
+        <div style={styles.formItem}>
+          <div style={styles.formLabel}>执行时间</div>
+          <DatePicker
+            showTime
+            format="YYYY-MM-DD HH:mm:ss"
+            style={{ width: '100%' }}
+            disabledDate={(current) =>
+              current && current < moment().startOf('day')
+            }
+            onChange={(_, dateString) =>
+              form.setFieldsValue({ job_execute_time: dateString })
+            }
+          />
+          <Form.Item name="job_execute_time" noStyle>
+            <input type="hidden" />
+          </Form.Item>
+        </div>
+      )}
+
+      {triggerType === 2 && (
+        <div style={styles.formItem}>
+          <div style={styles.formLabel}>Cron表达式</div>
+          <Select
+            placeholder="例如: 0 0 12 * * ?"
+            onChange={(value) =>
+              form.setFieldsValue({ job_execute_cron: value })
+            }
+            options={[
+              { label: '每分钟 (0 * * * * *)', value: '0 * * * * *' },
+              { label: '每小时 (0 0 * * * *)', value: '0 0 * * * *' },
+              { label: '每天12点 (0 0 12 * * *)', value: '0 0 12 * * *' },
+            ]}
+            showSearch
+            allowClear
+          />
+          <Form.Item name="job_execute_cron" noStyle>
+            <input type="hidden" />
+          </Form.Item>
+        </div>
+      )}
+
+      {triggerType === 3 && (
+        <div style={styles.formRow}>
+          <div style={styles.formRowItem}>
+            <div style={styles.formLabel}>执行间隔</div>
+            <InputNumber
+              min={1}
+              max={2000}
+              style={{ width: '100%' }}
+              addonAfter={
+                <Select
+                  defaultValue={record.job_execute_interval_unit ?? 'seconds'}
+                  style={{ width: 60 }}
+                  onChange={(value) =>
+                    form.setFieldsValue({ job_execute_interval_unit: value })
+                  }
+                  options={[
+                    { label: '秒', value: 'seconds' },
+                    { label: '分', value: 'minutes' },
+                    { label: '时', value: 'hours' },
+                    { label: '周', value: 'weeks' },
+                  ]}
+                />
+              }
+              onChange={(value) =>
+                form.setFieldsValue({ job_execute_interval: value })
+              }
+            />
+            <Form.Item name="job_execute_interval" noStyle>
+              <input type="hidden" />
+            </Form.Item>
+            <Form.Item name="job_execute_interval_unit" noStyle>
+              <input type="hidden" />
+            </Form.Item>
+          </div>
+        </div>
+      )}
+
+      <div style={styles.formRow}>
+        <div style={styles.formRowItem}>
+          <div style={styles.formLabel}>最大重试次数</div>
+          <InputNumber
+            min={0}
+            max={10}
+            style={{ width: '100%' }}
+            defaultValue={record.job_max_retry_count ?? 0}
+            onChange={(value) =>
+              form.setFieldsValue({ job_max_retry_count: value })
+            }
+          />
+          <Form.Item name="job_max_retry_count" noStyle>
+            <input type="hidden" />
+          </Form.Item>
+        </div>
+
+        <div style={styles.formRowItem}>
+          <div style={styles.formLabel}>重试间隔(秒)</div>
+          <InputNumber
+            min={0}
+            max={3600}
+            style={{ width: '100%' }}
+            defaultValue={record.job_retry_interval ?? 60}
+            onChange={(value) =>
+              form.setFieldsValue({ job_retry_interval: value })
+            }
+          />
+          <Form.Item name="job_retry_interval" noStyle>
+            <input type="hidden" />
+          </Form.Item>
+        </div>
+      </div>
+    </>
+  );
 
   return (
     <div
@@ -279,25 +464,31 @@ const TriggerType: FC<{
                 job_id: record.uid,
                 enable: checked,
               });
-              if (code === 0) {
-                callback();
-              }
+              if (code === 0) callback();
             }}
           />
         </div>
 
-        <MyModal
-          onFinish={updateJobTrigger}
-          trigger={
-            <div style={{ ...styles.editBtn, opacity: hovered ? 1 : 0 }}>
-              <EditOutlined style={{ fontSize: 11 }} />
-            </div>
-          }
-          form={form}
+        <div
+          style={{ ...styles.editBtn, opacity: hovered ? 1 : 0 }}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setOpen(true);
+          }}
         >
-          <TriggerTypeForm />
-        </MyModal>
+          <EditOutlined style={{ fontSize: 11 }} />
+        </div>
       </div>
+
+      <MyModal
+        onFinish={updateJobTrigger}
+        setOpen={setOpen}
+        open={open}
+        form={form}
+      >
+        {renderForm()}
+      </MyModal>
     </div>
   );
 };

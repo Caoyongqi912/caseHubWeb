@@ -1,9 +1,14 @@
 import { IObjGet } from '@/api';
 import { update_aps_job } from '@/api/base/aps';
+import { queryPushConfig } from '@/api/base/pushConfig';
 import MyModal from '@/components/MyModal';
 import { IJob } from '@/pages/Project/types';
-import NotifyForm from '@/pages/Scheduler/Job/JobForm/NotifyForm';
 import { BellOutlined, EditOutlined } from '@ant-design/icons';
+import {
+  ProFormDependency,
+  ProFormRadio,
+  ProFormSelect,
+} from '@ant-design/pro-components';
 import { Form, message, theme, Typography } from 'antd';
 import { FC, useEffect, useMemo, useState } from 'react';
 
@@ -20,11 +25,20 @@ const Notify: FC<Props> = ({ record, callback }) => {
   const [form] = Form.useForm();
   const [open, setOpen] = useState(false);
   const [hovered, setHovered] = useState(false);
+  const [notifyType, setNotifyType] = useState(record.job_notify_type ?? 1);
+  const [pushOptions, setPushOptions] = useState<
+    { value: number; label: string }[]
+  >([]);
 
   useEffect(() => {
-    if (!record) return;
-    form.setFieldsValue(record);
-  }, [record]);
+    queryPushConfig().then(({ code, data }) => {
+      if (code === 0 && data?.length > 0) {
+        setPushOptions(
+          data.map((item) => ({ label: item.push_name, value: item.id })),
+        );
+      }
+    });
+  }, []);
 
   const notifyTypeConfig: IObjGet = {
     0: {
@@ -108,19 +122,62 @@ const Notify: FC<Props> = ({ record, callback }) => {
 
   const handleOpenModal = () => {
     setOpen(true);
+    setNotifyType(record.job_notify_type ?? 1);
   };
 
-  const updateJobNotify = async (values: IJob) => {
-    const { code } = await update_aps_job({
-      ...values,
-      uid: record.uid,
-    });
+  const updateJobNotify = async (values: any) => {
+    const { code } = await update_aps_job({ ...values, uid: record.uid });
     if (code === 0) {
       message.success('保存成功');
       callback();
     }
     return true;
   };
+
+  const renderForm = () => (
+    <>
+      <ProFormRadio.Group
+        name="job_notify_type"
+        label="是否通知"
+        options={[
+          { label: '通知', value: 0 },
+          { label: '不通知', value: 1 },
+        ]}
+        initialValue={record.job_notify_type ?? 1}
+        fieldProps={{
+          onChange: (e) => setNotifyType(e.target.value),
+        }}
+      />
+      <ProFormDependency name={['job_notify_type']}>
+        {({ job_notify_type }) => {
+          if (job_notify_type === 0) {
+            return (
+              <>
+                <ProFormSelect
+                  name="job_notify_id"
+                  label="通知方式"
+                  options={pushOptions}
+                  rules={[{ required: true, message: '请选择通知方式' }]}
+                />
+                <ProFormSelect
+                  name="job_notify_on"
+                  label="通知时机"
+                  mode="multiple"
+                  options={[
+                    { label: '任务开始', value: 0 },
+                    { label: '任务成功', value: 1 },
+                    { label: '任务失败', value: 2 },
+                  ]}
+                  initialValue={record.job_notify_on ?? [0, 1, 2]}
+                />
+              </>
+            );
+          }
+          return null;
+        }}
+      </ProFormDependency>
+    </>
+  );
 
   if (!isActive) {
     return (
@@ -151,18 +208,13 @@ const Notify: FC<Props> = ({ record, callback }) => {
         </div>
 
         <MyModal
+          form={form}
           onFinish={updateJobNotify}
           setOpen={setOpen}
           open={open}
-          form={form}
+          initialValues={record}
         >
-          <NotifyForm
-            setNotifyName={(value) => {
-              form.setFieldsValue({
-                job_notify_name: value,
-              });
-            }}
-          />
+          {renderForm()}
         </MyModal>
       </>
     );
@@ -202,18 +254,13 @@ const Notify: FC<Props> = ({ record, callback }) => {
       </div>
 
       <MyModal
+        form={form}
         onFinish={updateJobNotify}
         setOpen={setOpen}
         open={open}
-        form={form}
+        initialValues={record}
       >
-        <NotifyForm
-          setNotifyName={(value) => {
-            form.setFieldsValue({
-              job_notify_name: value,
-            });
-          }}
-        />
+        {renderForm()}
       </MyModal>
     </>
   );

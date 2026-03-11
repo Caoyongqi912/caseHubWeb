@@ -1,18 +1,27 @@
 import { ModalForm } from '@ant-design/pro-components';
 import { FormInstance } from 'antd';
-import { FC } from 'react';
+import { FC, useEffect } from 'react';
 
 interface Props {
   onFinish: (values: any) => Promise<any>;
   title?: string;
   trigger?: JSX.Element;
-  form: FormInstance<any>;
+  form?: FormInstance<any>;
   open?: boolean;
   setOpen?: (open: boolean) => void;
+  initialValues?: Record<string, any>;
 }
 
-const Index: FC<Props> = (props, context) => {
-  const { onFinish, open, setOpen, trigger, form, title } = props;
+const Index: FC<Props> = (props) => {
+  const { onFinish, open, setOpen, trigger, form, title, initialValues } =
+    props;
+
+  useEffect(() => {
+    if (open && form && initialValues) {
+      form.setFieldsValue(initialValues);
+    }
+  }, [open, form, initialValues]);
+
   return (
     <ModalForm
       open={open}
@@ -20,7 +29,6 @@ const Index: FC<Props> = (props, context) => {
       trigger={trigger}
       modalProps={{
         destroyOnClose: true,
-        onCancel: () => console.log('run'),
       }}
       title={title}
       form={form}

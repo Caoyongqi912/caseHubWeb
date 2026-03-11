@@ -246,7 +246,12 @@ const JobDrawerForm: FC<SelfProps> = (props) => {
     setShowChoiceTable(false);
     setSelectedRowKeys(currentJob.job_task_id_list);
     setJobType(currentJob.job_type);
-    form.setFieldsValue(currentJob);
+    form.setFieldsValue({
+      ...currentJob,
+      job_execute_time: currentJob.job_execute_time
+        ? moment(currentJob.job_execute_time)
+        : undefined,
+    });
     setFormValid(true);
   }, [currentJob, form]);
 
@@ -288,8 +293,16 @@ const JobDrawerForm: FC<SelfProps> = (props) => {
   };
 
   const handleJobTypeChange = (value: number) => {
+    const prevJobType = jobType;
     setJobType(value);
     form.setFieldsValue({ job_type: value });
+    if (prevJobType !== value && selectedRowKeys.length > 0) {
+      setSelectedRowKeys([]);
+      setShowChoiceTable(true);
+      if (currentJob) {
+        message.info('任务类型已变更，请重新选择任务');
+      }
+    }
   };
 
   const validateStep0 = async () => {
@@ -346,6 +359,9 @@ const JobDrawerForm: FC<SelfProps> = (props) => {
       const submitData = {
         ...values,
         job_task_id_list: selectedRowKeys as string[],
+        job_execute_time: values.job_execute_time
+          ? moment(values.job_execute_time).format('YYYY-MM-DD HH:mm:ss')
+          : undefined,
       };
 
       if (currentJob) {
