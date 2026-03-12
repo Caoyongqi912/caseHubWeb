@@ -4,15 +4,14 @@ import InterfaceApiResponseDetail from '@/pages/Httpx/InterfaceApiResponse/Inter
 import { ITryResponseInfo } from '@/pages/Httpx/types';
 import { pageData } from '@/utils/somefunc';
 import { ActionType, ProCard, ProColumns } from '@ant-design/pro-components';
+import { Button, Tag, theme } from 'antd';
+
 import {
-  Button,
   CheckCircleOutlined,
   CloseCircleOutlined,
   PlayCircleOutlined,
-  Tag,
-  theme,
-} from 'antd';
-import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+} from '@ant-design/icons';
+import { FC, useCallback, useMemo, useRef, useState } from 'react';
 
 interface SelfProps {
   taskResultId?: number | string;
@@ -21,19 +20,15 @@ interface SelfProps {
 const InterfaceApiResultTable: FC<SelfProps> = ({ taskResultId }) => {
   const { token } = theme.useToken();
   const actionRef = useRef<ActionType>();
-  const [originDataSource, setOriginDataSource] = useState<any[]>([]);
-  const [failDataSource, setFailDataSource] = useState<any[]>([]);
+  const [allData, setAllData] = useState<any[]>([]);
   const [failOnly, setFailOnly] = useState(false);
 
-  useEffect(() => {
+  const dataSource = useMemo(() => {
     if (failOnly) {
-      setOriginDataSource(
-        failDataSource.filter((item) => item.result === 'ERROR'),
-      );
-    } else {
-      setOriginDataSource([...failDataSource]);
+      return allData.filter((item) => item.result === 'ERROR');
     }
-  }, [failOnly, failDataSource]);
+    return allData;
+  }, [failOnly, allData]);
 
   const fetchResults = useCallback(
     async (params: any, sort: any) => {
@@ -43,8 +38,7 @@ const InterfaceApiResultTable: FC<SelfProps> = ({ taskResultId }) => {
         sort: sort,
       };
       const { code, data } = await pageInterApiResult(searchData);
-      setOriginDataSource(data.items);
-      setFailDataSource(data.items);
+      setAllData(data.items);
       return pageData(code, data);
     },
     [taskResultId],
@@ -52,29 +46,6 @@ const InterfaceApiResultTable: FC<SelfProps> = ({ taskResultId }) => {
 
   const styles = useMemo(
     () => ({
-      actionBtn: {
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 4,
-        padding: '4px 8px',
-        borderRadius: 6,
-        fontSize: 13,
-        fontWeight: 500,
-        transition: 'all 0.2s ease',
-        cursor: 'pointer',
-      },
-      primaryBtn: {
-        color: token.colorPrimary,
-        backgroundColor: token.colorPrimaryBg,
-      },
-      successBtn: {
-        color: token.colorSuccess,
-        backgroundColor: token.colorSuccessBg,
-      },
-      dangerBtn: {
-        color: token.colorError,
-        backgroundColor: token.colorErrorBg,
-      },
       nameTag: {
         fontSize: 13,
         fontWeight: 500,
@@ -103,39 +74,6 @@ const InterfaceApiResultTable: FC<SelfProps> = ({ taskResultId }) => {
     }),
     [token],
   );
-
-  const ActionButton: FC<{
-    icon: React.ReactNode;
-    label: string;
-    type?: 'primary' | 'danger';
-    onClick?: () => void;
-  }> = ({ icon, label, type = 'primary', onClick }) => {
-    const styleMap = {
-      primary: styles.primaryBtn,
-      danger: styles.dangerBtn,
-    };
-
-    return (
-      <a
-        onClick={onClick}
-        style={{
-          ...styles.actionBtn,
-          ...styleMap[type],
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = 'translateY(-1px)';
-          e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = 'translateY(0)';
-          e.currentTarget.style.boxShadow = 'none';
-        }}
-      >
-        {icon}
-        {label}
-      </a>
-    );
-  };
 
   const columns: ProColumns<ITryResponseInfo>[] = [
     {
@@ -203,11 +141,6 @@ const InterfaceApiResultTable: FC<SelfProps> = ({ taskResultId }) => {
         </Tag>
       ),
     },
-    {
-      title: '操作',
-      valueType: 'option',
-      render: (_, record) => <></>,
-    },
   ];
 
   const expandedRowRender = (record: ITryResponseInfo) => {
@@ -219,6 +152,7 @@ const InterfaceApiResultTable: FC<SelfProps> = ({ taskResultId }) => {
       <MyProTable
         toolBarRender={() => [
           <Button
+            key="filter"
             type="primary"
             style={styles.filterBtn}
             onClick={() => setFailOnly(!failOnly)}
@@ -236,7 +170,7 @@ const InterfaceApiResultTable: FC<SelfProps> = ({ taskResultId }) => {
         ]}
         rowKey="uid"
         expandable={{ expandedRowRender }}
-        dataSource={originDataSource}
+        dataSource={dataSource}
         actionRef={actionRef}
         request={fetchResults}
         search={false}
