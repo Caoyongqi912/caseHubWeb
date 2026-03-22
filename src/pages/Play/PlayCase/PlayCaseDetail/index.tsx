@@ -23,6 +23,7 @@ import PlayStepDetail from '@/pages/Play/PlayStep/PlayStepDetail';
 import { useParams } from '@@/exports';
 import {
   ApiOutlined,
+  BranchesOutlined,
   DatabaseOutlined,
   EditOutlined,
   PythonOutlined,
@@ -170,6 +171,12 @@ const Index = () => {
                 label: '添加数据库脚本',
                 icon: <DatabaseOutlined style={{ color: 'orange' }} />,
                 onClick: async () => await AddContent(8),
+              },
+              {
+                key: 'add_condition',
+                label: '添加条件分支',
+                icon: <BranchesOutlined style={{ color: 'orange' }} />,
+                onClick: async () => await AddContent(3),
               },
               {
                 key: 'add_interface',

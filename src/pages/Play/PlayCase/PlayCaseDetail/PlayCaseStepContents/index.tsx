@@ -6,6 +6,7 @@ import PlayStepContent from '@/pages/Play/PlayCase/PlayCaseDetail/PlayCaseStepCo
 import PlayStepDBContent from '@/pages/Play/PlayCase/PlayCaseDetail/PlayCaseStepContents/contents/PlayStepDBContent';
 import PlayStepInterfaceContent from '@/pages/Play/PlayCase/PlayCaseDetail/PlayCaseStepContents/contents/PlayStepInterfaceContent';
 import { FC } from 'react';
+import PlayConditionContent from './contents/PlayConditionContent';
 
 const CaseContentType = {
   Play: 1,
@@ -35,6 +36,16 @@ const Index: FC<SelfProps> = (props) => {
 
   const dispatch = () => {
     switch (stepContent.content_type) {
+      case CaseContentType.Play_CONDITION:
+        return (
+          <PlayConditionContent
+            id={id}
+            step={step}
+            caseId={caseId}
+            stepContent={stepContent}
+            callback={callback}
+          />
+        );
       case CaseContentType.Play_ASSERTS:
         return (
           <PlayAssertsContent
