@@ -9,6 +9,7 @@ import PlayStepScriptResultContent from '@/pages/Play/PlayResult/PlayCaseResultC
 import { ProCard } from '@ant-design/pro-components';
 import { Button, Empty } from 'antd';
 import { FC, useEffect, useState } from 'react';
+import PlayStepConditionResultContent from './PlayStepConditionResultContent';
 
 const CaseContentType = {
   Play: 1,
@@ -67,6 +68,12 @@ const Index: FC<SelfProps> = ({ play_case_id }) => {
       {stepContentResult && stepContentResult.length > 0 ? (
         stepContentResult.map((item, index) => {
           switch (item.result.content_type) {
+            case CaseContentType.Play_CONDITION:
+              return (
+                <div key={index}>
+                  <PlayStepConditionResultContent content={item} />
+                </div>
+              );
             case CaseContentType.Play_ASSERT:
               return (
                 <div key={index}>

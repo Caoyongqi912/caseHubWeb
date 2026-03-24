@@ -1,5 +1,6 @@
 import { IResponse } from '@/api';
 import {
+  insertPlayCaseConditionContentStep,
   insertPlayCaseStep,
   insertPlayGroupStep,
   playStepDetailById,
@@ -28,6 +29,7 @@ interface Props {
   play_step_id?: number;
   play_case_id?: number;
   play_group_id?: number;
+  play_condition_content_id?: number;
   step_detail?: IPlayStepDetail;
   currentProjectId?: number;
   currentModuleId?: number;
@@ -44,6 +46,7 @@ const PlayStepDetail: FC<Props> = (props) => {
     currentModuleId,
     play_case_id,
     play_group_id,
+    play_condition_content_id,
   } = props;
   const [methods, setMethods] = useState<IUIMethod[]>([]);
   const [locators, setLocators] = useState<ILocator[]>([]);
@@ -157,6 +160,13 @@ const PlayStepDetail: FC<Props> = (props) => {
     if (play_case_id) {
       values.case_id = play_case_id;
       values.is_common = false;
+
+      // 条件内容
+      if (play_condition_content_id) {
+        values.content_id = play_condition_content_id;
+        return insertPlayCaseConditionContentStep(values).then(onFetchFinish);
+      }
+
       return insertPlayCaseStep(values).then(onFetchFinish);
     }
 
@@ -167,7 +177,7 @@ const PlayStepDetail: FC<Props> = (props) => {
     }
     values.is_common = true;
     return savePlayStep(values).then(onFetchFinish);
-  }, [stepForm, play_case_id, play_group_id, onFetchFinish]);
+  }, [stepForm, play_case_id, play_group_id, play_condition_content_id]);
 
   const styles = {
     container: {

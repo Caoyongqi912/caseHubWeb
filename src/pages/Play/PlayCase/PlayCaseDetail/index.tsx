@@ -1,6 +1,7 @@
 import {
   addCaseContent,
   associationInterface,
+  associationPlayStep,
   queryPlayCaseVars,
   queryPlayStepContentByCaseId,
   reorderCaseStep,
@@ -324,6 +325,22 @@ const Index = () => {
       await handelRefresh();
     }
   };
+
+  const choice_common_steps = async (
+    quote: boolean,
+    selectedRowKeys: React.Key[],
+  ) => {
+    if (!caseId) return;
+    const { code } = await associationPlayStep({
+      case_id: parseInt(caseId),
+      play_step_id_list: selectedRowKeys as number[],
+      quote: quote,
+    });
+    if (code === 0) {
+      await handelRefresh();
+    }
+  };
+
   return (
     <>
       <RcResizeObserver onResize={handleResize}>
@@ -377,8 +394,7 @@ const Index = () => {
         >
           <PlayCommonChoiceTable
             projectId={projectId}
-            caseId={caseId}
-            callBackFunc={handelRefresh}
+            onSelect={choice_common_steps}
           />
         </MyDrawer>
 

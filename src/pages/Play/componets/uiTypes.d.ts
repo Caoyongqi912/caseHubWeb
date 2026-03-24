@@ -80,6 +80,7 @@ export interface IUIGroupStep {
 
 export interface IPlayStepDetail {
   case_id?: number;
+  content_id?: number;
   id: number;
   uid: string;
   name: string;

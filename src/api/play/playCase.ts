@@ -471,6 +471,119 @@ export const insertPlayCaseStep = async (
 };
 
 /**
+ * 更新条件
+ * @param data
+ * @param opt
+ */
+export const updatePlayConditionContentInfo = async (
+  data: any,
+  opt?: IObjGet,
+) => {
+  return request<IResponse<any>>('/api/play/case/updateCondition', {
+    method: 'POST',
+    data,
+    ...(opt || {}),
+  });
+};
+
+/**
+ * 查询条件内容
+ * @param data
+ * @param opt
+ */
+export const getPlayConditionContentInfo = async (
+  data: number,
+  opt?: IObjGet,
+) => {
+  return request<IResponse<any>>('/api/play/case/condition', {
+    method: 'GET',
+    params: { condition_id: data },
+    ...(opt || {}),
+  });
+};
+
+/**
+ * Case Condition Content添加私有步骤
+ * @param data
+ * @param options
+ */
+export const insertPlayCaseConditionContentStep = async (
+  data: IPlayStepDetail,
+  options?: IObjGet,
+) => {
+  return request<IResponse<any>>('/api/play/case/insertConditionStep', {
+    method: 'POST',
+    data,
+    ...(options || {}),
+  });
+};
+
+/**
+ * Case Condition Content选择步骤
+ * @param data
+ * @param options
+ * @returns
+ */
+export const choicePlayCaseConditionContentStep = async (
+  data: { quote: boolean; condition_id: number; play_step_id_list: number[] },
+  options?: IObjGet,
+) => {
+  return request<IResponse<any>>('/api/play/case/choiceConditionStep', {
+    method: 'POST',
+    data,
+    ...(options || {}),
+  });
+};
+
+/**
+ * 查询条件内容步骤
+ * @param data
+ * @param options
+ * @returns
+ */
+export const getPlayCaseConditionContentSteps = async (
+  data: { condition_id: number },
+  options?: IObjGet,
+) => {
+  return request<IResponse<IPlayStepDetail[]>>(
+    '/api/play/case/queryConditionContentSteps',
+    {
+      method: 'GET',
+      params: data,
+      ...(options || {}),
+    },
+  );
+};
+
+/**
+ * 重新排序条件内容步骤
+ * @param data
+ * @param options
+ * @returns
+ */
+export const reorderPlayCaseConditionContentStep = async (
+  data: { condition_id: number; content_child_list_id: number[] },
+  options?: IObjGet,
+) => {
+  return request<IResponse<any>>('/api/play/case/reorderPlayConditionStep', {
+    method: 'POST',
+    data,
+    ...(options || {}),
+  });
+};
+
+export const removeCaseConditionContentstep = async (
+  data: { content_id: number; condition_id: number },
+  options?: IObjGet,
+) => {
+  return request<IResponse<null>>('/api/play/case/removeConditionStep', {
+    method: 'POST',
+    data,
+    ...(options || {}),
+  });
+};
+
+/**
  * Case添加私有步骤
  * @param data
  * @param options

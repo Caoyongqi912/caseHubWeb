@@ -1,4 +1,5 @@
 import {
+  associationPlayGroupStep,
   getPlayGroup,
   queryPlayGroupSubSteps,
   reOrderSubSteps,
@@ -84,7 +85,20 @@ const PlayStepGroupDetail = () => {
       });
     }
   };
-
+  const choice_common_steps = async (
+    quote: boolean,
+    selectedRowKeys: React.Key[],
+  ) => {
+    if (!groupId) return;
+    const { code } = await associationPlayGroupStep({
+      group_id: parseInt(groupId),
+      play_step_id_list: selectedRowKeys as number[],
+      quote: quote,
+    });
+    if (code === 0) {
+      await handelRefresh();
+    }
+  };
   const CardExtra = (
     <>
       {groupId && (
@@ -141,8 +155,7 @@ const PlayStepGroupDetail = () => {
       >
         <PlayCommonChoiceTable
           projectId={projectId?.toString()}
-          callBackFunc={handelRefresh}
-          groupId={groupId}
+          onSelect={choice_common_steps}
         />
       </MyDrawer>
       <ProCard

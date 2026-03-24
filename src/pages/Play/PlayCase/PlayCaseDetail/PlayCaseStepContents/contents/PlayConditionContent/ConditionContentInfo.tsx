@@ -1,6 +1,19 @@
+import {
+  choicePlayCaseConditionContentStep,
+  getPlayCaseConditionContentSteps,
+  getPlayConditionContentInfo,
+  removeCaseConditionContentstep,
+  reorderPlayCaseConditionContentStep,
+  updatePlayConditionContentInfo,
+} from '@/api/play/playCase';
+import MyDrawer from '@/components/MyDrawer';
+import { AssertOption } from '@/pages/Httpx/componets/assertEnum';
 import { IPlayStepContent } from '@/pages/Play/componets/uiTypes';
+import PlayStepDetail from '@/pages/Play/PlayStep/PlayStepDetail';
+import { queryData } from '@/utils/somefunc';
 import {
   DeleteOutlined,
+  LockOutlined,
   PlusOutlined,
   SelectOutlined,
 } from '@ant-design/icons';
@@ -16,17 +29,18 @@ import {
   Form,
   Input,
   MenuProps,
+  message,
   Popconfirm,
   Select,
   Space,
+  Tag,
   theme,
   Typography,
 } from 'antd';
-import { FC, useRef, useState } from 'react';
+import { FC, useCallback, useEffect, useRef, useState } from 'react';
+import PlayCommonChoiceTable from '../../../PlayCommonChoiceTable';
 const { Text } = Typography;
 const { useToken } = theme;
-
-import { AssertOption } from '@/pages/Httpx/componets/assertEnum';
 
 interface SelfProps {
   case_id: number;
@@ -39,58 +53,172 @@ interface SelfProps {
 const ConditionContentInfo: FC<SelfProps> = (props) => {
   const { case_id, stepContent, setKey, setValue, setOperator } = props;
   const { token } = useToken();
-  const timeoutRef = useRef<any>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const actionRef = useRef<ActionType>();
 
   const [conditionForm] = Form.useForm();
-  const [conditionPlayContent, setConditionPlayContent] = useState<
-    IPlayStepContent[]
-  >([]);
 
   const [showValueInput, setShowValueInput] = useState(true);
   const [showContentInfo, setShowContentInfo] = useState(false);
   const [currnetPlayContentId, setCurrnetPlayContentId] = useState<number>();
-  const [playCaseChoiceOpen, setPlayCaseChoiceOpen] = useState(false);
+  const [playCaseAddSelfStepOpen, setPlayCaseAddSelfStepOpen] = useState(false);
+  const [playCaseAddCommonStepOpen, setPlayCaseAddCommonStepOpen] =
+    useState(false);
+
+  useEffect(() => {
+    if (!stepContent) return;
+    getPlayConditionContentInfo(stepContent.target_id).then(
+      async ({ code, data }) => {
+        if (code === 0) {
+          setKey(data.condition_key);
+          setValue(data.condition_value);
+          setOperator(
+            AssertOption.find((o) => o.value === data.condition_operator)
+              ?.label || '',
+          );
+
+          conditionForm.setFieldsValue(data);
+          if (data.condition_operator === 3 || data.condition_operator === 4) {
+            setShowValueInput(false);
+          }
+        }
+      },
+    );
+  }, [stepContent.target_id]);
 
   const refresh = () => {
     actionRef.current?.reload();
+    setPlayCaseAddSelfStepOpen(false);
+    setShowContentInfo(false);
+    setPlayCaseAddCommonStepOpen(false);
+    setCurrnetPlayContentId(undefined);
   };
 
-  const onValuesChange = (values: any) => {
-    clearTimeout(timeoutRef.current);
-    timeoutRef.current = setTimeout(async () => {}, 2000);
-  };
+  const onValuesChange = useCallback(
+    (
+      changedValues: Record<string, unknown>,
+      allValues: Record<string, unknown>,
+    ) => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+
+      const { condition_key, condition_operator, condition_value } = allValues;
+
+      setKey((condition_key as string) || '');
+      setValue((condition_value as string) || '');
+      if (typeof condition_operator === 'number') {
+        const option = AssertOption.find((o) => o.value === condition_operator);
+        setOperator(option?.label || '');
+        setShowValueInput(![3, 4].includes(condition_operator));
+      }
+
+      const isValid =
+        condition_key &&
+        condition_operator !== undefined &&
+        condition_operator !== null &&
+        (showValueInput ? condition_value : true);
+
+      if (isValid) {
+        timeoutRef.current = setTimeout(async () => {
+          try {
+            const { code, data } = await updatePlayConditionContentInfo({
+              id: stepContent.target_id,
+              condition_key,
+              condition_operator,
+              condition_value: showValueInput ? condition_value : undefined,
+            });
+            if (code === 0) {
+              conditionForm.setFieldsValue(data);
+            }
+          } catch (error) {
+            message.error('保存条件失败');
+          }
+        }, 2000);
+      }
+    },
+    [
+      stepContent.target_id,
+      conditionForm,
+      setKey,
+      setValue,
+      setOperator,
+      showValueInput,
+    ],
+  );
   const columns: ProColumns<IPlayStepContent>[] = [
     {
       title: '排序',
       dataIndex: 'sort',
-      className: 'drag-visible',
-      align: 'center',
+      width: '8%',
     },
+
     {
-      title: '接口编号',
-      dataIndex: 'uid',
-      key: 'uid',
+      title: '名称',
+      dataIndex: 'content_name',
+      key: 'content_name',
+      ellipsis: true,
       render: (_, record) => {
         return (
           <a
             onClick={() => {
-              setCurrnetPlayContentId(record.id);
+              setCurrnetPlayContentId(record.target_id);
               setShowContentInfo(true);
             }}
           >
-            {record.uid}
+            {record.content_name}
           </a>
         );
       },
     },
     {
-      title: '名称',
-      dataIndex: 'name',
-      key: 'name',
+      title: '描述',
+      dataIndex: 'content_desc',
+      key: 'content_desc',
       ellipsis: true,
     },
 
+    {
+      title: '类型',
+      dataIndex: 'is_common',
+      render: (_, record) => {
+        if (record.is_common) {
+          return (
+            <Tag
+              style={{
+                background: '#d1fae5',
+                color: '#059669',
+                border: '#05966920',
+                fontWeight: 500,
+                fontSize: '12px',
+                padding: '2px 8px',
+                borderRadius: token.borderRadiusSM,
+              }}
+              icon={<LockOutlined />}
+            >
+              公共
+            </Tag>
+          );
+        } else {
+          return (
+            <Tag
+              style={{
+                background: '#fee2e2',
+                color: '#dc2626',
+                border: '#dc262620',
+                fontWeight: 500,
+                fontSize: '12px',
+                padding: '2px 8px',
+                borderRadius: token.borderRadiusSM,
+              }}
+              icon={<LockOutlined />}
+            >
+              私有
+            </Tag>
+          );
+        }
+      },
+    },
     {
       title: '操作',
       valueType: 'option',
@@ -101,7 +229,15 @@ const ConditionContentInfo: FC<SelfProps> = (props) => {
           <Popconfirm
             title="确认移除"
             description="确定要移除这个接口吗？"
-            onConfirm={async () => {}}
+            onConfirm={async () => {
+              const { code } = await removeCaseConditionContentstep({
+                content_id: record.id,
+                condition_id: stepContent.target_id,
+              });
+              if (code === 0) {
+                refresh();
+              }
+            }}
             okText="确定"
             cancelText="取消"
           >
@@ -138,9 +274,6 @@ const ConditionContentInfo: FC<SelfProps> = (props) => {
               <Input
                 placeholder="条件值，支持{{变量名}}"
                 style={{ width: '200px' }}
-                onChange={(e) => {
-                  setKey(e.target.value);
-                }}
               />
             </Form.Item>
             <Form.Item
@@ -151,13 +284,8 @@ const ConditionContentInfo: FC<SelfProps> = (props) => {
               <Select
                 style={{ width: '120px' }}
                 options={AssertOption}
-                onChange={(_: any, option: any) => {
-                  setOperator(option.label);
-                  if (option.value === 3 || option.value === 4) {
-                    setShowValueInput(false);
-                  } else {
-                    setShowValueInput(true);
-                  }
+                onChange={(value) => {
+                  setShowValueInput(![3, 4].includes(value));
                 }}
               />
             </Form.Item>
@@ -167,13 +295,7 @@ const ConditionContentInfo: FC<SelfProps> = (props) => {
                 rules={[{ required: true, message: '比较值不能为空' }]}
                 style={{ marginBottom: 0 }}
               >
-                <Input
-                  placeholder="输入比较值"
-                  style={{ width: '200px' }}
-                  onChange={(e) => {
-                    setValue(e.target.value);
-                  }}
-                />
+                <Input placeholder="输入比较值" style={{ width: '200px' }} />
               </Form.Item>
             )}
           </Space>
@@ -185,11 +307,72 @@ const ConditionContentInfo: FC<SelfProps> = (props) => {
   const items: MenuProps['items'] = [
     {
       key: 'choice_common',
-      label: '选择公共API',
+      label: '选择公共步骤',
       icon: <SelectOutlined style={{ color: token.colorPrimary }} />,
-      onClick: () => setPlayCaseChoiceOpen(true),
+      onClick: () => setPlayCaseAddCommonStepOpen(true),
+    },
+
+    {
+      key: 'add_self_step',
+      label: '添加私有步骤',
+      icon: <PlusOutlined style={{ color: token.colorPrimary }} />,
+      onClick: () => setPlayCaseAddSelfStepOpen(true),
     },
   ];
+
+  /**
+   * 查询条件内容步骤
+   * @param data
+   * @param options
+   * @returns
+   */
+  const fetchConditionStepsContent = useCallback(async () => {
+    const { code, data } = await getPlayCaseConditionContentSteps({
+      condition_id: stepContent.target_id,
+    });
+    return queryData(code, data);
+  }, [stepContent.id]);
+
+  /**
+   * Case Condition Content排序
+   * @param _ 未使用
+   * @param __ 未使用
+   * @param newDataSource
+   */
+  const handleDragSortEnd = async (
+    _: number,
+    __: number,
+    newDataSource: IPlayStepContent[],
+  ) => {
+    const reorderIds: number[] = newDataSource.map((item) => item.id);
+    const { code } = await reorderPlayCaseConditionContentStep({
+      condition_id: stepContent.target_id,
+      content_child_list_id: reorderIds,
+    });
+    if (code === 0) {
+      refresh();
+    }
+  };
+
+  /**
+   * 选择公共步骤
+   * @param quote
+   * @param selectedRowKeys
+   */
+  const choice_common_steps = async (
+    quote: boolean,
+    selectedRowKeys: React.Key[],
+  ) => {
+    const { code } = await choicePlayCaseConditionContentStep({
+      quote: quote,
+      condition_id: stepContent.target_id,
+      play_step_id_list: selectedRowKeys as number[],
+    });
+    if (code === 0) {
+      refresh();
+    }
+  };
+
   return (
     <>
       <div
@@ -201,43 +384,66 @@ const ConditionContentInfo: FC<SelfProps> = (props) => {
       >
         {formRender}
         <Divider style={{ margin: '16px 0' }} />
+        <DragSortTable
+          toolBarRender={() => [
+            <>
+              <Dropdown arrow menu={{ items: items }} placement="bottomRight">
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  style={{
+                    borderRadius: token.borderRadius,
+                  }}
+                >
+                  添加
+                </Button>
+              </Dropdown>
+            </>,
+          ]}
+          actionRef={actionRef}
+          columns={columns}
+          request={fetchConditionStepsContent}
+          rowKey="id"
+          onDragSortEnd={handleDragSortEnd}
+          search={false}
+          pagination={false}
+          dragSortKey="sort"
+          style={{
+            border: `1px solid ${token.colorBorder}`,
+            borderRadius: token.borderRadius,
+          }}
+        />
       </div>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '12px',
-        }}
+      <MyDrawer
+        width="auto"
+        open={playCaseAddSelfStepOpen}
+        setOpen={setPlayCaseAddSelfStepOpen}
       >
-        <Text strong style={{ fontSize: '14px' }}>
-          条件接口列表
-        </Text>
-        <Dropdown arrow menu={{ items: items }} placement="bottomRight">
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            style={{
-              borderRadius: token.borderRadius,
-            }}
-          >
-            选择
-          </Button>
-        </Dropdown>
-      </div>
-      <DragSortTable
-        actionRef={actionRef}
-        columns={columns}
-        options={false}
-        rowKey="id"
-        search={false}
-        pagination={false}
-        dragSortKey="sort"
-        style={{
-          border: `1px solid ${token.colorBorder}`,
-          borderRadius: token.borderRadius,
-        }}
-      />
+        <PlayStepDetail
+          play_case_id={case_id}
+          play_condition_content_id={stepContent.id}
+          callback={refresh}
+        />
+      </MyDrawer>
+      <MyDrawer
+        width="60%"
+        open={playCaseAddCommonStepOpen}
+        setOpen={setPlayCaseAddCommonStepOpen}
+      >
+        <PlayCommonChoiceTable onSelect={choice_common_steps} />
+      </MyDrawer>
+      <MyDrawer
+        width="auto"
+        open={showContentInfo}
+        setOpen={setShowContentInfo}
+      >
+        <PlayStepDetail
+          play_case_id={case_id}
+          play_step_id={currnetPlayContentId}
+          play_condition_content_id={stepContent.id}
+          callback={refresh}
+        />
+      </MyDrawer>
     </>
   );
 };

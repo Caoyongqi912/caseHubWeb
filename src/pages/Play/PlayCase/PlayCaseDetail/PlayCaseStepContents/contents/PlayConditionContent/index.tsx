@@ -2,11 +2,11 @@ import Handler from '@/components/DnDDraggable/handler';
 import { IPlayStepContent } from '@/pages/Play/componets/uiTypes';
 import { BranchesOutlined } from '@ant-design/icons';
 import { ProCard, useToken } from '@ant-design/pro-components';
-import { Space, Tag } from 'antd';
-import { FC, useState } from 'react';
+import { Space, Tag, Typography } from 'antd';
+import { FC, useEffect, useState } from 'react';
 import ContentExtra from '../../contentExtra';
 import ConditionContentInfo from './ConditionContentInfo';
-
+const { Text } = Typography;
 interface Props {
   id: number;
   step: number;
@@ -21,6 +21,12 @@ const Index: FC<Props> = ({ id, step, caseId, stepContent, callback }) => {
   const [conditionKey, setConditionKey] = useState<string>();
   const [conditionValue, setConditionValue] = useState<string>();
   const [conditionOperator, setConditionOperator] = useState<string>();
+
+  useEffect(() => {
+    if (conditionKey) setConditionKey(conditionKey);
+    if (conditionOperator) setConditionOperator(conditionOperator);
+    if (conditionValue) setConditionValue(conditionValue);
+  }, [conditionKey, conditionValue, conditionOperator]);
 
   const conditionTitle = (
     <>
@@ -40,6 +46,29 @@ const Index: FC<Props> = ({ id, step, caseId, stepContent, callback }) => {
         >
           IF
         </Tag>
+        {conditionKey && (
+          <Text type={'warning'} strong style={{ fontSize: '14px' }}>
+            {conditionKey}
+          </Text>
+        )}
+        {conditionOperator && (
+          <>
+            <Text
+              strong
+              style={{
+                fontSize: '14px',
+                color: token.colorText,
+              }}
+            >
+              {conditionOperator}
+            </Text>
+            {conditionValue && (
+              <Text type={'warning'} strong style={{ fontSize: '14px' }}>
+                {conditionValue}
+              </Text>
+            )}
+          </>
+        )}
       </Space>
     </>
   );

@@ -1,42 +1,31 @@
 import { IModuleEnum, IObjGet } from '@/api';
-import {
-  associationPlayGroupStep,
-  associationPlayStep,
-  pagePlaySteps,
-} from '@/api/play/playCase';
+import { pagePlaySteps } from '@/api/play/playCase';
 import { queryProjectEnum } from '@/components/CommonFunc';
 import MyProTable from '@/components/Table/MyProTable';
 import { IUICaseSteps } from '@/pages/Play/componets/uiTypes';
 import { ModuleEnum } from '@/utils/config';
 import { fetchModulesEnum, pageData } from '@/utils/somefunc';
 import { ProColumns } from '@ant-design/pro-table/lib/typing';
-import { Button, message, Tag } from 'antd';
+import { Button, Tag } from 'antd';
 import { TableRowSelection } from 'antd/es/table/interface';
 import React, { FC, useEffect, useState } from 'react';
 
 interface ISelfProps {
   projectId?: string;
-  caseId?: string;
-  groupId?: string;
-  callBackFunc: () => void;
+  onSelect: (quote: boolean, selectedRowKeys: React.Key[]) => Promise<void>;
 }
 
-const Index: FC<ISelfProps> = ({
-  projectId,
-  groupId,
-  caseId,
-  callBackFunc,
-}) => {
+const Index: FC<ISelfProps> = ({ projectId, onSelect }) => {
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [selectProjectId, setSelectProjectId] = useState<string | undefined>(
     projectId,
   );
   const [projectEnumMap, setProjectEnumMap] = useState<IObjGet>({});
   const [moduleEnum, setModuleEnum] = useState<IModuleEnum[]>([]);
+
   const fetchCommonStepPage = async (values: any, sort: any) => {
     const { code, data } = await pagePlaySteps({
       ...values,
-      project_id: projectId,
       module_type: ModuleEnum.UI_STEP,
       is_common: true,
       sort: sort,
@@ -65,7 +54,11 @@ const Index: FC<ISelfProps> = ({
       valueEnum: projectEnumMap,
       initialValue: selectProjectId?.toString(),
       fieldProps: {
-        disabled: true,
+        onChange: (value: string) => {
+          console.log(value);
+
+          setSelectProjectId(value);
+        },
       },
     },
     {
@@ -128,59 +121,13 @@ const Index: FC<ISelfProps> = ({
           <>
             <Button
               type={'primary'}
-              onClick={async () => {
-                if (caseId) {
-                  const { code } = await associationPlayStep({
-                    case_id: caseId,
-                    play_step_id_list: selectedRowKeys as number[],
-                    quote: false,
-                  });
-                  if (code === 0) {
-                    message.success('添加成功');
-                    callBackFunc();
-                  }
-                }
-                if (groupId) {
-                  const { code } = await associationPlayGroupStep({
-                    group_id: groupId,
-                    play_step_id_list: selectedRowKeys as number[],
-                    quote: false,
-                  });
-                  if (code === 0) {
-                    message.success('添加成功');
-                    callBackFunc();
-                  }
-                }
-              }}
+              onClick={() => onSelect(false, selectedRowKeys)}
             >
               复制添加
             </Button>
             <Button
               style={{ marginLeft: 5 }}
-              onClick={async () => {
-                if (caseId) {
-                  const { code, msg } = await associationPlayStep({
-                    case_id: caseId,
-                    play_step_id_list: selectedRowKeys as number[],
-                    quote: true,
-                  });
-                  if (code === 0) {
-                    message.success(msg);
-                    callBackFunc();
-                  }
-                }
-                if (groupId) {
-                  const { code } = await associationPlayGroupStep({
-                    group_id: groupId,
-                    play_step_id_list: selectedRowKeys as number[],
-                    quote: true,
-                  });
-                  if (code === 0) {
-                    message.success('添加成功');
-                    callBackFunc();
-                  }
-                }
-              }}
+              onClick={() => onSelect(true, selectedRowKeys)}
             >
               引用添加
             </Button>

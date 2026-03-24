@@ -415,25 +415,35 @@ const Index: FC<SelfProps> = ({
   ];
 
   const AddCaseButton = (
-    <Button
-      type="primary"
-      hidden={currentModuleId === undefined}
-      style={styles.addBtn}
-      icon={<PlusOutlined />}
-      onClick={() => {
-        setCurrentPlay(undefined);
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = 'translateY(-2px)';
-        e.currentTarget.style.boxShadow = `0 4px 16px ${token.colorPrimaryBg}`;
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = 'translateY(0)';
-        e.currentTarget.style.boxShadow = `0 2px 8px ${token.colorPrimaryBg}`;
-      }}
-    >
-      添加用例
-    </Button>
+    <>
+      <MyModal
+        onFinish={saveOrUpdateCaseBase}
+        trigger={
+          <Button
+            type="primary"
+            hidden={currentModuleId === undefined}
+            style={styles.addBtn}
+            icon={<PlusOutlined />}
+            onClick={() => {
+              setCurrentPlay(undefined);
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = `0 4px 16px ${token.colorPrimaryBg}`;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = `0 2px 8px ${token.colorPrimaryBg}`;
+            }}
+          >
+            添加用例
+          </Button>
+        }
+        form={caseForm}
+      >
+        <PlayBaseForm />
+      </MyModal>
+    </>
   );
 
   return (
