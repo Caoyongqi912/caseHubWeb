@@ -2,21 +2,28 @@ import {
   addDefaultTestCase,
   queryCasesByRequirement,
   queryTagsByRequirement,
-  reorderTestCase,
-  uploadTestCase,
 } from '@/api/case/testCase';
-import DnDDraggable from '@/components/DnDDraggable';
-import { DraggableItem } from '@/components/DnDDraggable/type';
 import CaseStepSearchForm from '@/pages/CaseHub/CaseInfo/CaseStepSearchForm';
 import ChoiceSettingArea from '@/pages/CaseHub/component/ChoiceSettingArea';
+import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import TestCase from '@/pages/CaseHub/TestCase';
 import { CaseSearchForm, ITestCase } from '@/pages/CaseHub/type';
 import { useParams } from '@@/exports';
-import { PlusOutlined, UploadOutlined } from '@ant-design/icons';
-import { ModalForm, ProCard } from '@ant-design/pro-components';
-import { ProFormUploadDragger } from '@ant-design/pro-form';
-import { Button, Empty, Form, message, Space, Typography } from 'antd';
-import { useEffect, useRef, useState } from 'react';
+import {
+  AppstoreOutlined,
+  DownOutlined,
+  RightOutlined,
+} from '@ant-design/icons';
+import { ProCard } from '@ant-design/pro-components';
+import { Collapse, Empty, Typography } from 'antd';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+const { Text } = Typography;
+
+interface GroupedTestCases {
+  tag: string;
+  cases: ITestCase[];
+}
 
 const Index = () => {
   const { reqId, projectId, moduleId } = useParams<{
@@ -24,26 +31,22 @@ const Index = () => {
     projectId: string;
     moduleId: string;
   }>();
-  // 添加用例
-  const topRef = useRef<HTMLElement>(null);
-  const [fileForm] = Form.useForm();
-  const [caseStepsContent, setCaseStepsContent] = useState<DraggableItem[]>([]);
+  const topRef = useRef<HTMLDivElement>(null);
   const [testCases, setTestCases] = useState<ITestCase[]>([]);
   const [tags, setTags] = useState<{ label: string; value: string }[]>([]);
-
-  const [showCheckButton, setShowCheckButton] = useState<boolean>(false);
+  const [showCheckButton, setShowCheckButton] = useState(false);
   const [shouldScroll, setShouldScroll] = useState(false);
   const [reload, setReload] = useState(0);
   const [searchInfo, setSearchInfo] = useState<CaseSearchForm>({});
-
   const [selectedCase, setSelectedCase] = useState<number[]>([]);
-  useEffect(() => {
-    selectedCase.length > 0
-      ? setShowCheckButton(true)
-      : setShowCheckButton(false);
-  }, [selectedCase]);
+  const [isGrouped, setIsGrouped] = useState(true);
+  const [activeGroupKeys, setActiveGroupKeys] = useState<string[]>([]);
+  const { colors, spacing, borderRadius } = useCaseHubTheme();
 
-  // 获取用例数据
+  useEffect(() => {
+    setShowCheckButton(selectedCase.length > 0);
+  }, [selectedCase.length]);
+
   useEffect(() => {
     if (!reqId) return;
 
@@ -68,176 +71,315 @@ const Index = () => {
   useEffect(() => {
     if (!reqId) return;
     queryTagsByRequirement({ requirement_id: parseInt(reqId) }).then(
-      async ({ code, data }) => {
+      ({ code, data }) => {
         if (code === 0 && data.length > 0) {
           setTags(data.map((tag) => ({ label: tag, value: tag })));
         }
       },
     );
   }, [reqId]);
-  useEffect(() => {
-    if (testCases) {
-      setCaseStepsContent(transformData2Content(testCases));
-    }
-  }, [testCases, tags, selectedCase]);
 
-  // 添加滚动效果
   useEffect(() => {
     if (shouldScroll) {
-      // 使用setTimeout确保DOM已更新
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         topRef.current?.scrollIntoView({ behavior: 'smooth' });
         setShouldScroll(false);
       }, 100);
+      return () => clearTimeout(timer);
     }
   }, [shouldScroll]);
-  const handelReload = () => {
-    setReload(reload + 1);
-  };
-  const transformData2Content = (data: ITestCase[]) => {
-    return data.map((item, index) => ({
-      id: index,
-      step_id: item.id,
-      content: (
-        <TestCase
-          selectedCase={selectedCase}
-          top={topRef}
-          reqId={reqId}
-          tags={tags}
-          setTags={setTags}
-          callback={handelReload}
-          testcaseData={item}
-          collapsible={false}
-          setSelectedCase={setSelectedCase}
+
+  const groupedTestCases = useMemo((): GroupedTestCases[] => {
+    if (testCases.length === 0) return [];
+
+    const groups: Record<string, ITestCase[]> = {};
+    const untaggedCases: ITestCase[] = [];
+
+    testCases.forEach((tc) => {
+      const tag = tc.case_tag || '';
+      if (tag) {
+        if (!groups[tag]) {
+          groups[tag] = [];
+        }
+        groups[tag].push(tc);
+      } else {
+        untaggedCases.push(tc);
+      }
+    });
+
+    const result: GroupedTestCases[] = Object.entries(groups).map(
+      ([tag, cases]) => ({
+        tag,
+        cases,
+      }),
+    );
+
+    if (untaggedCases.length > 0) {
+      result.push({ tag: '未分组', cases: untaggedCases });
+    }
+
+    return result;
+  }, [testCases]);
+
+  useEffect(() => {
+    if (isGrouped && groupedTestCases.length > 0) {
+      setActiveGroupKeys(groupedTestCases.map((g) => g.tag));
+    }
+  }, [isGrouped, groupedTestCases]);
+
+  const handleReload = useCallback(() => {
+    setReload((prev) => prev + 1);
+  }, []);
+
+  const isAllExpanded = useMemo(
+    () =>
+      activeGroupKeys.length === groupedTestCases.length &&
+      groupedTestCases.length > 0,
+    [activeGroupKeys.length, groupedTestCases.length],
+  );
+
+  const handleSelectAll = useCallback(() => {
+    const allIds = testCases
+      .map((tc) => tc.id)
+      .filter((id): id is number => id !== undefined);
+    setSelectedCase(allIds);
+  }, [testCases]);
+
+  const handleClearSelection = useCallback(() => {
+    setSelectedCase([]);
+  }, []);
+
+  const handleExpandAll = useCallback(() => {
+    setActiveGroupKeys(groupedTestCases.map((g) => g.tag));
+  }, [groupedTestCases]);
+
+  const handleCollapseAll = useCallback(() => {
+    setActiveGroupKeys([]);
+  }, []);
+
+  const handleRefresh = useCallback(() => {
+    handleReload();
+  }, [handleReload]);
+
+  const handleToggleGroup = useCallback(() => {
+    setIsGrouped((prev) => !prev);
+  }, []);
+
+  const handleAddCase = useCallback(async () => {
+    if (!reqId) return;
+    const { code } = await addDefaultTestCase({
+      requirement_id: parseInt(reqId),
+    });
+    if (code === 0) {
+      handleReload();
+      setShouldScroll(true);
+    }
+  }, [reqId, handleReload]);
+
+  const cardStyle = useMemo(
+    () => ({
+      borderRadius: borderRadius.xl,
+      border: `1px solid ${colors.border}`,
+      boxShadow: `0 2px 8px ${colors.bgContainer}20`,
+      overflow: 'hidden' as const,
+    }),
+    [borderRadius, colors],
+  );
+
+  const collapseExpandIcon = useCallback(
+    (isActive: boolean) => (
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: 20,
+          height: 20,
+          borderRadius: borderRadius.sm,
+          background: isActive ? colors.primary : colors.primaryBg,
+          transition: 'all 200ms ease',
+        }}
+      >
+        {isActive ? (
+          <DownOutlined style={{ fontSize: 10, color: '#fff' }} />
+        ) : (
+          <RightOutlined style={{ fontSize: 10, color: colors.primary }} />
+        )}
+      </div>
+    ),
+    [borderRadius, colors],
+  );
+
+  const renderTestCase = useCallback(
+    (item: ITestCase) => (
+      <TestCase
+        key={item.id}
+        selectedCase={selectedCase}
+        reqId={reqId}
+        tags={tags}
+        setTags={setTags}
+        callback={handleReload}
+        testcaseData={item}
+        setSelectedCase={setSelectedCase}
+      />
+    ),
+    [selectedCase, reqId, tags, handleReload],
+  );
+
+  const renderGroupedCases = useMemo(() => {
+    if (groupedTestCases.length === 0) {
+      return (
+        <Empty
+          style={{ height: '70vh' }}
+          description={<Text type="secondary">暂无用例</Text>}
         />
+      );
+    }
+
+    const collapseItems = groupedTestCases.map((group) => ({
+      key: group.tag,
+      label: (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: spacing.sm,
+            fontWeight: 600,
+            fontSize: 14,
+          }}
+        >
+          <AppstoreOutlined style={{ color: colors.primary }} />
+          <span style={{ color: colors.text }}>{group.tag}</span>
+          <span
+            style={{
+              color: colors.textSecondary,
+              fontWeight: 400,
+              fontSize: 12,
+              background: colors.primaryBg,
+              padding: '2px 8px',
+              borderRadius: borderRadius.sm,
+            }}
+          >
+            {group.cases.length} 个用例
+          </span>
+        </div>
+      ),
+      children: (
+        <div style={{ padding: `${spacing.sm}px 0` }}>
+          {group.cases.map(renderTestCase)}
+        </div>
       ),
     }));
-  };
 
-  const handleAddCase = async () => {
-    if (reqId) {
-      const { code } = await addDefaultTestCase({
-        requirement_id: parseInt(reqId),
-      });
-      if (code === 0) {
-        handelReload();
-        setShouldScroll(true);
-      }
-    }
-  };
+    return (
+      <Collapse
+        activeKey={activeGroupKeys}
+        onChange={(keys) => setActiveGroupKeys(keys as string[])}
+        items={collapseItems}
+        expandIcon={({ isActive }) => collapseExpandIcon(!!isActive)}
+        expandIconPosition="start"
+        style={{
+          background: 'transparent',
+          border: 'none',
+        }}
+        bordered={false}
+      />
+    );
+  }, [
+    groupedTestCases,
+    activeGroupKeys,
+    spacing,
+    colors,
+    borderRadius,
+    renderTestCase,
+    collapseExpandIcon,
+  ]);
 
-  const orderFetch = async (newItems: any[]) => {
-    const orderIds = newItems.map((item) => item.step_id);
-    await reorderTestCase({
-      requirement_id: parseInt(reqId!),
-      caseIds: orderIds,
-    });
-  };
-  const uploadCase = async (values: any) => {
-    const formData = new FormData();
-    const fileValue = values.file;
-    formData.append('file', fileValue[0].originFileObj);
-    formData.append('module_id', moduleId!);
-    formData.append('requirement_id', reqId!);
-    formData.append('project_id', projectId!);
-
-    const { code, msg } = await uploadTestCase(formData);
-    if (code === 0) {
-      handelReload();
-      message.success(msg);
-    }
-    fileForm.resetFields();
-    return true;
-  };
-
-  const UploadForm = (
-    <ModalForm
-      form={fileForm}
-      trigger={
-        <Button type="primary">
-          <UploadOutlined />
-          附件上传
-        </Button>
-      }
-      onFinish={uploadCase}
-    >
-      <ProCard>
-        <ProFormUploadDragger
-          title={false}
-          max={1}
-          description="上传文件"
-          accept=".xlsx,.xls"
-          name="file"
+  const renderUngroupedCases = useMemo(() => {
+    if (testCases.length === 0) {
+      return (
+        <Empty
+          style={{ height: '70vh' }}
+          description={<Text type="secondary">暂无用例</Text>}
         />
-      </ProCard>
-    </ModalForm>
-  );
+      );
+    }
 
-  const ExtraContent = (
-    <Space>
-      {UploadForm}
-      <Button type={'primary'} onClick={handleAddCase}>
-        <PlusOutlined />
-        添加用例
-      </Button>
-    </Space>
-  );
+    return (
+      <div
+        style={{
+          maxHeight: '70vh',
+          overflowY: 'auto',
+          padding: spacing.md,
+          borderRadius: borderRadius.lg,
+          background: colors.bgContainer,
+        }}
+      >
+        {testCases.map(renderTestCase)}
+        {testCases.length > 10 && (
+          <div
+            style={{
+              position: 'sticky',
+              bottom: 0,
+              background: `linear-gradient(transparent, ${colors.bgLayout})`,
+              height: spacing.xxxl,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: colors.textSecondary,
+              fontSize: 12,
+              borderTop: `1px solid ${colors.borderSecondary}`,
+              marginTop: spacing.md,
+            }}
+          >
+            滚动查看更多
+          </div>
+        )}
+      </div>
+    );
+  }, [testCases, spacing, colors, borderRadius, renderTestCase]);
 
   return (
-    <ProCard split={'horizontal'} bodyStyle={{ padding: 1 }}>
-      <CaseStepSearchForm tags={tags} setSearchForm={setSearchInfo} />
+    <ProCard split="horizontal" bodyStyle={{ padding: 0 }} style={cardStyle}>
+      <CaseStepSearchForm
+        tags={tags}
+        setSearchForm={setSearchInfo}
+        isGrouped={isGrouped}
+        isAllExpanded={isAllExpanded}
+        selectedCount={selectedCase.length}
+        totalCount={testCases.length}
+        onSelectAll={handleSelectAll}
+        onExpandAll={handleExpandAll}
+        onCollapseAll={handleCollapseAll}
+        onClearSelection={handleClearSelection}
+        onRefresh={handleRefresh}
+        onToggleGroup={handleToggleGroup}
+        onAddCase={handleAddCase}
+        onUploadFinish={handleReload}
+        uploadProps={{
+          reqId,
+          moduleId,
+          projectId,
+        }}
+      />
 
       <ProCard
-        split={'horizontal'}
-        extra={ExtraContent}
-        bodyStyle={{ padding: 4 }}
+        split="horizontal"
+        bodyStyle={{ padding: spacing.sm }}
+        style={{
+          borderRadius: borderRadius.xl,
+          margin: spacing.sm,
+        }}
       >
         <ChoiceSettingArea
-          callback={handelReload}
+          callback={handleReload}
           allTestCase={testCases}
           showCheckButton={showCheckButton}
           selectedCase={selectedCase}
           setSelectedCase={setSelectedCase}
         />
-        {testCases.length === 0 ? (
-          <Empty
-            style={{ height: '85vh' }}
-            description={<Typography.Text>暂无用例</Typography.Text>}
-          />
-        ) : (
-          <div
-            style={{
-              maxHeight: '90vh',
-              overflowY: 'auto',
-              padding: '10px',
-              borderRadius: '8px',
-            }}
-          >
-            <DnDDraggable
-              items={caseStepsContent}
-              setItems={setCaseStepsContent}
-              orderFetch={orderFetch}
-            />
-            {/* 滚动提示 */}
-            {caseStepsContent.length > 10 && (
-              <div
-                style={{
-                  position: 'sticky',
-                  bottom: 0,
-                  background: 'linear-gradient(transparent, #f0f2f5)',
-                  height: '30px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#999',
-                  fontSize: '12px',
-                }}
-              >
-                滚动查看更多
-              </div>
-            )}
-          </div>
-        )}
+
+        {isGrouped ? renderGroupedCases : renderUngroupedCases}
       </ProCard>
     </ProCard>
   );

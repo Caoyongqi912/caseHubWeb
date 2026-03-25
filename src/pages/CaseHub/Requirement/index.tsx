@@ -3,6 +3,7 @@ import { searchUser } from '@/api/base';
 import { insertRequirement } from '@/api/case/requirement';
 import MyDrawer from '@/components/MyDrawer';
 import { CaseHubConfig } from '@/pages/CaseHub/CaseConfig';
+import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import { IRequirement } from '@/pages/CaseHub/type';
 import { ModuleEnum } from '@/utils/config';
 import { fetchModulesEnum } from '@/utils/somefunc';
@@ -16,8 +17,10 @@ import {
   ProFormTreeSelect,
   StepsForm,
 } from '@ant-design/pro-components';
-import { Button, Empty, message } from 'antd';
-import { FC, useEffect, useRef, useState } from 'react';
+import { Button, Empty, message, Typography } from 'antd';
+import { FC, useEffect, useMemo, useRef, useState } from 'react';
+
+const { Text } = Typography;
 
 interface Props {
   currentProjectId?: number;
@@ -27,7 +30,6 @@ interface Props {
 
 const Index: FC<Props> = ({ currentProjectId, currentModuleId, callback }) => {
   const formRef = useRef<ProFormInstance>();
-
   const [moduleEnum, setModuleEnum] = useState<IModuleEnum[]>([]);
   const [selectProjectId, setSelectProjectId] = useState<number>();
   const [drawerVisible, setDrawerVisible] = useState<boolean>(false);
@@ -35,12 +37,14 @@ const Index: FC<Props> = ({ currentProjectId, currentModuleId, callback }) => {
   const projects = initialState?.projects || [];
   const currentUser = initialState?.currentUser;
   const { CASE_LEVEL_OPTION } = CaseHubConfig;
-  // 根据当前项目ID获取环境和用例部分
+  const { token, colors, spacing, borderRadius } = useCaseHubTheme();
+
   useEffect(() => {
     if (currentProjectId) {
       setSelectProjectId(currentProjectId);
     }
   }, [currentProjectId]);
+
   useEffect(() => {
     if (selectProjectId) {
       setSelectProjectId(selectProjectId);
@@ -62,12 +66,37 @@ const Index: FC<Props> = ({ currentProjectId, currentModuleId, callback }) => {
       }
     }
   };
+
+  const drawerStyles = useMemo(
+    () => ({
+      header: {
+        background: `linear-gradient(135deg, ${colors.primaryBg} 0%, ${colors.bgContainer} 100%)`,
+        borderBottom: `1px solid ${colors.border}`,
+        padding: `${token.paddingLG}px ${token.paddingXL}px`,
+      },
+      body: {
+        padding: spacing.lg,
+        background: colors.bgContainer,
+      },
+    }),
+    [colors, spacing, token],
+  );
+
+  const cardStyle = useMemo(
+    () => ({
+      borderRadius: borderRadius.xl,
+      border: `1px solid ${colors.border}`,
+      boxShadow: `0 2px 8px ${colors.bgContainer}20`,
+      overflow: 'hidden' as const,
+    }),
+    [borderRadius, colors],
+  );
+
   const RequirementsForm = (
     <StepsForm.StepForm
       name="base"
       title="需求信息"
       initialValues={{
-        // 设置初始值：优先使用传入的，否则使用选中的项目
         project_id: currentProjectId || selectProjectId,
         module_id: currentModuleId,
       }}
@@ -80,9 +109,13 @@ const Index: FC<Props> = ({ currentProjectId, currentModuleId, callback }) => {
         label={'所属项目'}
         name={'project_id'}
         required={true}
-        onChange={(value) => {
-          setSelectProjectId(value as number);
-          formRef.current?.setFieldValue('module_id', undefined);
+        rules={[{ required: true, message: '请选择项目' }]}
+        fieldProps={{
+          variant: 'filled',
+          onChange: (value) => {
+            setSelectProjectId(value as number);
+            formRef.current?.setFieldValue('module_id', undefined);
+          },
         }}
       />
       <ProFormTreeSelect
@@ -91,6 +124,7 @@ const Index: FC<Props> = ({ currentProjectId, currentModuleId, callback }) => {
         label="所属模块"
         rules={[{ required: true, message: '所属模块必选' }]}
         fieldProps={{
+          variant: 'filled',
           treeData: moduleEnum,
           fieldNames: {
             label: 'title',
@@ -98,12 +132,23 @@ const Index: FC<Props> = ({ currentProjectId, currentModuleId, callback }) => {
           filterTreeNode: true,
         }}
       />
-      <ProFormText name={'requirement_url'} label={'需求连接'} />
+      <ProFormText
+        name={'requirement_url'}
+        label={'需求连接'}
+        placeholder={'请输入需求链接'}
+        fieldProps={{
+          variant: 'filled',
+        }}
+      />
       <ProFormText
         name={'requirement_name'}
         label={'需求名'}
         required={true}
         rules={[{ required: true, message: '请填写需求名' }]}
+        fieldProps={{
+          variant: 'filled',
+          placeholder: '请输入需求名称',
+        }}
       />
       <ProFormSelect
         name={'requirement_level'}
@@ -111,6 +156,9 @@ const Index: FC<Props> = ({ currentProjectId, currentModuleId, callback }) => {
         required={true}
         initialValue={'P2'}
         options={CASE_LEVEL_OPTION}
+        fieldProps={{
+          variant: 'filled',
+        }}
       />
     </StepsForm.StepForm>
   );
@@ -132,9 +180,10 @@ const Index: FC<Props> = ({ currentProjectId, currentModuleId, callback }) => {
         debounceTime={1000}
         initialValue={currentUser?.id}
         fieldProps={{
+          variant: 'filled',
           value: { value: currentUser?.id, label: currentUser?.username },
-          optionFilterProp: 'label', // 确保搜索是基于 label)而不是 value
-          labelInValue: false, // 确保只提交 value 而不是 {value,label} 对象
+          optionFilterProp: 'label',
+          labelInValue: false,
         }}
       />
       <ProFormSelect
@@ -145,17 +194,23 @@ const Index: FC<Props> = ({ currentProjectId, currentModuleId, callback }) => {
         request={queryUser}
         debounceTime={1000}
         fieldProps={{
-          optionFilterProp: 'label', // 确保搜索是基于 label(chargeName) 而不是 value(chargeId)
-          labelInValue: false, // 确保只提交 value 而不是 {value,label} 对象
+          variant: 'filled',
+          optionFilterProp: 'label',
+          labelInValue: false,
         }}
       />
     </StepsForm.StepForm>
   );
+
   const CaseHubChoiceForm = (
     <StepsForm.StepForm name="case" title="模块用例关联">
-      <Empty description={'未开发'} />
+      <Empty
+        image={Empty.PRESENTED_IMAGE_SIMPLE}
+        description={<Text type="secondary">后续开发中...</Text>}
+      />
     </StepsForm.StepForm>
   );
+
   return (
     <>
       <MyDrawer
@@ -163,12 +218,12 @@ const Index: FC<Props> = ({ currentProjectId, currentModuleId, callback }) => {
         width={'50%'}
         open={drawerVisible}
         setOpen={setDrawerVisible}
+        drawerStyles={drawerStyles}
       >
-        <ProCard>
+        <ProCard style={cardStyle}>
           <StepsForm<IRequirement>
             formRef={formRef}
             onFinish={async (values) => {
-              console.log(values);
               const { code, data, msg } = await insertRequirement(values);
               if (code === 0) {
                 message.success(msg);
@@ -182,6 +237,19 @@ const Index: FC<Props> = ({ currentProjectId, currentModuleId, callback }) => {
                 required: '此项为必填项',
               },
             }}
+            submitter={{
+              render: (_, dom) => (
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    marginTop: spacing.lg,
+                  }}
+                >
+                  {dom}
+                </div>
+              ),
+            }}
           >
             {RequirementsForm}
             {MaintainerInfoForm}
@@ -189,8 +257,16 @@ const Index: FC<Props> = ({ currentProjectId, currentModuleId, callback }) => {
           </StepsForm>
         </ProCard>
       </MyDrawer>
-      <Button type="primary" onClick={() => setDrawerVisible(true)}>
-        <PlusOutlined /> 添加需求
+      <Button
+        type="primary"
+        onClick={() => setDrawerVisible(true)}
+        icon={<PlusOutlined />}
+        style={{
+          fontWeight: 500,
+          borderRadius: borderRadius.md,
+        }}
+      >
+        添加需求
       </Button>
     </>
   );

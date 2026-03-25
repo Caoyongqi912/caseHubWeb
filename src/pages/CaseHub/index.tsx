@@ -6,12 +6,14 @@ import { ModuleEnum } from '@/utils/config';
 import { getSplitter, setSplitter } from '@/utils/token';
 import { ProCard } from '@ant-design/pro-components';
 import { Splitter } from 'antd';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useCaseHubTheme } from './styles';
 
 const Index = () => {
   const [currentModuleId, setCurrentModuleId] = useState<number | undefined>();
   const [currentProjectId, setCurrentProjectId] = useState<number>();
   const [sizes, setSizes] = useState<(number | string)[]>(['20%', '80%']);
+  const { token, colors, spacing, borderRadius, shadows } = useCaseHubTheme();
 
   const PerKeyRequirement = 'Requirement';
   const PerKeyCaseDataSource = 'CaseDataSource';
@@ -24,16 +26,52 @@ const Index = () => {
   const onModuleChange = (moduleId: number) => {
     setCurrentModuleId(moduleId);
   };
+
   useEffect(() => {
     const data = getSplitter(PerKeySplitter);
     if (data) {
       setSizes([data.left, data.right]);
     }
   }, []);
+
+  const containerStyle = useMemo(
+    () => ({
+      minHeight: '100vh',
+      background: `linear-gradient(135deg, ${colors.bgLayout} 0%, ${colors.bgContainer} 50%, ${colors.bgContainer} 100%)`,
+      position: 'relative' as const,
+      overflow: 'hidden' as const,
+      '&::before': {
+        content: '""',
+        position: 'absolute' as const,
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: `
+          radial-gradient(ellipse at 20% 20%, ${colors.primaryBg}30 0%, transparent 50%),
+          radial-gradient(ellipse at 80% 80%, ${colors.infoBg}30 0%, transparent 50%)
+        `,
+        pointerEvents: 'none' as const,
+      },
+    }),
+    [colors],
+  );
+
+  const splitterStyle = useMemo(
+    () => ({
+      borderRadius: borderRadius.xl,
+      boxShadow: shadows.card,
+      overflow: 'hidden' as const,
+    }),
+    [borderRadius, shadows],
+  );
+
   const items = [
     {
       key: '1',
-      label: '需求表',
+      label: (
+        <span style={{ fontWeight: 500, padding: '4px 12px' }}>需求表</span>
+      ),
       children: (
         <RequirementTable
           perKey={PerKeyRequirement}
@@ -44,7 +82,9 @@ const Index = () => {
     },
     {
       key: '2',
-      label: '用例库',
+      label: (
+        <span style={{ fontWeight: 500, padding: '4px 12px' }}>用例库</span>
+      ),
       children: (
         <CaseDataTable
           perKey={PerKeyCaseDataSource}
@@ -54,20 +94,18 @@ const Index = () => {
       ),
     },
   ];
+
   return (
     <ProCard
-      bodyStyle={{
-        minHeight: '100vh',
-        padding: 0,
-        overflow: 'hidden',
-      }}
+      style={containerStyle}
+      bodyStyle={{ minHeight: '100vh', padding: 0, overflow: 'hidden' }}
     >
       <Splitter
         onResize={(sizes: number[]) => {
           setSizes(sizes);
           setSplitter(PerKeySplitter, sizes[0], sizes[1]);
         }}
-        style={{ boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)' }}
+        style={splitterStyle}
       >
         <Splitter.Panel
           collapsible={true}

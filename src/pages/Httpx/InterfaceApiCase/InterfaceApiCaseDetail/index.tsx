@@ -49,7 +49,6 @@ import {
   message,
   Splitter,
   TabsProps,
-  theme,
 } from 'antd';
 import { RadioChangeEvent } from 'antd/lib/radio/interface';
 import { debounce } from 'lodash';
@@ -62,7 +61,6 @@ interface Self {
 }
 
 const Index: FC<Self> = ({ interfaceCase, hiddenRunButton }) => {
-  const { token } = theme.useToken();
   const { caseApiId, projectId, moduleId } = useParams<{
     caseApiId: string;
     projectId: string;

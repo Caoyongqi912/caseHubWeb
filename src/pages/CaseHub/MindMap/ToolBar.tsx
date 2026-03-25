@@ -1,7 +1,10 @@
 import { exportAsJson } from '@/pages/CaseHub/MindMap/utils';
+import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import { AddOne, DeleteOne, Download, Refresh, Save } from '@icon-park/react';
-import { Button, Divider, message, Space, Tooltip } from 'antd';
-import React, { FC } from 'react';
+import { Button, Divider, message, Space, Tooltip, Typography } from 'antd';
+import React, { FC, useMemo } from 'react';
+
+const { Text } = Typography;
 
 interface Props {
   mind: React.MutableRefObject<any>;
@@ -10,10 +13,8 @@ interface Props {
 
 const ToolBar: FC<Props> = (props) => {
   const { mind, saveMap } = props;
+  const { colors, spacing, borderRadius } = useCaseHubTheme();
 
-  /**
-   * 添加子node
-   */
   const handleAddChild = () => {
     if (!mind.current) {
       message.warning('脑图未初始化');
@@ -33,9 +34,6 @@ const ToolBar: FC<Props> = (props) => {
     }
   };
 
-  /**
-   * 添加兄弟node
-   */
   const handleAddSibling = async () => {
     if (!mind.current) {
       message.warning('脑图未初始化');
@@ -59,9 +57,6 @@ const ToolBar: FC<Props> = (props) => {
     }
   };
 
-  /**
-   * 删除node
-   */
   const handleDeleteNode = async () => {
     if (!mind.current) {
       message.warning('脑图未初始化');
@@ -98,8 +93,24 @@ const ToolBar: FC<Props> = (props) => {
       message.error('导出失败');
     }
   };
+
+  const buttonStyle = useMemo(
+    () => ({
+      borderRadius: borderRadius.md,
+      fontWeight: 500,
+      transition: `all ${colors.primary}`,
+    }),
+    [borderRadius, colors],
+  );
+
   return (
-    <div>
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: spacing.sm,
+      }}
+    >
       <Space.Compact block>
         <Tooltip title="添加子节点 (Tab)">
           <Button
@@ -107,6 +118,7 @@ const ToolBar: FC<Props> = (props) => {
             size="large"
             icon={<AddOne theme="outline" size="18" />}
             onClick={handleAddChild}
+            style={buttonStyle}
           />
         </Tooltip>
         <Tooltip title="添加同级节点 (Enter)">
@@ -121,6 +133,7 @@ const ToolBar: FC<Props> = (props) => {
               />
             }
             onClick={handleAddSibling}
+            style={buttonStyle}
           />
         </Tooltip>
         <Tooltip title="删除节点 (Delete)">
@@ -129,26 +142,29 @@ const ToolBar: FC<Props> = (props) => {
             size="large"
             icon={<DeleteOne theme="outline" size="18" />}
             onClick={handleDeleteNode}
+            style={buttonStyle}
           />
         </Tooltip>
-        <Divider type="vertical" style={{ margin: '0 4px' }} />
+        <Divider type="vertical" style={{ margin: `0 ${spacing.sm}px` }} />
         <Tooltip title="重置视图">
           <Button
-            type="primary"
+            type="default"
             size="large"
             icon={<Refresh theme="outline" size="18" />}
             onClick={handleReset}
+            style={buttonStyle}
           />
         </Tooltip>
-        <Divider type="vertical" style={{ margin: '0 4px' }} />
         <Tooltip title="导出JSON">
           <Button
-            type="primary"
+            type="default"
             size="large"
             onClick={handleExport}
             icon={<Download theme="outline" size="18" />}
+            style={buttonStyle}
           />
         </Tooltip>
+        <Divider type="vertical" style={{ margin: `0 ${spacing.sm}px` }} />
         <Tooltip title="保存">
           <Button
             type="primary"
@@ -158,7 +174,10 @@ const ToolBar: FC<Props> = (props) => {
               console.log(mind?.current.getData());
               await saveMap();
             }}
-          />
+            style={buttonStyle}
+          >
+            保存
+          </Button>
         </Tooltip>
       </Space.Compact>
     </div>

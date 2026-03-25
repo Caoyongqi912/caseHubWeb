@@ -9,16 +9,7 @@ const { Text } = Typography;
 interface SelfProps {
   content: IPlayCaseContentResultResponse;
 }
-const OperatorOption: { [key: number]: string } = {
-  0: '等于',
-  1: '不等于',
-  2: '大于',
-  3: '小于',
-  4: '大于等于',
-  5: '小于等于',
-  6: '包含',
-  7: '不包含',
-};
+
 const Index: FC<SelfProps> = ({ content }) => {
   return (
     <div>
@@ -46,10 +37,11 @@ const Index: FC<SelfProps> = ({ content }) => {
             <CheckCircleTwoTone twoToneColor="#52c41a" />
 
             <Tooltip title={content.result.content_message || null}>
-              <Text type={'secondary'} style={{ marginLeft: 20 }}>
-                {content.result.content_name}
+              <Text style={{ width: '100%' }}>
+                {content.result.content_message}
               </Text>
             </Tooltip>
+            <Typography></Typography>
           </Space>
         }
         collapsibleIconRender={({}) => {

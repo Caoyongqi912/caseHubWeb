@@ -7,72 +7,30 @@ import {
   updateTestCase,
   updateTestCaseStep,
 } from '@/api/case/testCase';
+import { caseStatusColors } from '@/pages/CaseHub/styles';
+import { useCaseSubStepsStyles } from '@/pages/CaseHub/TestCase/CaseSubStepsStyles';
 import { CaseSubStep } from '@/pages/CaseHub/type';
 import {
-  CheckCircleTwoTone,
-  CloseCircleTwoTone,
-  MenuOutlined,
+  CheckCircleFilled,
+  CloseCircleFilled,
+  CopyOutlined,
+  DeleteOutlined,
+  HolderOutlined,
   PlusOutlined,
+  SaveOutlined,
 } from '@ant-design/icons';
-import {
-  DragSortTable,
-  ProCard,
-  ProColumns,
-  ProForm,
-  ProFormTextArea,
-} from '@ant-design/pro-components';
-import { Button, Popconfirm, Space, Spin, Switch, Typography } from 'antd';
-import React, { FC, useCallback, useEffect, useRef, useState } from 'react';
+import { Button, Popconfirm, Spin, Switch, Tooltip, Typography } from 'antd';
+import React, { FC, useEffect, useRef, useState } from 'react';
 
 const { Text } = Typography;
-
-const caseInfoColumn: ProColumns<CaseSubStep>[] = [
-  {
-    title: '步骤',
-    dataIndex: 'sort',
-    width: '5%',
-    editable: false,
-  },
-  {
-    title: '操作步骤',
-    dataIndex: 'action',
-    valueType: 'textarea',
-    ellipsis: true,
-    fieldProps: {
-      rows: 2,
-      autoSize: { minRows: 2, maxRows: 10 },
-      placeholder: '请输入操作步骤',
-      allowClear: true,
-      fontWeight: 'bold',
-      variant: 'filled',
-    },
-  },
-  {
-    title: '预期结果',
-    dataIndex: 'expected_result',
-    valueType: 'textarea',
-    ellipsis: true,
-    fieldProps: {
-      rows: 2,
-      autoSize: { minRows: 2, maxRows: 10 },
-      variant: 'filled',
-      placeholder: '请输入预期结果',
-      allowClear: true,
-    },
-  },
-  {
-    title: '操作',
-    valueType: 'option',
-    fixed: 'right',
-    width: '8%',
-  },
-];
 
 interface IProps {
   caseId?: number;
   case_status?: number;
   callback?: () => void;
   hiddenStatusBut?: boolean;
+  case_setup?: string;
+  case_mark?: string;
 }
 
 const CaseSubSteps: FC<IProps> = ({
@@ -80,249 +38,415 @@ const CaseSubSteps: FC<IProps> = ({
   case_status,
   hiddenStatusBut = false,
   callback,
+  case_setup = '',
+  case_mark = '',
 }) => {
-  const [editableKeys, setEditableRowKeys] = useState<React.Key[]>();
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-  // 0 啥也每干 1 编辑 2 已保存
+  const [steps, setSteps] = useState<CaseSubStep[]>([]);
   const [editStatus, setEditStatus] = useState(0);
-  const [caseSubStepDataSource, setCaseSubStepDataSource] = useState<
-    CaseSubStep[]
-  >([]);
   const [addLine, setAddLine] = useState(0);
+  const [hoveredStep, setHoveredStep] = useState<string | null>(null);
+  const [focusedField, setFocusedField] = useState<{
+    uid: string;
+    field: string;
+  } | null>(null);
+  const [draggedStep, setDraggedStep] = useState<string | null>(null);
+  const [setupValue, setSetupValue] = useState(case_setup);
+  const [markValue, setMarkValue] = useState(case_mark);
+  const [setupFocused, setSetupFocused] = useState(false);
+  const [markFocused, setMarkFocused] = useState(false);
+
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const stepsRef = useRef<CaseSubStep[]>(steps);
+  const styles = useCaseSubStepsStyles();
+  const statusConfig =
+    caseStatusColors[case_status || 0] || caseStatusColors[0];
+
+  useEffect(() => {
+    setSetupValue(case_setup);
+    setMarkValue(case_mark);
+  }, [case_setup, case_mark]);
+
+  useEffect(() => {
+    stepsRef.current = steps;
+  }, [steps]);
+
   useEffect(() => {
     if (!caseId) return;
     queryTestCaseSupStep(caseId.toString()).then(async ({ code, data }) => {
       if (code === 0) {
-        setCaseSubStepDataSource(data);
+        setSteps(data);
       }
     });
   }, [caseId, addLine]);
 
-  // 使用 useCallback 来确保 handleDragSortEnd 不会在每次渲染时重新定义
-  const handleDragSortEnd = useCallback(
-    async (_: number, __: number, newDataSource: any) => {
-      setCaseSubStepDataSource(newDataSource);
-      const orderIds = newDataSource.map((item: CaseSubStep) => item.id);
-      await reorderTestCaseStep({ stepIds: orderIds });
-    },
-    [caseSubStepDataSource],
-  );
+  const handleDragStart = (uid: string) => {
+    setDraggedStep(uid);
+  };
 
-  /*
-   保存步骤  2s自动保存
-   */
-  const saveStep = async (data: CaseSubStep) => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(async () => {
-      const { code } = await updateTestCaseStep(data);
+  const handleDragEnd = () => {
+    setDraggedStep(null);
+  };
+
+  const handleDrop = async (targetUid: string) => {
+    if (!draggedStep || draggedStep === targetUid) {
+      setDraggedStep(null);
+      return;
+    }
+
+    const newSteps = [...steps];
+    const draggedIndex = newSteps.findIndex((s) => s.uid === draggedStep);
+    const targetIndex = newSteps.findIndex((s) => s.uid === targetUid);
+
+    if (draggedIndex !== -1 && targetIndex !== -1) {
+      const [draggedItem] = newSteps.splice(draggedIndex, 1);
+      newSteps.splice(targetIndex, 0, draggedItem);
+      setSteps(newSteps);
+
+      const orderIds = newSteps
+        .map((item) => item.id)
+        .filter((id): id is number => typeof id === 'number');
+      await reorderTestCaseStep({ stepIds: orderIds });
+    }
+
+    setDraggedStep(null);
+  };
+
+  const saveStep = async (uid: string) => {
+    const step = stepsRef.current.find((s) => s.uid === uid);
+    if (!step?.id) return;
+
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    setEditStatus(1);
+    saveTimeoutRef.current = setTimeout(async () => {
+      const { code } = await updateTestCaseStep(step);
       if (code === 0) {
         setEditStatus(2);
-        // 2秒后恢复为初始状态
-        setTimeout(() => {
-          setEditStatus(0);
-        }, 1500);
+        setTimeout(() => setEditStatus(0), 2000);
       }
-    }, 2000);
+    }, 500);
   };
 
-  useEffect(() => {
-    if (caseSubStepDataSource) {
-      setEditableRowKeys(
-        caseSubStepDataSource.map((item: CaseSubStep) => item.uid),
-      );
-    }
-  }, [caseSubStepDataSource]);
+  const saveCaseField = async (
+    field: 'case_setup' | 'case_mark',
+    value: string,
+  ) => {
+    if (!caseId) return;
 
-  const addSubStepLine = () => {
-    // 如果当前是折叠状态，则展开
-    if (caseId) {
-      handleAddTestCaseStep({ caseId: caseId }).then(async ({ code }) => {
-        if (code === 0) {
-          setAddLine(addLine + 1);
-        }
-      });
+    setEditStatus(1);
+    const { code } = await updateTestCase({
+      id: caseId,
+      [field]: value,
+    } as any);
+
+    if (code === 0) {
+      setEditStatus(2);
+      setTimeout(() => setEditStatus(0), 2000);
+      callback?.();
     }
   };
 
-  const StatusArea = (status: number) => {
-    let statusText = null;
-    switch (status) {
-      case 0:
-        statusText = null;
-        break;
-      case 1:
-        statusText = <Text type={'secondary'}>编辑中。。。</Text>;
-        break;
-      case 2:
-        statusText = <Text type={'secondary'}>已保存</Text>;
-        break;
-    }
-
-    return (
-      <Space>
-        {status === 1 ? <Spin size="small" /> : null}
-        {statusText}
-      </Space>
+  const handleFieldChange = (
+    uid: string,
+    field: 'action' | 'expected_result',
+    value: string,
+  ) => {
+    setSteps((prev) =>
+      prev.map((step) =>
+        step.uid === uid ? { ...step, [field]: value } : step,
+      ),
     );
   };
 
-  const onChange = async (checked: boolean) => {
-    console.log(`switch to ${checked}`);
+  const handleFieldBlur = (uid: string) => {
+    saveStep(uid);
+    setFocusedField(null);
+  };
+
+  const handleFieldKeyDown = (e: React.KeyboardEvent, uid: string) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      (e.target as HTMLTextAreaElement).blur();
+    }
+  };
+
+  const handleSetupBlur = () => {
+    setSetupFocused(false);
+    if (setupValue !== case_setup) {
+      saveCaseField('case_setup', setupValue);
+    }
+  };
+
+  const handleMarkBlur = () => {
+    setMarkFocused(false);
+    if (markValue !== case_mark) {
+      saveCaseField('case_mark', markValue);
+    }
+  };
+
+  const addStep = async () => {
+    if (caseId) {
+      const { code } = await handleAddTestCaseStep({ caseId });
+      if (code === 0) {
+        setAddLine((prev) => prev + 1);
+      }
+    }
+  };
+
+  const deleteStep = async (stepId: number) => {
+    const { code } = await removeTestCaseStep({ stepId });
+    if (code === 0) {
+      setAddLine((prev) => prev + 1);
+    }
+  };
+
+  const copyStep = async (stepId: number) => {
+    const { code } = await copyTestCaseStep({ stepId });
+    if (code === 0) {
+      setAddLine((prev) => prev + 1);
+    }
+  };
+
+  const handleStatusChange = async (checked: boolean) => {
     if (!caseId) return;
-    // @ts-ignore
     const { code } = await updateTestCase({
       id: caseId,
       case_status: checked ? 1 : 2,
-    });
+    } as any);
     if (code === 0) {
       callback?.();
     }
   };
+
+  const SaveIndicator = () => {
+    const config = {
+      0: { text: '', icon: null },
+      1: { text: '保存中...', icon: <Spin size="small" /> },
+      2: { text: '已保存', icon: <SaveOutlined /> },
+    };
+    const current = config[editStatus as keyof typeof config];
+
+    if (!current.text) return null;
+
+    return (
+      <div style={styles.saveIndicator(editStatus)}>
+        {current.icon}
+        <span>{current.text}</span>
+      </div>
+    );
+  };
+
   return (
-    <ProCard
-      extra={StatusArea(editStatus)}
-      actions={
-        <Button onClick={addSubStepLine} type={'link'}>
-          <PlusOutlined />
-          步骤
-        </Button>
-      }
-      title={
-        !hiddenStatusBut && (
-          <Space
-            style={{
-              display: 'flex',
-              justifyContent: 'flex-end',
-              width: '100%',
+    <div style={styles.container()}>
+      <div style={styles.header()}>
+        <div style={styles.headerLeft()}>
+          <div style={styles.stepCounter()}>
+            <HolderOutlined style={{ fontSize: 14 }} />
+            <span>{steps.length} 个步骤</span>
+          </div>
+
+          {!hiddenStatusBut && (
+            <div style={styles.statusSwitch(statusConfig)}>
+              <Switch
+                checkedChildren={<CheckCircleFilled style={{ fontSize: 12 }} />}
+                unCheckedChildren={
+                  <CloseCircleFilled style={{ fontSize: 12 }} />
+                }
+                value={case_status === 1}
+                onChange={handleStatusChange}
+                size="small"
+              />
+              <Text
+                style={{
+                  fontSize: 13,
+                  fontWeight: 500,
+                  color: statusConfig.text,
+                }}
+              >
+                {case_status === 1
+                  ? '通过'
+                  : case_status === 2
+                  ? '失败'
+                  : '待测试'}
+              </Text>
+            </div>
+          )}
+        </div>
+
+        <SaveIndicator />
+      </div>
+
+      <div style={styles.body()}>
+        <div style={styles.textareaWrapper()}>
+          <div style={styles.textareaLabel()}>
+            <span>前置条件</span>
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              （可选）
+            </Text>
+          </div>
+          <textarea
+            value={setupValue}
+            placeholder="输入用例执行的前置条件..."
+            style={styles.textarea(setupFocused)}
+            onFocus={() => setSetupFocused(true)}
+            onBlur={handleSetupBlur}
+            onChange={(e) => setSetupValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                (e.target as HTMLTextAreaElement).blur();
+              }
+            }}
+            rows={2}
+          />
+        </div>
+
+        <div style={styles.sectionTitle()}>测试步骤</div>
+
+        <div style={styles.stepsContainer()}>
+          {steps.map((step, index) => (
+            <div
+              key={step.uid}
+              style={styles.stepRow(hoveredStep === step.uid, index)}
+              onMouseEnter={() => setHoveredStep(step.uid)}
+              onMouseLeave={() => setHoveredStep(null)}
+              draggable
+              onDragStart={() => handleDragStart(step.uid)}
+              onDragEnd={handleDragEnd}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={() => handleDrop(step.uid)}
+            >
+              <div
+                style={{
+                  ...styles.dragHandle(draggedStep === step.uid),
+                  opacity: hoveredStep === step.uid ? 1 : 0.3,
+                }}
+              >
+                <HolderOutlined style={{ fontSize: 16 }} />
+              </div>
+
+              <div style={styles.stepNumber(index + 1)}>{index + 1}</div>
+
+              <textarea
+                value={step.action || ''}
+                placeholder="输入操作步骤..."
+                style={styles.stepInput(
+                  focusedField?.uid === step.uid &&
+                    focusedField?.field === 'action',
+                )}
+                onFocus={() =>
+                  setFocusedField({ uid: step.uid, field: 'action' })
+                }
+                onBlur={() => handleFieldBlur(step.uid)}
+                onChange={(e) =>
+                  handleFieldChange(step.uid, 'action', e.target.value)
+                }
+                onKeyDown={(e) => handleFieldKeyDown(e, step.uid)}
+                rows={2}
+              />
+
+              <textarea
+                value={step.expected_result || ''}
+                placeholder="输入预期结果..."
+                style={styles.stepInput(
+                  focusedField?.uid === step.uid &&
+                    focusedField?.field === 'expected_result',
+                )}
+                onFocus={() =>
+                  setFocusedField({ uid: step.uid, field: 'expected_result' })
+                }
+                onBlur={() => handleFieldBlur(step.uid)}
+                onChange={(e) =>
+                  handleFieldChange(step.uid, 'expected_result', e.target.value)
+                }
+                onKeyDown={(e) => handleFieldKeyDown(e, step.uid)}
+                rows={2}
+              />
+
+              <div style={styles.stepActions()}>
+                <Tooltip title="复制">
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<CopyOutlined style={{ fontSize: 14 }} />}
+                    onClick={() => {
+                      if (typeof step.id === 'number') {
+                        copyStep(step.id);
+                      }
+                    }}
+                    style={{ opacity: hoveredStep === step.uid ? 1 : 0 }}
+                  />
+                </Tooltip>
+                <Popconfirm
+                  title="确认删除此步骤？"
+                  description="删除后无法恢复"
+                  onConfirm={() => {
+                    if (typeof step.id === 'number') {
+                      deleteStep(step.id);
+                    }
+                  }}
+                  okText="删除"
+                  cancelText="取消"
+                  okButtonProps={{ danger: true }}
+                >
+                  <Button
+                    type="text"
+                    size="small"
+                    danger
+                    icon={<DeleteOutlined style={{ fontSize: 14 }} />}
+                    style={{ opacity: hoveredStep === step.uid ? 1 : 0 }}
+                  />
+                </Popconfirm>
+              </div>
+            </div>
+          ))}
+
+          <button
+            style={styles.addButton()}
+            onClick={addStep}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = '#1890ff';
+              e.currentTarget.style.color = '#1890ff';
+              e.currentTarget.style.background = '#e6f7ff';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = '';
+              e.currentTarget.style.color = '';
+              e.currentTarget.style.background = '';
             }}
           >
-            <Switch
-              checkedChildren={<CheckCircleTwoTone twoToneColor="#52c41a" />}
-              unCheckedChildren={
-                <CloseCircleTwoTone twoToneColor={'#f74649'} />
+            <PlusOutlined style={{ fontSize: 16 }} />
+            <span>添加步骤</span>
+          </button>
+        </div>
+
+        <div style={styles.textareaWrapper()}>
+          <div style={styles.textareaLabel()}>
+            <span>备注</span>
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              （可选）
+            </Text>
+          </div>
+          <textarea
+            value={markValue}
+            placeholder="输入备注信息..."
+            style={styles.textarea(markFocused)}
+            onFocus={() => setMarkFocused(true)}
+            onBlur={handleMarkBlur}
+            onChange={(e) => setMarkValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                (e.target as HTMLTextAreaElement).blur();
               }
-              value={case_status === 1}
-              onChange={onChange}
-            />
-            {/*<Button*/}
-            {/*  type={'text'}*/}
-            {/*  icon={<CheckCircleTwoTone twoToneColor="#52c41a" />}*/}
-            {/*  onClick={async () => {*/}
-            {/*    if (caseId) {*/}
-            {/*      // @ts-ignore*/}
-            {/*      const { code } = await updateTestCase({*/}
-            {/*        id: caseId,*/}
-            {/*        case_status: 1,*/}
-            {/*      });*/}
-            {/*      if (code === 0) {*/}
-            {/*        callback();*/}
-            {/*      }*/}
-            {/*    }*/}
-            {/*  }}*/}
-            {/*/>*/}
-            {/*<Button*/}
-            {/*  icon={<CloseCircleTwoTone twoToneColor={'#f74649'} />}*/}
-            {/*  type={'text'}*/}
-            {/*  onClick={async () => {*/}
-            {/*    if (caseId) {*/}
-            {/*      // @ts-ignore*/}
-            {/*      const { code } = await updateTestCase({*/}
-            {/*        id: caseId,*/}
-            {/*        case_status: 2,*/}
-            {/*      });*/}
-            {/*      if (code === 0) {*/}
-            {/*        callback();*/}
-            {/*      }*/}
-            {/*    }*/}
-            {/*  }}*/}
-            {/*/>*/}
-          </Space>
-        )
-      }
-    >
-      <ProFormTextArea
-        name={'case_setup'}
-        placeholder={'请输入用例前置'}
-        fieldProps={{
-          variant: 'filled',
-          rows: 3,
-        }}
-      />
-      <ProForm.Item name={'case_sub_step'}>
-        <DragSortTable<CaseSubStep>
-          columns={caseInfoColumn}
-          rowKey="uid"
-          search={false}
-          pagination={false}
-          toolBarRender={false}
-          dataSource={caseSubStepDataSource}
-          dragSortKey="sort"
-          onDragSortEnd={handleDragSortEnd}
-          dragSortHandlerRender={() => (
-            <MenuOutlined style={{ cursor: 'grab', color: 'gold' }} />
-          )}
-          editable={{
-            type: 'multiple',
-            editableKeys,
-            // @ts-ignore
-            actionRender: (row, _, __) => {
-              return (
-                <>
-                  {row.id && (
-                    <Space>
-                      <a
-                        onClick={async () => {
-                          const { code } = await copyTestCaseStep({
-                            stepId: row.id,
-                          });
-                          if (code === 0) {
-                            setAddLine(addLine + 1);
-                          }
-                        }}
-                      >
-                        复制
-                      </a>
-                      <Popconfirm
-                        title="用例删除"
-                        description="未存到用例库将彻底删除"
-                        onConfirm={async () => {
-                          const { code } = await removeTestCaseStep({
-                            stepId: row.id,
-                          });
-                          if (code === 0) {
-                            setAddLine(addLine + 1);
-                          }
-                        }}
-                        okText="是"
-                        cancelText="否"
-                      >
-                        <a>删除</a>
-                      </Popconfirm>
-                    </Space>
-                  )}
-                </>
-              );
-            },
-            onValuesChange: async (
-              step: CaseSubStep,
-              records: CaseSubStep[],
-            ) => {
-              setEditStatus(1);
-              await saveStep(step);
-            },
-            onChange: setEditableRowKeys,
-          }}
-        />
-      </ProForm.Item>
-      <ProFormTextArea
-        name={'case_mark'}
-        placeholder={'请输入备注'}
-        fieldProps={{
-          variant: 'filled',
-          rows: 3,
-        }}
-      />
-    </ProCard>
+            }}
+            rows={2}
+          />
+        </div>
+      </div>
+    </div>
   );
 };
 

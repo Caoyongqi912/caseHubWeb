@@ -1,39 +1,40 @@
 import {
   copyTestCase,
   removeTestCase,
-  saveTestCase,
   updateTestCase,
 } from '@/api/case/testCase';
 import MyDrawer from '@/components/MyDrawer';
-import { CaseHubConfig } from '@/pages/CaseHub/CaseConfig';
 import CaseLevelSelect from '@/pages/CaseHub/component/CaseLevelSelect';
 import CaseTagSelect from '@/pages/CaseHub/component/CaseTagSelect';
 import CaseTypeSelect from '@/pages/CaseHub/component/CaseTypeSelect';
+import { caseStatusColors } from '@/pages/CaseHub/styles';
 import CaseSubSteps from '@/pages/CaseHub/TestCase/CaseSubSteps';
 import DynamicInfo from '@/pages/CaseHub/TestCase/DynamicInfo';
+import { useTestCaseStyles } from '@/pages/CaseHub/TestCase/styles';
 import { ITestCase } from '@/pages/CaseHub/type';
 import {
+  CheckCircleFilled,
+  ClockCircleFilled,
+  CloseCircleFilled,
   CopyOutlined,
   DeleteOutlined,
+  ExpandOutlined,
   MessageOutlined,
   MoreOutlined,
 } from '@ant-design/icons';
-import { ProCard, ProForm, ProFormText } from '@ant-design/pro-components';
+import { ProForm } from '@ant-design/pro-components';
 import {
-  Badge,
   Button,
   Checkbox,
   Dropdown,
   Form,
+  Input,
   MenuProps,
   message,
-  Space,
-  Tag,
 } from 'antd';
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 
 interface Props {
-  top: any;
   reqId?: string;
   tags?: { label: string; value: string }[];
   setTags: React.Dispatch<
@@ -43,258 +44,297 @@ interface Props {
   testcaseData: ITestCase;
   setSelectedCase: React.Dispatch<React.SetStateAction<number[]>>;
   callback: () => void;
-  collapsible: boolean;
 }
 
-const Index: FC<Props> = (props) => {
-  const {
-    top,
-    callback,
-    selectedCase,
-    setSelectedCase,
-    testcaseData,
-    reqId,
-    tags,
-    setTags,
-  } = props;
-  let timeout: NodeJS.Timeout | null = null;
+const Index: FC<Props> = ({
+  callback,
+  selectedCase,
+  setSelectedCase,
+  testcaseData,
+  reqId,
+  tags,
+  setTags,
+}) => {
   const [form] = Form.useForm<ITestCase>();
   const [openDynamic, setOpenDynamic] = useState(false);
-  const { CASE_STATUS_TEXT_ENUM, CASE_STATUS_COLOR_ENUM } = CaseHubConfig;
-  const [status, setStatus] = useState(0);
   const [openCaseSteps, setOpenCaseSteps] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+  const [titleValue, setTitleValue] = useState('');
+
+  const styles = useTestCaseStyles();
 
   useEffect(() => {
     if (testcaseData) {
       form.setFieldsValue(testcaseData);
+      setTitleValue(testcaseData.case_name || '');
     }
-  }, [testcaseData]);
+  }, [testcaseData, form]);
 
-  useEffect(() => {
-    if (selectedCase) {
-      console.log(selectedCase);
-    }
-  }, [selectedCase]);
-  const reloadCaseStep = () => {
-    setStatus(status + 1);
+  const reloadCaseStep = useCallback(() => {
     callback();
-  };
+  }, [callback]);
 
-  const CardTitle = (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        width: '100%',
-        minHeight: 32,
-        flexWrap: 'nowrap',
-        overflow: 'hidden',
-      }}
-      onClick={(e) => e.stopPropagation()}
-    >
-      <Space size={'small'}>
-        <Checkbox
-          checked={selectedCase.includes(testcaseData.id!)} // 控制选中状态
-          onChange={(e) => {
-            const checked = e.target.checked;
-            const testCaseId = testcaseData.id;
-            if (testCaseId) {
-              setSelectedCase((pre) =>
-                checked
-                  ? pre.includes(testCaseId)
-                    ? pre
-                    : [...pre, testCaseId]
-                  : pre.filter((id) => id !== testCaseId),
-              );
-            }
-          }}
-        />
-      </Space>
-
-      <Space size={'small'} style={{ marginLeft: 10 }}>
-        <Tag color={'#87d068'}>{testcaseData?.uid}</Tag>
-        <ProFormText
-          style={{ fontWeight: 'bold', width: 'auto' }}
-          fieldProps={{
-            variant: 'outlined',
-            style: {
-              borderRadius: 20,
-              height: 'auto',
-              width: '500px', // 添加宽度限制
-            },
-          }}
-          allowClear
-          noStyle
-          name={'case_name'}
-          placeholder={'请输入用例标题'}
-          required
-          tooltip={'最长20位'}
-          rules={[{ required: true, message: '标题不能为空' }]}
-        />
-      </Space>
-    </div>
+  const statusConfig = useMemo(
+    () =>
+      caseStatusColors[testcaseData?.case_status || 0] || caseStatusColors[0],
+    [testcaseData?.case_status],
   );
 
-  const menuItems: MenuProps['items'] = [
-    {
-      label: '动态',
-      key: '1',
-      icon: <MessageOutlined />,
-    },
-    {
-      label: '复制',
-      key: '2',
-      icon: <CopyOutlined />,
-    },
-    {
-      label: '删除',
-      key: '3',
-      icon: <DeleteOutlined />,
-    },
-  ];
+  const statusText = useMemo(() => {
+    const statusTextMap = ['', '通过', '失败', '待开始'];
+    return statusTextMap[testcaseData?.case_status || 0] || '待开始';
+  }, [testcaseData?.case_status]);
 
-  const handleMenuClick: MenuProps['onClick'] = async (e) => {
-    switch (e.key) {
-      case '1':
-        setOpenDynamic(true);
-        return;
-      case '2':
-        await copyStepCase();
-        return;
-      case '3':
-        await deleteStepCase();
+  const StatusIcon = useMemo(() => {
+    if (testcaseData?.case_status === 1) {
+      return <CheckCircleFilled style={{ color: '#52c41a' }} />;
     }
-  };
-
-  const copyStepCase = async () => {
-    if (testcaseData?.id) {
-      const { code, msg } = await copyTestCase({
-        requirement_id: reqId ? parseInt(reqId) : null,
-        caseId: testcaseData.id,
-      });
-      if (code === 0) {
-        message.success(msg);
-        callback();
-      }
+    if (testcaseData?.case_status === 2) {
+      return <CloseCircleFilled style={{ color: '#ff4d4f' }} />;
     }
-  };
-  const deleteStepCase = async () => {
-    if (testcaseData?.id) {
-      const { code, msg } = await removeTestCase({
-        requirement_id: reqId ? parseInt(reqId) : null,
-        caseId: testcaseData.id,
-      });
-      if (code === 0) {
-        message.success(msg);
-        callback();
-      }
-    }
-  };
+    return <ClockCircleFilled style={{ color: '#8c8c8c' }} />;
+  }, [testcaseData?.case_status]);
 
-  const ExtraOpt = (
-    <Space style={{ marginRight: 30 }}>
-      <CaseTagSelect
-        tags={tags}
-        setTags={setTags}
-        testcaseData={testcaseData}
-      />
-      <CaseLevelSelect testcaseData={testcaseData} />
-      <CaseTypeSelect testcaseData={testcaseData} />
-
-      <Dropdown menu={{ items: menuItems, onClick: handleMenuClick }}>
-        <Button type={'link'} icon={<MoreOutlined />} />
-      </Dropdown>
-    </Space>
+  const menuItems: MenuProps['items'] = useMemo(
+    () => [
+      { label: '查看动态', key: '1', icon: <MessageOutlined /> },
+      { label: '复制用例', key: '2', icon: <CopyOutlined /> },
+      { type: 'divider' },
+      { label: '删除用例', key: '3', icon: <DeleteOutlined />, danger: true },
+    ],
+    [],
   );
 
-  // 监听表单值变化
-  const handleValuesChange = async (
-    changedValues: any,
-    allValues: ITestCase,
-  ) => {
-    const values = form.getFieldsValue(true);
-    console.log('all', values);
-    console.log('表单值变化:', changedValues);
-    if (timeout) {
-      clearTimeout(timeout);
+  const copyStepCase = useCallback(async () => {
+    if (!testcaseData?.id) return;
+    const { code, msg } = await copyTestCase({
+      requirement_id: reqId ? parseInt(reqId) : null,
+      caseId: testcaseData.id,
+    });
+    if (code === 0) {
+      message.success(msg);
+      callback();
     }
+  }, [testcaseData?.id, reqId, callback]);
 
-    if (form.getFieldValue('id')) {
-      changedValues.id = values.id;
-      timeout = setTimeout(async () => {
-        console.log('发送更新请求，当前值：', allValues);
-
-        const { code, msg } = await updateTestCase(values);
-        if (code === 0) {
-          message.success(msg);
-        }
-      }, 3000); // 延时3秒
-    } else {
-      timeout = setTimeout(async () => {
-        console.log('发送插入请求，当前值：', values);
-        if (values.case_name && values.case_tag) {
-          console.log(allValues);
-          const { code, msg } = await saveTestCase(values);
-          if (code === 0) {
-            message.success(msg);
-          }
-        }
-      }, 3000); // 延时3秒
+  const deleteStepCase = useCallback(async () => {
+    if (!testcaseData?.id) return;
+    const { code, msg } = await removeTestCase({
+      requirement_id: reqId ? parseInt(reqId) : null,
+      caseId: testcaseData.id,
+    });
+    if (code === 0) {
+      message.success(msg);
+      callback();
     }
-  };
+  }, [testcaseData?.id, reqId, callback]);
+
+  const handleMenuClick: MenuProps['onClick'] = useCallback(
+    async (e) => {
+      e.domEvent.stopPropagation();
+      switch (e.key) {
+        case '1':
+          setOpenDynamic(true);
+          break;
+        case '2':
+          await copyStepCase();
+          break;
+        case '3':
+          await deleteStepCase();
+          break;
+      }
+    },
+    [copyStepCase, deleteStepCase],
+  );
+
+  const handleFieldSave = useCallback(
+    async (field: string, value: string | number) => {
+      if (!testcaseData?.id) return;
+
+      const values: Record<string, unknown> = {
+        id: testcaseData.id,
+        [field]: value,
+      };
+
+      const { code } = await updateTestCase(values as unknown as ITestCase);
+      if (code === 0) {
+        message.success('保存成功');
+        callback();
+      }
+    },
+    [testcaseData?.id, callback],
+  );
+
+  const handleTitleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setTitleValue(e.target.value);
+    },
+    [],
+  );
+
+  const handleTitleSave = useCallback(async () => {
+    const trimmedValue = titleValue.trim();
+    if (trimmedValue && trimmedValue !== testcaseData?.case_name) {
+      form.setFieldsValue({ case_name: trimmedValue });
+      await handleFieldSave('case_name', trimmedValue);
+    }
+  }, [titleValue, testcaseData?.case_name, form, handleFieldSave]);
+
+  const handleTitleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        (e.target as HTMLInputElement).blur();
+      }
+    },
+    [],
+  );
+
+  const handleMouseEnter = useCallback(() => setIsHovered(true), []);
+  const handleMouseLeave = useCallback(() => setIsHovered(false), []);
+  const handleFocus = useCallback(() => setIsFocused(true), []);
+  const handleBlur = useCallback(() => {
+    setIsFocused(false);
+    handleTitleSave();
+  }, [handleTitleSave]);
+
+  const handleCheckboxChange = useCallback(
+    (e: { target: { checked: boolean }; stopPropagation: () => void }) => {
+      e.stopPropagation();
+      const checked = e.target.checked;
+      const testCaseId = testcaseData.id;
+      if (testCaseId) {
+        setSelectedCase((prev) =>
+          checked
+            ? prev.includes(testCaseId)
+              ? prev
+              : [...prev, testCaseId]
+            : prev.filter((id) => id !== testCaseId),
+        );
+      }
+    },
+    [testcaseData.id, setSelectedCase],
+  );
+
+  const handleExpandClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    setOpenCaseSteps(true);
+  }, []);
+
+  const isSelected =
+    testcaseData.id !== undefined && selectedCase.includes(testcaseData.id);
 
   return (
     <>
       <MyDrawer
-        name={'动态'}
-        width={'40%'}
+        name="动态"
+        width="40%"
         open={openDynamic}
         setOpen={setOpenDynamic}
       >
         <DynamicInfo caseId={testcaseData?.id} />
       </MyDrawer>
 
-      <ProForm<ITestCase>
-        form={form}
-        submitter={false}
-        onValuesChange={handleValuesChange}
+      <MyDrawer
+        name={testcaseData.case_name || '用例详情'}
+        width="70%"
+        open={openCaseSteps}
+        setOpen={setOpenCaseSteps}
       >
-        <MyDrawer
-          name={testcaseData.case_name}
-          open={openCaseSteps}
-          setOpen={setOpenCaseSteps}
+        <CaseSubSteps
+          caseId={testcaseData?.id}
+          case_status={testcaseData?.case_status}
+          callback={reloadCaseStep}
+        />
+      </MyDrawer>
+
+      <ProForm<ITestCase> form={form} submitter={false}>
+        <div
+          style={styles.container(isHovered, isSelected)}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
         >
-          <CaseSubSteps
-            caseId={testcaseData?.id}
-            case_status={testcaseData?.case_status}
-            callback={reloadCaseStep}
+          <div
+            style={styles.leftAccent(
+              isHovered,
+              testcaseData?.case_status || 0,
+              isSelected,
+            )}
           />
-        </MyDrawer>
-        <Badge.Ribbon
-          text={CASE_STATUS_TEXT_ENUM[testcaseData!.case_status!]}
-          color={CASE_STATUS_COLOR_ENUM[testcaseData!.case_status!]}
-        >
-          <ProCard
-            ref={top}
-            hoverable
-            title={CardTitle}
-            extra={ExtraOpt}
-            bordered
-            collapsible
-            defaultCollapsed
-            collapsibleIconRender={({ collapsed }) => null}
-            onClick={() => {
-              setOpenCaseSteps(true);
-            }}
-            headerBordered
-            headStyle={{
-              height: 80,
-              padding: '0 16px',
-            }}
-          />
-        </Badge.Ribbon>
+
+          <div style={styles.inner()}>
+            <div style={styles.checkbox(isSelected, isHovered)}>
+              <Checkbox checked={isSelected} onChange={handleCheckboxChange} />
+            </div>
+
+            <span style={styles.caseIdTag()}>{testcaseData?.uid}</span>
+
+            <div style={styles.titleInputContainer()}>
+              <Input
+                value={titleValue}
+                placeholder="输入用例标题..."
+                bordered={false}
+                style={styles.titleInput(isFocused)}
+                onFocus={handleFocus}
+                onBlur={handleBlur}
+                onChange={handleTitleChange}
+                onKeyDown={handleTitleKeyDown}
+              />
+              <div style={styles.focusIndicator(isFocused)} />
+            </div>
+
+            <div style={styles.metaSection()}>
+              <span
+                style={styles.statusTag(
+                  { bg: statusConfig.bg, text: statusConfig.text },
+                  testcaseData?.case_status || 0,
+                )}
+              >
+                {StatusIcon}
+                {statusText}
+              </span>
+
+              <CaseTagSelect
+                tags={tags}
+                setTags={setTags}
+                testcaseData={testcaseData}
+                onSave={handleFieldSave}
+              />
+              <CaseLevelSelect
+                testcaseData={testcaseData}
+                onSave={handleFieldSave}
+              />
+              <CaseTypeSelect
+                testcaseData={testcaseData}
+                onSave={handleFieldSave}
+              />
+
+              <Button
+                type="text"
+                size="small"
+                icon={<ExpandOutlined style={{ fontSize: 14 }} />}
+                style={styles.detailBtn(isHovered)}
+                onClick={handleExpandClick}
+              />
+
+              <Dropdown
+                menu={{ items: menuItems, onClick: handleMenuClick }}
+                trigger={['click']}
+              >
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<MoreOutlined style={{ fontSize: 16 }} />}
+                  style={styles.moreBtn(isHovered)}
+                />
+              </Dropdown>
+            </div>
+          </div>
+        </div>
       </ProForm>
     </>
   );
 };
+
 export default Index;

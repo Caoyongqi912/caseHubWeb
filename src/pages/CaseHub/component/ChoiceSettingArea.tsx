@@ -1,6 +1,7 @@
 import { IModuleEnum } from '@/api';
 import { queryProject } from '@/api/base';
 import { moveTestCase2Common, setAllTestCaseStatus } from '@/api/case/testCase';
+import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import { ITestCase } from '@/pages/CaseHub/type';
 import { ModuleEnum } from '@/utils/config';
 import { fetchModulesEnum } from '@/utils/somefunc';
@@ -10,8 +11,10 @@ import {
   ProFormSelect,
   ProFormTreeSelect,
 } from '@ant-design/pro-components';
-import { Button, Form, message, Space } from 'antd';
-import React, { FC, useEffect, useState } from 'react';
+import { Button, Divider, Form, message, Space, Typography } from 'antd';
+import React, { FC, useEffect, useMemo, useState } from 'react';
+
+const { Text, Link } = Typography;
 
 interface Props {
   showCheckButton: boolean;
@@ -32,15 +35,18 @@ const ChoiceSettingArea: FC<Props> = ({
   const [selectProjectId, setSelectProjectId] = useState<number>();
   const [moduleEnum, setModuleEnum] = useState<IModuleEnum[]>([]);
   const [projects, setProjects] = useState<any[]>([]);
+  const { colors, spacing, borderRadius } = useCaseHubTheme();
+
   useEffect(() => {
     queryProject().then(async ({ code, data }) => {
       if (code === 0) {
         setProjects(
-          data.map((itme) => ({ label: itme.title, value: itme.id })),
+          data.map((item) => ({ label: item.title, value: item.id })),
         );
       }
     });
   }, []);
+
   useEffect(() => {
     if (selectProjectId) {
       setSelectProjectId(selectProjectId);
@@ -61,6 +67,7 @@ const ChoiceSettingArea: FC<Props> = ({
       callback();
     }
   };
+
   const setAllFail = async () => {
     const values = {
       caseIds: selectedCase,
@@ -72,6 +79,7 @@ const ChoiceSettingArea: FC<Props> = ({
       callback();
     }
   };
+
   const moveToCaseLib = async () => {
     const v = await form.validateFields();
     const values = {
@@ -85,16 +93,40 @@ const ChoiceSettingArea: FC<Props> = ({
     }
   };
 
+  const cardStyle = useMemo(
+    () => ({
+      borderRadius: borderRadius.lg,
+      background: `linear-gradient(135deg, ${colors.warningBg}20 0%, ${colors.bgContainer} 100%)`,
+      border: `1px solid ${colors.border}`,
+      transition: `all ${colors.primary}`,
+    }),
+    [borderRadius, colors],
+  );
+
   return (
     <>
       {showCheckButton && (
         <ProCard
           collapsed
+          style={cardStyle}
+          headStyle={{
+            background: `linear-gradient(135deg, ${colors.primaryBg} 0%, ${colors.bgContainer} 100%)`,
+            borderBottom: `1px solid ${colors.border}`,
+            padding: `${spacing.sm}px ${spacing.md}px`,
+          }}
+          bodyStyle={{
+            padding: `${spacing.sm}px ${spacing.md}px`,
+          }}
           title={
-            <div>
-              已选择 {selectedCase.length} 项{' '}
-              <Space style={{ marginLeft: '10px' }}>
-                <a
+            <div
+              style={{ display: 'flex', alignItems: 'center', gap: spacing.sm }}
+            >
+              <Text strong style={{ color: colors.primary }}>
+                已选择 {selectedCase.length} 项
+              </Text>
+              <Space size="small">
+                <Link
+                  style={{ color: colors.primary }}
                   onClick={() => {
                     if (allTestCase) {
                       setSelectedCase(allTestCase.map((tc) => tc.id!));
@@ -102,24 +134,34 @@ const ChoiceSettingArea: FC<Props> = ({
                   }}
                 >
                   全选
-                </a>
-                <a onClick={() => setSelectedCase([])}>取消选择</a>
+                </Link>
+                <Link
+                  style={{ color: colors.textSecondary }}
+                  onClick={() => setSelectedCase([])}
+                >
+                  取消选择
+                </Link>
               </Space>
             </div>
           }
-          style={{
-            background: '#e6e6e6',
-            borderRadius: '8px',
-          }}
           extra={
-            <Space size={'small'}>
-              <a onClick={setAllSuccess}>全部成功</a>
-              <a onClick={setAllFail}>全部失败</a>
-
+            <Space size="small">
+              <Link style={{ color: colors.success }} onClick={setAllSuccess}>
+                全部成功
+              </Link>
+              <Divider />
+              <Link style={{ color: colors.error }} onClick={setAllFail}>
+                全部失败
+              </Link>
+              <Divider />
               <ModalForm
                 form={form}
                 onFinish={moveToCaseLib}
-                trigger={<Button type="link">移动到用例库</Button>}
+                trigger={
+                  <Button type="link" style={{ color: colors.primary }}>
+                    移动到用例库
+                  </Button>
+                }
               >
                 <ProFormSelect
                   options={projects}
@@ -127,9 +169,13 @@ const ChoiceSettingArea: FC<Props> = ({
                   name={'project_id'}
                   width={'md'}
                   required={true}
-                  onChange={(value) => {
-                    setSelectProjectId(value as number);
-                    form.setFieldValue('module_id', undefined);
+                  rules={[{ required: true, message: '请选择项目' }]}
+                  fieldProps={{
+                    variant: 'filled',
+                    onChange: (value) => {
+                      setSelectProjectId(value as number);
+                      form.setFieldValue('module_id', undefined);
+                    },
                   }}
                 />
                 <ProFormTreeSelect
@@ -139,6 +185,7 @@ const ChoiceSettingArea: FC<Props> = ({
                   label="所属模块"
                   rules={[{ required: true, message: '所属模块必选' }]}
                   fieldProps={{
+                    variant: 'filled',
                     treeData: moduleEnum,
                     fieldNames: {
                       label: 'title',
@@ -149,9 +196,10 @@ const ChoiceSettingArea: FC<Props> = ({
               </ModalForm>
             </Space>
           }
-        ></ProCard>
+        />
       )}
     </>
   );
 };
+
 export default ChoiceSettingArea;

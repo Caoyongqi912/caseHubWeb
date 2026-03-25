@@ -2,6 +2,7 @@ import { IModuleEnum } from '@/api';
 import { queryProject, queryUser } from '@/api/base';
 import { getRequirement, updateRequirement } from '@/api/case/requirement';
 import { CaseHubConfig } from '@/pages/CaseHub/CaseConfig';
+import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import { IRequirement } from '@/pages/CaseHub/type';
 import { ModuleEnum } from '@/utils/config';
 import { fetchModulesEnum } from '@/utils/somefunc';
@@ -12,8 +13,8 @@ import {
   ProFormText,
   ProFormTreeSelect,
 } from '@ant-design/pro-components';
-import { Form } from 'antd';
-import { FC, useEffect, useState } from 'react';
+import { Form, Tag } from 'antd';
+import { FC, useEffect, useMemo, useState } from 'react';
 
 interface Props {
   callback: () => void;
@@ -23,11 +24,22 @@ interface Props {
 const RequirementDetail: FC<Props> = ({ callback, requirementId }) => {
   const [reqForm] = Form.useForm<IRequirement>();
   const [moduleEnum, setModuleEnum] = useState<IModuleEnum[]>([]);
-
   const { CASE_LEVEL_OPTION } = CaseHubConfig;
   const [selectProjectId, setSelectProjectId] = useState<number>();
   const [users, setUsers] = useState<any[]>([]);
   const [projects, setProjects] = useState<any[]>([]);
+  const { token, colors, spacing, borderRadius } = useCaseHubTheme();
+
+  const cardStyle = useMemo(
+    () => ({
+      borderRadius: borderRadius.xl,
+      border: `1px solid ${colors.border}`,
+      boxShadow: `0 2px 8px ${colors.bgContainer}20`,
+      overflow: 'hidden' as const,
+    }),
+    [borderRadius, colors],
+  );
+
   useEffect(() => {
     queryProject().then(async ({ code, data }) => {
       if (code === 0) {
@@ -46,6 +58,7 @@ const RequirementDetail: FC<Props> = ({ callback, requirementId }) => {
       setModuleEnum([]);
     }
   }, [selectProjectId]);
+
   useEffect(() => {
     if (requirementId) {
       getRequirement(requirementId).then(async ({ code, data }) => {
@@ -69,10 +82,22 @@ const RequirementDetail: FC<Props> = ({ callback, requirementId }) => {
     }
   }, [requirementId]);
 
+  const formItemStyle = useMemo(
+    () => ({
+      marginBottom: spacing.lg,
+    }),
+    [spacing],
+  );
+
   return (
-    <ProCard>
+    <ProCard style={cardStyle}>
       <ProForm
         form={reqForm}
+        layout="horizontal"
+        labelCol={{ span: 6 }}
+        wrapperCol={{ span: 16 }}
+        //@ts-ignore
+        formItemProps={{ style: formItemStyle }}
         onFinish={async (values) => {
           if (requirementId) {
             const { code } = await updateRequirement({
@@ -84,42 +109,100 @@ const RequirementDetail: FC<Props> = ({ callback, requirementId }) => {
             }
           }
         }}
+        submitter={{
+          render: (_, dom) => (
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                marginTop: spacing.lg,
+              }}
+            >
+              {dom}
+            </div>
+          ),
+        }}
       >
-        <ProForm.Group>
-          <ProFormSelect
-            options={projects}
-            label={'所属项目'}
-            name={'project_id'}
-            width={'md'}
-            required={true}
-            onChange={(value) => {
-              setSelectProjectId(value as number);
-              reqForm.setFieldValue('module_id', undefined);
-            }}
-          />
-          <ProFormTreeSelect
-            required
-            width={'md'}
-            name="module_id"
-            label="所属模块"
-            rules={[{ required: true, message: '所属模块必选' }]}
+        <ProCard
+          title={
+            <Tag
+              style={{
+                background: colors.primaryBg,
+                borderColor: colors.primary,
+                color: colors.primary,
+              }}
+            >
+              基本信息
+            </Tag>
+          }
+          style={{ marginBottom: spacing.md }}
+          bordered={false}
+        >
+          <ProForm.Group>
+            <ProFormSelect
+              options={projects}
+              label={'所属项目'}
+              name={'project_id'}
+              width={'md'}
+              required={true}
+              rules={[{ required: true, message: '请选择项目' }]}
+              fieldProps={{
+                onChange: (value) => {
+                  setSelectProjectId(value as number);
+                  reqForm.setFieldValue('module_id', undefined);
+                },
+              }}
+            />
+            <ProFormTreeSelect
+              required
+              width={'md'}
+              name="module_id"
+              label="所属模块"
+              rules={[{ required: true, message: '所属模块必选' }]}
+              fieldProps={{
+                treeData: moduleEnum,
+                fieldNames: {
+                  label: 'title',
+                },
+                filterTreeNode: true,
+              }}
+            />
+          </ProForm.Group>
+          <ProFormText
+            name={'requirement_url'}
+            label={'需求连接'}
+            placeholder={'请输入需求链接'}
             fieldProps={{
-              treeData: moduleEnum,
-              fieldNames: {
-                label: 'title',
-              },
-              filterTreeNode: true,
+              variant: 'filled',
             }}
           />
-        </ProForm.Group>
-        <ProFormText name={'requirement_url'} label={'需求连接'} />
-        <ProForm.Group>
+        </ProCard>
+
+        <ProCard
+          title={
+            <Tag
+              style={{
+                background: colors.infoBg,
+                borderColor: colors.info,
+                color: colors.info,
+              }}
+            >
+              需求详情
+            </Tag>
+          }
+          style={{ marginBottom: spacing.md }}
+          bordered={false}
+        >
           <ProFormText
             name={'requirement_name'}
             label={'需求名'}
             required={true}
             width={'lg'}
             rules={[{ required: true, message: '请填写需求名' }]}
+            fieldProps={{
+              variant: 'filled',
+              placeholder: '请输入需求名称',
+            }}
           />
           <ProFormSelect
             name={'requirement_level'}
@@ -128,31 +211,53 @@ const RequirementDetail: FC<Props> = ({ callback, requirementId }) => {
             width={'sm'}
             initialValue={'P2'}
             options={CASE_LEVEL_OPTION}
+            fieldProps={{
+              variant: 'filled',
+            }}
           />
-        </ProForm.Group>
-        <ProFormSelect
-          showSearch
-          name={'maintainer'}
-          label={'维护人'}
-          required={true}
-          options={users}
-          fieldProps={{
-            optionFilterProp: 'label', // 确保搜索是基于 label(chargeName) 而不是 value(chargeId)
-            labelInValue: false, // 确保只提交 value 而不是 {value,label} 对象
-          }}
-        />
-        <ProFormSelect
-          showSearch
-          mode="multiple"
-          name={'develops'}
-          label={'开发'}
-          debounceTime={1000}
-          options={users}
-          fieldProps={{
-            optionFilterProp: 'label', // 确保搜索是基于 label(chargeName) 而不是 value(chargeId)
-            labelInValue: false, // 确保只提交 value 而不是 {value,label} 对象
-          }}
-        />
+        </ProCard>
+
+        <ProCard
+          title={
+            <Tag
+              style={{
+                background: colors.warningBg,
+                borderColor: colors.warning,
+                color: colors.warning,
+              }}
+            >
+              维护人员
+            </Tag>
+          }
+          bordered={false}
+        >
+          <ProFormSelect
+            showSearch
+            name={'maintainer'}
+            label={'维护人'}
+            required={true}
+            options={users}
+            rules={[{ required: true, message: '请选择维护人' }]}
+            fieldProps={{
+              variant: 'filled',
+              optionFilterProp: 'label',
+              labelInValue: false,
+            }}
+          />
+          <ProFormSelect
+            showSearch
+            mode="multiple"
+            name={'develops'}
+            label={'开发'}
+            debounceTime={1000}
+            options={users}
+            fieldProps={{
+              variant: 'filled',
+              optionFilterProp: 'label',
+              labelInValue: false,
+            }}
+          />
+        </ProCard>
       </ProForm>
     </ProCard>
   );

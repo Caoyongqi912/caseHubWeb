@@ -343,7 +343,7 @@ export const getTestCaseMind = async (
   },
   options?: IObjGet,
 ) => {
-  return request<IResponse<null>>(`/api/hub/mindCase/detail`, {
+  return request<IResponse<any>>(`/api/hub/mindCase/detail`, {
     method: 'GET',
     params: info,
     ...(options || {}),

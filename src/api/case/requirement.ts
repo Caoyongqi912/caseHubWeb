@@ -58,7 +58,7 @@ export const getRequirement = async (
 ) => {
   return request<IResponse<IRequirement>>('/api/hub/getRequirement', {
     method: 'GET',
-    params: { requirement_id: requirementId },
+    params: { requirementId: requirementId },
     ...(options || {}),
   });
 };
