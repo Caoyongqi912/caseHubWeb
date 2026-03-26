@@ -34,9 +34,13 @@ export interface ITestCase {
   case_status?: 0 | 1 | 2; // 0:未开始 1:通过 2:失败
   case_bugs?: string[] | [] | undefined;
   case_mark?: string | undefined;
+  is_common?: boolean; // 是否公共用例
+  is_review?: boolean; // 是否已评审
   // case_sub_steps?: CaseSubStep[];
   requirementId?: number | string;
 
+  creatorName: string;
+  creatorId: number;
   project_id?: number;
   module_id?: number;
 }

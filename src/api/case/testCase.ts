@@ -12,7 +12,7 @@ export const queryCasesByRequirement = async (
   searchInfo: IObjGet,
   options?: IObjGet,
 ) => {
-  return request<IResponse<ITestCase[]>>('/api/hub/cases/queryByReqId', {
+  return request<IResponse<ITestCase[]>>('/api/hub/cases/queryByField', {
     method: 'GET',
     params: searchInfo,
     ...(options || {}),
@@ -288,11 +288,30 @@ export const downloadCaseExcel = async (options: { responseType: 'blob' }) => {
 export const setAllTestCaseStatus = async (
   info: {
     status: number;
-    caseIds: number[];
+    case_ids: number[];
   },
   options?: IObjGet,
 ) => {
   return request<IResponse<null>>(`/api/hub/cases/updateStatus`, {
+    method: 'POST',
+    data: info,
+    ...(options || {}),
+  });
+};
+
+/**
+ * setAllTestCaseReview
+ * @param info
+ * @param options
+ */
+export const setAllTestCaseReview = async (
+  info: {
+    is_review: boolean;
+    case_ids: number[];
+  },
+  options?: IObjGet,
+) => {
+  return request<IResponse<null>>(`/api/hub/cases/updateReview`, {
     method: 'POST',
     data: info,
     ...(options || {}),

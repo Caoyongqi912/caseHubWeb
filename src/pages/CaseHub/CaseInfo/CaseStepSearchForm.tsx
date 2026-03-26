@@ -316,6 +316,36 @@ const CaseStepSearchForm: FC<Props> = ({
                 />
                 <ProFormSelect
                   width="sm"
+                  name="is_review"
+                  placeholder="是否评审"
+                  mode="single"
+                  allowClear
+                  options={[
+                    { label: '已评审', value: true },
+                    { label: '未评审', value: false },
+                  ]}
+                  fieldProps={{
+                    variant: 'filled',
+                    style: { borderRadius: borderRadius.md },
+                  }}
+                />
+                <ProFormSelect
+                  width="sm"
+                  name="is_common"
+                  placeholder="是否公共用例"
+                  mode="single"
+                  allowClear
+                  options={[
+                    { label: '公共', value: true },
+                    { label: '私有', value: false },
+                  ]}
+                  fieldProps={{
+                    variant: 'filled',
+                    style: { borderRadius: borderRadius.md },
+                  }}
+                />
+                <ProFormSelect
+                  width="sm"
                   name="case_type"
                   placeholder="选择类型"
                   mode="single"

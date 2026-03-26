@@ -19,8 +19,10 @@ import {
   CopyOutlined,
   DeleteOutlined,
   ExpandOutlined,
+  FileProtectOutlined,
   MessageOutlined,
   MoreOutlined,
+  StarFilled,
 } from '@ant-design/icons';
 import { ProForm } from '@ant-design/pro-components';
 import {
@@ -31,6 +33,7 @@ import {
   Input,
   MenuProps,
   message,
+  Tag,
 } from 'antd';
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -130,6 +133,9 @@ const Index: FC<Props> = ({
     }
   }, [testcaseData?.id, reqId, callback]);
 
+  /**
+   * 处理菜单点击事件
+   */
   const handleMenuClick: MenuProps['onClick'] = useCallback(
     async (e) => {
       e.domEvent.stopPropagation();
@@ -148,6 +154,9 @@ const Index: FC<Props> = ({
     [copyStepCase, deleteStepCase],
   );
 
+  /**
+   * 处理字段保存事件
+   */
   const handleFieldSave = useCallback(
     async (field: string, value: string | number) => {
       if (!testcaseData?.id) return;
@@ -243,9 +252,11 @@ const Index: FC<Props> = ({
         setOpen={setOpenCaseSteps}
       >
         <CaseSubSteps
+          creatorName={testcaseData?.creatorName}
           caseId={testcaseData?.id}
           case_status={testcaseData?.case_status}
           callback={reloadCaseStep}
+          requirement_id={reqId ? parseInt(reqId) : undefined}
         />
       </MyDrawer>
 
@@ -295,6 +306,13 @@ const Index: FC<Props> = ({
                 {statusText}
               </span>
 
+              {testcaseData?.is_common && (
+                <span style={styles.caseFlagTag('common')}>
+                  <StarFilled style={{ fontSize: 10 }} />
+                  公共
+                </span>
+              )}
+
               <CaseTagSelect
                 tags={tags}
                 setTags={setTags}
@@ -310,6 +328,30 @@ const Index: FC<Props> = ({
                 onSave={handleFieldSave}
               />
 
+              {testcaseData?.is_review !== undefined && (
+                <Tag
+                  onClick={() => {
+                    if (testcaseData?.id) {
+                      const newValue = !testcaseData.is_review;
+                      handleFieldSave(
+                        'is_review',
+                        newValue as unknown as string,
+                      );
+                    }
+                  }}
+                  style={{
+                    ...styles.caseFlagTag(
+                      testcaseData.is_review
+                        ? 'review-active'
+                        : 'review-pending',
+                    ),
+                    cursor: 'pointer',
+                  }}
+                >
+                  <FileProtectOutlined style={{ fontSize: 10 }} />
+                  {testcaseData.is_review ? '已评审' : '未评审'}
+                </Tag>
+              )}
               <Button
                 type="text"
                 size="small"

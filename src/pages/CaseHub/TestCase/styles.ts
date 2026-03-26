@@ -4,31 +4,51 @@ import { useCaseHubTheme } from '../styles/useCaseHubTheme';
 export const useTestCaseStyles = () => {
   const { colors, spacing } = useCaseHubTheme();
 
+  const getStatusColors = (caseStatus: number) => {
+    switch (caseStatus) {
+      case 1:
+        return {
+          accent: '#22c55e',
+          text: '#15803d',
+          bg: 'rgba(34, 197, 94, 0.08)',
+        };
+      case 2:
+        return {
+          accent: '#ef4444',
+          text: '#b91c1c',
+          bg: 'rgba(239, 68, 68, 0.08)',
+        };
+      case 3:
+        return {
+          accent: '#f59e0b',
+          text: '#b45309',
+          bg: 'rgba(245, 158, 11, 0.08)',
+        };
+      default:
+        return {
+          accent: colors.textSecondary,
+          text: colors.textSecondary,
+          bg: 'transparent',
+        };
+    }
+  };
+
   const container = (
     isHovered: boolean,
     isSelected: boolean = false,
   ): CSSProperties => ({
     position: 'relative',
-    borderRadius: 16,
-    background: isSelected
-      ? `linear-gradient(135deg, ${colors.primary}08 0%, ${colors.primaryBg} 100%)`
-      : colors.bgContainer,
-    transition: 'all 280ms cubic-bezier(0.4, 0, 0.2, 1)',
-    transform:
-      isHovered || isSelected
-        ? 'translateY(-2px) scale(1.002)'
-        : 'translateY(0) scale(1)',
+    borderRadius: 10,
+    background: colors.bgContainer,
+    transition: 'all 150ms ease',
+    transform: isHovered || isSelected ? 'translateY(-1px)' : 'translateY(0)',
     boxShadow:
       isHovered || isSelected
-        ? `0 8px 32px rgba(0, 0, 0, 0.12), 0 0 0 2px ${colors.primary}30`
-        : '0 2px 8px rgba(0, 0, 0, 0.04)',
-    border: `1px solid ${
-      isSelected
-        ? colors.primary
-        : isHovered
-        ? `${colors.primary}40`
-        : `${colors.border}20`
-    }`,
+        ? `0 2px 8px rgba(0, 0, 0, 0.06), 0 0 0 1px ${
+            isSelected ? colors.primary : `${colors.border}60`
+          }`
+        : '0 1px 3px rgba(0, 0, 0, 0.03)',
+    border: '1px solid transparent',
     overflow: 'hidden',
   });
 
@@ -37,37 +57,27 @@ export const useTestCaseStyles = () => {
     caseStatus: number,
     isSelected: boolean = false,
   ): CSSProperties => {
-    let accentColor = colors.textSecondary;
-    let glowColor = 'rgba(0,0,0,0.1)';
-
-    if (caseStatus === 1) {
-      accentColor = '#22c55e';
-      glowColor = 'rgba(34, 197, 94, 0.3)';
-    } else if (caseStatus === 2) {
-      accentColor = '#ef4444';
-      glowColor = 'rgba(239, 68, 68, 0.3)';
-    }
+    const statusColors = getStatusColors(caseStatus);
 
     return {
       position: 'absolute',
       left: 0,
-      top: 8,
-      bottom: 8,
-      width: isSelected ? 4 : 3,
-      borderRadius: '0 3px 3px 0',
-      background: `linear-gradient(180deg, ${accentColor} 0%, ${accentColor}80 100%)`,
-      boxShadow: isHovered || isSelected ? `0 0 12px ${glowColor}` : 'none',
-      opacity: isHovered || isSelected ? 1 : 0.7,
-      transition: 'all 200ms',
+      top: 0,
+      bottom: 0,
+      width: 3,
+      background: `linear-gradient(180deg, ${statusColors.accent} 0%, ${statusColors.accent}90 100%)`,
+      boxShadow: `0 0 6px ${statusColors.accent}40`,
+      opacity: caseStatus > 0 ? 1 : isHovered || isSelected ? 0.8 : 0.3,
+      transition: 'all 150ms ease',
     };
   };
 
   const inner = (): CSSProperties => ({
     display: 'flex',
     alignItems: 'center',
-    padding: `${spacing.md}px ${spacing.lg}px ${spacing.md}px ${spacing.xl}px`,
-    gap: spacing.md,
-    minHeight: 56,
+    padding: `${spacing.sm}px ${spacing.md}px ${spacing.sm}px ${spacing.lg}px`,
+    gap: spacing.sm,
+    minHeight: 44,
   });
 
   const checkbox = (
@@ -75,51 +85,51 @@ export const useTestCaseStyles = () => {
     isHovered: boolean,
   ): CSSProperties => ({
     opacity: isSelected ? 1 : isHovered ? 0.7 : 0.3,
-    transition: 'opacity 200ms',
-    transform: isSelected ? 'scale(1.1)' : 'scale(1)',
+    transition: 'opacity 150ms',
   });
 
   const caseIdTag = (): CSSProperties => ({
-    padding: '3px 12px',
-    borderRadius: 20,
-    background: `linear-gradient(135deg, ${colors.primary}10 0%, ${colors.primary}05 100%)`,
+    padding: '2px 8px',
+    borderRadius: 10,
+    background: `${colors.primary}10`,
     color: colors.primary,
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: 600,
     fontFamily:
       'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
     letterSpacing: '0.02em',
-    border: `1px solid ${colors.primary}20`,
+    flexShrink: 0,
   });
 
   const titleInputContainer = (): CSSProperties => ({
     flex: 1,
     minWidth: 0,
     position: 'relative',
+    marginLeft: spacing.lg,
   });
 
   const titleInput = (isFocused: boolean): CSSProperties => ({
     width: '100%',
     border: 'none',
-    background: isFocused ? `${colors.primary}08` : 'transparent',
-    fontSize: 15,
+    background: isFocused ? `${colors.primary}06` : 'transparent',
+    fontSize: 14,
     fontWeight: 500,
     color: colors.text,
-    padding: `${spacing.xs}px ${spacing.sm}px`,
-    borderRadius: 8,
-    transition: 'all 200ms',
+    padding: `${spacing.xs}px 0`,
+    borderRadius: 6,
+    transition: 'all 150ms',
     outline: 'none',
   });
 
   const focusIndicator = (isFocused: boolean): CSSProperties => ({
     position: 'absolute',
-    bottom: 0,
-    left: spacing.sm,
-    right: spacing.sm,
+    bottom: -2,
+    left: 0,
+    right: 0,
     height: 2,
     borderRadius: 1,
     background: isFocused ? colors.primary : 'transparent',
-    transition: 'all 200ms',
+    transition: 'all 150ms',
     transform: isFocused ? 'scaleX(1)' : 'scaleX(0)',
     transformOrigin: 'left',
   });
@@ -127,42 +137,29 @@ export const useTestCaseStyles = () => {
   const metaSection = (): CSSProperties => ({
     display: 'flex',
     alignItems: 'center',
-    gap: spacing.sm,
+    gap: spacing.xs,
     flexShrink: 0,
   });
 
   const statusTag = (
-    statusConfig: { bg: string; text: string },
+    _statusConfig: { bg: string; text: string },
     caseStatus: number,
   ): CSSProperties => {
-    let enhancedBg = statusConfig.bg;
-    let enhancedText = statusConfig.text;
-
-    if (caseStatus === 1) {
-      enhancedBg = 'linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%)';
-      enhancedText = '#15803d';
-    } else if (caseStatus === 2) {
-      enhancedBg = 'linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)';
-      enhancedText = '#b91c1c';
-    }
+    const statusColors = getStatusColors(caseStatus);
 
     return {
       display: 'inline-flex',
       alignItems: 'center',
-      gap: 6,
-      padding: '5px 12px',
-      borderRadius: 20,
-      background: enhancedBg,
-      color: enhancedText,
-      fontSize: 12,
+      gap: 4,
+      padding: '3px 8px',
+      borderRadius: 10,
+      background: statusColors.bg,
+      color: statusColors.text,
+      fontSize: 11,
       fontWeight: 600,
-      border: 'none',
-      boxShadow:
-        caseStatus === 1
-          ? '0 2px 8px rgba(34, 197, 94, 0.2)'
-          : caseStatus === 2
-          ? '0 2px 8px rgba(239, 68, 68, 0.2)'
-          : 'none',
+      border: `1px solid ${statusColors.accent}30`,
+      transition: 'all 150ms',
+      flexShrink: 0,
     };
   };
 
@@ -170,31 +167,81 @@ export const useTestCaseStyles = () => {
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
-    width: 32,
-    height: 32,
-    borderRadius: 10,
-    background: isHovered ? `${colors.primary}10` : 'transparent',
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    background: isHovered ? `${colors.primary}08` : 'transparent',
     color: colors.primary,
     border: 'none',
     cursor: 'pointer',
-    transition: 'all 200ms',
-    opacity: isHovered ? 1 : 0.5,
+    transition: 'all 150ms',
+    opacity: isHovered ? 1 : 0.4,
+    flexShrink: 0,
   });
 
   const moreBtn = (isHovered: boolean): CSSProperties => ({
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
-    width: 28,
-    height: 28,
-    borderRadius: 10,
-    background: isHovered ? `${colors.primary}08` : 'transparent',
+    width: 26,
+    height: 26,
+    borderRadius: 8,
+    background: isHovered ? `${colors.primary}06` : 'transparent',
     color: colors.textSecondary,
     border: 'none',
     cursor: 'pointer',
-    transition: 'all 200ms',
-    opacity: isHovered ? 1 : 0.5,
+    transition: 'all 150ms',
+    opacity: isHovered ? 1 : 0.4,
+    flexShrink: 0,
   });
+
+  const caseFlagTag = (
+    type: 'common' | 'review-active' | 'review-pending',
+  ): CSSProperties => {
+    if (type === 'common') {
+      return {
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 4,
+        padding: '2px 6px',
+        borderRadius: 8,
+        background: `${colors.warning}15`,
+        color: colors.warning,
+        fontSize: 10,
+        fontWeight: 600,
+        border: `1px solid ${colors.warning}30`,
+        flexShrink: 0,
+      };
+    }
+    if (type === 'review-active') {
+      return {
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 4,
+        padding: '2px 6px',
+        borderRadius: 8,
+        background: `${colors.success}15`,
+        color: colors.success,
+        fontSize: 10,
+        fontWeight: 600,
+        border: `1px solid ${colors.success}30`,
+        flexShrink: 0,
+      };
+    }
+    return {
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: 4,
+      padding: '2px 6px',
+      borderRadius: 8,
+      background: `${colors.textSecondary}10`,
+      color: colors.textSecondary,
+      fontSize: 10,
+      fontWeight: 600,
+      border: `1px solid ${colors.textSecondary}30`,
+      flexShrink: 0,
+    };
+  };
 
   return {
     container,
@@ -209,5 +256,6 @@ export const useTestCaseStyles = () => {
     statusTag,
     detailBtn,
     moreBtn,
+    caseFlagTag,
   };
 };

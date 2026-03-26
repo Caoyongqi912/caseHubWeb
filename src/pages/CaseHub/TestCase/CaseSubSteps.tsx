@@ -1,4 +1,5 @@
 import {
+  copyTestCase,
   copyTestCaseStep,
   handleAddTestCaseStep,
   queryTestCaseSupStep,
@@ -7,8 +8,8 @@ import {
   updateTestCase,
   updateTestCaseStep,
 } from '@/api/case/testCase';
-import { caseStatusColors } from '@/pages/CaseHub/styles';
-import { useCaseSubStepsStyles } from '@/pages/CaseHub/TestCase/CaseSubStepsStyles';
+import { caseStatusColors, useCaseHubTheme } from '@/pages/CaseHub/styles';
+import { useCaseSubStepsStyles } from '@/pages/CaseHub/styles/CaseSubStepsStyles';
 import { CaseSubStep } from '@/pages/CaseHub/type';
 import {
   CheckCircleFilled,
@@ -19,25 +20,29 @@ import {
   PlusOutlined,
   SaveOutlined,
 } from '@ant-design/icons';
-import { Button, Popconfirm, Spin, Switch, Tooltip, Typography } from 'antd';
+import { Button, message, Popconfirm, Spin, Tooltip, Typography } from 'antd';
 import React, { FC, useEffect, useRef, useState } from 'react';
 
 const { Text } = Typography;
 
 interface IProps {
   caseId?: number;
+  requirement_id?: number;
   case_status?: number;
   callback?: () => void;
   hiddenStatusBut?: boolean;
   case_setup?: string;
   case_mark?: string;
+  creatorName?: string;
 }
 
 const CaseSubSteps: FC<IProps> = ({
   caseId,
   case_status,
+  requirement_id,
   hiddenStatusBut = false,
   callback,
+  creatorName = '',
   case_setup = '',
   case_mark = '',
 }) => {
@@ -58,6 +63,7 @@ const CaseSubSteps: FC<IProps> = ({
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const stepsRef = useRef<CaseSubStep[]>(steps);
   const styles = useCaseSubStepsStyles();
+  const { colors, spacing } = useCaseHubTheme();
   const statusConfig =
     caseStatusColors[case_status || 0] || caseStatusColors[0];
 
@@ -238,6 +244,18 @@ const CaseSubSteps: FC<IProps> = ({
     );
   };
 
+  const CreatorBadge = () => {
+    if (!creatorName) return null;
+    return (
+      <div style={styles.headerRight()}>
+        <span>创建者：</span>
+        <span style={{ color: colors.primary, fontWeight: 500 }}>
+          {creatorName}
+        </span>
+      </div>
+    );
+  };
+
   return (
     <div style={styles.container()}>
       <div style={styles.header()}>
@@ -248,34 +266,34 @@ const CaseSubSteps: FC<IProps> = ({
           </div>
 
           {!hiddenStatusBut && (
-            <div style={styles.statusSwitch(statusConfig)}>
-              <Switch
-                checkedChildren={<CheckCircleFilled style={{ fontSize: 12 }} />}
-                unCheckedChildren={
-                  <CloseCircleFilled style={{ fontSize: 12 }} />
-                }
-                value={case_status === 1}
-                onChange={handleStatusChange}
-                size="small"
-              />
-              <Text
-                style={{
-                  fontSize: 13,
-                  fontWeight: 500,
-                  color: statusConfig.text,
-                }}
-              >
+            <div
+              style={styles.statusSwitch(statusConfig)}
+              onClick={() => handleStatusChange(case_status !== 1)}
+            >
+              {case_status === 1 ? (
+                <CheckCircleFilled style={{ fontSize: 14, color: '#22c55e' }} />
+              ) : case_status === 2 ? (
+                <CloseCircleFilled style={{ fontSize: 14, color: '#ef4444' }} />
+              ) : (
+                <HolderOutlined
+                  style={{ fontSize: 14, color: colors.textSecondary }}
+                />
+              )}
+              <span style={styles.statusText(case_status || 0)}>
                 {case_status === 1
                   ? '通过'
                   : case_status === 2
                   ? '失败'
                   : '待测试'}
-              </Text>
+              </span>
             </div>
           )}
         </div>
 
-        <SaveIndicator />
+        <div style={{ display: 'flex', alignItems: 'center', gap: spacing.lg }}>
+          <CreatorBadge />
+          <SaveIndicator />
+        </div>
       </div>
 
       <div style={styles.body()}>
@@ -444,6 +462,25 @@ const CaseSubSteps: FC<IProps> = ({
             }}
             rows={2}
           />
+        </div>
+        <div style={styles.footerAction()}>
+          <button
+            style={styles.quickCreateBtn()}
+            onClick={async () => {
+              if (!caseId || !requirement_id) return;
+              const { code, msg } = await copyTestCase({
+                requirement_id: requirement_id,
+                caseId: caseId,
+              });
+              if (code === 0) {
+                message.success(msg);
+                callback?.();
+              }
+            }}
+          >
+            <PlusOutlined />
+            快速创建下一个
+          </button>
         </div>
       </div>
     </div>

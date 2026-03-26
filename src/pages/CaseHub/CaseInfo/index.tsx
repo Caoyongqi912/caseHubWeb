@@ -3,9 +3,10 @@ import {
   queryCasesByRequirement,
   queryTagsByRequirement,
 } from '@/api/case/testCase';
+import CaseStatsBar from '@/pages/CaseHub/CaseInfo/CaseStatsBar';
 import CaseStepSearchForm from '@/pages/CaseHub/CaseInfo/CaseStepSearchForm';
 import ChoiceSettingArea from '@/pages/CaseHub/component/ChoiceSettingArea';
-import { useCaseHubTheme } from '@/pages/CaseHub/styles';
+import { useCaseHubTheme, useCaseInfoStyles } from '@/pages/CaseHub/styles';
 import TestCase from '@/pages/CaseHub/TestCase';
 import { CaseSearchForm, ITestCase } from '@/pages/CaseHub/type';
 import { useParams } from '@@/exports';
@@ -41,7 +42,10 @@ const Index = () => {
   const [selectedCase, setSelectedCase] = useState<number[]>([]);
   const [isGrouped, setIsGrouped] = useState(true);
   const [activeGroupKeys, setActiveGroupKeys] = useState<string[]>([]);
-  const { colors, spacing, borderRadius } = useCaseHubTheme();
+  const [isInitialized, setIsInitialized] = useState(false);
+  const isManualToggleRef = useRef(false);
+  const { colors, spacing } = useCaseHubTheme();
+  const styles = useCaseInfoStyles();
 
   useEffect(() => {
     setShowCheckButton(selectedCase.length > 0);
@@ -67,6 +71,11 @@ const Index = () => {
 
     fetchCases();
   }, [reqId, reload, searchInfo]);
+
+  useEffect(() => {
+    setIsInitialized(false);
+    setActiveGroupKeys([]);
+  }, [searchInfo]);
 
   useEffect(() => {
     if (!reqId) return;
@@ -122,10 +131,11 @@ const Index = () => {
   }, [testCases]);
 
   useEffect(() => {
-    if (isGrouped && groupedTestCases.length > 0) {
+    if (isGrouped && groupedTestCases.length > 0 && !isInitialized) {
       setActiveGroupKeys(groupedTestCases.map((g) => g.tag));
+      setIsInitialized(true);
     }
-  }, [isGrouped, groupedTestCases]);
+  }, [isGrouped, groupedTestCases, isInitialized]);
 
   const handleReload = useCallback(() => {
     setReload((prev) => prev + 1);
@@ -176,39 +186,15 @@ const Index = () => {
     }
   }, [reqId, handleReload]);
 
-  const cardStyle = useMemo(
-    () => ({
-      borderRadius: borderRadius.xl,
-      border: `1px solid ${colors.border}`,
-      boxShadow: `0 2px 8px ${colors.bgContainer}20`,
-      overflow: 'hidden' as const,
-    }),
-    [borderRadius, colors],
-  );
-
-  const collapseExpandIcon = useCallback(
-    (isActive: boolean) => (
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: 20,
-          height: 20,
-          borderRadius: borderRadius.sm,
-          background: isActive ? colors.primary : colors.primaryBg,
-          transition: 'all 200ms ease',
-        }}
-      >
-        {isActive ? (
-          <DownOutlined style={{ fontSize: 10, color: '#fff' }} />
-        ) : (
-          <RightOutlined style={{ fontSize: 10, color: colors.primary }} />
-        )}
-      </div>
-    ),
-    [borderRadius, colors],
-  );
+  const caseStats = useMemo(() => {
+    const total = testCases.length;
+    const passed = testCases.filter((tc) => tc.case_status === 1).length;
+    const failed = testCases.filter((tc) => tc.case_status === 2).length;
+    const unchecked = testCases.filter(
+      (tc) => tc.case_status === 0 || tc.case_status === undefined,
+    ).length;
+    return { total, passed, failed, unchecked };
+  }, [testCases]);
 
   const renderTestCase = useCallback(
     (item: ITestCase) => (
@@ -239,29 +225,12 @@ const Index = () => {
     const collapseItems = groupedTestCases.map((group) => ({
       key: group.tag,
       label: (
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: spacing.sm,
-            fontWeight: 600,
-            fontSize: 14,
-          }}
-        >
-          <AppstoreOutlined style={{ color: colors.primary }} />
-          <span style={{ color: colors.text }}>{group.tag}</span>
-          <span
-            style={{
-              color: colors.textSecondary,
-              fontWeight: 400,
-              fontSize: 12,
-              background: colors.primaryBg,
-              padding: '2px 8px',
-              borderRadius: borderRadius.sm,
-            }}
-          >
-            {group.cases.length} 个用例
-          </span>
+        <div style={styles.groupedCaseLabel()}>
+          <div style={styles.groupTitle()}>
+            <AppstoreOutlined style={{ color: colors.primary }} />
+            <span>{group.tag}</span>
+          </div>
+          <span style={styles.groupCount()}>{group.cases.length} 个用例</span>
         </div>
       ),
       children: (
@@ -276,12 +245,17 @@ const Index = () => {
         activeKey={activeGroupKeys}
         onChange={(keys) => setActiveGroupKeys(keys as string[])}
         items={collapseItems}
-        expandIcon={({ isActive }) => collapseExpandIcon(!!isActive)}
+        expandIcon={({ isActive }) => (
+          <div style={styles.collapseExpandIcon(!!isActive)}>
+            {isActive ? (
+              <DownOutlined style={{ fontSize: 10, color: '#fff' }} />
+            ) : (
+              <RightOutlined style={{ fontSize: 10, color: colors.primary }} />
+            )}
+          </div>
+        )}
         expandIconPosition="start"
-        style={{
-          background: 'transparent',
-          border: 'none',
-        }}
+        style={{ background: 'transparent', border: 'none' }}
         bordered={false}
       />
     );
@@ -290,9 +264,8 @@ const Index = () => {
     activeGroupKeys,
     spacing,
     colors,
-    borderRadius,
+    styles,
     renderTestCase,
-    collapseExpandIcon,
   ]);
 
   const renderUngroupedCases = useMemo(() => {
@@ -306,41 +279,21 @@ const Index = () => {
     }
 
     return (
-      <div
-        style={{
-          maxHeight: '70vh',
-          overflowY: 'auto',
-          padding: spacing.md,
-          borderRadius: borderRadius.lg,
-          background: colors.bgContainer,
-        }}
-      >
+      <div style={styles.ungroupedContainer()}>
         {testCases.map(renderTestCase)}
         {testCases.length > 10 && (
-          <div
-            style={{
-              position: 'sticky',
-              bottom: 0,
-              background: `linear-gradient(transparent, ${colors.bgLayout})`,
-              height: spacing.xxxl,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: colors.textSecondary,
-              fontSize: 12,
-              borderTop: `1px solid ${colors.borderSecondary}`,
-              marginTop: spacing.md,
-            }}
-          >
-            滚动查看更多
-          </div>
+          <div style={styles.scrollIndicator()}>滚动查看更多</div>
         )}
       </div>
     );
-  }, [testCases, spacing, colors, borderRadius, renderTestCase]);
+  }, [testCases, styles, renderTestCase]);
 
   return (
-    <ProCard split="horizontal" bodyStyle={{ padding: 0 }} style={cardStyle}>
+    <ProCard
+      split="horizontal"
+      bodyStyle={{ padding: 0 }}
+      style={styles.cardStyle()}
+    >
       <CaseStepSearchForm
         tags={tags}
         setSearchForm={setSearchInfo}
@@ -356,20 +309,22 @@ const Index = () => {
         onToggleGroup={handleToggleGroup}
         onAddCase={handleAddCase}
         onUploadFinish={handleReload}
-        uploadProps={{
-          reqId,
-          moduleId,
-          projectId,
-        }}
+        uploadProps={{ reqId, moduleId, projectId }}
       />
+
+      <div style={{ padding: `${spacing.sm}px ${spacing.lg}px` }}>
+        <CaseStatsBar
+          total={caseStats.total}
+          passed={caseStats.passed}
+          failed={caseStats.failed}
+          unchecked={caseStats.unchecked}
+        />
+      </div>
 
       <ProCard
         split="horizontal"
         bodyStyle={{ padding: spacing.sm }}
-        style={{
-          borderRadius: borderRadius.xl,
-          margin: spacing.sm,
-        }}
+        style={styles.innerCardStyle()}
       >
         <ChoiceSettingArea
           callback={handleReload}
@@ -378,7 +333,6 @@ const Index = () => {
           selectedCase={selectedCase}
           setSelectedCase={setSelectedCase}
         />
-
         {isGrouped ? renderGroupedCases : renderUngroupedCases}
       </ProCard>
     </ProCard>

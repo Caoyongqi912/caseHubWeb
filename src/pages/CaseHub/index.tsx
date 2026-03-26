@@ -2,18 +2,19 @@ import LeftComponents from '@/components/LeftComponents';
 import MyTabs from '@/components/MyTabs';
 import CaseDataTable from '@/pages/CaseHub/CaseDataBase/CaseDataTable';
 import RequirementTable from '@/pages/CaseHub/Requirement/RequirementTable';
+import { useCaseHubIndexStyles, useCaseHubTheme } from '@/pages/CaseHub/styles';
 import { ModuleEnum } from '@/utils/config';
 import { getSplitter, setSplitter } from '@/utils/token';
 import { ProCard } from '@ant-design/pro-components';
 import { Splitter } from 'antd';
-import { useEffect, useMemo, useState } from 'react';
-import { useCaseHubTheme } from './styles';
+import { useEffect, useState } from 'react';
 
 const Index = () => {
   const [currentModuleId, setCurrentModuleId] = useState<number | undefined>();
   const [currentProjectId, setCurrentProjectId] = useState<number>();
   const [sizes, setSizes] = useState<(number | string)[]>(['20%', '80%']);
-  const { token, colors, spacing, borderRadius, shadows } = useCaseHubTheme();
+  const styles = useCaseHubIndexStyles();
+  const { colors } = useCaseHubTheme();
 
   const PerKeyRequirement = 'Requirement';
   const PerKeyCaseDataSource = 'CaseDataSource';
@@ -33,38 +34,6 @@ const Index = () => {
       setSizes([data.left, data.right]);
     }
   }, []);
-
-  const containerStyle = useMemo(
-    () => ({
-      minHeight: '100vh',
-      background: `linear-gradient(135deg, ${colors.bgLayout} 0%, ${colors.bgContainer} 50%, ${colors.bgContainer} 100%)`,
-      position: 'relative' as const,
-      overflow: 'hidden' as const,
-      '&::before': {
-        content: '""',
-        position: 'absolute' as const,
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: `
-          radial-gradient(ellipse at 20% 20%, ${colors.primaryBg}30 0%, transparent 50%),
-          radial-gradient(ellipse at 80% 80%, ${colors.infoBg}30 0%, transparent 50%)
-        `,
-        pointerEvents: 'none' as const,
-      },
-    }),
-    [colors],
-  );
-
-  const splitterStyle = useMemo(
-    () => ({
-      borderRadius: borderRadius.xl,
-      boxShadow: shadows.card,
-      overflow: 'hidden' as const,
-    }),
-    [borderRadius, shadows],
-  );
 
   const items = [
     {
@@ -97,15 +66,29 @@ const Index = () => {
 
   return (
     <ProCard
-      style={containerStyle}
+      style={styles.containerStyle()}
       bodyStyle={{ minHeight: '100vh', padding: 0, overflow: 'hidden' }}
     >
+      <style>{`
+        .case-hub-background {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background:
+            radial-gradient(ellipse at 20% 20%, ${colors.primaryBg}30 0%, transparent 50%),
+            radial-gradient(ellipse at 80% 80%, ${colors.infoBg}30 0%, transparent 50%);
+          pointer-events: none;
+        }
+      `}</style>
+      <div className="case-hub-background" />
       <Splitter
         onResize={(sizes: number[]) => {
           setSizes(sizes);
           setSplitter(PerKeySplitter, sizes[0], sizes[1]);
         }}
-        style={splitterStyle}
+        style={styles.splitterStyle()}
       >
         <Splitter.Panel
           collapsible={true}

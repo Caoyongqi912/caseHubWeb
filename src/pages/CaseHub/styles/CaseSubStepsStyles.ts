@@ -1,5 +1,5 @@
 import { CSSProperties } from 'react';
-import { useCaseHubTheme } from '../styles/useCaseHubTheme';
+import { useCaseHubTheme } from './useCaseHubTheme';
 
 export const useCaseSubStepsStyles = () => {
   const { colors, spacing, borderRadius, shadows } = useCaseHubTheme();
@@ -28,6 +28,16 @@ export const useCaseSubStepsStyles = () => {
     gap: spacing.lg,
   });
 
+  const headerRight = (): CSSProperties => ({
+    display: 'flex',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginLeft: 'auto',
+    paddingLeft: spacing.lg,
+    color: colors.textSecondary,
+    fontSize: 12,
+  });
+
   const stepCounter = (): CSSProperties => ({
     display: 'inline-flex',
     alignItems: 'center',
@@ -48,12 +58,31 @@ export const useCaseSubStepsStyles = () => {
   }): CSSProperties => ({
     display: 'inline-flex',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
     padding: '6px 14px',
-    borderRadius: 12,
+    borderRadius: 20,
     background: statusConfig.bg,
     border: `1px solid ${statusConfig.border}`,
+    cursor: 'pointer',
+    transition: 'all 200ms ease',
   });
+
+  const statusText = (status: number): CSSProperties => {
+    const isActive = status === 1 || status === 2;
+    return {
+      fontSize: 12,
+      fontWeight: 600,
+      color:
+        status === 1
+          ? '#22c55e'
+          : status === 2
+          ? '#ef4444'
+          : colors.textSecondary,
+      display: 'flex',
+      alignItems: 'center',
+      gap: 4,
+    };
+  };
 
   const body = (): CSSProperties => ({
     padding: spacing.xl,
@@ -231,12 +260,39 @@ export const useCaseSubStepsStyles = () => {
     color: colors.textSecondary,
   });
 
+  const footerAction = (): CSSProperties => ({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    padding: `${spacing.lg}px 0 0`,
+    marginTop: spacing.lg,
+    borderTop: `1px solid ${colors.borderSecondary}`,
+  });
+
+  const quickCreateBtn = (): CSSProperties => ({
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 8,
+    padding: '10px 20px',
+    borderRadius: 24,
+    background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryHover} 100%)`,
+    color: '#fff',
+    fontWeight: 600,
+    fontSize: 14,
+    border: 'none',
+    boxShadow: `0 4px 16px ${colors.primary}35`,
+    cursor: 'pointer',
+    transition: 'all 200ms ease',
+  });
+
   return {
     container,
     header,
     headerLeft,
+    headerRight,
     stepCounter,
     statusSwitch,
+    statusText,
     body,
     sectionTitle,
     textareaWrapper,
@@ -251,5 +307,7 @@ export const useCaseSubStepsStyles = () => {
     addButton,
     saveIndicator,
     emptyState,
+    footerAction,
+    quickCreateBtn,
   };
 };
