@@ -14,7 +14,7 @@ import {
   ProFormSelect,
   ProFormText,
 } from '@ant-design/pro-components';
-import { Form, Space, Typography } from 'antd';
+import { Divider, Form, Space, Tag, Typography } from 'antd';
 import { FC, useEffect, useMemo, useRef, useState } from 'react';
 
 const { Text, Title } = Typography;
@@ -34,10 +34,10 @@ const TestCaseDetail: FC<Props> = ({ testcase, callback }) => {
   useEffect(() => {
     if (!testcase) return;
     caseForm.setFieldsValue(testcase);
-  }, [testcase]);
+  }, [testcase, caseForm]);
 
   const reload = () => {
-    setEditStatus(editStatus + 1);
+    setEditStatus((prev) => prev + 1);
   };
 
   const statusConfig =
@@ -46,113 +46,9 @@ const TestCaseDetail: FC<Props> = ({ testcase, callback }) => {
     caseLevelColors[testcase?.case_level as keyof typeof caseLevelColors] ||
     caseLevelColors.P2;
 
-  const containerStyle = useMemo(
-    () => ({
-      minHeight: '100%',
-      background: `
-        radial-gradient(ellipse at 20% 0%, ${colors.primaryBg}40 0%, transparent 50%),
-        radial-gradient(ellipse at 80% 100%, ${statusConfig.bg}30 0%, transparent 50%),
-        linear-gradient(180deg, ${colors.bgContainer} 0%, ${colors.bgLayout} 100%)
-      `,
-      padding: spacing.lg,
-    }),
-    [colors, spacing, statusConfig],
-  );
-
-  const mainCardStyle = useMemo(
-    () => ({
-      borderRadius: borderRadius.xxl,
-      border: `1px solid ${colors.border}`,
-      overflow: 'hidden' as const,
-      boxShadow: shadows.xl,
-      background: colors.bgContainer,
-    }),
-    [borderRadius, colors, shadows],
-  );
-
-  const heroStyle = useMemo(
-    () => ({
-      position: 'relative' as const,
-      padding: `${spacing.xxl}px ${spacing.xxl}px ${spacing.xl}px`,
-      background: `
-        linear-gradient(135deg, ${colors.primary}08 0%, ${statusConfig.bg}20 50%, ${colors.infoBg}10 100%)
-      `,
-      borderBottom: `1px solid ${colors.borderSecondary}`,
-    }),
-    [colors, spacing, statusConfig],
-  );
-
-  const statusBadgeStyle = useMemo(
-    () => ({
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: 8,
-      padding: '8px 16px',
-      borderRadius: borderRadius.round,
-      background: statusConfig.bg,
-      border: `1px solid ${statusConfig.border}`,
-      color: statusConfig.text,
-      fontWeight: 700,
-      fontSize: 14,
-      boxShadow: `0 4px 16px ${statusConfig.bg}40`,
-    }),
-    [statusConfig, borderRadius],
-  );
-
-  const levelBadgeStyle = useMemo(
-    () => ({
-      display: 'inline-flex',
-      alignItems: 'center',
-      padding: '6px 14px',
-      borderRadius: borderRadius.lg,
-      background: levelConfig.bg,
-      border: `1px solid ${levelConfig.border}`,
-      color: levelConfig.text,
-      fontWeight: 600,
-      fontSize: 13,
-      boxShadow: `0 2px 8px ${levelConfig.bg}40`,
-    }),
-    [levelConfig, borderRadius],
-  );
-
-  const typeBadgeStyle = useMemo(
-    () => ({
-      display: 'inline-flex',
-      alignItems: 'center',
-      padding: '6px 14px',
-      borderRadius: borderRadius.lg,
-      background: colors.infoBg,
-      border: `1px solid ${colors.info}`,
-      color: colors.info,
-      fontWeight: 600,
-      fontSize: 13,
-    }),
-    [colors, borderRadius],
-  );
-
-  const formSectionStyle = useMemo(
-    () => ({
-      padding: spacing.xl,
-      background: colors.bgContainer,
-    }),
-    [colors, spacing],
-  );
-
-  const fieldLabelStyle = useMemo(
-    () => ({
-      color: colors.textSecondary,
-      fontWeight: 500,
-      fontSize: 13,
-    }),
-    [colors],
-  );
-
-  const onValuesChange = async (values: any, allValues: ITestCase) => {
+  const onValuesChange = async (_values: any, allValues: ITestCase) => {
     if (!testcase) return;
-    const data = {
-      id: testcase.id,
-      ...allValues,
-    };
+    const data = { id: testcase.id, ...allValues };
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(async () => {
       const { code } = await updateTestCase(data);
@@ -165,190 +61,300 @@ const TestCaseDetail: FC<Props> = ({ testcase, callback }) => {
   };
 
   const StatusIndicator = () => {
-    if (!testcase?.case_status) return null;
-    const isSuccess = testcase.case_status === 1;
+    const status = testcase?.case_status;
+    if (status === undefined) return null;
+    const isSuccess = status === 1;
+    const isPending = status === 0 || status === undefined;
     return (
-      <div style={statusBadgeStyle}>
-        {isSuccess ? (
-          <CheckCircleFilled style={{ fontSize: 16 }} />
-        ) : (
-          <CloseCircleFilled style={{ fontSize: 16 }} />
-        )}
-        {isSuccess ? '通过' : testcase.case_status === 2 ? '失败' : '待开始'}
-      </div>
+      <Tag
+        icon={isSuccess ? <CheckCircleFilled /> : <CloseCircleFilled />}
+        style={{
+          padding: '6px 14px',
+          borderRadius: borderRadius.round,
+          background: statusConfig.bg,
+          border: `1px solid ${statusConfig.border}`,
+          color: statusConfig.text,
+          fontWeight: 600,
+          fontSize: 13,
+        }}
+      >
+        {isSuccess ? '通过' : isPending ? '待执行' : '失败'}
+      </Tag>
     );
   };
 
-  const statusTextMap = ['', '通过', '失败', '待开始'];
-  const statusText = statusTextMap[testcase?.case_status || 0] || '待开始';
+  const containerStyle = useMemo(
+    () => ({
+      minHeight: '100%',
+      background: `
+        radial-gradient(ellipse at 0% 0%, ${colors.primaryBg}30 0%, transparent 50%),
+        linear-gradient(180deg, ${colors.bgContainer} 0%, ${colors.bgLayout} 100%)
+      `,
+      padding: spacing.lg,
+    }),
+    [colors, spacing],
+  );
+
+  const mainCardStyle = useMemo(
+    () => ({
+      borderRadius: borderRadius.xxl,
+      border: `1px solid ${colors.border}`,
+      overflow: 'hidden' as const,
+      boxShadow: shadows.lg,
+    }),
+    [borderRadius, colors, shadows],
+  );
+
+  const headerStyle = useMemo(
+    () => ({
+      padding: `${spacing.xl}px ${spacing.xxl}px`,
+      background: `linear-gradient(135deg, ${colors.primaryBg} 0%, ${colors.bgContainer} 100%)`,
+      borderBottom: `1px solid ${colors.borderSecondary}`,
+    }),
+    [colors, spacing],
+  );
+
+  const uidBadgeStyle = useMemo(
+    () => ({
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: spacing.sm,
+      padding: `${spacing.xs}px ${spacing.md}px`,
+      borderRadius: borderRadius.lg,
+      background: `${colors.primary}10`,
+      border: `1px solid ${colors.primary}30`,
+    }),
+    [colors, spacing, borderRadius],
+  );
+
+  const bodyStyle = useMemo(
+    () => ({
+      padding: spacing.xxl,
+    }),
+    [spacing],
+  );
+
+  const metaRowStyle = useMemo(
+    () => ({
+      display: 'flex',
+      alignItems: 'center',
+      gap: spacing.lg,
+      padding: `${spacing.md}px ${spacing.xxl}px`,
+      background: colors.bgLayout,
+      borderBottom: `1px solid ${colors.borderSecondary}`,
+    }),
+    [colors, spacing],
+  );
+
+  const metaItemStyle = useMemo(
+    () => ({
+      display: 'flex',
+      alignItems: 'center',
+      gap: spacing.xs,
+    }),
+    [spacing],
+  );
+
+  const fieldLabelStyle = useMemo(
+    () => ({
+      color: colors.textSecondary,
+      fontWeight: 500,
+      fontSize: 13,
+    }),
+    [colors],
+  );
 
   return (
     <div style={containerStyle}>
       <ProCard style={mainCardStyle} bodyStyle={{ padding: 0 }}>
-        <div style={heroStyle}>
+        <div style={headerStyle}>
           <div
             style={{
               display: 'flex',
               justifyContent: 'space-between',
-              alignItems: 'flex-start',
-              marginBottom: spacing.lg,
+              alignItems: 'center',
             }}
           >
-            <Space direction="vertical" size="middle">
-              <Space align="center" size="middle">
-                <div
-                  style={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: borderRadius.lg,
-                    background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryHover} 100%)`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: `0 4px 16px ${colors.primary}40`,
-                  }}
-                >
-                  <Text
-                    style={{ color: '#fff', fontSize: 20, fontWeight: 700 }}
-                  >
-                    {testcase?.uid?.slice(-2) || 'TC'}
-                  </Text>
-                </div>
-                <div>
-                  <Text type="secondary" style={{ fontSize: 12 }}>
-                    用例编号
-                  </Text>
-                  <div
-                    style={{
-                      color: colors.primary,
-                      fontWeight: 600,
-                      fontSize: 14,
-                    }}
-                  >
-                    {testcase?.uid}
-                  </div>
-                </div>
-              </Space>
-              <Title
-                level={4}
-                style={{ margin: 0, fontWeight: 600, color: colors.text }}
+            <Space size="middle">
+              <div
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: borderRadius.lg,
+                  background: `linear-gradient(135deg, ${colors.primary} 0%, ${
+                    colors.primaryHover || colors.primary
+                  } 100%)`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: `0 4px 12px ${colors.primary}30`,
+                }}
               >
-                {testcase?.case_name || '用例详情'}
-              </Title>
+                <Text style={{ color: '#fff', fontSize: 18, fontWeight: 700 }}>
+                  {testcase?.uid?.slice(-2) || 'TC'}
+                </Text>
+              </div>
+              <div>
+                <div style={uidBadgeStyle}>
+                  <Text style={{ fontSize: 12, color: colors.textSecondary }}>
+                    编号
+                  </Text>
+                  <Text strong style={{ fontSize: 13, color: colors.primary }}>
+                    {testcase?.uid || '-'}
+                  </Text>
+                </div>
+              </div>
             </Space>
-            <Space direction="vertical" align="end" size="middle">
+
+            <Space size="middle">
               <StatusIndicator />
-              <Space size="middle">
-                <span style={levelBadgeStyle}>
-                  {testcase?.case_level || 'P2'}
-                </span>
-                <span style={typeBadgeStyle}>
-                  {CASE_TYPE_ENUM[testcase?.case_type as number] || '普通'}
-                </span>
-              </Space>
+              <Tag
+                style={{
+                  padding: '4px 12px',
+                  borderRadius: borderRadius.md,
+                  background: levelConfig.bg,
+                  border: `1px solid ${levelConfig.border}`,
+                  color: levelConfig.text,
+                  fontWeight: 600,
+                  fontSize: 12,
+                }}
+              >
+                {testcase?.case_level || 'P2'}
+              </Tag>
+              <Tag
+                style={{
+                  padding: '4px 12px',
+                  borderRadius: borderRadius.md,
+                  background: colors.infoBg,
+                  border: `1px solid ${colors.info}`,
+                  color: colors.info,
+                  fontWeight: 600,
+                  fontSize: 12,
+                }}
+              >
+                {CASE_TYPE_ENUM[testcase?.case_type as number] || '普通'}
+              </Tag>
             </Space>
           </div>
+
+          <Title
+            level={4}
+            style={{
+              margin: `${spacing.md}px 0 0`,
+              fontWeight: 600,
+              color: colors.text,
+              fontSize: 18,
+            }}
+          >
+            {testcase?.case_name || '用例详情'}
+          </Title>
         </div>
 
-        <div style={formSectionStyle}>
+        <div style={metaRowStyle}>
+          <div style={metaItemStyle}>
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              创建者
+            </Text>
+            <Text style={{ fontSize: 12, fontWeight: 500 }}>
+              {testcase?.creatorName || '-'}
+            </Text>
+          </div>
+
+          {testcase?.is_common && (
+            <>
+              <Divider type="vertical" style={{ margin: 0, height: 16 }} />
+              <Tag style={{ borderRadius: borderRadius.sm, fontSize: 11 }}>
+                公共用例
+              </Tag>
+            </>
+          )}
+          {testcase?.is_review && (
+            <>
+              <Divider type="vertical" style={{ margin: 0, height: 16 }} />
+              <Tag
+                color="green"
+                style={{ borderRadius: borderRadius.sm, fontSize: 11 }}
+              >
+                已评审
+              </Tag>
+            </>
+          )}
+        </div>
+
+        <div style={bodyStyle}>
           <ProForm
             form={caseForm}
             onValuesChange={onValuesChange}
             submitter={false}
             layout="horizontal"
-            labelCol={{ span: 4 }}
-            wrapperCol={{ span: 18 }}
-            style={{ marginBottom: spacing.lg }}
+            style={{ marginBottom: spacing.xl }}
           >
             <ProFormText
-              name={'case_name'}
-              label={<span style={fieldLabelStyle}>用例标题</span>}
-              placeholder={'请输入用例标题'}
-              required={true}
-              tooltip={'最长20位'}
+              name="case_name"
+              label={'用例标题'}
+              placeholder="请输入用例标题"
+              required
+              width="lg"
+              tooltip="最长20位"
               rules={[{ required: true, message: '标题不能为空' }]}
               fieldProps={{
                 variant: 'filled',
-                style: { fontWeight: 500, borderRadius: borderRadius.lg },
               }}
             />
-            <ProForm.Group>
+            <ProForm.Group style={{ margin: 2 }}>
               <ProFormSelect
-                label={<span style={fieldLabelStyle}>用例等级</span>}
-                required={true}
-                width={'md'}
-                name={'case_level'}
+                label={'用例等级'}
+                required
+                width="md"
+                name="case_level"
                 options={CASE_LEVEL_OPTION}
                 fieldProps={{
                   variant: 'filled',
                   style: { borderRadius: borderRadius.lg },
                 }}
-                //@ts-ignore
-                renderFormItem={(_, formProps) => {
-                  const value = formProps.value;
-                  const lc =
-                    caseLevelColors[value as keyof typeof caseLevelColors] ||
-                    caseLevelColors.P2;
-                  return (
-                    <div
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        padding: '6px 16px',
-                        borderRadius: borderRadius.lg,
-                        background: lc.bg,
-                        border: `1px solid ${lc.border}`,
-                        color: lc.text,
-                        fontWeight: 600,
-                      }}
-                    >
-                      {value || 'P2'}
-                    </div>
-                  );
-                }}
               />
               <ProFormSelect
-                label={<span style={fieldLabelStyle}>用例类型</span>}
-                required={true}
-                width={'md'}
-                name={'case_type'}
+                label={'用例类型'}
+                required
+                width="md"
+                name="case_type"
                 options={CASE_TYPE_OPTION}
                 fieldProps={{
                   variant: 'filled',
                   style: { borderRadius: borderRadius.lg },
                 }}
-                //@ts-ignore
-                renderFormItem={(_, formProps) => {
-                  const value = formProps.value;
-                  return (
-                    <div
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        padding: '6px 16px',
-                        borderRadius: borderRadius.lg,
-                        background: colors.infoBg,
-                        border: `1px solid ${colors.info}`,
-                        color: colors.info,
-                        fontWeight: 600,
-                      }}
-                    >
-                      {CASE_TYPE_ENUM[value as number] || '普通'}
-                    </div>
-                  );
-                }}
               />
             </ProForm.Group>
           </ProForm>
 
-          <CaseSubSteps
-            caseId={testcase?.id}
-            hiddenStatusBut={true}
-            callback={reload}
-            case_status={testcase?.case_status}
-            case_setup={testcase?.case_setup}
-            case_mark={testcase?.case_mark}
+          <Divider
+            style={{
+              margin: `${spacing.lg}px 0`,
+              borderColor: colors.borderSecondary,
+            }}
           />
+
+          <div>
+            <Text
+              strong
+              style={{
+                fontSize: 15,
+                color: colors.text,
+                marginBottom: spacing.md,
+                display: 'block',
+              }}
+            >
+              测试步骤
+            </Text>
+            <CaseSubSteps
+              caseId={testcase?.id}
+              hiddenStatusBut={true}
+              callback={reload}
+              case_status={testcase?.case_status}
+              case_setup={testcase?.case_setup}
+              case_mark={testcase?.case_mark}
+            />
+          </div>
         </div>
       </ProCard>
     </div>

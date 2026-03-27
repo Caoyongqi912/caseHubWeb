@@ -338,7 +338,7 @@ export const pageTestCase = async (searchParams: any, options?: IObjGet) => {
  */
 export const moveTestCase2Common = async (
   info: {
-    caseIds: number[];
+    case_ids: number[];
     module_id: int;
     project_id: int;
   },

@@ -464,7 +464,8 @@ const CaseSubSteps: FC<IProps> = ({
           />
         </div>
         <div style={styles.footerAction()}>
-          <button
+          <Button
+            hidden={hiddenStatusBut}
             style={styles.quickCreateBtn()}
             onClick={async () => {
               if (!caseId || !requirement_id) return;
@@ -480,7 +481,7 @@ const CaseSubSteps: FC<IProps> = ({
           >
             <PlusOutlined />
             快速创建下一个
-          </button>
+          </Button>
         </div>
       </div>
     </div>

@@ -104,7 +104,7 @@ const ChoiceSettingArea: FC<Props> = ({
 
   const moveToCaseLib = async () => {
     const v = await form.validateFields();
-    const values = { ...v, caseIds: selectedCase };
+    const values = { ...v, case_ids: selectedCase };
     const { code, msg } = await moveTestCase2Common(values);
     if (code === 0) {
       message.success(msg);
