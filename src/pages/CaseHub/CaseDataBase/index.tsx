@@ -33,13 +33,13 @@ const Index = () => {
   return (
     <>
       <ProCard
-        style={{
-          minHeight: '100vh',
-          background: `linear-gradient(135deg, ${colors.bgLayout} 0%, ${colors.bgContainer} 50%, ${colors.bgContainer} 100%)`,
-          position: 'relative',
+        style={{ height: 'auto' }}
+        bodyStyle={{
+          height: '100%',
+          minHeight: '90vh',
+          padding: 0,
           overflow: 'hidden',
         }}
-        bodyStyle={{ minHeight: '100vh', padding: 0, overflow: 'hidden' }}
       >
         <Splitter
           onResize={(sizes: number[]) => {

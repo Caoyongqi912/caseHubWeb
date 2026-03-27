@@ -1,111 +1,121 @@
 import { ProTable } from '@ant-design/pro-components';
-import { SearchConfig } from '@ant-design/pro-table/es/components/Form/FormRender';
-import { OptionsFunctionType } from '@ant-design/pro-table/es/components/ToolBar';
 import type { ActionType, ProColumns } from '@ant-design/pro-table/lib/typing';
 import { TablePaginationConfig, TableProps } from 'antd';
 import type { ExpandableConfig } from 'rc-table/lib/interface';
-import { TableProps as RcTableProps } from 'rc-table/lib/Table';
-import { FC, MutableRefObject } from 'react';
+import type { TableProps as RcTableProps } from 'rc-table/lib/Table';
+import { FC, MutableRefObject, useMemo } from 'react';
 
-interface SelfProps {
-  headerTitle?: any;
+export interface MyProTableProps {
   columns: ProColumns[];
   request?: (params: any, sort: any) => Promise<any>;
   dataSource?: RcTableProps<any>['data'];
   onSave?: (_: any, record: any) => Promise<any>;
   onDelete?: (_: any, record: any) => Promise<any>;
   rowKey: string;
-  toolBarRender?: () => any | boolean;
+  toolBarRender?: () => React.ReactNode | false;
   actionRef?: MutableRefObject<ActionType | undefined>;
-  height?: string;
-  rowSelection?: TableProps<any>['rowSelection']; // 添加rowSelection属性
-  search?: boolean;
-  reload?: OptionsFunctionType;
-  form?: any;
-  pagination?: TablePaginationConfig;
-  x?: number;
+  rowSelection?: TableProps<any>['rowSelection'];
+  search?: boolean | { labelWidth?: number; showHiddenNum?: boolean };
+  reload?: boolean | ((e: React.MouseEvent) => void);
+  form?: Record<string, unknown>;
+  pagination?: TablePaginationConfig | false;
   persistenceKey?: string;
   expandable?: ExpandableConfig<any>;
+  headerTitle?: React.ReactNode;
+  size?: 'small' | 'middle' | 'large';
+  className?: string;
+  tableLayout?: 'auto' | 'fixed' | 'scroll';
 }
 
-const MyProTable: FC<SelfProps> = (props) => {
+const DEFAULT_PAGINATION: TablePaginationConfig = {
+  showQuickJumper: true,
+  defaultPageSize: 10,
+  showSizeChanger: true,
+  pageSizeOptions: ['10', '20', '50', '100'],
+};
+
+const DEFAULT_SEARCH_CONFIG = {
+  labelWidth: 'auto' as const,
+  showHiddenNum: true,
+};
+
+const MyProTable: FC<MyProTableProps> = (props) => {
   const {
-    expandable,
-    form,
     columns,
-    height = 'auto',
-    search = true,
-    rowKey,
     dataSource,
     request,
     onSave,
     onDelete,
-    headerTitle,
+    rowKey,
     toolBarRender,
     actionRef,
     rowSelection,
-    reload,
+    search = true,
+    reload = true,
+    form,
     pagination,
-    x = 1000,
     persistenceKey,
-    ...otherProps
+    expandable,
+    headerTitle,
+    size,
+    className,
+    tableLayout,
   } = props;
 
-  // 默认分页配置
-  const defaultPagination: TablePaginationConfig = {
-    showQuickJumper: true,
-    defaultPageSize: 10,
-    showSizeChanger: true,
-    pageSizeOptions: ['10', '20', '50', '100'],
-  };
+  const resolvedPagination = useMemo(() => {
+    if (pagination === false) return false;
+    return { ...DEFAULT_PAGINATION, ...pagination };
+  }, [pagination]);
 
-  // 默认搜索配置
-  const defaultSearchConfig: SearchConfig = {
-    labelWidth: 'auto',
-    showHiddenNum: true,
-  };
+  const resolvedSearch = useMemo(() => {
+    if (search === false) return false;
+    if (typeof search === 'object') {
+      return { ...DEFAULT_SEARCH_CONFIG, ...search };
+    }
+    return DEFAULT_SEARCH_CONFIG;
+  }, [search]);
+
   return (
-    <>
-      <ProTable
-        {...otherProps}
-        style={{ width: '100%' }}
-        tableStyle={{
-          width: '100%',
-        }}
-        form={form}
-        dataSource={dataSource}
-        columns={columns}
-        actionRef={actionRef}
-        // cardBordered
-        scroll={{ x: 'max-content' }}
-        request={request}
-        editable={{
-          //可编辑表格的相关配置
-          type: 'single', // 编辑单行
-          onSave: onSave,
-          onDelete: onDelete,
-        }}
-        columnsState={{
-          persistenceKey: persistenceKey ?? 'pro-table',
-          persistenceType: 'localStorage', //持久化列的类类型， localStorage 设置在关闭浏览器后也是存在的，sessionStorage 关闭浏览器后会丢失 sessionStorage
-        }}
-        rowKey={rowKey}
-        rowSelection={rowSelection || false}
-        search={search ? defaultSearchConfig : false}
-        options={{
-          density: true,
-          setting: {
-            listsHeight: 400,
-          },
-          reload: reload || true,
-        }}
-        expandable={expandable}
-        pagination={pagination || defaultPagination}
-        dateFormatter="string"
-        headerTitle={headerTitle && null}
-        toolBarRender={toolBarRender}
-      />
-    </>
+    <ProTable
+      className={className}
+      style={{ width: '100%' }}
+      tableStyle={{ width: '100%' }}
+      form={form}
+      formProps={{ labelAlign: 'left' }}
+      dataSource={dataSource}
+      columns={columns}
+      actionRef={actionRef}
+      scroll={{ x: 'max-content' }}
+      //@ts-ignore
+      tableLayout={tableLayout}
+      request={request}
+      editable={{
+        type: 'single',
+        onSave: onSave,
+        onDelete: onDelete,
+      }}
+      columnsState={{
+        persistenceKey: persistenceKey ?? 'pro-table',
+        persistenceType: 'localStorage',
+      }}
+      rowKey={rowKey}
+      rowSelection={rowSelection || false}
+      search={resolvedSearch}
+      options={{
+        density: true,
+        setting: {
+          listsHeight: 400,
+        },
+        reload: reload as boolean | ((e: React.MouseEvent) => void),
+      }}
+      expandable={expandable}
+      pagination={resolvedPagination}
+      dateFormatter="string"
+      headerTitle={headerTitle ? headerTitle : null}
+      //@ts-ignore
+      toolBarRender={toolBarRender}
+      size={size}
+    />
   );
 };
 

@@ -12,7 +12,6 @@ const Index = () => {
   const [currentModuleId, setCurrentModuleId] = useState<number>();
   const [currentProjectId, setCurrentProjectId] = useState<number>();
   const PerKey = 'InterfaceApi';
-  const PerKeyNoPart = 'InterfaceApiNoPart';
   const PerGroupKey = 'InterfaceGroupApi';
   const PerKeySplitter = 'InterfaceApi:Splitter';
   const [sizes, setSizes] = useState<(number | string)[]>(['20%', '80%']);
