@@ -6,8 +6,8 @@ import {
   RequirementProcessEnum,
   RequirementProcessOption,
 } from '@/pages/CaseHub/CaseConfig';
-import Requirement from '@/pages/CaseHub/Requirement/index';
 import RequirementDetail from '@/pages/CaseHub/Requirement/RequirementDetail';
+import Requirement from '@/pages/CaseHub/Requirement/RequirementForm';
 import {
   caseLevelColors,
   requirementProcessColors,
@@ -254,7 +254,7 @@ const RequirementTable: FC<SelfProps> = ({
       const values = {
         ...params,
         module_id: currentModuleId,
-        module_type: ModuleEnum.CASE,
+        module_type: ModuleEnum.REQUIREMENT,
         sort: sort,
       };
       const { code, data } = await pageRequirement(values);

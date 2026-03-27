@@ -20,7 +20,8 @@ export const ModuleEnum = {
   UI_STEP: 6,
   UI_STEP_GROUP: 7,
 
-  CASE: 8,
+  CASE: 10,
+  REQUIREMENT: 8,
   JOB: 9,
 };
 

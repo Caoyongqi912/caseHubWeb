@@ -90,9 +90,14 @@ export default [
     icon: 'BuildFilled',
     routes: [
       {
+        path: '/cases/Requirement',
+        name: '需求',
+        component: '@/pages/CaseHub/Requirement',
+      },
+      {
         path: '/cases/caseHub',
         name: '测试用例',
-        component: '@/pages/CaseHub',
+        component: '@/pages/CaseHub/CaseDataBase',
       },
       {
         path: '/cases/caseHub/requirementCases/reqId=:reqId&projectId=:projectId&moduleId=:moduleId',

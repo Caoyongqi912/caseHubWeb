@@ -1,10 +1,10 @@
 import { queryTestCaseDynamic } from '@/api/case/testCase';
-import { useDynamicInfoStyles } from '@/pages/CaseHub/styles';
+import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import { ICaseDynamic } from '@/pages/CaseHub/type';
 import { HistoryOutlined, SoundTwoTone } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
 import { Avatar, Space, Timeline, Typography } from 'antd';
-import { FC, useEffect, useState } from 'react';
+import { FC, useEffect, useMemo, useState } from 'react';
 
 const { Text, Title } = Typography;
 
@@ -17,7 +17,7 @@ const DynamicInfo: FC<IProps> = ({ caseId }) => {
   const [displayData, setDisplayData] = useState<ICaseDynamic[]>([]);
   const [showMore, setShowMore] = useState(false);
   const [shouldShowToggle, setShouldShowToggle] = useState(false);
-  const styles = useDynamicInfoStyles();
+  const { token, colors, spacing, borderRadius, shadows } = useCaseHubTheme();
 
   useEffect(() => {
     if (caseId) {
@@ -48,17 +48,149 @@ const DynamicInfo: FC<IProps> = ({ caseId }) => {
     }
   }, [showMore, originalData]);
 
+  const containerStyle = useMemo(
+    () => ({
+      minHeight: '100%',
+      background: `
+        radial-gradient(ellipse at 0% 0%, ${colors.primaryBg}40 0%, transparent 50%),
+        linear-gradient(180deg, ${colors.bgContainer} 0%, ${colors.bgLayout} 100%)
+      `,
+      padding: spacing.lg,
+    }),
+    [colors, spacing],
+  );
+
+  const cardStyle = useMemo(
+    () => ({
+      borderRadius: borderRadius.xxl,
+      border: `1px solid ${colors.border}`,
+      overflow: 'hidden' as const,
+      boxShadow: shadows.lg,
+      background: colors.bgContainer,
+    }),
+    [borderRadius, colors, shadows],
+  );
+
+  const headerStyle = useMemo(
+    () => ({
+      padding: `${spacing.xl}px ${spacing.xl}px`,
+      background: `
+        linear-gradient(135deg, ${colors.primaryBg} 0%, ${colors.bgContainer} 100%)
+      `,
+      borderBottom: `1px solid ${colors.border}`,
+      display: 'flex',
+      alignItems: 'center',
+      gap: spacing.md,
+    }),
+    [colors, spacing],
+  );
+
+  const headerIconStyle = useMemo(
+    () => ({
+      width: 40,
+      height: 40,
+      borderRadius: borderRadius.lg,
+      background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryHover} 100%)`,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      boxShadow: `0 4px 12px ${colors.primary}40`,
+    }),
+    [colors, borderRadius],
+  );
+
+  const timelineItemStyle = (index: number) => ({
+    padding: `${spacing.md}px 0`,
+    position: 'relative' as const,
+    animation: `slideIn 300ms ease-out ${index * 50}ms both`,
+  });
+
+  const avatarStyle = (index: number) => ({
+    width: 40,
+    height: 40,
+    borderRadius: borderRadius.round,
+    background: `linear-gradient(135deg, ${
+      index % 3 === 0
+        ? colors.primary
+        : index % 3 === 1
+        ? colors.warning
+        : colors.info
+    } 0%, ${
+      index % 3 === 0
+        ? colors.primaryHover
+        : index % 3 === 1
+        ? colors.warningHover
+        : colors.infoHover
+    } 100%)`,
+    boxShadow: `0 2px 8px ${
+      index % 3 === 0
+        ? colors.primary
+        : index % 3 === 1
+        ? colors.warning
+        : colors.info
+    }40`,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    border: `2px solid ${colors.bgContainer}`,
+  });
+
+  const dotStyle = (index: number) => ({
+    width: 12,
+    height: 12,
+    borderRadius: '50%',
+    background: `linear-gradient(135deg, ${
+      index % 2 === 0 ? colors.success : colors.primary
+    } 0%, ${index % 2 === 0 ? colors.successHover : colors.primaryHover} 100%)`,
+    boxShadow: `0 0 0 4px ${
+      index % 2 === 0 ? colors.successBg : colors.primaryBg
+    }`,
+  });
+
+  const contentCardStyle = useMemo(
+    () => ({
+      marginLeft: spacing.xl,
+      padding: `${spacing.md}px ${spacing.lg}px`,
+      borderRadius: borderRadius.xl,
+      background: colors.bgLayout,
+      border: `1px solid ${colors.borderSecondary}`,
+      position: 'relative' as const,
+      transition: `all ${token.motionDurationFast} ${token.motionEaseInOut}`,
+      '&:hover': {
+        borderColor: colors.primary,
+        boxShadow: shadows.md,
+      },
+    }),
+    [colors, spacing, borderRadius, shadows, token],
+  );
+
+  const timeTagStyle = useMemo(
+    () => ({
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: 4,
+      padding: '2px 8px',
+      borderRadius: borderRadius.round,
+      background: colors.bgContainer,
+      border: `1px solid ${colors.border}`,
+      color: colors.textSecondary,
+      fontSize: 11,
+      fontWeight: 500,
+    }),
+    [colors, borderRadius],
+  );
+
   return (
-    <div style={styles.containerStyle()}>
-      <ProCard style={styles.cardStyle()} bodyStyle={{ padding: 0 }}>
-        <div style={styles.headerStyle()}>
-          <div style={styles.headerIconStyle()}>
+    <div style={containerStyle}>
+      <ProCard style={cardStyle} bodyStyle={{ padding: 0 }}>
+        <div style={headerStyle}>
+          <div style={headerIconStyle}>
             <HistoryOutlined style={{ fontSize: 20, color: '#fff' }} />
           </div>
           <div>
             <Title
               level={5}
-              style={{ margin: 0, fontWeight: 600, color: 'inherit' }}
+              style={{ margin: 0, fontWeight: 600, color: colors.text }}
             >
               操作动态
             </Title>
@@ -68,39 +200,45 @@ const DynamicInfo: FC<IProps> = ({ caseId }) => {
           </div>
         </div>
 
-        <div style={{ padding: 16 }}>
+        <div style={{ padding: spacing.lg }}>
           {displayData.length === 0 ? (
-            <div style={styles.emptyStateStyle() as any}>
+            <div
+              style={{
+                textAlign: 'center' as const,
+                padding: spacing.xxxl,
+                color: colors.textSecondary,
+              }}
+            >
               <SoundTwoTone style={{ fontSize: 48, opacity: 0.5 }} />
-              <div style={{ marginTop: 8 }}>
+              <div style={{ marginTop: spacing.md }}>
                 <Text type="secondary">暂无操作记录</Text>
               </div>
             </div>
           ) : (
             <Timeline
               items={displayData.map((item, index) => ({
-                dot: <div style={styles.dotStyle(index)} />,
+                dot: <div style={dotStyle(index)} />,
                 children: (
-                  <div style={styles.timelineItemStyle(index)} key={item.id}>
-                    <div style={styles.contentCardStyle() as any}>
+                  <div style={timelineItemStyle(index)} key={item.id}>
+                    <div style={contentCardStyle as any}>
                       <div
                         style={{
                           display: 'flex',
                           alignItems: 'flex-start',
                           justifyContent: 'space-between',
-                          marginBottom: 8,
+                          marginBottom: spacing.sm,
                         }}
                       >
                         <Space size="middle" align="center">
-                          <Avatar style={styles.avatarStyle(index)}>
+                          <Avatar style={avatarStyle(index)}>
                             {item.creatorName[0]}
                           </Avatar>
                           <div>
-                            <Text strong style={{ color: 'inherit' }}>
+                            <Text strong style={{ color: colors.text }}>
                               {item.creatorName}
                             </Text>
                             <div>
-                              <span style={styles.timeTagStyle()}>
+                              <span style={timeTagStyle}>
                                 {item.create_time}
                               </span>
                             </div>
@@ -111,14 +249,14 @@ const DynamicInfo: FC<IProps> = ({ caseId }) => {
                         style={{
                           display: 'flex',
                           alignItems: 'flex-start',
-                          gap: 8,
-                          marginTop: 8,
+                          gap: spacing.sm,
+                          marginTop: spacing.sm,
                         }}
                       >
                         <SoundTwoTone style={{ fontSize: 14, marginTop: 2 }} />
                         <Text
                           style={{
-                            color: 'inherit',
+                            color: colors.textSecondary,
                             lineHeight: 1.6,
                           }}
                         >
@@ -133,9 +271,24 @@ const DynamicInfo: FC<IProps> = ({ caseId }) => {
           )}
 
           {shouldShowToggle && (
-            <div style={styles.toggleAreaStyle()}>
+            <div
+              style={{
+                textAlign: 'center' as const,
+                marginTop: spacing.lg,
+                padding: `${spacing.md}px 0`,
+                borderTop: `1px dashed ${colors.border}`,
+              }}
+            >
               <Text
-                style={styles.toggleTextStyle()}
+                style={{
+                  color: colors.primary,
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  padding: `${spacing.sm}px ${spacing.lg}px`,
+                  borderRadius: borderRadius.round,
+                  transition: `all ${token.motionDurationFast}`,
+                  background: colors.primaryBg,
+                }}
                 onClick={() => setShowMore(!showMore)}
               >
                 {showMore ? '收起' : `展开更多 (${originalData.length - 5} 条)`}

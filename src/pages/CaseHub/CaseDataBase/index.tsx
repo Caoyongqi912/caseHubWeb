@@ -5,15 +5,17 @@ import { ProCard } from '@ant-design/pro-components';
 import { Splitter } from 'antd';
 import { useEffect, useState } from 'react';
 import useCaseHubTheme from '../styles';
-import RequirementTable from './RequirementTable';
+import CaseDataTable from './CaseDataTable';
 
 const Index = () => {
+  const { colors, borderRadius, shadows } = useCaseHubTheme();
   const [currentModuleId, setCurrentModuleId] = useState<number | undefined>();
   const [currentProjectId, setCurrentProjectId] = useState<number>();
   const [sizes, setSizes] = useState<(number | string)[]>(['20%', '80%']);
-  const { colors, borderRadius, shadows } = useCaseHubTheme();
-  const PerKey = 'Requirement';
-  const PerKeySplitter = 'Requirement:Splitter';
+
+  const PerKey = 'TEST_CASE';
+  const PerKeySplitter = 'TEST_CASE:Splitter';
+
   const onProjectChange = (projectId: number | undefined) => {
     setCurrentProjectId(projectId);
   };
@@ -28,7 +30,6 @@ const Index = () => {
       setSizes([data.left, data.right]);
     }
   }, []);
-
   return (
     <>
       <ProCard
@@ -57,7 +58,7 @@ const Index = () => {
             style={{ height: 'auto' }}
           >
             <LeftComponents
-              moduleType={ModuleEnum.REQUIREMENT}
+              moduleType={ModuleEnum.CASE}
               currentProjectId={currentProjectId}
               onModuleChange={onModuleChange}
               onProjectChange={onProjectChange}
@@ -69,11 +70,11 @@ const Index = () => {
             min={'60%'}
             style={{ height: 'auto', overflow: 'auto' }}
           >
-            <RequirementTable
+            <CaseDataTable
               perKey={PerKey}
               currentProjectId={currentProjectId}
               currentModuleId={currentModuleId}
-            />
+            />{' '}
           </Splitter.Panel>
         </Splitter>
       </ProCard>
