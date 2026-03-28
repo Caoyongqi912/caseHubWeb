@@ -28,7 +28,11 @@ interface Props {
   callback: () => void;
 }
 
-const Index: FC<Props> = ({ currentProjectId, currentModuleId, callback }) => {
+const RequirementForm: FC<Props> = ({
+  currentProjectId,
+  currentModuleId,
+  callback,
+}) => {
   const formRef = useRef<ProFormInstance>();
   const [moduleEnum, setModuleEnum] = useState<IModuleEnum[]>([]);
   const [selectProjectId, setSelectProjectId] = useState<number>();
@@ -46,13 +50,20 @@ const Index: FC<Props> = ({ currentProjectId, currentModuleId, callback }) => {
   }, [currentProjectId]);
 
   useEffect(() => {
-    if (selectProjectId) {
-      setSelectProjectId(selectProjectId);
-      fetchModulesEnum(selectProjectId, ModuleEnum.CASE, setModuleEnum).then();
-    } else {
+    let isMounted = true;
+    if (selectProjectId && drawerVisible) {
+      fetchModulesEnum(
+        selectProjectId,
+        ModuleEnum.REQUIREMENT,
+        setModuleEnum,
+      ).then();
+    } else if (isMounted) {
       setModuleEnum([]);
     }
-  }, [selectProjectId]);
+    return () => {
+      isMounted = false;
+    };
+  }, [selectProjectId, drawerVisible]);
 
   const queryUser: any = async (value: any) => {
     const { keyWords } = value;
@@ -128,6 +139,7 @@ const Index: FC<Props> = ({ currentProjectId, currentModuleId, callback }) => {
           treeData: moduleEnum,
           fieldNames: {
             label: 'title',
+            value: 'value',
           },
           filterTreeNode: true,
         }}
@@ -272,4 +284,4 @@ const Index: FC<Props> = ({ currentProjectId, currentModuleId, callback }) => {
   );
 };
 
-export default Index;
+export default RequirementForm;

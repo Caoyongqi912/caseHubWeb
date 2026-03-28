@@ -1,5 +1,5 @@
 import { IModuleEnum } from '@/api';
-import { queryProject, queryUser } from '@/api/base';
+import { queryUser } from '@/api/base';
 import { getRequirement, updateRequirement } from '@/api/case/requirement';
 import { CaseHubConfig } from '@/pages/CaseHub/CaseConfig';
 import { useCaseHubTheme } from '@/pages/CaseHub/styles';
@@ -7,14 +7,21 @@ import { IRequirement } from '@/pages/CaseHub/type';
 import { ModuleEnum } from '@/utils/config';
 import { fetchModulesEnum } from '@/utils/somefunc';
 import {
+  ApartmentOutlined,
+  FileTextOutlined,
+  LinkOutlined,
+  TeamOutlined,
+} from '@ant-design/icons';
+import {
   ProCard,
   ProForm,
   ProFormSelect,
   ProFormText,
   ProFormTreeSelect,
 } from '@ant-design/pro-components';
-import { Form, Tag } from 'antd';
-import { FC, useEffect, useMemo, useState } from 'react';
+import { useModel } from '@umijs/max';
+import { Form } from 'antd';
+import { FC, useCallback, useEffect, useMemo, useState } from 'react';
 
 interface Props {
   callback: () => void;
@@ -23,12 +30,14 @@ interface Props {
 
 const RequirementDetail: FC<Props> = ({ callback, requirementId }) => {
   const [reqForm] = Form.useForm<IRequirement>();
+  const { initialState } = useModel('@@initialState');
+
   const [moduleEnum, setModuleEnum] = useState<IModuleEnum[]>([]);
   const { CASE_LEVEL_OPTION } = CaseHubConfig;
   const [selectProjectId, setSelectProjectId] = useState<number>();
   const [users, setUsers] = useState<any[]>([]);
-  const [projects, setProjects] = useState<any[]>([]);
-  const { token, colors, spacing, borderRadius } = useCaseHubTheme();
+  const { colors, spacing, borderRadius } = useCaseHubTheme();
+  const projects = initialState?.projects || [];
 
   const cardStyle = useMemo(
     () => ({
@@ -40,48 +49,6 @@ const RequirementDetail: FC<Props> = ({ callback, requirementId }) => {
     [borderRadius, colors],
   );
 
-  useEffect(() => {
-    queryProject().then(async ({ code, data }) => {
-      if (code === 0) {
-        setProjects(
-          data.map((item) => ({ label: item.title, value: item.id })),
-        );
-      }
-    });
-  }, []);
-
-  useEffect(() => {
-    if (selectProjectId) {
-      setSelectProjectId(selectProjectId);
-      fetchModulesEnum(selectProjectId, ModuleEnum.CASE, setModuleEnum).then();
-    } else {
-      setModuleEnum([]);
-    }
-  }, [selectProjectId]);
-
-  useEffect(() => {
-    if (requirementId) {
-      getRequirement(requirementId).then(async ({ code, data }) => {
-        if (code === 0) {
-          queryUser().then(({ code, data }) => {
-            if (code === 0) {
-              setUsers(
-                data.map((item) => {
-                  return {
-                    label: item.username,
-                    value: item.id,
-                  };
-                }),
-              );
-            }
-          });
-          reqForm.setFieldsValue(data);
-          setSelectProjectId(data.project_id);
-        }
-      });
-    }
-  }, [requirementId]);
-
   const formItemStyle = useMemo(
     () => ({
       marginBottom: spacing.lg,
@@ -89,8 +56,89 @@ const RequirementDetail: FC<Props> = ({ callback, requirementId }) => {
     [spacing],
   );
 
+  useEffect(() => {
+    let isMounted = true;
+    queryUser().then(({ code, data }) => {
+      if (isMounted && code === 0) {
+        setUsers(
+          data.map((item) => ({
+            label: item.username,
+            value: item.id,
+          })),
+        );
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+    if (selectProjectId) {
+      fetchModulesEnum(
+        selectProjectId,
+        ModuleEnum.REQUIREMENT,
+        setModuleEnum,
+      ).then();
+    } else if (isMounted) {
+      setModuleEnum([]);
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [selectProjectId]);
+
+  useEffect(() => {
+    let isMounted = true;
+    if (requirementId) {
+      getRequirement(requirementId).then(({ code, data }) => {
+        if (isMounted && code === 0) {
+          reqForm.setFieldsValue(data);
+          setSelectProjectId(data.project_id);
+        }
+      });
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [requirementId, reqForm]);
+
+  const handleProjectChange = useCallback(
+    (value: number) => {
+      setSelectProjectId(value);
+      reqForm.setFieldValue('module_id', undefined);
+    },
+    [reqForm],
+  );
+
+  const handleFinish = useCallback(
+    async (values: IRequirement) => {
+      if (requirementId) {
+        const { code } = await updateRequirement({
+          ...values,
+          id: requirementId,
+        });
+        if (code === 0) {
+          callback();
+        }
+      }
+    },
+    [requirementId, callback],
+  );
+
+  const sectionTitleStyle = useMemo(
+    () => ({
+      display: 'flex',
+      alignItems: 'center',
+      gap: spacing.sm,
+      marginBottom: spacing.md,
+    }),
+    [spacing],
+  );
+
   return (
-    <ProCard style={cardStyle}>
+    <ProCard style={cardStyle} bodyStyle={{ padding: spacing.lg }}>
       <ProForm
         form={reqForm}
         layout="horizontal"
@@ -98,24 +146,16 @@ const RequirementDetail: FC<Props> = ({ callback, requirementId }) => {
         wrapperCol={{ span: 16 }}
         //@ts-ignore
         formItemProps={{ style: formItemStyle }}
-        onFinish={async (values) => {
-          if (requirementId) {
-            const { code } = await updateRequirement({
-              ...values,
-              id: requirementId,
-            });
-            if (code === 0) {
-              callback();
-            }
-          }
-        }}
+        onFinish={handleFinish}
         submitter={{
           render: (_, dom) => (
             <div
               style={{
                 display: 'flex',
                 justifyContent: 'flex-end',
-                marginTop: spacing.lg,
+                marginTop: spacing.xl,
+                paddingTop: spacing.lg,
+                borderTop: `1px dashed ${colors.border}`,
               }}
             >
               {dom}
@@ -125,17 +165,16 @@ const RequirementDetail: FC<Props> = ({ callback, requirementId }) => {
       >
         <ProCard
           title={
-            <Tag
-              style={{
-                background: colors.primaryBg,
-                borderColor: colors.primary,
-                color: colors.primary,
-              }}
-            >
-              基本信息
-            </Tag>
+            <div style={sectionTitleStyle}>
+              <ApartmentOutlined style={{ color: colors.primary }} />
+              <span>基本信息</span>
+            </div>
           }
-          style={{ marginBottom: spacing.md }}
+          style={{
+            marginBottom: spacing.lg,
+            background: colors.primaryBg,
+            borderRadius: borderRadius.lg,
+          }}
           bordered={false}
         >
           <ProForm.Group>
@@ -147,10 +186,9 @@ const RequirementDetail: FC<Props> = ({ callback, requirementId }) => {
               required={true}
               rules={[{ required: true, message: '请选择项目' }]}
               fieldProps={{
-                onChange: (value) => {
-                  setSelectProjectId(value as number);
-                  reqForm.setFieldValue('module_id', undefined);
-                },
+                variant: 'filled',
+
+                onChange: handleProjectChange,
               }}
             />
             <ProFormTreeSelect
@@ -160,9 +198,12 @@ const RequirementDetail: FC<Props> = ({ callback, requirementId }) => {
               label="所属模块"
               rules={[{ required: true, message: '所属模块必选' }]}
               fieldProps={{
+                variant: 'filled',
+
                 treeData: moduleEnum,
                 fieldNames: {
                   label: 'title',
+                  value: 'value',
                 },
                 filterTreeNode: true,
               }}
@@ -172,25 +213,26 @@ const RequirementDetail: FC<Props> = ({ callback, requirementId }) => {
             name={'requirement_url'}
             label={'需求连接'}
             placeholder={'请输入需求链接'}
+            width={'lg'}
             fieldProps={{
               variant: 'filled',
+              prefix: <LinkOutlined style={{ color: colors.textSecondary }} />,
             }}
           />
         </ProCard>
 
         <ProCard
           title={
-            <Tag
-              style={{
-                background: colors.infoBg,
-                borderColor: colors.info,
-                color: colors.info,
-              }}
-            >
-              需求详情
-            </Tag>
+            <div style={sectionTitleStyle}>
+              <FileTextOutlined style={{ color: colors.info }} />
+              <span>需求详情</span>
+            </div>
           }
-          style={{ marginBottom: spacing.md }}
+          style={{
+            marginBottom: spacing.lg,
+            background: colors.infoBg,
+            borderRadius: borderRadius.lg,
+          }}
           bordered={false}
         >
           <ProFormText
@@ -208,7 +250,7 @@ const RequirementDetail: FC<Props> = ({ callback, requirementId }) => {
             name={'requirement_level'}
             label={'需求等级'}
             required={true}
-            width={'sm'}
+            width={'lg'}
             initialValue={'P2'}
             options={CASE_LEVEL_OPTION}
             fieldProps={{
@@ -219,16 +261,15 @@ const RequirementDetail: FC<Props> = ({ callback, requirementId }) => {
 
         <ProCard
           title={
-            <Tag
-              style={{
-                background: colors.warningBg,
-                borderColor: colors.warning,
-                color: colors.warning,
-              }}
-            >
-              维护人员
-            </Tag>
+            <div style={sectionTitleStyle}>
+              <TeamOutlined style={{ color: colors.warning }} />
+              <span>维护人员</span>
+            </div>
           }
+          style={{
+            background: colors.warningBg,
+            borderRadius: borderRadius.lg,
+          }}
           bordered={false}
         >
           <ProFormSelect

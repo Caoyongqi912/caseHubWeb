@@ -11,7 +11,7 @@ const Index = () => {
   const [currentModuleId, setCurrentModuleId] = useState<number | undefined>();
   const [currentProjectId, setCurrentProjectId] = useState<number>();
   const [sizes, setSizes] = useState<(number | string)[]>(['20%', '80%']);
-  const { colors, borderRadius, shadows } = useCaseHubTheme();
+  const { borderRadius, shadows } = useCaseHubTheme();
   const PerKey = 'Requirement';
   const PerKeySplitter = 'Requirement:Splitter';
   const onProjectChange = (projectId: number | undefined) => {

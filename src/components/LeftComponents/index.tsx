@@ -6,13 +6,7 @@ import ProjectSelect from '@/components/LeftComponents/ProjectSelect';
 import { ProCard } from '@ant-design/pro-components';
 import { Space, theme } from 'antd';
 import { FC, useEffect, useMemo, useState } from 'react';
-import {
-  borderRadius,
-  responsive,
-  shadows,
-  spacing,
-  styleHelpers,
-} from './styles';
+import { borderRadius, shadows, spacing, styleHelpers } from './styles';
 
 const { useToken } = theme;
 
@@ -44,9 +38,6 @@ const Index: FC<SelfProps> = (props) => {
       body: {
         minHeight: '80vh',
         padding: spacing.md,
-        [responsive.mobile]: {
-          padding: spacing.sm,
-        },
       },
       decorativeCircle: {
         position: 'absolute' as const,
@@ -58,12 +49,16 @@ const Index: FC<SelfProps> = (props) => {
   );
 
   useEffect(() => {
-    queryProject().then(async ({ data }) => {
-      if (data && data.length > 0) {
+    let isMounted = true;
+    queryProject().then(({ data }) => {
+      if (isMounted && data && data.length > 0) {
         setProjects(data);
         onProjectChange(data[0].id);
       }
     });
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   return (

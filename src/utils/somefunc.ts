@@ -67,14 +67,14 @@ export const fetchModulesEnum = async (
 };
 
 const loopData = (data: IModule[]): IModuleEnum[] => {
-  return data.map((item) => {
+  return data.map((item, index) => {
     if (item.children) {
       return {
         title: item.title,
-        value: item.key,
+        value: item.key ?? `fallback-${index}`,
         children: loopData(item.children),
       };
     }
-    return { title: item.title, value: item.key };
+    return { title: item.title, value: item.key ?? `fallback-${index}` };
   });
 };

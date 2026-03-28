@@ -90,7 +90,7 @@ export default [
     icon: 'BuildFilled',
     routes: [
       {
-        path: '/cases/Requirement',
+        path: '/cases/requirement',
         name: '需求',
         component: '@/pages/CaseHub/Requirement',
       },

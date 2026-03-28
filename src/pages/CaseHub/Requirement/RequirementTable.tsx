@@ -7,7 +7,7 @@ import {
   RequirementProcessOption,
 } from '@/pages/CaseHub/CaseConfig';
 import RequirementDetail from '@/pages/CaseHub/Requirement/RequirementDetail';
-import Requirement from '@/pages/CaseHub/Requirement/RequirementForm';
+import RequirementForm from '@/pages/CaseHub/Requirement/RequirementForm';
 import {
   caseLevelColors,
   requirementProcessColors,
@@ -251,6 +251,9 @@ const RequirementTable: FC<SelfProps> = ({
 
   const fetchPageData = useCallback(
     async (params: IRequirement, sort: any) => {
+      if (!currentModuleId) {
+        return;
+      }
       const values = {
         ...params,
         module_id: currentModuleId,
@@ -288,6 +291,7 @@ const RequirementTable: FC<SelfProps> = ({
   return (
     <ProCard bodyStyle={{ padding: 0 }}>
       <MyDrawer
+        width={'40%'}
         name={'需求详情'}
         open={detailVisible}
         setOpen={setDetailVisible}
@@ -318,7 +322,7 @@ const RequirementTable: FC<SelfProps> = ({
           >
             用例模版
           </Button>,
-          <Requirement
+          <RequirementForm
             key="add"
             callback={() => actionRef.current?.reload()}
             currentModuleId={currentModuleId}
