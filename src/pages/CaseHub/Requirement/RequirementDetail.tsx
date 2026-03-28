@@ -187,7 +187,6 @@ const RequirementDetail: FC<Props> = ({ callback, requirementId }) => {
               rules={[{ required: true, message: '请选择项目' }]}
               fieldProps={{
                 variant: 'filled',
-
                 onChange: handleProjectChange,
               }}
             />
@@ -208,17 +207,19 @@ const RequirementDetail: FC<Props> = ({ callback, requirementId }) => {
                 filterTreeNode: true,
               }}
             />
+            <ProFormText
+              name={'requirement_url'}
+              label={'需求连接'}
+              placeholder={'请输入需求链接'}
+              width={'md'}
+              fieldProps={{
+                variant: 'filled',
+                prefix: (
+                  <LinkOutlined style={{ color: colors.textSecondary }} />
+                ),
+              }}
+            />
           </ProForm.Group>
-          <ProFormText
-            name={'requirement_url'}
-            label={'需求连接'}
-            placeholder={'请输入需求链接'}
-            width={'lg'}
-            fieldProps={{
-              variant: 'filled',
-              prefix: <LinkOutlined style={{ color: colors.textSecondary }} />,
-            }}
-          />
         </ProCard>
 
         <ProCard

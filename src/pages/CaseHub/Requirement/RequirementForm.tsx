@@ -45,6 +45,7 @@ const RequirementForm: FC<Props> = ({
 
   useEffect(() => {
     if (currentProjectId) {
+      console.log(currentProjectId);
       setSelectProjectId(currentProjectId);
     }
   }, [currentProjectId]);

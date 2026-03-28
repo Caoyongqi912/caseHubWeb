@@ -221,7 +221,6 @@ const CaseDataTable: FC<Props> = (props) => {
         persistenceKey={perKey}
         request={fetchPageData}
         columns={column}
-        x={1200}
         rowKey={'uid'}
       />
     </>

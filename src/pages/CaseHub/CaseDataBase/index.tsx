@@ -8,7 +8,7 @@ import useCaseHubTheme from '../styles';
 import CaseDataTable from './CaseDataTable';
 
 const Index = () => {
-  const { colors, borderRadius, shadows } = useCaseHubTheme();
+  const { borderRadius, shadows } = useCaseHubTheme();
   const [currentModuleId, setCurrentModuleId] = useState<number | undefined>();
   const [currentProjectId, setCurrentProjectId] = useState<number>();
   const [sizes, setSizes] = useState<(number | string)[]>(['20%', '80%']);
@@ -74,7 +74,7 @@ const Index = () => {
               perKey={PerKey}
               currentProjectId={currentProjectId}
               currentModuleId={currentModuleId}
-            />{' '}
+            />
           </Splitter.Panel>
         </Splitter>
       </ProCard>
