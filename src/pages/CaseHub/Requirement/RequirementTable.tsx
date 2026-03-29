@@ -1,5 +1,4 @@
 import { pageRequirement, updateRequirement } from '@/api/case/requirement';
-import { downloadCaseExcel } from '@/api/case/testCase';
 import MyDrawer from '@/components/MyDrawer';
 import MyProTable from '@/components/Table/MyProTable';
 import {
@@ -16,10 +15,10 @@ import {
 import { IRequirement } from '@/pages/CaseHub/type';
 import { CONFIG, ModuleEnum } from '@/utils/config';
 import { pageData } from '@/utils/somefunc';
-import { DownloadOutlined, EditOutlined } from '@ant-design/icons';
+import { EditOutlined } from '@ant-design/icons';
 import { ActionType, ProCard } from '@ant-design/pro-components';
 import { ProColumns } from '@ant-design/pro-table/lib/typing';
-import { Button, Popconfirm, Select, Space, Tag, Typography } from 'antd';
+import { Popconfirm, Select, Space, Tag, Typography } from 'antd';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 const { Text, Link } = Typography;
@@ -38,7 +37,7 @@ const RequirementTable: FC<SelfProps> = ({
   const actionRef = useRef<ActionType>();
   const [detailVisible, setDetailVisible] = useState<boolean>(false);
   const [currentReqId, setCurrentReqId] = useState<number>();
-  const { token, colors, spacing, borderRadius, shadows } = useCaseHubTheme();
+  const { token, colors, spacing, borderRadius } = useCaseHubTheme();
 
   const drawerStyles = useMemo(
     () => ({
@@ -266,17 +265,6 @@ const RequirementTable: FC<SelfProps> = ({
     [currentModuleId],
   );
 
-  const download = async () => {
-    const blob = await downloadCaseExcel({ responseType: 'blob' });
-    const objectURL = URL.createObjectURL(blob);
-    let btn: any = document.createElement('a');
-    btn.download = `模版.xlsx`;
-    btn.href = objectURL;
-    btn.click();
-    URL.revokeObjectURL(objectURL);
-    btn = null;
-  };
-
   const onSave = async (_: any, record: IRequirement) => {
     const values = {
       id: record.id,
@@ -313,15 +301,6 @@ const RequirementTable: FC<SelfProps> = ({
         columns={columns}
         request={fetchPageData}
         toolBarRender={() => [
-          <Button
-            key="download"
-            onClick={download}
-            type="text"
-            icon={<DownloadOutlined style={{ color: colors.primary }} />}
-            style={{ fontWeight: 500 }}
-          >
-            用例模版
-          </Button>,
           <RequirementForm
             key="add"
             callback={() => actionRef.current?.reload()}

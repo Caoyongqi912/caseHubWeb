@@ -1,4 +1,9 @@
-import { pageTestCase } from '@/api/case/testCase';
+import { IModuleEnum } from '@/api';
+import {
+  downloadCaseExcel,
+  pageTestCase,
+  uploadTestCase,
+} from '@/api/case/testCase';
 import MyDrawer from '@/components/MyDrawer';
 import MyProTable from '@/components/Table/MyProTable';
 import { CaseHubConfig } from '@/pages/CaseHub/CaseConfig';
@@ -7,9 +12,27 @@ import DynamicInfo from '@/pages/CaseHub/TestCase/DynamicInfo';
 import TestCaseDetail from '@/pages/CaseHub/TestCase/TestCaseDetail';
 import { ITestCase } from '@/pages/CaseHub/type';
 import { ModuleEnum } from '@/utils/config';
-import { pageData } from '@/utils/somefunc';
-import { ActionType, ProColumns } from '@ant-design/pro-components';
-import { Popconfirm, Space, Tag, Typography } from 'antd';
+import { fetchModulesEnum, pageData } from '@/utils/somefunc';
+import { DownloadOutlined, UploadOutlined } from '@ant-design/icons';
+import {
+  ActionType,
+  ModalForm,
+  ProColumns,
+  ProForm,
+  ProFormSelect,
+  ProFormTreeSelect,
+  ProFormUploadDragger,
+} from '@ant-design/pro-components';
+import { useModel } from '@umijs/max';
+import {
+  Button,
+  Form,
+  message,
+  Popconfirm,
+  Space,
+  Tag,
+  Typography,
+} from 'antd';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 const { Text, Link } = Typography;
@@ -23,15 +46,32 @@ interface Props {
 const CaseDataTable: FC<Props> = (props) => {
   const { perKey, currentProjectId, currentModuleId } = props;
   const { CASE_LEVEL_ENUM } = CaseHubConfig;
-  const { token, colors, spacing, borderRadius, shadows } = useCaseHubTheme();
+  const { token, colors, spacing, borderRadius } = useCaseHubTheme();
   const actionRef = useRef<ActionType>();
+  const [uploadForm] = Form.useForm();
   const [currentCaseId, setCurrentCaseId] = useState<number>();
   const [currentCase, setCurrentCase] = useState<ITestCase>();
   const [showDynamic, setShowDynamic] = useState<boolean>(false);
   const [showCaseDetail, setShowCaseDetail] = useState<boolean>(false);
+  const { initialState } = useModel('@@initialState');
+  const projects = initialState?.projects || [];
+  const [selectProjectId, setSelectProjectId] = useState<number>();
+  const [moduleEnum, setModuleEnum] = useState<IModuleEnum[]>([]);
+
+  useEffect(() => {
+    if (selectProjectId) {
+      fetchModulesEnum(selectProjectId, ModuleEnum.CASE, setModuleEnum).then();
+    }
+  }, [selectProjectId]);
 
   useEffect(() => {
     actionRef.current?.reload();
+    if (currentProjectId) {
+      setSelectProjectId(currentProjectId);
+      uploadForm.setFieldsValue({
+        project_id: currentProjectId,
+      });
+    }
   }, [currentModuleId, currentProjectId]);
 
   const drawerStyles = useMemo(
@@ -47,6 +87,17 @@ const CaseDataTable: FC<Props> = (props) => {
     }),
     [colors, spacing],
   );
+
+  const download = async () => {
+    const blob = await downloadCaseExcel({ responseType: 'blob' });
+    const objectURL = URL.createObjectURL(blob);
+    let btn: any = document.createElement('a');
+    btn.download = `模版.xlsx`;
+    btn.href = objectURL;
+    btn.click();
+    URL.revokeObjectURL(objectURL);
+    btn = null;
+  };
 
   const column: ProColumns<ITestCase>[] = useMemo(
     () => [
@@ -192,6 +243,22 @@ const CaseDataTable: FC<Props> = (props) => {
     [currentModuleId],
   );
 
+  /** 上传用例 */
+  const uploadCase = async (values: any) => {
+    console.log(values);
+    const formData = new FormData();
+    const fileValue = values.file;
+    formData.append('file', fileValue[0].originFileObj);
+    formData.append('project_id', values.project_id);
+    formData.append('module_id', values.module_id);
+    const { code } = await uploadTestCase(formData);
+    if (code === 0) {
+      message.success('上传成功');
+    }
+    uploadForm.resetFields();
+    return true;
+  };
+
   return (
     <>
       <MyDrawer
@@ -217,6 +284,69 @@ const CaseDataTable: FC<Props> = (props) => {
         />
       </MyDrawer>
       <MyProTable
+        toolBarRender={() => [
+          <Button
+            key="download"
+            onClick={download}
+            type="text"
+            icon={<DownloadOutlined style={{ color: colors.primary }} />}
+          >
+            用例模版
+          </Button>,
+
+          <ModalForm
+            form={uploadForm}
+            trigger={
+              <Button key="upload" type="primary">
+                <UploadOutlined />
+                上传
+              </Button>
+            }
+            title={'上传用例'}
+            onFinish={uploadCase}
+          >
+            <ProForm.Group>
+              <ProFormSelect
+                label={'所属项目'}
+                options={projects}
+                name={'project_id'}
+                width={'md'}
+                required={true}
+                rules={[{ required: true, message: '请选择项目' }]}
+                fieldProps={{
+                  variant: 'filled',
+                  onChange: (value) => {
+                    setSelectProjectId(value as number);
+                  },
+                }}
+              />
+              <ProFormTreeSelect
+                required
+                name="module_id"
+                label="所属模块"
+                width={'md'}
+                rules={[{ required: true, message: '所属模块必选' }]}
+                fieldProps={{
+                  variant: 'filled',
+                  treeData: moduleEnum,
+                  fieldNames: {
+                    label: 'title',
+                    value: 'value',
+                  },
+                  filterTreeNode: true,
+                }}
+              />
+            </ProForm.Group>
+            <ProFormUploadDragger
+              title={false}
+              max={1}
+              description="上传文件"
+              width={'md'}
+              accept=".xlsx,.xls"
+              name="file"
+            />
+          </ModalForm>,
+        ]}
         actionRef={actionRef}
         persistenceKey={perKey}
         request={fetchPageData}

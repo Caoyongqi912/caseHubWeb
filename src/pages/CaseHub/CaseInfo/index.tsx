@@ -43,7 +43,6 @@ const Index = () => {
   const [isGrouped, setIsGrouped] = useState(true);
   const [activeGroupKeys, setActiveGroupKeys] = useState<string[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
-  const isManualToggleRef = useRef(false);
   const { colors, spacing } = useCaseHubTheme();
   const styles = useCaseInfoStyles();
 
