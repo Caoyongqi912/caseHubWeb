@@ -1,6 +1,6 @@
-import { CaseHubConfig } from '@/pages/CaseHub/CaseConfig';
+import { CaseHubConfig } from '@/pages/CaseHub/config/constants';
 import { caseLevelColors, useCaseHubTheme } from '@/pages/CaseHub/styles';
-import { ITestCase } from '@/pages/CaseHub/type';
+import { ITestCase } from '@/pages/CaseHub/types';
 import { ProFormSelect } from '@ant-design/pro-components';
 import { Tag } from 'antd';
 import { FC, useEffect, useState } from 'react';
@@ -8,9 +8,14 @@ import { FC, useEffect, useState } from 'react';
 interface Props {
   testcaseData?: ITestCase;
   onSave?: (field: string, value: string) => void;
+  onLevelChange?: (caseId: number, newLevel: string) => void;
 }
 
-const CaseLevelSelect: FC<Props> = ({ testcaseData, onSave }) => {
+const CaseLevelSelect: FC<Props> = ({
+  testcaseData,
+  onSave,
+  onLevelChange,
+}) => {
   const [levelVisible, setLevelVisible] = useState(true);
   const [level, setLevel] = useState<string>('P2');
   const { colors, borderRadius } = useCaseHubTheme();
@@ -32,7 +37,11 @@ const CaseLevelSelect: FC<Props> = ({ testcaseData, onSave }) => {
   const handleLevelChange = (value: string) => {
     setLevel(value);
     setLevelVisible(false);
-    onSave?.('case_level', value);
+    if (testcaseData?.id) {
+      onLevelChange?.(testcaseData.id, value);
+    } else {
+      onSave?.('case_level', value);
+    }
   };
 
   return (

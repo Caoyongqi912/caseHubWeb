@@ -1,5 +1,5 @@
 import { IObjGet, IPage, IResponse } from '@/api';
-import { CaseSubStep, ICaseDynamic, ITestCase } from '@/pages/CaseHub/type';
+import { CaseSubStep, ICaseDynamic, ITestCase } from '@/pages/CaseHub/types';
 import { request } from '@@/plugin-request';
 import { int } from 'utrie/dist/types/Trie';
 
@@ -155,7 +155,7 @@ export const reorderTestCase = async (
  */
 export const removeTestCase = async (
   info: {
-    requirement_id: number | null;
+    requirement_id?: number;
     caseId: number;
   },
   options?: IObjGet,
@@ -174,7 +174,7 @@ export const removeTestCase = async (
  */
 export const copyTestCase = async (
   info: {
-    requirement_id: number | null;
+    requirement_id?: number;
     caseId: number;
   },
   options?: IObjGet,

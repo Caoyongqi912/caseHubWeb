@@ -1,6 +1,6 @@
-import { CaseHubConfig } from '@/pages/CaseHub/CaseConfig';
+import { CaseHubConfig } from '@/pages/CaseHub/config/constants';
 import { useCaseHubTheme } from '@/pages/CaseHub/styles';
-import { ITestCase } from '@/pages/CaseHub/type';
+import { ITestCase } from '@/pages/CaseHub/types';
 import { ProFormSelect } from '@ant-design/pro-components';
 import { Tag } from 'antd';
 import { FC, useEffect, useState } from 'react';
@@ -8,9 +8,10 @@ import { FC, useEffect, useState } from 'react';
 interface Props {
   testcaseData?: ITestCase;
   onSave?: (field: string, value: number) => void;
+  onTypeChange?: (caseId: number, newType: number) => void;
 }
 
-const CaseTypeSelect: FC<Props> = ({ testcaseData, onSave }) => {
+const CaseTypeSelect: FC<Props> = ({ testcaseData, onSave, onTypeChange }) => {
   const [typeVisible, setTypeVisible] = useState(true);
   const [typeValue, setTypeValue] = useState<number>(2);
   const { colors, borderRadius } = useCaseHubTheme();
@@ -36,7 +37,11 @@ const CaseTypeSelect: FC<Props> = ({ testcaseData, onSave }) => {
   const handleTypeChange = (value: number) => {
     setTypeValue(value);
     setTypeVisible(false);
-    onSave?.('case_type', value);
+    if (testcaseData?.id) {
+      onTypeChange?.(testcaseData.id, value);
+    } else {
+      onSave?.('case_type', value);
+    }
   };
 
   return (
@@ -48,6 +53,7 @@ const CaseTypeSelect: FC<Props> = ({ testcaseData, onSave }) => {
             borderRadius: borderRadius.md,
             minWidth: 70,
           }}
+          allowClear={false}
           onChange={handleTypeChange}
           name={'case_type'}
           initialValue={2}

@@ -4,14 +4,13 @@ import {
   updateTestCase,
 } from '@/api/case/testCase';
 import MyDrawer from '@/components/MyDrawer';
-import CaseLevelSelect from '@/pages/CaseHub/component/CaseLevelSelect';
-import CaseTagSelect from '@/pages/CaseHub/component/CaseTagSelect';
-import CaseTypeSelect from '@/pages/CaseHub/component/CaseTypeSelect';
+import CaseLevelSelect from '@/pages/CaseHub/components/CaseLevelSelect';
+import CaseSubSteps from '@/pages/CaseHub/components/CaseSubSteps';
+import CaseTagSelect from '@/pages/CaseHub/components/CaseTagSelect';
+import CaseTypeSelect from '@/pages/CaseHub/components/CaseTypeSelect';
+import DynamicInfo from '@/pages/CaseHub/components/DynamicInfo';
 import { caseStatusColors } from '@/pages/CaseHub/styles';
-import CaseSubSteps from '@/pages/CaseHub/TestCase/CaseSubSteps';
-import DynamicInfo from '@/pages/CaseHub/TestCase/DynamicInfo';
-import { useTestCaseStyles } from '@/pages/CaseHub/TestCase/styles';
-import { ITestCase } from '@/pages/CaseHub/type';
+import { ITestCase } from '@/pages/CaseHub/types';
 import {
   CheckCircleFilled,
   ClockCircleFilled,
@@ -36,6 +35,7 @@ import {
   Tag,
 } from 'antd';
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import { useTestCaseStyles } from './styles';
 
 interface Props {
   reqId?: string;
@@ -47,9 +47,12 @@ interface Props {
   testcaseData: ITestCase;
   setSelectedCase: React.Dispatch<React.SetStateAction<number[]>>;
   callback: () => void;
+  onCaseTagChange?: (caseId: number, newTag: string) => void;
+  onCaseLevelChange?: (caseId: number, newLevel: string) => void;
+  onCaseTypeChange?: (caseId: number, newType: number) => void;
 }
 
-const Index: FC<Props> = ({
+const TestCaseCard: FC<Props> = ({
   callback,
   selectedCase,
   setSelectedCase,
@@ -57,6 +60,9 @@ const Index: FC<Props> = ({
   reqId,
   tags,
   setTags,
+  onCaseTagChange,
+  onCaseLevelChange,
+  onCaseTypeChange,
 }) => {
   const [form] = Form.useForm<ITestCase>();
   const [openDynamic, setOpenDynamic] = useState(false);
@@ -112,7 +118,7 @@ const Index: FC<Props> = ({
   const copyStepCase = useCallback(async () => {
     if (!testcaseData?.id) return;
     const { code, msg } = await copyTestCase({
-      requirement_id: reqId ? parseInt(reqId) : null,
+      requirement_id: reqId ? parseInt(reqId) : undefined,
       caseId: testcaseData.id,
     });
     if (code === 0) {
@@ -124,7 +130,7 @@ const Index: FC<Props> = ({
   const deleteStepCase = useCallback(async () => {
     if (!testcaseData?.id) return;
     const { code, msg } = await removeTestCase({
-      requirement_id: reqId ? parseInt(reqId) : null,
+      requirement_id: reqId ? parseInt(reqId) : undefined,
       caseId: testcaseData.id,
     });
     if (code === 0) {
@@ -133,9 +139,6 @@ const Index: FC<Props> = ({
     }
   }, [testcaseData?.id, reqId, callback]);
 
-  /**
-   * 处理菜单点击事件
-   */
   const handleMenuClick: MenuProps['onClick'] = useCallback(
     async (e) => {
       e.domEvent.stopPropagation();
@@ -154,9 +157,6 @@ const Index: FC<Props> = ({
     [copyStepCase, deleteStepCase],
   );
 
-  /**
-   * 处理字段保存事件
-   */
   const handleFieldSave = useCallback(
     async (field: string, value: string | number) => {
       if (!testcaseData?.id) return;
@@ -168,8 +168,6 @@ const Index: FC<Props> = ({
 
       const { code } = await updateTestCase(values as unknown as ITestCase);
       if (code === 0) {
-        message.success('保存成功');
-        callback();
       }
     },
     [testcaseData?.id, callback],
@@ -194,10 +192,49 @@ const Index: FC<Props> = ({
     (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (e.key === 'Enter') {
         e.preventDefault();
-        (e.target as HTMLInputElement).blur();
+        (e.target as HTMLTextAreaElement).blur();
       }
     },
     [],
+  );
+
+  const handleTagChange = useCallback(
+    async (caseId: number, newTag: string) => {
+      const { code } = await updateTestCase({
+        id: caseId,
+        case_tag: newTag,
+      } as unknown as ITestCase);
+      if (code === 0) {
+        onCaseTagChange?.(caseId, newTag);
+      }
+    },
+    [onCaseTagChange],
+  );
+
+  const handleLevelChange = useCallback(
+    async (caseId: number, newLevel: string) => {
+      const { code } = await updateTestCase({
+        id: caseId,
+        case_level: newLevel,
+      } as unknown as ITestCase);
+      if (code === 0) {
+        onCaseLevelChange?.(caseId, newLevel);
+      }
+    },
+    [onCaseLevelChange],
+  );
+
+  const handleTypeChange = useCallback(
+    async (caseId: number, newType: number) => {
+      const { code } = await updateTestCase({
+        id: caseId,
+        case_type: newType,
+      } as unknown as ITestCase);
+      if (code === 0) {
+        onCaseTypeChange?.(caseId, newType);
+      }
+    },
+    [onCaseTypeChange],
   );
 
   const handleMouseEnter = useCallback(() => setIsHovered(true), []);
@@ -318,14 +355,17 @@ const Index: FC<Props> = ({
                 setTags={setTags}
                 testcaseData={testcaseData}
                 onSave={handleFieldSave}
+                onTagChange={handleTagChange}
               />
               <CaseLevelSelect
                 testcaseData={testcaseData}
                 onSave={handleFieldSave}
+                onLevelChange={handleLevelChange}
               />
               <CaseTypeSelect
                 testcaseData={testcaseData}
                 onSave={handleFieldSave}
+                onTypeChange={handleTypeChange}
               />
 
               {testcaseData?.is_review !== undefined && (
@@ -379,4 +419,4 @@ const Index: FC<Props> = ({
   );
 };
 
-export default Index;
+export default TestCaseCard;

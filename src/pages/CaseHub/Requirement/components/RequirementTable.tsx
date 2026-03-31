@@ -4,15 +4,13 @@ import MyProTable from '@/components/Table/MyProTable';
 import {
   RequirementProcessEnum,
   RequirementProcessOption,
-} from '@/pages/CaseHub/CaseConfig';
-import RequirementDetail from '@/pages/CaseHub/Requirement/RequirementDetail';
-import RequirementForm from '@/pages/CaseHub/Requirement/RequirementForm';
+} from '@/pages/CaseHub/config/constants';
 import {
   caseLevelColors,
   requirementProcessColors,
   useCaseHubTheme,
 } from '@/pages/CaseHub/styles';
-import { IRequirement } from '@/pages/CaseHub/type';
+import { IRequirement } from '@/pages/CaseHub/types';
 import { CONFIG, ModuleEnum } from '@/utils/config';
 import { pageData } from '@/utils/somefunc';
 import { EditOutlined } from '@ant-design/icons';
@@ -20,6 +18,8 @@ import { ActionType, ProCard } from '@ant-design/pro-components';
 import { ProColumns } from '@ant-design/pro-table/lib/typing';
 import { Popconfirm, Select, Space, Tag, Typography } from 'antd';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import RequirementDetail from './RequirementDetail';
+import RequirementForm from './RequirementForm';
 
 const { Text, Link } = Typography;
 

@@ -1,5 +1,5 @@
 import { IObjGet, IPage, IResponse } from '@/api';
-import { IRequirement } from '@/pages/CaseHub/type';
+import { IRequirement } from '@/pages/CaseHub/types';
 import { request } from '@@/plugin-request';
 
 /**

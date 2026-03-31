@@ -1,5 +1,5 @@
 import { CSSProperties } from 'react';
-import { useCaseHubTheme } from '../styles/useCaseHubTheme';
+import { useCaseHubTheme } from '../../styles/useCaseHubTheme';
 
 export const useTestCaseStyles = () => {
   const { colors, spacing } = useCaseHubTheme();

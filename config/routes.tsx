@@ -97,13 +97,13 @@ export default [
       {
         path: '/cases/caseHub',
         name: '测试用例',
-        component: '@/pages/CaseHub/CaseDataBase',
+        component: '@/pages/CaseHub/CaseLibrary',
       },
       {
         path: '/cases/caseHub/requirementCases/reqId=:reqId&projectId=:projectId&moduleId=:moduleId',
         name: 'CaseHub',
         hideInMenu: true,
-        component: '@/pages/CaseHub/CaseInfo',
+        component: '@/pages/CaseHub/RequirementCases',
       },
       {
         path: '/cases/caseHub/requirementMindMap/reqId=:reqId&projectId=:projectId&moduleId=:moduleId',

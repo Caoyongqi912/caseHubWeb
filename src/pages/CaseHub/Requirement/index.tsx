@@ -5,7 +5,7 @@ import { ProCard } from '@ant-design/pro-components';
 import { Splitter } from 'antd';
 import { useEffect, useState } from 'react';
 import useCaseHubTheme from '../styles';
-import RequirementTable from './RequirementTable';
+import RequirementTable from './components/RequirementTable';
 
 const Index = () => {
   const [currentModuleId, setCurrentModuleId] = useState<number | undefined>();

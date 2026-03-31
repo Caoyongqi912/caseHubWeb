@@ -1,7 +1,7 @@
 import { uploadTestCase } from '@/api/case/testCase';
-import { CaseHubConfig } from '@/pages/CaseHub/CaseConfig';
+import { CaseHubConfig } from '@/pages/CaseHub/config/constants';
 import { useCaseHubTheme } from '@/pages/CaseHub/styles';
-import { CaseSearchForm } from '@/pages/CaseHub/type';
+import { CaseSearchForm } from '@/pages/CaseHub/types';
 import {
   AppstoreOutlined,
   CheckSquareOutlined,

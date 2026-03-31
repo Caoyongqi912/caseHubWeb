@@ -1,16 +1,19 @@
 import { IModuleEnum } from '@/api';
 import {
+  copyTestCase,
   downloadCaseExcel,
   pageTestCase,
+  removeTestCase,
   uploadTestCase,
 } from '@/api/case/testCase';
 import MyDrawer from '@/components/MyDrawer';
 import MyProTable from '@/components/Table/MyProTable';
-import { CaseHubConfig } from '@/pages/CaseHub/CaseConfig';
+import UserSelect from '@/components/Table/UserSelect';
+import DynamicInfo from '@/pages/CaseHub/components/DynamicInfo';
+import TestCaseDetail from '@/pages/CaseHub/components/TestCaseDetail';
+import { CaseHubConfig } from '@/pages/CaseHub/config/constants';
 import { caseLevelColors, useCaseHubTheme } from '@/pages/CaseHub/styles';
-import DynamicInfo from '@/pages/CaseHub/TestCase/DynamicInfo';
-import TestCaseDetail from '@/pages/CaseHub/TestCase/TestCaseDetail';
-import { ITestCase } from '@/pages/CaseHub/type';
+import { ITestCase } from '@/pages/CaseHub/types';
 import { ModuleEnum } from '@/utils/config';
 import { fetchModulesEnum, pageData } from '@/utils/somefunc';
 import { DownloadOutlined, UploadOutlined } from '@ant-design/icons';
@@ -89,14 +92,21 @@ const CaseDataTable: FC<Props> = (props) => {
   );
 
   const download = async () => {
-    const blob = await downloadCaseExcel({ responseType: 'blob' });
-    const objectURL = URL.createObjectURL(blob);
-    let btn: any = document.createElement('a');
-    btn.download = `模版.xlsx`;
-    btn.href = objectURL;
-    btn.click();
-    URL.revokeObjectURL(objectURL);
-    btn = null;
+    try {
+      const response = await downloadCaseExcel({ responseType: 'blob' });
+      const blob = response as unknown as Blob;
+      const objectURL = URL.createObjectURL(blob);
+      const filename = '用例模板.xlsx';
+      const link = document.createElement('a');
+      link.href = objectURL;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(objectURL);
+    } catch (error) {
+      message.error('下载失败');
+    }
   };
 
   const column: ProColumns<ITestCase>[] = useMemo(
@@ -134,6 +144,17 @@ const CaseDataTable: FC<Props> = (props) => {
         ),
       },
       {
+        title: '标签',
+        dataIndex: 'case_tag',
+        width: 100,
+
+        render: (text) => (
+          <Text strong ellipsis={{ tooltip: text }}>
+            {text}
+          </Text>
+        ),
+      },
+      {
         title: '等级',
         dataIndex: 'case_level',
         sorter: true,
@@ -162,6 +183,9 @@ const CaseDataTable: FC<Props> = (props) => {
         title: '创建人',
         dataIndex: 'creatorName',
         width: 100,
+        renderFormItem: () => {
+          return <UserSelect />;
+        },
         render: (text) => <Text type="secondary">{text}</Text>,
       },
       {
@@ -171,13 +195,7 @@ const CaseDataTable: FC<Props> = (props) => {
         hideInSearch: true,
         width: 180,
       },
-      {
-        title: '更新时间',
-        dataIndex: 'update_time',
-        valueType: 'dateTime',
-        hideInSearch: true,
-        width: 180,
-      },
+
       {
         valueType: 'option',
         fixed: 'right',
@@ -198,6 +216,16 @@ const CaseDataTable: FC<Props> = (props) => {
               >
                 详情
               </Link>
+              {/* 复制用例 */}
+              <Link
+                style={{
+                  color: colors.primary,
+                  cursor: 'pointer',
+                }}
+                onClick={async () => await copyCase(record.id)}
+              >
+                复制
+              </Link>
               <Link
                 style={{
                   color: colors.primary,
@@ -215,6 +243,9 @@ const CaseDataTable: FC<Props> = (props) => {
                   style={{
                     color: colors.error,
                     cursor: 'pointer',
+                  }}
+                  onClick={async () => {
+                    await removeCase(record.id);
                   }}
                 >
                   删除
@@ -251,12 +282,41 @@ const CaseDataTable: FC<Props> = (props) => {
     formData.append('file', fileValue[0].originFileObj);
     formData.append('project_id', values.project_id);
     formData.append('module_id', values.module_id);
+    formData.append('is_common', true.toString());
     const { code } = await uploadTestCase(formData);
     if (code === 0) {
       message.success('上传成功');
     }
     uploadForm.resetFields();
     return true;
+  };
+
+  /** 复制用例 */
+  const copyCase = async (caseId?: number) => {
+    if (!caseId) {
+      return;
+    }
+    const { code } = await copyTestCase({
+      caseId: caseId,
+    });
+    if (code === 0) {
+      actionRef.current?.reload();
+      message.success('复制成功');
+    }
+  };
+
+  /** 删除用例 */
+  const removeCase = async (caseId?: number) => {
+    if (!caseId) {
+      return;
+    }
+    const { code } = await removeTestCase({
+      caseId: caseId,
+    });
+    if (code === 0) {
+      actionRef.current?.reload();
+      message.success('删除成功');
+    }
   };
 
   return (

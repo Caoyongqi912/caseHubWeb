@@ -1,9 +1,9 @@
 import { IModuleEnum } from '@/api';
 import { queryUser } from '@/api/base';
 import { getRequirement, updateRequirement } from '@/api/case/requirement';
-import { CaseHubConfig } from '@/pages/CaseHub/CaseConfig';
+import { CaseHubConfig } from '@/pages/CaseHub/config/constants';
 import { useCaseHubTheme } from '@/pages/CaseHub/styles';
-import { IRequirement } from '@/pages/CaseHub/type';
+import { IRequirement } from '@/pages/CaseHub/types';
 import { ModuleEnum } from '@/utils/config';
 import { fetchModulesEnum } from '@/utils/somefunc';
 import {

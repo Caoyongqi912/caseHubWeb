@@ -1,5 +1,5 @@
 import { useCaseHubTheme } from '@/pages/CaseHub/styles';
-import { ITestCase } from '@/pages/CaseHub/type';
+import { ITestCase } from '@/pages/CaseHub/types';
 import { PlusOutlined } from '@ant-design/icons';
 import { ProFormSelect } from '@ant-design/pro-components';
 import { Button, Divider, Input, InputRef, Space, Tag } from 'antd';
@@ -12,9 +12,16 @@ interface Props {
   >;
   testcaseData?: ITestCase;
   onSave?: (field: string, value: string) => void;
+  onTagChange?: (caseId: number, newTag: string) => void;
 }
 
-const CaseTagSelect: FC<Props> = ({ tags, setTags, testcaseData, onSave }) => {
+const CaseTagSelect: FC<Props> = ({
+  tags,
+  setTags,
+  testcaseData,
+  onSave,
+  onTagChange,
+}) => {
   const inputRef = useRef<InputRef>(null);
   const [currentTag, setCurrentTag] = useState<string>();
   const [tagVisible, setTagVisible] = useState<boolean>(false);
@@ -54,7 +61,11 @@ const CaseTagSelect: FC<Props> = ({ tags, setTags, testcaseData, onSave }) => {
   const handleTagChange = (value: string) => {
     setTagValue(value);
     setTagVisible(true);
-    onSave?.('case_tag', value);
+    if (testcaseData?.id) {
+      onTagChange?.(testcaseData.id, value);
+    } else {
+      onSave?.('case_tag', value);
+    }
   };
 
   return (

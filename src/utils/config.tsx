@@ -10,7 +10,7 @@ if (process.env.NODE_ENV === 'development') {
 }
 export { socketUrl };
 
-export const ModuleEnum = {
+export const ModuleEnum: Record<string, number> = {
   API: 1,
   API_CASE: 2,
   API_TASK: 3,

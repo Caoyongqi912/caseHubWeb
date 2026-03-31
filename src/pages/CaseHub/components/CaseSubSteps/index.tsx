@@ -9,8 +9,7 @@ import {
   updateTestCaseStep,
 } from '@/api/case/testCase';
 import { caseStatusColors, useCaseHubTheme } from '@/pages/CaseHub/styles';
-import { useCaseSubStepsStyles } from '@/pages/CaseHub/styles/CaseSubStepsStyles';
-import { CaseSubStep } from '@/pages/CaseHub/type';
+import { CaseSubStep } from '@/pages/CaseHub/types';
 import {
   CheckCircleFilled,
   CloseCircleFilled,
@@ -22,6 +21,7 @@ import {
 } from '@ant-design/icons';
 import { Button, message, Popconfirm, Spin, Tooltip, Typography } from 'antd';
 import React, { FC, useEffect, useRef, useState } from 'react';
+import { useCaseSubStepsStyles } from './styles';
 
 const { Text } = Typography;
 

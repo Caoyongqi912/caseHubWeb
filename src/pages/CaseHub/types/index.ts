@@ -31,12 +31,11 @@ export interface ITestCase {
   case_type: 1 | 2;
   case_tag?: string;
   case_setup?: string;
-  case_status?: 0 | 1 | 2; // 0:未开始 1:通过 2:失败
+  case_status?: 0 | 1 | 2;
   case_bugs?: string[] | [] | undefined;
   case_mark?: string | undefined;
-  is_common?: boolean; // 是否公共用例
-  is_review?: boolean; // 是否已评审
-  // case_sub_steps?: CaseSubStep[];
+  is_common?: boolean;
+  is_review?: boolean;
   requirementId?: number | string;
 
   creatorName: string;
@@ -66,5 +65,5 @@ export interface CaseSearchForm {
   case_level?: 'P1' | 'P0' | 'P2' | 'P3';
   case_type?: 1 | 2;
   case_tag?: string;
-  case_status?: 0 | 1 | 2; // 0:未开始 1:通过 2:失败
+  case_status?: 0 | 1 | 2;
 }

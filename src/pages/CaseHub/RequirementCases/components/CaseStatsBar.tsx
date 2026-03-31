@@ -1,4 +1,5 @@
 import { useCaseHubTheme } from '@/pages/CaseHub/styles';
+import { useCaseStatsBarStyles } from '@/pages/CaseHub/styles/CaseStatsBarStyles';
 import {
   CheckCircleFilled,
   ClockCircleFilled,
@@ -6,7 +7,6 @@ import {
 } from '@ant-design/icons';
 import { Tooltip } from 'antd';
 import { FC, useMemo } from 'react';
-import { useCaseStatsBarStyles } from '../styles/CaseStatsBarStyles';
 
 interface Props {
   total: number;

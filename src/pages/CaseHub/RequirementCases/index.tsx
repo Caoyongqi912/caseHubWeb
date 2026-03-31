@@ -3,12 +3,12 @@ import {
   queryCasesByRequirement,
   queryTagsByRequirement,
 } from '@/api/case/testCase';
-import CaseStatsBar from '@/pages/CaseHub/CaseInfo/CaseStatsBar';
-import CaseStepSearchForm from '@/pages/CaseHub/CaseInfo/CaseStepSearchForm';
-import ChoiceSettingArea from '@/pages/CaseHub/component/ChoiceSettingArea';
+import TestCaseCard from '@/pages/CaseHub/components/TestCaseCard';
+import CaseStatsBar from '@/pages/CaseHub/RequirementCases/components/CaseStatsBar';
+import CaseStepSearchForm from '@/pages/CaseHub/RequirementCases/components/CaseStepSearchForm';
+import ChoiceSettingArea from '@/pages/CaseHub/RequirementCases/components/ChoiceSettingArea';
 import { useCaseHubTheme, useCaseInfoStyles } from '@/pages/CaseHub/styles';
-import TestCase from '@/pages/CaseHub/TestCase';
-import { CaseSearchForm, ITestCase } from '@/pages/CaseHub/type';
+import { CaseSearchForm, ITestCase } from '@/pages/CaseHub/types';
 import { useParams } from '@@/exports';
 import {
   AppstoreOutlined,
@@ -16,7 +16,7 @@ import {
   RightOutlined,
 } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
-import { Collapse, Empty, Typography } from 'antd';
+import { Collapse, Empty, Spin, Typography } from 'antd';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 const { Text } = Typography;
@@ -43,6 +43,7 @@ const Index = () => {
   const [isGrouped, setIsGrouped] = useState(true);
   const [activeGroupKeys, setActiveGroupKeys] = useState<string[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [loadingCase, setLoadingCase] = useState(false);
   const { colors, spacing } = useCaseHubTheme();
   const styles = useCaseInfoStyles();
 
@@ -55,16 +56,19 @@ const Index = () => {
 
     const fetchCases = async () => {
       try {
+        setLoadingCase(true);
         const searchValues = {
           requirement_id: reqId,
           ...searchInfo,
         };
         const { code, data } = await queryCasesByRequirement(searchValues);
         if (code === 0) {
+          setLoadingCase(false);
           setTestCases(data);
         }
       } catch (error) {
         console.error('Failed to fetch cases:', error);
+        setLoadingCase(false);
       }
     };
 
@@ -100,22 +104,22 @@ const Index = () => {
   const groupedTestCases = useMemo((): GroupedTestCases[] => {
     if (testCases.length === 0) return [];
 
-    const groups: Record<string, ITestCase[]> = {};
+    const groups = new Map<string, ITestCase[]>();
     const untaggedCases: ITestCase[] = [];
 
     testCases.forEach((tc) => {
       const tag = tc.case_tag || '';
       if (tag) {
-        if (!groups[tag]) {
-          groups[tag] = [];
+        if (!groups.has(tag)) {
+          groups.set(tag, []);
         }
-        groups[tag].push(tc);
+        groups.get(tag)!.push(tc);
       } else {
         untaggedCases.push(tc);
       }
     });
 
-    const result: GroupedTestCases[] = Object.entries(groups).map(
+    const result: GroupedTestCases[] = Array.from(groups.entries()).map(
       ([tag, cases]) => ({
         tag,
         cases,
@@ -185,6 +189,34 @@ const Index = () => {
     }
   }, [reqId, handleReload]);
 
+  const handleCaseTagChange = useCallback((caseId: number, newTag: string) => {
+    setTestCases((prev) =>
+      prev.map((tc) => (tc.id === caseId ? { ...tc, case_tag: newTag } : tc)),
+    );
+  }, []);
+
+  const handleCaseLevelChange = useCallback(
+    (caseId: number, newLevel: string) => {
+      setTestCases((prev) =>
+        prev.map((tc) =>
+          tc.id === caseId ? { ...tc, case_level: newLevel } : tc,
+        ),
+      );
+    },
+    [],
+  );
+
+  const handleCaseTypeChange = useCallback(
+    (caseId: number, newType: number) => {
+      setTestCases((prev) =>
+        prev.map((tc) =>
+          tc.id === caseId ? { ...tc, case_type: newType } : tc,
+        ),
+      );
+    },
+    [],
+  );
+
   const caseStats = useMemo(() => {
     const total = testCases.length;
     const passed = testCases.filter((tc) => tc.case_status === 1).length;
@@ -197,7 +229,7 @@ const Index = () => {
 
   const renderTestCase = useCallback(
     (item: ITestCase) => (
-      <TestCase
+      <TestCaseCard
         key={item.id}
         selectedCase={selectedCase}
         reqId={reqId}
@@ -206,9 +238,20 @@ const Index = () => {
         callback={handleReload}
         testcaseData={item}
         setSelectedCase={setSelectedCase}
+        onCaseTagChange={handleCaseTagChange}
+        onCaseLevelChange={handleCaseLevelChange}
+        onCaseTypeChange={handleCaseTypeChange}
       />
     ),
-    [selectedCase, reqId, tags, handleReload],
+    [
+      selectedCase,
+      reqId,
+      tags,
+      handleReload,
+      handleCaseTagChange,
+      handleCaseLevelChange,
+      handleCaseTypeChange,
+    ],
   );
 
   const renderGroupedCases = useMemo(() => {
@@ -220,7 +263,6 @@ const Index = () => {
         />
       );
     }
-
     const collapseItems = groupedTestCases.map((group) => ({
       key: group.tag,
       label: (
@@ -332,7 +374,13 @@ const Index = () => {
           selectedCase={selectedCase}
           setSelectedCase={setSelectedCase}
         />
-        {isGrouped ? renderGroupedCases : renderUngroupedCases}
+        <>
+          {loadingCase ? (
+            <Spin size="large" />
+          ) : (
+            <>{isGrouped ? renderGroupedCases : renderUngroupedCases}</>
+          )}
+        </>
       </ProCard>
     </ProCard>
   );

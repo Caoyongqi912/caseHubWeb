@@ -5,12 +5,14 @@ import { ProCard } from '@ant-design/pro-components';
 import { Splitter } from 'antd';
 import { useEffect, useState } from 'react';
 import useCaseHubTheme from '../styles';
-import CaseDataTable from './CaseDataTable';
+import CaseDataTable from './components/CaseDataTable';
 
 const Index = () => {
   const { borderRadius, shadows } = useCaseHubTheme();
   const [currentModuleId, setCurrentModuleId] = useState<number | undefined>();
-  const [currentProjectId, setCurrentProjectId] = useState<number>();
+  const [currentProjectId, setCurrentProjectId] = useState<
+    number | undefined
+  >();
   const [sizes, setSizes] = useState<(number | string)[]>(['20%', '80%']);
 
   const PerKey = 'TEST_CASE';

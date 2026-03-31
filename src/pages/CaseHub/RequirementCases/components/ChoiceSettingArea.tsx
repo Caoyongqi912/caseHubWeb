@@ -6,7 +6,8 @@ import {
   setAllTestCaseStatus,
 } from '@/api/case/testCase';
 import { useCaseHubTheme } from '@/pages/CaseHub/styles';
-import { ITestCase } from '@/pages/CaseHub/type';
+import { useChoiceSettingAreaStyles } from '@/pages/CaseHub/styles/ChoiceSettingAreaStyles';
+import { ITestCase } from '@/pages/CaseHub/types';
 import { ModuleEnum } from '@/utils/config';
 import { fetchModulesEnum } from '@/utils/somefunc';
 import {
@@ -23,7 +24,6 @@ import {
 } from '@ant-design/pro-components';
 import { Button, Form, message, Space, Typography } from 'antd';
 import React, { FC, useEffect, useState } from 'react';
-import { useChoiceSettingAreaStyles } from '../styles/ChoiceSettingAreaStyles';
 
 const { Text } = Typography;
 

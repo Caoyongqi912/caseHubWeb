@@ -126,7 +126,7 @@ const ModuleTree: FC<IProps> = (props) => {
         margin: '2px 0',
         cursor: 'pointer',
         padding: `${spacing.xs}px ${spacing.sm}px`,
-        minHeight: 36,
+        minHeight: 25,
       },
       actionBtn: {
         borderRadius: borderRadius.round,
@@ -214,7 +214,6 @@ const ModuleTree: FC<IProps> = (props) => {
                   padding: `0 ${spacing.xs}px`,
                   borderRadius: borderRadius.xs,
                   fontWeight: typography.fontWeight.semibold,
-                  background: token.colorPrimaryBg,
                 }}
               >
                 {searchValue}
