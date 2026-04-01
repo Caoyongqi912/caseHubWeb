@@ -69,6 +69,7 @@ export const useCaseInfoStyles = () => {
   const innerCardStyle = (): CSSProperties => ({
     borderRadius: borderRadius.xl,
     margin: spacing.sm,
+    minHeight: '70vh',
   });
 
   return {

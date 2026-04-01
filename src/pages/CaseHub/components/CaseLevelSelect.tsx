@@ -7,15 +7,10 @@ import { FC, useEffect, useState } from 'react';
 
 interface Props {
   testcaseData?: ITestCase;
-  onSave?: (field: string, value: string) => void;
   onLevelChange?: (caseId: number, newLevel: string) => void;
 }
 
-const CaseLevelSelect: FC<Props> = ({
-  testcaseData,
-  onSave,
-  onLevelChange,
-}) => {
+const CaseLevelSelect: FC<Props> = ({ testcaseData, onLevelChange }) => {
   const [levelVisible, setLevelVisible] = useState(true);
   const [level, setLevel] = useState<string>('P2');
   const { colors, borderRadius } = useCaseHubTheme();
@@ -39,8 +34,6 @@ const CaseLevelSelect: FC<Props> = ({
     setLevelVisible(false);
     if (testcaseData?.id) {
       onLevelChange?.(testcaseData.id, value);
-    } else {
-      onSave?.('case_level', value);
     }
   };
 

@@ -17,10 +17,10 @@ import {
   ProFormTreeSelect,
   StepsForm,
 } from '@ant-design/pro-components';
-import { Button, Empty, message, Typography } from 'antd';
-import { FC, useEffect, useMemo, useRef, useState } from 'react';
 
-const { Text } = Typography;
+import { Button, message } from 'antd';
+import { FC, useEffect, useMemo, useRef, useState } from 'react';
+import ChoiceCaseTable from './choiceCaseTable';
 
 interface Props {
   currentProjectId?: number;
@@ -215,20 +215,41 @@ const RequirementForm: FC<Props> = ({
     </StepsForm.StepForm>
   );
 
+  const [selectedCaseIds, setSelectedCaseIds] = useState<number[]>([]);
+
+  const onCaseSelect = (caseIds: number[]) => {
+    setSelectedCaseIds(caseIds);
+  };
+
   const CaseHubChoiceForm = (
     <StepsForm.StepForm name="case" title="模块用例关联">
-      <Empty
-        image={Empty.PRESENTED_IMAGE_SIMPLE}
-        description={<Text type="secondary">后续开发中...</Text>}
+      <ProFormText name="case_ids" hidden initialValue={[]} />
+      <ChoiceCaseTable
+        onCaseSelect={onCaseSelect}
+        projectId={selectProjectId}
       />
     </StepsForm.StepForm>
   );
+
+  const save = async (values: IRequirement) => {
+    const submitData = {
+      ...values,
+      case_ids: selectedCaseIds,
+    };
+    const { code, msg } = await insertRequirement(submitData);
+    if (code === 0) {
+      message.success(msg);
+      setDrawerVisible(false);
+      setSelectedCaseIds([]);
+      callback();
+    }
+  };
 
   return (
     <>
       <MyDrawer
         name={'添加需求'}
-        width={'50%'}
+        width={'70%'}
         open={drawerVisible}
         setOpen={setDrawerVisible}
         drawerStyles={drawerStyles}
@@ -236,14 +257,7 @@ const RequirementForm: FC<Props> = ({
         <ProCard style={cardStyle}>
           <StepsForm<IRequirement>
             formRef={formRef}
-            onFinish={async (values) => {
-              const { code, data, msg } = await insertRequirement(values);
-              if (code === 0) {
-                message.success(msg);
-                setDrawerVisible(false);
-                callback();
-              }
-            }}
+            onFinish={save}
             stepsProps={{ direction: 'vertical' }}
             formProps={{
               validateMessages: {

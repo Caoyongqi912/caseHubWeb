@@ -82,6 +82,34 @@ export const updateTestCase = async (
 };
 
 /**
+ * updateRequirementCase
+ * @param {
+    requirement_id: number;
+    case_id: number;
+    is_review?:boolean;
+    case_status?:number
+  }
+ * @param options
+ */
+export const updateRequirementCase = async (
+  caseInfo: {
+    requirement_id: number;
+    case_id: number;
+    is_review?: boolean;
+    case_status?: number;
+    case_type?: number;
+    case_level?: string;
+  },
+  options?: IObjGet,
+) => {
+  return request<IResponse<null>>('/api/hub/updateRequirementCase', {
+    method: 'POST',
+    data: caseInfo,
+    ...(options || {}),
+  });
+};
+
+/**
  * uploadTestCase
  * @param data
  * @param options
@@ -324,7 +352,7 @@ export const setAllTestCaseReview = async (
  * @param options
  */
 export const pageTestCase = async (searchParams: any, options?: IObjGet) => {
-  return request<IResponse<IPage<ITestCase>>>('/api/hub/cases/dataPage', {
+  return request<IResponse<IPage<ITestCase>>>('/api/hub/cases/page', {
     method: 'POST',
     data: searchParams,
     ...(options || {}),

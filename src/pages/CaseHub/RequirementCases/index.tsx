@@ -1,12 +1,17 @@
-import {
-  addDefaultTestCase,
-  queryCasesByRequirement,
-  queryTagsByRequirement,
-} from '@/api/case/testCase';
-import TestCaseCard from '@/pages/CaseHub/components/TestCaseCard';
+import { addDefaultTestCase } from '@/api/case/testCase';
 import CaseStatsBar from '@/pages/CaseHub/RequirementCases/components/CaseStatsBar';
 import CaseStepSearchForm from '@/pages/CaseHub/RequirementCases/components/CaseStepSearchForm';
 import ChoiceSettingArea from '@/pages/CaseHub/RequirementCases/components/ChoiceSettingArea';
+import RequirementCaseCard from '@/pages/CaseHub/RequirementCases/components/RequirementCaseCard';
+import {
+  CaseSelectionProvider,
+  useCaseSelection,
+} from '@/pages/CaseHub/RequirementCases/contexts';
+import { CaseUpdateProvider } from '@/pages/CaseHub/RequirementCases/contexts/CaseUpdateContext';
+import {
+  useCaseGrouping,
+  useCaseList,
+} from '@/pages/CaseHub/RequirementCases/hooks';
 import { useCaseHubTheme, useCaseInfoStyles } from '@/pages/CaseHub/styles';
 import { CaseSearchForm, ITestCase } from '@/pages/CaseHub/types';
 import { useParams } from '@@/exports';
@@ -21,75 +26,35 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 const { Text } = Typography;
 
-interface GroupedTestCases {
-  tag: string;
-  cases: ITestCase[];
-}
-
-const Index = () => {
+const RequirementCasesContent: React.FC = () => {
   const { reqId, projectId, moduleId } = useParams<{
     reqId: string;
     projectId: string;
     moduleId: string;
   }>();
   const topRef = useRef<HTMLDivElement>(null);
-  const [testCases, setTestCases] = useState<ITestCase[]>([]);
-  const [tags, setTags] = useState<{ label: string; value: string }[]>([]);
-  const [showCheckButton, setShowCheckButton] = useState(false);
-  const [shouldScroll, setShouldScroll] = useState(false);
-  const [reload, setReload] = useState(0);
   const [searchInfo, setSearchInfo] = useState<CaseSearchForm>({});
-  const [selectedCase, setSelectedCase] = useState<number[]>([]);
-  const [isGrouped, setIsGrouped] = useState(true);
-  const [activeGroupKeys, setActiveGroupKeys] = useState<string[]>([]);
-  const [isInitialized, setIsInitialized] = useState(false);
-  const [loadingCase, setLoadingCase] = useState(false);
+  const [shouldScroll, setShouldScroll] = useState(false);
   const { colors, spacing } = useCaseHubTheme();
   const styles = useCaseInfoStyles();
 
-  useEffect(() => {
-    setShowCheckButton(selectedCase.length > 0);
-  }, [selectedCase.length]);
+  const { testCases, tags, setTags, loading, refresh, updateCaseData } =
+    useCaseList({ reqId, searchInfo });
 
-  useEffect(() => {
-    if (!reqId) return;
+  const {
+    groupedTestCases,
+    isGrouped,
+    activeGroupKeys,
+    isAllExpanded,
+    toggleGrouped,
+    expandAll,
+    collapseAll,
+    setActiveGroupKeys,
+    resetGrouping,
+  } = useCaseGrouping({ testCases });
 
-    const fetchCases = async () => {
-      try {
-        setLoadingCase(true);
-        const searchValues = {
-          requirement_id: reqId,
-          ...searchInfo,
-        };
-        const { code, data } = await queryCasesByRequirement(searchValues);
-        if (code === 0) {
-          setLoadingCase(false);
-          setTestCases(data);
-        }
-      } catch (error) {
-        console.error('Failed to fetch cases:', error);
-        setLoadingCase(false);
-      }
-    };
-
-    fetchCases();
-  }, [reqId, reload, searchInfo]);
-
-  useEffect(() => {
-    setIsInitialized(false);
-    setActiveGroupKeys([]);
-  }, [searchInfo]);
-
-  useEffect(() => {
-    if (!reqId) return;
-    queryTagsByRequirement({ requirement_id: parseInt(reqId) }).then(
-      ({ code, data }) => {
-        if (code === 0 && data.length > 0) {
-          setTags(data.map((tag) => ({ label: tag, value: tag })));
-        }
-      },
-    );
-  }, [reqId]);
+  const { selectedCount, selectAll, clearSelection, selectedCaseIds } =
+    useCaseSelection();
 
   useEffect(() => {
     if (shouldScroll) {
@@ -101,82 +66,9 @@ const Index = () => {
     }
   }, [shouldScroll]);
 
-  const groupedTestCases = useMemo((): GroupedTestCases[] => {
-    if (testCases.length === 0) return [];
-
-    const groups = new Map<string, ITestCase[]>();
-    const untaggedCases: ITestCase[] = [];
-
-    testCases.forEach((tc) => {
-      const tag = tc.case_tag || '';
-      if (tag) {
-        if (!groups.has(tag)) {
-          groups.set(tag, []);
-        }
-        groups.get(tag)!.push(tc);
-      } else {
-        untaggedCases.push(tc);
-      }
-    });
-
-    const result: GroupedTestCases[] = Array.from(groups.entries()).map(
-      ([tag, cases]) => ({
-        tag,
-        cases,
-      }),
-    );
-
-    if (untaggedCases.length > 0) {
-      result.push({ tag: '未分组', cases: untaggedCases });
-    }
-
-    return result;
-  }, [testCases]);
-
   useEffect(() => {
-    if (isGrouped && groupedTestCases.length > 0 && !isInitialized) {
-      setActiveGroupKeys(groupedTestCases.map((g) => g.tag));
-      setIsInitialized(true);
-    }
-  }, [isGrouped, groupedTestCases, isInitialized]);
-
-  const handleReload = useCallback(() => {
-    setReload((prev) => prev + 1);
-  }, []);
-
-  const isAllExpanded = useMemo(
-    () =>
-      activeGroupKeys.length === groupedTestCases.length &&
-      groupedTestCases.length > 0,
-    [activeGroupKeys.length, groupedTestCases.length],
-  );
-
-  const handleSelectAll = useCallback(() => {
-    const allIds = testCases
-      .map((tc) => tc.id)
-      .filter((id): id is number => id !== undefined);
-    setSelectedCase(allIds);
-  }, [testCases]);
-
-  const handleClearSelection = useCallback(() => {
-    setSelectedCase([]);
-  }, []);
-
-  const handleExpandAll = useCallback(() => {
-    setActiveGroupKeys(groupedTestCases.map((g) => g.tag));
-  }, [groupedTestCases]);
-
-  const handleCollapseAll = useCallback(() => {
-    setActiveGroupKeys([]);
-  }, []);
-
-  const handleRefresh = useCallback(() => {
-    handleReload();
-  }, [handleReload]);
-
-  const handleToggleGroup = useCallback(() => {
-    setIsGrouped((prev) => !prev);
-  }, []);
+    resetGrouping();
+  }, [searchInfo, resetGrouping]);
 
   const handleAddCase = useCallback(async () => {
     if (!reqId) return;
@@ -184,38 +76,10 @@ const Index = () => {
       requirement_id: parseInt(reqId),
     });
     if (code === 0) {
-      handleReload();
+      refresh();
       setShouldScroll(true);
     }
-  }, [reqId, handleReload]);
-
-  const handleCaseTagChange = useCallback((caseId: number, newTag: string) => {
-    setTestCases((prev) =>
-      prev.map((tc) => (tc.id === caseId ? { ...tc, case_tag: newTag } : tc)),
-    );
-  }, []);
-
-  const handleCaseLevelChange = useCallback(
-    (caseId: number, newLevel: string) => {
-      setTestCases((prev) =>
-        prev.map((tc) =>
-          tc.id === caseId ? { ...tc, case_level: newLevel } : tc,
-        ),
-      );
-    },
-    [],
-  );
-
-  const handleCaseTypeChange = useCallback(
-    (caseId: number, newType: number) => {
-      setTestCases((prev) =>
-        prev.map((tc) =>
-          tc.id === caseId ? { ...tc, case_type: newType } : tc,
-        ),
-      );
-    },
-    [],
-  );
+  }, [reqId, refresh]);
 
   const caseStats = useMemo(() => {
     const total = testCases.length;
@@ -227,31 +91,18 @@ const Index = () => {
     return { total, passed, failed, unchecked };
   }, [testCases]);
 
+  const handleSelectAll = useCallback(() => {
+    const allIds = testCases
+      .map((tc) => tc.id)
+      .filter((id): id is number => id !== undefined);
+    selectAll(allIds);
+  }, [testCases, selectAll]);
+
   const renderTestCase = useCallback(
     (item: ITestCase) => (
-      <TestCaseCard
-        key={item.id}
-        selectedCase={selectedCase}
-        reqId={reqId}
-        tags={tags}
-        setTags={setTags}
-        callback={handleReload}
-        testcaseData={item}
-        setSelectedCase={setSelectedCase}
-        onCaseTagChange={handleCaseTagChange}
-        onCaseLevelChange={handleCaseLevelChange}
-        onCaseTypeChange={handleCaseTypeChange}
-      />
+      <RequirementCaseCard key={item.id} testcaseData={item} />
     ),
-    [
-      selectedCase,
-      reqId,
-      tags,
-      handleReload,
-      handleCaseTagChange,
-      handleCaseLevelChange,
-      handleCaseTypeChange,
-    ],
+    [],
   );
 
   const renderGroupedCases = useMemo(() => {
@@ -329,60 +180,89 @@ const Index = () => {
     );
   }, [testCases, styles, renderTestCase]);
 
+  const showCheckButton = selectedCount > 0;
+
   return (
-    <ProCard
-      split="horizontal"
-      bodyStyle={{ padding: 0 }}
-      style={styles.cardStyle()}
+    <CaseUpdateProvider
+      reqId={reqId}
+      tags={tags}
+      setTags={setTags}
+      refreshCases={refresh}
+      onCaseDataChange={updateCaseData}
     >
-      <CaseStepSearchForm
-        tags={tags}
-        setSearchForm={setSearchInfo}
-        isGrouped={isGrouped}
-        isAllExpanded={isAllExpanded}
-        selectedCount={selectedCase.length}
-        totalCount={testCases.length}
-        onSelectAll={handleSelectAll}
-        onExpandAll={handleExpandAll}
-        onCollapseAll={handleCollapseAll}
-        onClearSelection={handleClearSelection}
-        onRefresh={handleRefresh}
-        onToggleGroup={handleToggleGroup}
-        onAddCase={handleAddCase}
-        onUploadFinish={handleReload}
-        uploadProps={{ reqId, moduleId, projectId }}
-      />
-
-      <div style={{ padding: `${spacing.sm}px ${spacing.lg}px` }}>
-        <CaseStatsBar
-          total={caseStats.total}
-          passed={caseStats.passed}
-          failed={caseStats.failed}
-          unchecked={caseStats.unchecked}
-        />
-      </div>
-
       <ProCard
         split="horizontal"
-        bodyStyle={{ padding: spacing.sm }}
-        style={styles.innerCardStyle()}
+        bodyStyle={{ padding: 0 }}
+        style={styles.cardStyle()}
       >
-        <ChoiceSettingArea
-          callback={handleReload}
-          allTestCase={testCases}
-          showCheckButton={showCheckButton}
-          selectedCase={selectedCase}
-          setSelectedCase={setSelectedCase}
+        <CaseStepSearchForm
+          tags={tags}
+          setSearchForm={setSearchInfo}
+          isGrouped={isGrouped}
+          isAllExpanded={isAllExpanded}
+          selectedCount={selectedCount}
+          totalCount={testCases.length}
+          onSelectAll={handleSelectAll}
+          onExpandAll={expandAll}
+          onCollapseAll={collapseAll}
+          onClearSelection={clearSelection}
+          onRefresh={refresh}
+          onToggleGroup={toggleGrouped}
+          onAddCase={handleAddCase}
+          onUploadFinish={refresh}
+          uploadProps={{ reqId, moduleId, projectId }}
         />
-        <>
-          {loadingCase ? (
-            <Spin size="large" />
-          ) : (
-            <>{isGrouped ? renderGroupedCases : renderUngroupedCases}</>
+
+        <div style={{ padding: `${spacing.sm}px ${spacing.lg}px` }}>
+          <CaseStatsBar
+            total={caseStats.total}
+            passed={caseStats.passed}
+            failed={caseStats.failed}
+            unchecked={caseStats.unchecked}
+          />
+        </div>
+
+        <ProCard
+          split="horizontal"
+          bodyStyle={{ padding: spacing.sm }}
+          style={styles.innerCardStyle()}
+        >
+          {showCheckButton && (
+            <ChoiceSettingArea
+              callback={refresh}
+              allTestCase={testCases}
+              showCheckButton={showCheckButton}
+              selectedCase={Array.from(selectedCaseIds)}
+              setSelectedCase={(
+                ids: number[] | ((prev: number[]) => number[]),
+              ) => {
+                if (typeof ids === 'function') {
+                  const result = ids(Array.from(selectedCaseIds));
+                  selectAll(result);
+                } else {
+                  selectAll(ids);
+                }
+              }}
+            />
           )}
-        </>
+          <>
+            {loading ? (
+              <Spin size="large" />
+            ) : (
+              <>{isGrouped ? renderGroupedCases : renderUngroupedCases}</>
+            )}
+          </>
+        </ProCard>
       </ProCard>
-    </ProCard>
+    </CaseUpdateProvider>
+  );
+};
+
+const Index: React.FC = () => {
+  return (
+    <CaseSelectionProvider>
+      <RequirementCasesContent />
+    </CaseSelectionProvider>
   );
 };
 

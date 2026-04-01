@@ -25,6 +25,10 @@ export interface MyProTableProps {
   size?: 'small' | 'middle' | 'large';
   className?: string;
   tableLayout?: 'auto' | 'fixed' | 'scroll';
+  tableAlertOptionRender?: (props: {
+    selectedRowKeys: React.Key[];
+    selectedRows: any[];
+  }) => React.ReactNode;
 }
 
 const DEFAULT_PAGINATION: TablePaginationConfig = {
@@ -60,6 +64,7 @@ const MyProTable: FC<MyProTableProps> = (props) => {
     size,
     className,
     tableLayout,
+    tableAlertOptionRender,
   } = props;
 
   const resolvedPagination = useMemo(() => {
@@ -77,6 +82,7 @@ const MyProTable: FC<MyProTableProps> = (props) => {
 
   return (
     <ProTable
+      tableAlertOptionRender={tableAlertOptionRender}
       className={className}
       style={{ width: '100%' }}
       tableStyle={{ width: '100%' }}

@@ -1,4 +1,8 @@
-import { pageRequirement, updateRequirement } from '@/api/case/requirement';
+import {
+  pageRequirement,
+  removeRequirement,
+  updateRequirement,
+} from '@/api/case/requirement';
 import MyDrawer from '@/components/MyDrawer';
 import MyProTable from '@/components/Table/MyProTable';
 import {
@@ -230,7 +234,12 @@ const RequirementTable: FC<SelfProps> = ({
 
               <Popconfirm
                 title="确定要删除吗？"
-                onConfirm={async () => {}}
+                onConfirm={async () => {
+                  const { code } = await removeRequirement(record.id);
+                  if (code === 0) {
+                    actionRef.current?.reload();
+                  }
+                }}
                 okText="是"
                 cancelText="否"
               >

@@ -7,11 +7,10 @@ import { FC, useEffect, useState } from 'react';
 
 interface Props {
   testcaseData?: ITestCase;
-  onSave?: (field: string, value: number) => void;
   onTypeChange?: (caseId: number, newType: number) => void;
 }
 
-const CaseTypeSelect: FC<Props> = ({ testcaseData, onSave, onTypeChange }) => {
+const CaseTypeSelect: FC<Props> = ({ testcaseData, onTypeChange }) => {
   const [typeVisible, setTypeVisible] = useState(true);
   const [typeValue, setTypeValue] = useState<number>(2);
   const { colors, borderRadius } = useCaseHubTheme();
@@ -39,8 +38,6 @@ const CaseTypeSelect: FC<Props> = ({ testcaseData, onSave, onTypeChange }) => {
     setTypeVisible(false);
     if (testcaseData?.id) {
       onTypeChange?.(testcaseData.id, value);
-    } else {
-      onSave?.('case_type', value);
     }
   };
 

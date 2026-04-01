@@ -1,14 +1,9 @@
-import {
-  copyTestCase,
-  removeTestCase,
-  updateTestCase,
-} from '@/api/case/testCase';
+import { copyTestCase, removeTestCase } from '@/api/case/testCase';
 import MyDrawer from '@/components/MyDrawer';
 import CaseLevelSelect from '@/pages/CaseHub/components/CaseLevelSelect';
-import CaseSubSteps from '@/pages/CaseHub/components/CaseSubSteps';
 import CaseTagSelect from '@/pages/CaseHub/components/CaseTagSelect';
 import CaseTypeSelect from '@/pages/CaseHub/components/CaseTypeSelect';
-import DynamicInfo from '@/pages/CaseHub/components/DynamicInfo';
+import { useTestCaseStyles } from '@/pages/CaseHub/components/TestCaseCard/styles';
 import { caseStatusColors } from '@/pages/CaseHub/styles';
 import { ITestCase } from '@/pages/CaseHub/types';
 import {
@@ -34,36 +29,16 @@ import {
   message,
   Tag,
 } from 'antd';
-import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
-import { useTestCaseStyles } from './styles';
+import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import CaseSubSteps from '../../components/CaseSubSteps';
+import DynamicInfo from '../../components/DynamicInfo';
+import { useCaseSelection, useCaseUpdate } from '../contexts';
 
 interface Props {
-  reqId?: string;
-  tags?: { label: string; value: string }[];
-  setTags: React.Dispatch<
-    React.SetStateAction<{ label: string; value: string }[]>
-  >;
-  selectedCase: number[];
   testcaseData: ITestCase;
-  setSelectedCase: React.Dispatch<React.SetStateAction<number[]>>;
-  callback: () => void;
-  onCaseTagChange?: (caseId: number, newTag: string) => void;
-  onCaseLevelChange?: (caseId: number, newLevel: string) => void;
-  onCaseTypeChange?: (caseId: number, newType: number) => void;
 }
 
-const TestCaseCard: FC<Props> = ({
-  callback,
-  selectedCase,
-  setSelectedCase,
-  testcaseData,
-  reqId,
-  tags,
-  setTags,
-  onCaseTagChange,
-  onCaseLevelChange,
-  onCaseTypeChange,
-}) => {
+const RequirementCaseCard: React.FC<Props> = memo(({ testcaseData }) => {
   const [form] = Form.useForm<ITestCase>();
   const [openDynamic, setOpenDynamic] = useState(false);
   const [openCaseSteps, setOpenCaseSteps] = useState(false);
@@ -72,6 +47,20 @@ const TestCaseCard: FC<Props> = ({
   const [titleValue, setTitleValue] = useState('');
 
   const styles = useTestCaseStyles();
+  const { isSelected, toggleCase } = useCaseSelection();
+  const {
+    reqId,
+    tags,
+    setTags,
+    updateCaseField,
+    updateCaseReview,
+    updateCaseLevel,
+    updateCaseType,
+    refreshCases,
+  } = useCaseUpdate();
+
+  const caseId = testcaseData?.id;
+  const selected = caseId ? isSelected(caseId) : false;
 
   useEffect(() => {
     if (testcaseData) {
@@ -79,10 +68,6 @@ const TestCaseCard: FC<Props> = ({
       setTitleValue(testcaseData.case_name || '');
     }
   }, [testcaseData, form]);
-
-  const reloadCaseStep = useCallback(() => {
-    callback();
-  }, [callback]);
 
   const statusConfig = useMemo(
     () =>
@@ -116,28 +101,28 @@ const TestCaseCard: FC<Props> = ({
   );
 
   const copyStepCase = useCallback(async () => {
-    if (!testcaseData?.id) return;
+    if (!caseId) return;
     const { code, msg } = await copyTestCase({
       requirement_id: reqId ? parseInt(reqId) : undefined,
-      caseId: testcaseData.id,
+      caseId,
     });
     if (code === 0) {
       message.success(msg);
-      callback();
+      refreshCases();
     }
-  }, [testcaseData?.id, reqId, callback]);
+  }, [caseId, reqId, refreshCases]);
 
   const deleteStepCase = useCallback(async () => {
-    if (!testcaseData?.id) return;
+    if (!caseId) return;
     const { code, msg } = await removeTestCase({
       requirement_id: reqId ? parseInt(reqId) : undefined,
-      caseId: testcaseData.id,
+      caseId,
     });
     if (code === 0) {
       message.success(msg);
-      callback();
+      refreshCases();
     }
-  }, [testcaseData?.id, reqId, callback]);
+  }, [caseId, reqId, refreshCases]);
 
   const handleMenuClick: MenuProps['onClick'] = useCallback(
     async (e) => {
@@ -159,18 +144,10 @@ const TestCaseCard: FC<Props> = ({
 
   const handleFieldSave = useCallback(
     async (field: string, value: string | number) => {
-      if (!testcaseData?.id) return;
-
-      const values: Record<string, unknown> = {
-        id: testcaseData.id,
-        [field]: value,
-      };
-
-      const { code } = await updateTestCase(values as unknown as ITestCase);
-      if (code === 0) {
-      }
+      if (!caseId) return;
+      await updateCaseField(caseId, field as keyof ITestCase, value);
     },
-    [testcaseData?.id, callback],
+    [caseId, updateCaseField],
   );
 
   const handleTitleChange = useCallback(
@@ -199,43 +176,35 @@ const TestCaseCard: FC<Props> = ({
   );
 
   const handleTagChange = useCallback(
-    async (caseId: number, newTag: string) => {
-      const { code } = await updateTestCase({
-        id: caseId,
-        case_tag: newTag,
-      } as unknown as ITestCase);
-      if (code === 0) {
-        onCaseTagChange?.(caseId, newTag);
-      }
+    async (id: number, newTag: string) => {
+      await updateCaseField(id, 'case_tag', newTag);
     },
-    [onCaseTagChange],
+    [updateCaseField],
   );
 
-  const handleLevelChange = useCallback(
-    async (caseId: number, newLevel: string) => {
-      const { code } = await updateTestCase({
-        id: caseId,
-        case_level: newLevel,
-      } as unknown as ITestCase);
-      if (code === 0) {
-        onCaseLevelChange?.(caseId, newLevel);
-      }
+  /** 切换用例类型 */
+  const handleCaseLevelToggle = useCallback(
+    async (id: number, newLevel: string) => {
+      if (!reqId) return;
+      await updateCaseLevel(id, newLevel);
     },
-    [onCaseLevelChange],
+    [caseId, testcaseData?.case_level, updateCaseLevel],
   );
 
-  const handleTypeChange = useCallback(
-    async (caseId: number, newType: number) => {
-      const { code } = await updateTestCase({
-        id: caseId,
-        case_type: newType,
-      } as unknown as ITestCase);
-      if (code === 0) {
-        onCaseTypeChange?.(caseId, newType);
-      }
+  /** 切换用例类型 */
+  const handleCaseTypeToggle = useCallback(
+    async (id: number, newType: number) => {
+      if (!reqId) return;
+      await updateCaseType(id, newType);
     },
-    [onCaseTypeChange],
+    [caseId, testcaseData?.case_type, updateCaseType],
   );
+
+  /** 切换审核状态 */
+  const handleReviewToggle = useCallback(async () => {
+    if (!caseId || testcaseData?.is_review === undefined) return;
+    await updateCaseReview(caseId, !testcaseData.is_review);
+  }, [caseId, testcaseData?.is_review, updateCaseReview]);
 
   const handleMouseEnter = useCallback(() => setIsHovered(true), []);
   const handleMouseLeave = useCallback(() => setIsHovered(false), []);
@@ -245,31 +214,21 @@ const TestCaseCard: FC<Props> = ({
     handleTitleSave();
   }, [handleTitleSave]);
 
+  /** 切换选中状态 */
   const handleCheckboxChange = useCallback(
     (e: { target: { checked: boolean }; stopPropagation: () => void }) => {
       e.stopPropagation();
-      const checked = e.target.checked;
-      const testCaseId = testcaseData.id;
-      if (testCaseId) {
-        setSelectedCase((prev) =>
-          checked
-            ? prev.includes(testCaseId)
-              ? prev
-              : [...prev, testCaseId]
-            : prev.filter((id) => id !== testCaseId),
-        );
+      if (caseId) {
+        toggleCase(caseId);
       }
     },
-    [testcaseData.id, setSelectedCase],
+    [caseId, toggleCase],
   );
 
   const handleExpandClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     setOpenCaseSteps(true);
   }, []);
-
-  const isSelected =
-    testcaseData.id !== undefined && selectedCase.includes(testcaseData.id);
 
   return (
     <>
@@ -279,7 +238,7 @@ const TestCaseCard: FC<Props> = ({
         open={openDynamic}
         setOpen={setOpenDynamic}
       >
-        <DynamicInfo caseId={testcaseData?.id} />
+        <DynamicInfo caseId={caseId} />
       </MyDrawer>
 
       <MyDrawer
@@ -290,16 +249,16 @@ const TestCaseCard: FC<Props> = ({
       >
         <CaseSubSteps
           creatorName={testcaseData?.creatorName}
-          caseId={testcaseData?.id}
+          caseId={caseId}
           case_status={testcaseData?.case_status}
-          callback={reloadCaseStep}
+          callback={refreshCases}
           requirement_id={reqId ? parseInt(reqId) : undefined}
         />
       </MyDrawer>
 
       <ProForm<ITestCase> form={form} submitter={false}>
         <div
-          style={styles.container(isHovered, isSelected)}
+          style={styles.container(isHovered, selected)}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
         >
@@ -307,13 +266,13 @@ const TestCaseCard: FC<Props> = ({
             style={styles.leftAccent(
               isHovered,
               testcaseData?.case_status || 0,
-              isSelected,
+              selected,
             )}
           />
 
           <div style={styles.inner()}>
-            <div style={styles.checkbox(isSelected, isHovered)}>
-              <Checkbox checked={isSelected} onChange={handleCheckboxChange} />
+            <div style={styles.checkbox(selected, isHovered)}>
+              <Checkbox checked={selected} onChange={handleCheckboxChange} />
             </div>
 
             <span style={styles.caseIdTag()}>{testcaseData?.uid}</span>
@@ -322,7 +281,7 @@ const TestCaseCard: FC<Props> = ({
               <Input
                 value={titleValue}
                 placeholder="输入用例标题..."
-                bordered={false}
+                variant={'borderless'}
                 style={styles.titleInput(isFocused)}
                 onFocus={handleFocus}
                 onBlur={handleBlur}
@@ -354,31 +313,20 @@ const TestCaseCard: FC<Props> = ({
                 tags={tags}
                 setTags={setTags}
                 testcaseData={testcaseData}
-                onSave={handleFieldSave}
                 onTagChange={handleTagChange}
               />
               <CaseLevelSelect
                 testcaseData={testcaseData}
-                onSave={handleFieldSave}
-                onLevelChange={handleLevelChange}
+                onLevelChange={handleCaseLevelToggle}
               />
               <CaseTypeSelect
                 testcaseData={testcaseData}
-                onSave={handleFieldSave}
-                onTypeChange={handleTypeChange}
+                onTypeChange={handleCaseTypeToggle}
               />
 
               {testcaseData?.is_review !== undefined && (
                 <Tag
-                  onClick={() => {
-                    if (testcaseData?.id) {
-                      const newValue = !testcaseData.is_review;
-                      handleFieldSave(
-                        'is_review',
-                        newValue as unknown as string,
-                      );
-                    }
-                  }}
+                  onClick={handleReviewToggle}
                   style={{
                     ...styles.caseFlagTag(
                       testcaseData.is_review
@@ -417,6 +365,8 @@ const TestCaseCard: FC<Props> = ({
       </ProForm>
     </>
   );
-};
+});
 
-export default TestCaseCard;
+RequirementCaseCard.displayName = 'RequirementCaseCard';
+
+export default RequirementCaseCard;

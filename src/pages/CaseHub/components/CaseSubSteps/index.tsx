@@ -5,6 +5,7 @@ import {
   queryTestCaseSupStep,
   removeTestCaseStep,
   reorderTestCaseStep,
+  updateRequirementCase,
   updateTestCase,
   updateTestCaseStep,
 } from '@/api/case/testCase';
@@ -217,8 +218,10 @@ const CaseSubSteps: FC<IProps> = ({
 
   const handleStatusChange = async (checked: boolean) => {
     if (!caseId) return;
-    const { code } = await updateTestCase({
-      id: caseId,
+    if (!requirement_id) return;
+    const { code } = await updateRequirementCase({
+      requirement_id,
+      case_id: caseId,
       case_status: checked ? 1 : 2,
     } as any);
     if (code === 0) {
