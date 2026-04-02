@@ -10,18 +10,18 @@ import UploadModal from './UploadModal';
 interface Props {
   setSearchForm: React.Dispatch<React.SetStateAction<CaseSearchForm>>;
   tags: { label: string; value: string }[];
-  isGrouped?: boolean;
-  isAllExpanded?: boolean;
-  selectedCount?: number;
-  totalCount?: number;
-  onSelectAll?: () => void;
-  onExpandAll?: () => void;
-  onCollapseAll?: () => void;
-  onClearSelection?: () => void;
-  onRefresh?: () => void;
-  onToggleGroup?: () => void;
-  onAddCase?: () => void;
-  onUploadFinish?: () => void;
+  isGrouped: boolean;
+  isAllExpanded: boolean;
+  selectedCount: number;
+  totalCount: number;
+  onSelectAll: () => void;
+  onExpandAll: () => void;
+  onCollapseAll: () => void;
+  onClearSelection: () => void;
+  onRefresh: () => void;
+  onToggleGroup: () => void;
+  onAddCase: () => void;
+  onUploadFinish: () => void;
   uploadProps?: {
     reqId?: string;
     moduleId?: string;
@@ -32,10 +32,10 @@ interface Props {
 const CaseStepSearchForm: FC<Props> = ({
   tags,
   setSearchForm,
-  isGrouped = true,
-  isAllExpanded = true,
-  selectedCount = 0,
-  totalCount = 0,
+  isGrouped,
+  isAllExpanded,
+  selectedCount,
+  totalCount,
   onSelectAll,
   onExpandAll,
   onCollapseAll,
@@ -78,9 +78,7 @@ const CaseStepSearchForm: FC<Props> = ({
         open={uploadModalOpen}
         onOpenChange={setUploadModalOpen}
         uploadProps={uploadProps}
-        onUploadFinish={() => {
-          onUploadFinish?.();
-        }}
+        onUploadFinish={onUploadFinish}
       />
 
       <ProCard
@@ -122,13 +120,13 @@ const CaseStepSearchForm: FC<Props> = ({
             isAllExpanded={isAllExpanded}
             selectedCount={selectedCount}
             totalCount={totalCount}
-            onSelectAll={() => onSelectAll?.()}
-            onExpandAll={() => onExpandAll?.()}
-            onCollapseAll={() => onCollapseAll?.()}
-            onClearSelection={() => onClearSelection?.()}
-            onRefresh={() => onRefresh?.()}
-            onToggleGroup={() => onToggleGroup?.()}
-            onAddCase={() => onAddCase?.()}
+            onSelectAll={onSelectAll}
+            onExpandAll={onExpandAll}
+            onCollapseAll={onCollapseAll}
+            onClearSelection={onClearSelection}
+            onRefresh={onRefresh}
+            onToggleGroup={onToggleGroup}
+            onAddCase={onAddCase}
             onUploadClick={() => setUploadModalOpen(true)}
           />
         </div>

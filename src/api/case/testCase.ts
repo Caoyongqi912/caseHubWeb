@@ -315,12 +315,13 @@ export const downloadCaseExcel = async (options: { responseType: 'blob' }) => {
  */
 export const setAllTestCaseStatus = async (
   info: {
-    status: number;
+    requirement_id: number;
+    case_status: number;
     case_ids: number[];
   },
   options?: IObjGet,
 ) => {
-  return request<IResponse<null>>(`/api/hub/cases/updateStatus`, {
+  return request<IResponse<null>>(`/api/hub/req/updateStatus`, {
     method: 'POST',
     data: info,
     ...(options || {}),
@@ -334,12 +335,13 @@ export const setAllTestCaseStatus = async (
  */
 export const setAllTestCaseReview = async (
   info: {
+    requirement_id: number;
     is_review: boolean;
     case_ids: number[];
   },
   options?: IObjGet,
 ) => {
-  return request<IResponse<null>>(`/api/hub/cases/updateReview`, {
+  return request<IResponse<null>>(`/api/hub/req/updateReview`, {
     method: 'POST',
     data: info,
     ...(options || {}),

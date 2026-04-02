@@ -13,7 +13,7 @@ interface Props {
 const CaseTypeSelect: FC<Props> = ({ testcaseData, onTypeChange }) => {
   const [typeVisible, setTypeVisible] = useState(true);
   const [typeValue, setTypeValue] = useState<number>(2);
-  const { colors, borderRadius } = useCaseHubTheme();
+  const { colors } = useCaseHubTheme();
   const { CASE_TYPE_OPTION, CASE_TYPE_ENUM } = CaseHubConfig;
 
   useEffect(() => {
@@ -27,8 +27,16 @@ const CaseTypeSelect: FC<Props> = ({ testcaseData, onTypeChange }) => {
     number,
     { bg: string; border: string; text: string }
   > = {
-    1: { bg: '#fff7e6', border: '#ffd591', text: '#fa8c16' },
-    2: { bg: '#e6f7ff', border: '#91d5ff', text: '#1890ff' },
+    1: {
+      bg: `${colors.warning}12`,
+      border: `${colors.warning}25`,
+      text: colors.warning,
+    },
+    2: {
+      bg: `${colors.info}12`,
+      border: `${colors.info}25`,
+      text: colors.info,
+    },
   };
 
   const typeColor = typeColorMap[typeValue] || typeColorMap[2];
@@ -41,13 +49,27 @@ const CaseTypeSelect: FC<Props> = ({ testcaseData, onTypeChange }) => {
     }
   };
 
+  const tagStyle = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    padding: '3px 8px',
+    borderRadius: 10,
+    background: typeColor.bg,
+    color: typeColor.text,
+    border: `1px solid ${typeColor.border}`,
+    fontSize: 11,
+    fontWeight: 600,
+    cursor: 'pointer',
+    transition: 'all 150ms ease',
+  };
+
   return (
     <>
       {typeVisible ? (
         <ProFormSelect
           noStyle
           style={{
-            borderRadius: borderRadius.md,
+            borderRadius: 10,
             minWidth: 70,
           }}
           allowClear={false}
@@ -57,22 +79,18 @@ const CaseTypeSelect: FC<Props> = ({ testcaseData, onTypeChange }) => {
           options={CASE_TYPE_OPTION}
           fieldProps={{
             variant: 'filled',
-            style: { minWidth: 70 },
+            style: { minWidth: 70, borderRadius: 10 },
           }}
         />
       ) : (
         <Tag
           onClick={() => setTypeVisible(true)}
-          style={{
-            background: typeColor.bg,
-            borderColor: typeColor.border,
-            color: typeColor.text,
-            borderRadius: borderRadius.md,
-            fontWeight: 500,
-            cursor: 'pointer',
-            padding: '2px 10px',
-            margin: 0,
-            transition: `all ${colors.primary}`,
+          style={tagStyle}
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLElement).style.transform = 'scale(1.02)';
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLElement).style.transform = 'scale(1)';
           }}
         >
           {CASE_TYPE_ENUM[typeValue]}

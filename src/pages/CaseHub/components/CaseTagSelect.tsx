@@ -68,27 +68,29 @@ const CaseTagSelect: FC<Props> = ({
     }
   };
 
+  const tagStyle = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 4,
+    padding: '3px 8px',
+    borderRadius: 10,
+    background: `${colors.info}12`,
+    color: colors.info,
+    fontSize: 11,
+    fontWeight: 600,
+    border: `1px solid ${colors.info}25`,
+    cursor: 'pointer',
+    transition: 'all 150ms ease',
+    maxWidth: 100,
+    textOverflow: 'ellipsis',
+    overflow: 'hidden',
+    whiteSpace: 'nowrap' as const,
+  };
+
   return (
     <>
       {tagVisible ? (
-        <Tag
-          onClick={() => setTagVisible(false)}
-          style={{
-            background: colors.infoBg,
-            borderColor: colors.info,
-            color: colors.info,
-            textOverflow: 'ellipsis',
-            textAlign: 'center',
-            borderRadius: borderRadius.md,
-            fontWeight: 500,
-            cursor: 'pointer',
-            padding: '2px 10px',
-            margin: 0,
-            maxWidth: 100,
-            overflow: 'hidden',
-            whiteSpace: 'nowrap',
-          }}
-        >
+        <Tag onClick={() => setTagVisible(false)} style={tagStyle}>
           {tagValue && tagValue.length > 10
             ? `${tagValue.slice(0, 10)}...`
             : tagValue}

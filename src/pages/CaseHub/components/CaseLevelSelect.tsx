@@ -13,7 +13,7 @@ interface Props {
 const CaseLevelSelect: FC<Props> = ({ testcaseData, onLevelChange }) => {
   const [levelVisible, setLevelVisible] = useState(true);
   const [level, setLevel] = useState<string>('P2');
-  const { colors, borderRadius } = useCaseHubTheme();
+  const { colors } = useCaseHubTheme();
   const { CASE_LEVEL_OPTION } = CaseHubConfig;
 
   useEffect(() => {
@@ -37,14 +37,28 @@ const CaseLevelSelect: FC<Props> = ({ testcaseData, onLevelChange }) => {
     }
   };
 
+  const tagStyle = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    padding: '3px 8px',
+    borderRadius: 10,
+    background: levelColor.bg,
+    color: levelColor.text,
+    border: `1px solid ${levelColor.border}`,
+    fontSize: 11,
+    fontWeight: 600,
+    cursor: 'pointer',
+    transition: 'all 150ms ease',
+  };
+
   return (
     <>
       {levelVisible ? (
         <ProFormSelect
           noStyle
           style={{
-            borderRadius: borderRadius.md,
-            minWidth: 80,
+            borderRadius: 10,
+            minWidth: 70,
           }}
           name="case_level"
           required
@@ -53,28 +67,18 @@ const CaseLevelSelect: FC<Props> = ({ testcaseData, onLevelChange }) => {
           options={CASE_LEVEL_OPTION}
           fieldProps={{
             variant: 'filled',
-            style: { minWidth: 80 },
+            style: { minWidth: 70, borderRadius: 10 },
           }}
         />
       ) : (
         <Tag
           onClick={() => setLevelVisible(true)}
-          style={{
-            background: levelColor.bg,
-            borderColor: levelColor.border,
-            color: levelColor.text,
-            borderRadius: borderRadius.md,
-            fontWeight: 500,
-            cursor: 'pointer',
-            padding: '2px 10px',
-            margin: 0,
-            transition: `all ${colors.primary}`,
-          }}
+          style={tagStyle}
           onMouseEnter={(e) => {
-            (e.currentTarget as HTMLElement).style.opacity = '0.8';
+            (e.currentTarget as HTMLElement).style.transform = 'scale(1.02)';
           }}
           onMouseLeave={(e) => {
-            (e.currentTarget as HTMLElement).style.opacity = '1';
+            (e.currentTarget as HTMLElement).style.transform = 'scale(1)';
           }}
         >
           {level}

@@ -12,7 +12,7 @@ import UserSelect from '@/components/Table/UserSelect';
 import DynamicInfo from '@/pages/CaseHub/components/DynamicInfo';
 import TestCaseDetail from '@/pages/CaseHub/components/TestCaseDetail';
 import { CaseHubConfig } from '@/pages/CaseHub/config/constants';
-import { caseLevelColors, useCaseHubTheme } from '@/pages/CaseHub/styles';
+import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import { ITestCase } from '@/pages/CaseHub/types';
 import { ModuleEnum } from '@/utils/config';
 import { fetchModulesEnum, pageData } from '@/utils/somefunc';
@@ -154,31 +154,7 @@ const CaseDataTable: FC<Props> = (props) => {
           </Text>
         ),
       },
-      {
-        title: '等级',
-        dataIndex: 'case_level',
-        sorter: true,
-        valueEnum: CASE_LEVEL_ENUM,
-        width: 80,
-        render: (_, record) => {
-          const levelColor =
-            caseLevelColors[record.case_level] || caseLevelColors.P2;
-          return (
-            <Tag
-              style={{
-                background: levelColor.bg,
-                borderColor: levelColor.border,
-                color: levelColor.text,
-                borderRadius: borderRadius.md,
-                fontWeight: 500,
-                margin: 0,
-              }}
-            >
-              {record.case_level}
-            </Tag>
-          );
-        },
-      },
+
       {
         title: '创建人',
         dataIndex: 'creatorName',

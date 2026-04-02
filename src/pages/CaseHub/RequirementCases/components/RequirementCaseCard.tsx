@@ -274,7 +274,13 @@ const RequirementCaseCard: React.FC<Props> = memo(({ testcaseData }) => {
             <div style={styles.checkbox(selected, isHovered)}>
               <Checkbox checked={selected} onChange={handleCheckboxChange} />
             </div>
-
+            <Button
+              type="text"
+              size="middle"
+              icon={<ExpandOutlined style={{ fontSize: 14 }} />}
+              style={styles.detailBtn(isHovered)}
+              onClick={handleExpandClick}
+            />
             <span style={styles.caseIdTag()}>{testcaseData?.uid}</span>
 
             <div style={styles.titleInputContainer()}>
@@ -340,13 +346,6 @@ const RequirementCaseCard: React.FC<Props> = memo(({ testcaseData }) => {
                   {testcaseData.is_review ? '已评审' : '未评审'}
                 </Tag>
               )}
-              <Button
-                type="text"
-                size="small"
-                icon={<ExpandOutlined style={{ fontSize: 14 }} />}
-                style={styles.detailBtn(isHovered)}
-                onClick={handleExpandClick}
-              />
 
               <Dropdown
                 menu={{ items: menuItems, onClick: handleMenuClick }}

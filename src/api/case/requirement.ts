@@ -11,7 +11,7 @@ export const insertRequirement = async (
   requirement: IRequirement,
   options?: IObjGet,
 ) => {
-  return request<IResponse<IRequirement>>('/api/hub/insertRequirement', {
+  return request<IResponse<IRequirement>>('/api/hub/req/insertRequirement', {
     method: 'POST',
     data: requirement,
     ...(options || {}),
@@ -27,7 +27,7 @@ export const updateRequirement = async (
   requirement: IRequirement,
   options?: IObjGet,
 ) => {
-  return request<IResponse<IRequirement>>('/api/hub/updateRequirement', {
+  return request<IResponse<IRequirement>>('/api/hub/req/updateRequirement', {
     method: 'POST',
     data: requirement,
     ...(options || {}),
@@ -40,11 +40,14 @@ export const updateRequirement = async (
  * @param options
  */
 export const pageRequirement = async (searchParams: any, options?: IObjGet) => {
-  return request<IResponse<IPage<IRequirement>>>('/api/hub/pageRequirement', {
-    method: 'POST',
-    data: searchParams,
-    ...(options || {}),
-  });
+  return request<IResponse<IPage<IRequirement>>>(
+    '/api/hub/req/pageRequirement',
+    {
+      method: 'POST',
+      data: searchParams,
+      ...(options || {}),
+    },
+  );
 };
 
 /**
@@ -56,7 +59,7 @@ export const getRequirement = async (
   requirementId: number,
   options?: IObjGet,
 ) => {
-  return request<IResponse<IRequirement>>('/api/hub/getRequirement', {
+  return request<IResponse<IRequirement>>('/api/hub/req/getRequirement', {
     method: 'GET',
     params: { requirementId: requirementId },
     ...(options || {}),
@@ -71,7 +74,7 @@ export const removeRequirement = async (
   requirementId: number,
   options?: IObjGet,
 ) => {
-  return request<IResponse<number>>('/api/hub/removeRequirement', {
+  return request<IResponse<number>>('/api/hub/req/removeRequirement', {
     method: 'POST',
     data: { requirement_id: requirementId },
     ...(options || {}),

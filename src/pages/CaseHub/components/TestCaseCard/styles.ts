@@ -198,48 +198,40 @@ export const useTestCaseStyles = () => {
   const caseFlagTag = (
     type: 'common' | 'review-active' | 'review-pending',
   ): CSSProperties => {
+    const baseStyle: CSSProperties = {
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: 4,
+      padding: '3px 8px',
+      borderRadius: 10,
+      fontSize: 11,
+      fontWeight: 600,
+      flexShrink: 0,
+      cursor: 'pointer',
+      transition: 'all 150ms ease',
+    };
+
     if (type === 'common') {
       return {
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 4,
-        padding: '2px 6px',
-        borderRadius: 8,
-        background: `${colors.warning}15`,
+        ...baseStyle,
+        background: `${colors.warning}12`,
         color: colors.warning,
-        fontSize: 10,
-        fontWeight: 600,
-        border: `1px solid ${colors.warning}30`,
-        flexShrink: 0,
+        border: `1px solid ${colors.warning}25`,
       };
     }
     if (type === 'review-active') {
       return {
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 4,
-        padding: '2px 6px',
-        borderRadius: 8,
-        background: `${colors.success}15`,
+        ...baseStyle,
+        background: `${colors.success}12`,
         color: colors.success,
-        fontSize: 10,
-        fontWeight: 600,
-        border: `1px solid ${colors.success}30`,
-        flexShrink: 0,
+        border: `1px solid ${colors.success}25`,
       };
     }
     return {
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: 4,
-      padding: '2px 6px',
-      borderRadius: 8,
-      background: `${colors.textSecondary}10`,
+      ...baseStyle,
+      background: `${colors.textSecondary}08`,
       color: colors.textSecondary,
-      fontSize: 10,
-      fontWeight: 600,
-      border: `1px solid ${colors.textSecondary}30`,
-      flexShrink: 0,
+      border: `1px solid ${colors.textSecondary}20`,
     };
   };
 

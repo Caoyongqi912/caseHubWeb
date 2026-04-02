@@ -2,17 +2,15 @@ import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import {
   AppstoreOutlined,
   CheckSquareOutlined,
-  ClearOutlined,
   CloseSquareOutlined,
   DownSquareOutlined,
   MenuOutlined,
   PlusOutlined,
   ReloadOutlined,
-  SettingOutlined,
   UploadOutlined,
   UpSquareOutlined,
 } from '@ant-design/icons';
-import { Button, Divider, Dropdown, Tooltip, Typography } from 'antd';
+import { Button, Divider, Tooltip, Typography } from 'antd';
 import { FC, useMemo } from 'react';
 
 interface ToolbarProps {
@@ -58,40 +56,6 @@ const Toolbar: FC<ToolbarProps> = ({
     }),
     [borderRadius],
   );
-
-  const moreActions = useMemo(
-    () => [
-      {
-        key: 'upload',
-        label: '附件上传',
-        icon: <UploadOutlined />,
-      },
-      { type: 'divider' as const },
-      {
-        key: 'batch-pass',
-        label: '批量设置通过',
-        icon: <CheckSquareOutlined style={{ color: '#52c41a' }} />,
-      },
-      {
-        key: 'batch-fail',
-        label: '批量设置失败',
-        icon: <CloseSquareOutlined style={{ color: '#ff4d4f' }} />,
-      },
-      { type: 'divider' as const },
-      {
-        key: 'batch-reset',
-        label: '批量重置状态',
-        icon: <ClearOutlined />,
-      },
-    ],
-    [],
-  );
-
-  const handleMoreAction = (key: string) => {
-    if (key === 'upload') {
-      onUploadClick();
-    }
-  };
 
   const groupButtonStyle = useMemo(
     () => ({
@@ -225,23 +189,17 @@ const Toolbar: FC<ToolbarProps> = ({
           </Button>
         </Tooltip>
 
-        <Dropdown
-          menu={{
-            items: moreActions,
-            onClick: (e) => handleMoreAction(e.key),
-          }}
-          trigger={['click']}
-          placement="bottomRight"
-        >
+        <Tooltip title="附件上传">
           <Button
             type="text"
             size="small"
-            icon={<SettingOutlined />}
+            icon={<UploadOutlined />}
+            onClick={onUploadClick}
             style={toolbarBtnStyle}
           >
-            更多操作
+            上传
           </Button>
-        </Dropdown>
+        </Tooltip>
 
         <Button
           type="primary"

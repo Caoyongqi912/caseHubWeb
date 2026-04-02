@@ -229,6 +229,7 @@ const RequirementCasesContent: React.FC = () => {
         >
           {showCheckButton && (
             <ChoiceSettingArea
+              requirementId={parseInt(reqId!)}
               callback={refresh}
               allTestCase={testCases}
               showCheckButton={showCheckButton}

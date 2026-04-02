@@ -3,12 +3,7 @@ import CaseSubSteps from '@/pages/CaseHub/components/CaseSubSteps';
 import { CaseHubConfig } from '@/pages/CaseHub/config/constants';
 import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import { ITestCase } from '@/pages/CaseHub/types';
-import {
-  ProCard,
-  ProForm,
-  ProFormSelect,
-  ProFormText,
-} from '@ant-design/pro-components';
+import { ProCard, ProForm, ProFormText } from '@ant-design/pro-components';
 import { Form, Space, Tag, Typography } from 'antd';
 import { FC, useEffect, useRef } from 'react';
 import { useTestCaseDetailStyles } from './styles';
@@ -98,7 +93,7 @@ const TestCaseDetail: FC<Props> = ({ testcase, callback }) => {
                   }}
                 />
               </div>
-              <div style={styles.formSubGrid()}>
+              {/* <div style={styles.formSubGrid()}>
                 <ProFormSelect
                   label={'用例等级'}
                   required
@@ -108,7 +103,7 @@ const TestCaseDetail: FC<Props> = ({ testcase, callback }) => {
                     variant: 'filled',
                   }}
                 />
-              </div>
+              </div> */}
             </div>
           </ProForm>
 

@@ -28,6 +28,7 @@ import React, { FC, useEffect, useState } from 'react';
 const { Text } = Typography;
 
 interface Props {
+  requirementId: number;
   showCheckButton: boolean;
   callback: () => void;
   selectedCase: number[];
@@ -41,13 +42,14 @@ const ChoiceSettingArea: FC<Props> = ({
   selectedCase,
   setSelectedCase,
   callback,
+  requirementId,
 }) => {
   const [form] = Form.useForm();
   const [selectProjectId, setSelectProjectId] = useState<number>();
   const [moduleEnum, setModuleEnum] = useState<IModuleEnum[]>([]);
   const [projects, setProjects] = useState<any[]>([]);
   const [moveModalOpen, setMoveModalOpen] = useState(false);
-  const { colors, spacing, borderRadius } = useCaseHubTheme();
+  const { colors, spacing } = useCaseHubTheme();
   const styles = useChoiceSettingAreaStyles();
 
   useEffect(() => {
@@ -71,8 +73,9 @@ const ChoiceSettingArea: FC<Props> = ({
 
   const setAllSuccess = async () => {
     const { code, msg } = await setAllTestCaseStatus({
+      requirement_id: requirementId,
       case_ids: selectedCase,
-      status: 1,
+      case_status: 1,
     });
     if (code === 0) {
       message.success(msg);
@@ -82,6 +85,7 @@ const ChoiceSettingArea: FC<Props> = ({
 
   const setAllReview = async () => {
     const { code, msg } = await setAllTestCaseReview({
+      requirement_id: requirementId,
       case_ids: selectedCase,
       is_review: true,
     });
@@ -93,8 +97,9 @@ const ChoiceSettingArea: FC<Props> = ({
 
   const setAllFail = async () => {
     const { code, msg } = await setAllTestCaseStatus({
+      requirement_id: requirementId,
       case_ids: selectedCase,
-      status: 2,
+      case_status: 2,
     });
     if (code === 0) {
       message.success(msg);
