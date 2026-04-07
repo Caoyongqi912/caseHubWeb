@@ -406,7 +406,6 @@ const InterfaceApiCaseResultTable: FC<SelfProps> = (props) => {
         request={fetchResults}
         search={false}
         columns={columns}
-        x={800}
       />
     </>
   );

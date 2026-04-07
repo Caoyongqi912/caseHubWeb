@@ -128,6 +128,7 @@ const ProjectList: React.FC = () => {
           name="desc"
           label="项目描述"
           placeholder="请输入项目描述"
+          required={true}
         />
         <ProFormSelect
           showSearch
