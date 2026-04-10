@@ -1,4 +1,3 @@
-import ApidbCard from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/APIDBCard';
 import ApiProCard from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/APIProCard';
 import AssertProCard from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/AssertProCard';
 import ConditionProCard from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/ConditionProCard';
@@ -8,6 +7,7 @@ import Index from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/content
 import WaitProCard from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/WaitProCard';
 import { IInterfaceCaseContent } from '@/pages/Httpx/types';
 import { FC } from 'react';
+import DBScriptProCard from './contents/DBScriptProCard';
 
 const CaseContentType = {
   API: 1,
@@ -101,7 +101,7 @@ const CaseContentCollapsible: FC<SelfProps> = (props) => {
         );
       case CaseContentType.DB:
         return (
-          <ApidbCard
+          <DBScriptProCard
             id={props.id}
             step={props.step}
             caseId={caseId}

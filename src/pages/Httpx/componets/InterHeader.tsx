@@ -111,10 +111,9 @@ const InterHeader: FC<SelfProps> = ({ form, readonly = false }) => {
                   index={record?.id}
                   setValue={(index, newData) => {
                     editorFormRef.current?.setRowData?.(index, newData);
-                    // 更新表单数据
                     form.setFieldsValue({
-                      headers: form
-                        .getFieldValue('headers')
+                      interface_headers: form
+                        .getFieldValue('interface_headers')
                         .map((item: any) =>
                           item.id === index
                             ? { ...item, value: newData.value }
@@ -157,7 +156,7 @@ const InterHeader: FC<SelfProps> = ({ form, readonly = false }) => {
 
   return (
     <>
-      <ProForm.Item name={'headers'} trigger={'onValuesChange'}>
+      <ProForm.Item name={'interface_headers'} trigger={'onValuesChange'}>
         <EditableProTable<IHeaders>
           editableFormRef={editorFormRef}
           rowKey={'id'}
@@ -174,12 +173,12 @@ const InterHeader: FC<SelfProps> = ({ form, readonly = false }) => {
           editable={{
             type: 'multiple',
             editableKeys: headersEditableKeys,
-            onChange: setHeadersEditableRowKeys, // Update editable keys
+            onChange: setHeadersEditableRowKeys,
             onSave: async () => {
-              await FormEditableOnValueChange(form, 'headers');
+              await FormEditableOnValueChange(form, 'interface_headers');
             },
             onDelete: async (key) => {
-              await FormEditableOnValueRemove(form, 'headers', key);
+              await FormEditableOnValueRemove(form, 'interface_headers', key);
             },
             actionRender: (_, __, dom) => {
               return [dom.save, dom.cancel, dom.delete];

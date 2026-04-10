@@ -4,7 +4,7 @@ import AssertContentCard, {
 } from '@/components/ContentCard/AssertContentCard';
 import CardExtraOption from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/CardExtraOption';
 import { IInterfaceCaseContent } from '@/pages/Httpx/types';
-import { FC, useMemo, useState } from 'react';
+import { FC, useCallback, useMemo, useState } from 'react';
 
 interface Props {
   id: number;
@@ -19,13 +19,20 @@ const AssertProCard: FC<Props> = (props) => {
   const { step, id, caseId, caseContent, callback } = props;
   const [showOption, setShowOption] = useState(false);
 
-  const handleUpdateAssert = async (data: {
-    id: number;
-    content_name?: string;
-    assert_list?: any[];
-  }) => {
-    return updateCaseContent(data);
-  };
+  const handleUpdateAssert = useCallback(
+    async (data: {
+      id: number;
+      content_name?: string;
+      assert_list?: any[];
+    }) => {
+      return updateCaseContent({
+        content_id: data.id,
+        content_name: data.content_name,
+        assert_list: data.assert_list,
+      });
+    },
+    [],
+  );
 
   const contentInfo: AssertContentInfo = useMemo(
     () => ({

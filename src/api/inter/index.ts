@@ -52,13 +52,13 @@ export const pageInterApi = async (data: any, options?: IObjGet) => {
  */
 export const copyApiTo = async (
   data: {
-    inter_id: number;
+    interface_id: number;
     module_id: number;
     project_id: number;
   },
   options?: IObjGet,
 ) => {
-  return request<IResponse<IInterfaceAPI>>('/api/interface/copy2Module', {
+  return request<IResponse<IInterfaceAPI>>('/api/interface/copy_to_module', {
     method: 'POST',
     data: data,
     ...(options || {}),
@@ -205,7 +205,7 @@ export const tryInterScript = async (data: string, options?: IObjGet) => {
 export const removeInterApiById = async (data: number, options?: IObjGet) => {
   return request<IResponse<null>>('/api/interface/remove', {
     method: 'POST',
-    data: { id: data },
+    data: { interface_id: data },
     ...(options || {}),
   });
 };
@@ -218,7 +218,7 @@ export const removeInterApiById = async (data: number, options?: IObjGet) => {
 export const copyInterApiById = async (data: number, options?: IObjGet) => {
   return request<IResponse<null>>('/api/interface/copy', {
     method: 'POST',
-    data: { id: data },
+    data: { interface_id: data },
     ...(options || {}),
   });
 };

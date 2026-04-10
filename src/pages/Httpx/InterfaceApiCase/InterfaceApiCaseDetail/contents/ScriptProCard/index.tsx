@@ -34,7 +34,11 @@ const Index: FC<Props> = (props) => {
     script_text?: string;
     content_name?: string;
   }) => {
-    return updateCaseContent(data);
+    return updateCaseContent({
+      content_id: data.id,
+      content_name: data.content_name,
+      script_text: data.script_text,
+    });
   };
 
   /**

@@ -17,7 +17,6 @@ const InterAfterScript: FC<SelfProps> = ({ form, mode }) => {
   const [funcOpen, setFuncOpen] = useState(false);
 
   useEffect(() => {
-    console.log(mode);
     if (mode) {
       if (mode === 1) {
         setReadonly(true);
@@ -27,7 +26,7 @@ const InterAfterScript: FC<SelfProps> = ({ form, mode }) => {
     }
   }, [mode]);
   useEffect(() => {
-    const script = form.getFieldValue('after_script');
+    const script = form.getFieldValue('interface_after_script');
     if (script) {
       setScriptData(script);
     }
@@ -35,7 +34,7 @@ const InterAfterScript: FC<SelfProps> = ({ form, mode }) => {
   const handleOnChange = (value: any) => {
     if (value) {
       setScriptData(value);
-      form.setFieldsValue({ after_script: value });
+      form.setFieldsValue({ interface_after_script: value });
     }
   };
   return (

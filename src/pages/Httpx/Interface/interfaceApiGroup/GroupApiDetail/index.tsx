@@ -2,6 +2,7 @@ import { IEnv } from '@/api';
 import { queryEnvBy } from '@/api/base';
 import {
   addInterfaceGroupApis,
+  addSelfInterfaceGroupApi,
   queryInterfaceGroupApis,
   reorderInterfaceGroupApis,
   tryInterfaceGroup,
@@ -14,7 +15,7 @@ import InterfaceApiResponseDetail from '@/pages/Httpx/InterfaceApiResponse/Inter
 import { IInterfaceAPI, ITryResponseInfo } from '@/pages/Httpx/types';
 import { SendOutlined } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
-import { Button, Dropdown, Empty, Space, Spin } from 'antd';
+import { Dropdown, Empty, Space, Spin } from 'antd';
 import { FC, useEffect, useState } from 'react';
 
 interface SelfProps {
@@ -105,8 +106,8 @@ const Index: FC<SelfProps> = ({ groupId, projectId }) => {
       setShowTryResponses(true);
       setShowTryResponsesLoading(true);
       const { code, data } = await tryInterfaceGroup({
-        groupId: groupId,
-        envId: key,
+        group_id: groupId,
+        env_id: key,
       });
       if (code === 0) {
         setTryResponses(data);
@@ -115,12 +116,15 @@ const Index: FC<SelfProps> = ({ groupId, projectId }) => {
     }
   };
 
-  const selectInterface2Group = async (values: number[]) => {
+  /**
+   * group关联 api
+   */
+  const selectInterface2Group = async (values: number[], copy: boolean) => {
     if (!groupId) return;
-
     const { code } = await addInterfaceGroupApis({
-      groupId: groupId,
-      apiIds: values,
+      group_id: groupId,
+      interface_ids: values,
+      copy: copy,
     });
     if (code === 0) {
       await handleReload();
@@ -152,9 +156,33 @@ const Index: FC<SelfProps> = ({ groupId, projectId }) => {
         bodyStyle={{ padding: 20 }}
         extra={
           <Space>
-            <Button type={'primary'} onClick={() => setChoiceOpen(true)}>
-              Choice API
-            </Button>
+            <Dropdown.Button
+              type={'primary'}
+              menu={{
+                items: [
+                  {
+                    label: '选择公共接口',
+                    key: 'common',
+                    onClick: () => setChoiceOpen(true),
+                  },
+                  {
+                    label: '添加私接口',
+                    key: 'private',
+                    onClick: async () => {
+                      if (!groupId) return;
+                      const { code, data } = await addSelfInterfaceGroupApi({
+                        group_id: groupId,
+                      });
+                      if (code === 0) {
+                        await handleReload();
+                      }
+                    },
+                  },
+                ],
+              }}
+            >
+              添加接口
+            </Dropdown.Button>
             {apisContent.length > 0 && (
               <Dropdown.Button
                 type={'primary'}

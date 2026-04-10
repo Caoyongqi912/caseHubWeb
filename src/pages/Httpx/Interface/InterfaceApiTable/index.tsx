@@ -224,43 +224,43 @@ const Index: FC<SelfProps> = ({
     },
     {
       title: '名称',
-      dataIndex: 'name',
-      key: 'name',
+      dataIndex: 'interface_name',
+      key: 'interface_name',
       fixed: 'left',
       width: 180,
       ellipsis: true,
       render: (_, record) => (
         <Tag style={styles.nameTag}>
           <ApiOutlined style={{ marginRight: 6, opacity: 0.6 }} />
-          {record.name}
+          {record.interface_name}
         </Tag>
       ),
     },
     {
       title: '路径',
-      dataIndex: 'url',
-      key: 'url',
+      dataIndex: 'interface_url',
+      key: 'interface_url',
       ellipsis: true,
       width: 300,
       render: (_, record) => (
         <Text style={styles.urlText} ellipsis>
           <LinkOutlined style={{ marginRight: 6, opacity: 0.6 }} />
-          {record.url}
+          {record.interface_url}
         </Text>
       ),
     },
     {
       title: '方法',
-      dataIndex: 'method',
+      dataIndex: 'interface_method',
       valueType: 'select',
-      key: 'method',
+      key: 'interface_method',
       valueEnum: CONFIG.API_METHOD_ENUM,
       filters: true,
       search: true,
       onFilter: true,
       width: 100,
       render: (_, record) => {
-        const methodConfig = CONFIG.API_METHOD_ENUM[record.method];
+        const methodConfig = CONFIG.API_METHOD_ENUM[record.interface_method];
         return (
           <Tag
             color={methodConfig?.color}
@@ -271,15 +271,15 @@ const Index: FC<SelfProps> = ({
               fontWeight: 600,
             }}
           >
-            {record.method}
+            {record.interface_method}
           </Tag>
         );
       },
     },
     {
       title: '优先级',
-      dataIndex: 'level',
-      key: 'level',
+      dataIndex: 'interface_level',
+      key: 'interface_level',
       valueType: 'select',
       valueEnum: CONFIG.API_LEVEL_ENUM,
       search: false,
@@ -287,7 +287,7 @@ const Index: FC<SelfProps> = ({
       onFilter: true,
       width: 100,
       render: (_, record) => {
-        const levelConfig = CONFIG.API_LEVEL_ENUM[record.level];
+        const levelConfig = CONFIG.API_LEVEL_ENUM[record.interface_level];
         return (
           <Tag
             color={levelConfig?.status === 'Success' ? 'success' : 'processing'}
@@ -297,23 +297,23 @@ const Index: FC<SelfProps> = ({
               padding: '4px 12px',
             }}
           >
-            {record.level}
+            {record.interface_level}
           </Tag>
         );
       },
     },
     {
       title: '状态',
-      dataIndex: 'status',
+      dataIndex: 'interface_status',
       valueType: 'select',
-      key: 'status',
+      key: 'interface_status',
       search: false,
       filters: true,
       onFilter: true,
       valueEnum: CONFIG.API_STATUS_ENUM,
       width: 100,
       render: (_, record) => {
-        return CONFIG.API_STATUS_ENUM[record.status].tag;
+        return CONFIG.API_STATUS_ENUM[record.interface_status].tag;
       },
     },
     {
@@ -433,7 +433,7 @@ const Index: FC<SelfProps> = ({
             let response;
             if (copyOrMove === 1) {
               response = await copyApiTo({
-                inter_id: currentApiId,
+                interface_id: currentApiId,
                 project_id: values.project_id,
                 module_id: values.module_id,
               });
@@ -499,7 +499,6 @@ const Index: FC<SelfProps> = ({
         persistenceKey={perKey}
         columns={columns}
         rowKey="id"
-        x={1500}
         actionRef={actionRef}
         request={fetchInterface}
         toolBarRender={() => [

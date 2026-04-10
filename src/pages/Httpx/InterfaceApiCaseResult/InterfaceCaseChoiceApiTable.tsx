@@ -27,7 +27,7 @@ import React, {
 interface SelfProps {
   projectId?: number;
   radio?: boolean;
-  onSelect: (value: number[]) => Promise<any>;
+  onSelect: (value: number[], copy: boolean) => Promise<any>;
 }
 
 const InterfaceCaseChoiceApiTable: FC<SelfProps> = ({
@@ -147,43 +147,43 @@ const InterfaceCaseChoiceApiTable: FC<SelfProps> = ({
     },
     {
       title: '名称',
-      dataIndex: 'name',
-      key: 'name',
+      dataIndex: 'interface_name',
+      key: 'interface_name',
       width: 200,
       render: (_, record) => (
         <Tag style={styles.nameTag}>
           <ApiOutlined style={{ marginRight: 6, opacity: 0.6 }} />
-          {record.name}
+          {record.interface_name}
         </Tag>
       ),
     },
     {
       title: '优先级',
-      dataIndex: 'level',
+      dataIndex: 'interface_level',
       valueType: 'select',
       valueEnum: CONFIG.API_LEVEL_ENUM,
       width: 100,
       render: (_, record) => (
         <Tag
           color={
-            CONFIG.API_LEVEL_ENUM[record.level]?.status === 'Success'
+            CONFIG.API_LEVEL_ENUM[record.interface_level]?.status === 'Success'
               ? 'success'
               : 'processing'
           }
           style={{ borderRadius: 6, fontSize: 12, padding: '4px 12px' }}
         >
-          {record.level}
+          {record.interface_level}
         </Tag>
       ),
     },
     {
       title: '状态',
-      dataIndex: 'status',
+      dataIndex: 'interface_status',
       valueType: 'select',
       valueEnum: CONFIG.API_STATUS_ENUM,
       width: 100,
       render: (_, record) => {
-        return CONFIG.API_STATUS_ENUM[record.status].tag;
+        return CONFIG.API_STATUS_ENUM[record.interface_status].tag;
       },
     },
     {
@@ -221,7 +221,25 @@ const InterfaceCaseChoiceApiTable: FC<SelfProps> = ({
               style={styles.addBtn}
               icon={<PlusOutlined />}
               onClick={async () => {
-                await onSelect(selectedRowKeys as number[]);
+                await onSelect(selectedRowKeys as number[], true);
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = `0 4px 16px ${token.colorPrimaryBg}`;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = `0 2px 8px ${token.colorPrimaryBg}`;
+              }}
+            >
+              复制添加
+            </Button>
+            <Button
+              type="primary"
+              style={styles.addBtn}
+              icon={<PlusOutlined />}
+              onClick={async () => {
+                await onSelect(selectedRowKeys as number[], false);
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-2px)';
@@ -240,7 +258,6 @@ const InterfaceCaseChoiceApiTable: FC<SelfProps> = ({
       rowSelection={rowSelection}
       columns={columns}
       rowKey="id"
-      x={1000}
       actionRef={actionRef}
       request={fetchInterface}
     />

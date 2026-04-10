@@ -9,7 +9,7 @@ import { IInterfaceResultByCase } from '@/pages/Httpx/types';
 import { CONFIG } from '@/utils/config';
 import { ProCard } from '@ant-design/pro-components';
 import { Space, Tag, Typography } from 'antd';
-import { FC, useState } from 'react';
+import { FC } from 'react';
 
 const { Text } = Typography;
 
@@ -19,9 +19,6 @@ interface SelfProps {
 
 const InterfaceApiResponseDetail: FC<SelfProps> = ({ responses }) => {
   const { API_STATUS } = CONFIG;
-  const [activeKeys, setActiveKeys] = useState(
-    Array(responses?.length).fill('3'),
-  );
 
   const tabExtra = (response: IInterfaceResultByCase) => {
     if (!response.response_status) return null;

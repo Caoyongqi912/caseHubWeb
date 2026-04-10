@@ -20,7 +20,7 @@ const ApiCaseBaseForm = () => {
       <ProFormText hidden={true} required name="module_id" label="所属模块" />
       <ProFormText
         width={'lg'}
-        name="title"
+        name="case_title"
         label="用例标题"
         required={true}
         rules={[{ required: true, message: '用例标题必填' }]}
@@ -28,7 +28,7 @@ const ApiCaseBaseForm = () => {
 
       <ProForm.Group>
         <ProFormSelect
-          name="level"
+          name="case_level"
           label="优先级"
           initialValue={'P1'}
           options={API_LEVEL_SELECT}
@@ -37,7 +37,7 @@ const ApiCaseBaseForm = () => {
           rules={[{ required: true, message: '用例优先级必选' }]}
         />
         <ProFormSelect
-          name="status"
+          name="case_status"
           label="用例状态"
           initialValue={'DEBUG'}
           width={'md'}
@@ -48,7 +48,7 @@ const ApiCaseBaseForm = () => {
       </ProForm.Group>
       <ProFormTextArea
         width={'lg'}
-        name="desc"
+        name="case_desc"
         label="用例描述"
         required={true}
         fieldProps={{

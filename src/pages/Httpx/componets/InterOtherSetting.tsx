@@ -24,7 +24,7 @@ const InterOtherSetting: FC<Props> = (props) => {
         <ProForm.Group>
           <ProFormSelect
             disabled={currentMode === 1}
-            name="level"
+            name="interface_level"
             label="优先级"
             width={'sm'}
             initialValue={'P1'}
@@ -32,7 +32,7 @@ const InterOtherSetting: FC<Props> = (props) => {
           />
           <ProFormSelect
             disabled={currentMode === 1}
-            name="status"
+            name="interface_status"
             label="状态"
             initialValue={'DEBUG'}
             width={'sm'}
@@ -44,7 +44,7 @@ const InterOtherSetting: FC<Props> = (props) => {
             disabled={currentMode === 1}
             width={'sm'}
             label={'是否重定向'}
-            name={'follow_redirects'}
+            name={'interface_follow_redirects'}
             initialValue={0}
             options={[
               { label: '是', value: 1 },
@@ -57,7 +57,7 @@ const InterOtherSetting: FC<Props> = (props) => {
             disabled={currentMode === 1}
             width={'sm'}
             label={'请求超时(s)'}
-            name={'connect_timeout'}
+            name={'interface_connect_timeout'}
             initialValue={6}
             min={0}
           />
@@ -67,7 +67,7 @@ const InterOtherSetting: FC<Props> = (props) => {
             label={'响应超时(s)'}
             initialValue={6}
             min={0}
-            name={'response_timeout'}
+            name={'interface_response_timeout'}
           />
         </ProForm.Group>
       </>

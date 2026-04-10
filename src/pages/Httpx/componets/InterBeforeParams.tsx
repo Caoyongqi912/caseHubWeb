@@ -107,8 +107,8 @@ const InterBeforeParams: FC<SelfProps> = ({ form }) => {
                   setValue={(index, newData) => {
                     editorFormRef.current?.setRowData?.(index, newData);
                     form.setFieldsValue({
-                      before_params: form
-                        .getFieldValue('before_params')
+                      interface_before_params: form
+                        .getFieldValue('interface_before_params')
                         .map((item: any) =>
                           item.id === index
                             ? { ...item, value: newData.value }
@@ -196,7 +196,7 @@ const InterBeforeParams: FC<SelfProps> = ({ form }) => {
           前置参数配置
         </Text>
       </div>
-      <ProForm.Item name={'before_params'} trigger={'onValuesChange'}>
+      <ProForm.Item name={'interface_before_params'} trigger={'onValuesChange'}>
         <EditableProTable<IBeforeParams>
           editableFormRef={editorFormRef}
           rowKey={'id'}
@@ -223,11 +223,15 @@ const InterBeforeParams: FC<SelfProps> = ({ form }) => {
             type: 'multiple',
             editableKeys: beforeParamsEditableKeys,
             onDelete: async (key) => {
-              await FormEditableOnValueRemove(form, 'before_params', key);
+              await FormEditableOnValueRemove(
+                form,
+                'interface_before_params',
+                key,
+              );
             },
             onChange: setBeforeParamsEditableRowKeys,
             onSave: async () => {
-              await FormEditableOnValueChange(form, 'before_params');
+              await FormEditableOnValueChange(form, 'interface_before_params');
             },
             actionRender: (row, _, dom) => {
               return [dom.save, dom.cancel, dom.delete];

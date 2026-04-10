@@ -41,9 +41,10 @@ export interface IInterfaceCaseContent {
   content_name?: string | undefined;
   content_desc?: string | undefined;
 
+  group_interface_num?: number;
   is_common_api: number;
   enable?: boolean;
-  api_wait_time?: number;
+  wait_time?: number;
   script_text?: string;
   assert_list?: IInterfaceCaseContentAssert[];
 }
@@ -63,63 +64,52 @@ export interface IInterfaceCaseCondition {
 }
 
 export interface IInterfaceAPI extends IBaseField {
-  name: string;
-  description: string;
-  method: 'GET' | 'POST' | 'PUT' | 'DELETE';
-  status: string;
-  level: string;
-  url: string;
-  body_type: number;
-  headers: IHeaders[] | [];
-  params: IParams[] | [];
-  body: any;
-  raw_type: 'json' | 'text';
-  auth_type: number;
-  auth: any;
-  data: any;
-  files: any;
-  asserts: IAsserts[];
-  extracts: IExtracts[];
-  project_id: number;
-  module_id: number;
-  env_id: number;
-  connect_timeout: number;
-  response_timeout: number;
-  before_script: string;
-  before_db_id: number;
-  before_sql: string;
-  before_sql_extracts: { key: string; jP: string; id: any }[];
-  after_script: string;
-  before_params: IBeforeParams[] | [];
-  follow_redirects: boolean;
+  interface_name: string;
+  interface_desc: string;
+  interface_status: string;
+  interface_level: string;
+  interface_url: string;
+  interface_method: string;
+  interface_params: any;
+  interface_headers: any;
+  interface_body_type: number;
+  interface_raw_type: string;
+  interface_auth_type: number;
+  interface_auth: any;
+  interface_body: any;
+  interface_data: any;
+  interface_asserts: any;
+  interface_extracts: any;
+  interface_follow_redirects: number;
+  interface_connect_timeout: number;
+  interface_response_timeout: number;
+  interface_before_script: string;
+  interface_before_db_id: number;
+  interface_before_sql: string;
+  interface_before_sql_extracts: any;
+  interface_after_script: string;
+  interface_before_params: any;
   is_common: number;
-  enable: boolean;
-  is_group: number;
-  group_id: number;
-
-  is_condition: boolean;
-  condition_id?: number;
-
-  // 兼容UI
-  interface_a_or_b?: number | null;
-  interface_fail_stop?: number | null;
+  env_id: number;
+  module_id: number;
+  project_id: number;
 }
 
 export interface IInterfaceGroup extends IBaseField {
-  name: string;
-  description: string;
-  api_num: number;
+  interface_group_name: string;
+  interface_group_desc: string;
+  interface_group_api_num: number;
   project_id: number;
   module_id: number;
 }
 
 export interface IInterfaceAPICase extends IBaseField {
-  title: string;
-  desc: string;
-  level: string;
-  status: string;
+  case_title: string;
+  case_desc: string;
+  case_level: string;
+  case_status: string;
   module_id: number;
-  apiNum: number;
+  case_api_num: number;
   project_id: number;
 }
 

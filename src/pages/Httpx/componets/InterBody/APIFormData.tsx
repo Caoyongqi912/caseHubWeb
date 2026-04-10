@@ -31,20 +31,17 @@ const APIFormData: FC<SelfProps> = ({ form }) => {
   const uploadData = async (info: any, index: number | undefined) => {
     const formData = new FormData();
     const file = info.fileList[0]?.originFileObj;
-    formData.append('data_file', file || null); // 选择了一个文件，放入 FormData
+    formData.append('data_file', file || null);
     formData.append('interfaceId', form.getFieldValue('uid'));
 
-    //
     const { code, data, msg } = await uploadInterApiData(formData);
     if (code === 0) {
-      // 更新当前行的数据
-      const currentData = form.getFieldValue('data');
+      const currentData = form.getFieldValue('interface_data');
       const newData = currentData.map((item: any) =>
         item.id === index ? { ...item, value: data } : item,
       );
 
-      // 更新表单和编辑状态
-      form.setFieldsValue({ data: newData });
+      form.setFieldsValue({ interface_data: newData });
       editorFormRef.current?.setRowData?.(index!, {
         ...currentData[index!],
         value: data,
@@ -111,10 +108,9 @@ const APIFormData: FC<SelfProps> = ({ form }) => {
                     index={record?.id}
                     setValue={(index, newData) => {
                       editorFormRef.current?.setRowData?.(index, newData);
-                      // 更新表单数据
                       form.setFieldsValue({
-                        data: form
-                          .getFieldValue('data')
+                        interface_data: form
+                          .getFieldValue('interface_data')
                           .map((item: any) =>
                             item.id === index
                               ? { ...item, value: newData.value }
@@ -156,11 +152,11 @@ const APIFormData: FC<SelfProps> = ({ form }) => {
     <>
       <SetKv2Query
         callBack={(resultArray: any) => {
-          form.setFieldValue('data', resultArray);
+          form.setFieldValue('interface_data', resultArray);
           setDataEditableRowKeys(resultArray.map((item: any) => item.id) || []);
         }}
       />
-      <ProForm.Item name={'data'} trigger={'onValuesChange'}>
+      <ProForm.Item name={'interface_data'} trigger={'onValuesChange'}>
         <EditableProTable<IFromData>
           rowKey={'id'}
           editableFormRef={editorFormRef}
@@ -177,12 +173,12 @@ const APIFormData: FC<SelfProps> = ({ form }) => {
             type: 'multiple',
             editableKeys: dataEditableKeys,
             onSave: async () => {
-              await FormEditableOnValueChange(form, 'data');
+              await FormEditableOnValueChange(form, 'interface_data');
             },
             onDelete: async (key) => {
-              await FormEditableOnValueRemove(form, 'data', key);
+              await FormEditableOnValueRemove(form, 'interface_data', key);
             },
-            onChange: setDataEditableRowKeys, // Update editable keys
+            onChange: setDataEditableRowKeys,
             actionRender: (_, __, dom) => {
               return [dom.delete, dom.save, dom.cancel];
             },

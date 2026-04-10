@@ -51,17 +51,16 @@ interface ISelfProps {
 }
 
 const InterAssertList: FC<ISelfProps> = ({ form, readonly = false }) => {
-  const [editingIndex, setEditingIndex] = useState<number | null>(0); // 当前正在编辑的行索引
+  const [editingIndex, setEditingIndex] = useState<number | null>(0);
   const [showTools, setShowTools] = useState(false);
 
   useEffect(() => {
-    const asserts = form.getFieldValue('asserts');
+    const asserts = form.getFieldValue('interface_asserts');
     if (asserts === null || asserts?.length === 0) {
       setEditingIndex(0);
     } else setEditingIndex(null);
   }, []);
 
-  // 处理编辑按钮的点击
   const handleEdit = (index: number) => {
     setEditingIndex(index);
   };
@@ -72,8 +71,8 @@ const InterAssertList: FC<ISelfProps> = ({ form, readonly = false }) => {
     } catch (e) {
       return;
     }
-    setEditingIndex(null); // 取消编辑
-    await FormEditableOnValueChange(form, 'asserts');
+    setEditingIndex(null);
+    await FormEditableOnValueChange(form, 'interface_asserts');
   };
   return (
     <>
@@ -81,7 +80,7 @@ const InterAssertList: FC<ISelfProps> = ({ form, readonly = false }) => {
         <JsonPathTool />
       </MyDrawer>
       <ProFormList
-        name="asserts"
+        name="interface_asserts"
         creatorButtonProps={{
           creatorButtonText: '添加断言',
         }}
@@ -91,7 +90,7 @@ const InterAssertList: FC<ISelfProps> = ({ form, readonly = false }) => {
           }
         }}
         onAfterRemove={async () => {
-          await FormEditableOnValueChange(form, 'asserts');
+          await FormEditableOnValueChange(form, 'interface_asserts');
         }}
         copyIconProps={
           !readonly && { tooltipText: '复制当前行', Icon: CopyTwoTone }

@@ -1,5 +1,5 @@
 import {
-  getConditionContentInfo,
+  createInterfaceAssoiationCondition,
   queryConditionAPI,
   removerAssociationAPI,
   reorderAssociationAPI,
@@ -16,6 +16,7 @@ import { CONFIG } from '@/utils/config';
 import { queryData } from '@/utils/somefunc';
 import {
   DeleteOutlined,
+  LoadingOutlined,
   PlusOutlined,
   SelectOutlined,
 } from '@ant-design/icons';
@@ -39,315 +40,397 @@ import {
   theme,
   Typography,
 } from 'antd';
-import React, { FC, useCallback, useEffect, useRef, useState } from 'react';
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 const { Text } = Typography;
 const { useToken } = theme;
+
+interface ConditionData {
+  condition_key?: string;
+  condition_value?: string;
+  condition_operator?: number;
+}
 
 interface SelfProps {
   case_id: number;
   caseContent: IInterfaceCaseContent;
   projectId?: number;
-  setKey: React.Dispatch<React.SetStateAction<string | undefined>>;
-  setValue: React.Dispatch<React.SetStateAction<string | undefined>>;
-  setOperator: React.Dispatch<React.SetStateAction<string | undefined>>;
+  initialConditionData: ConditionData;
+  onConditionChange: () => void;
 }
 
-const OperatorOption: { [key: number]: string } = {
-  0: '等于',
-  1: '不等于',
-  2: '大于',
-  3: '小于',
-  4: '大于等于',
-  5: '小于等于',
-  6: '包含',
-  7: '不包含',
-};
-const ApiCondition: FC<SelfProps> = ({
-  projectId,
-  setValue,
-  setOperator,
-  setKey,
-  case_id,
-  caseContent,
-}) => {
+/**
+ * 条件详情组件
+ * 用于显示和管理条件判断的详细信息，包括条件配置和条件接口列表
+ */
+const ApiCondition: FC<SelfProps> = (props) => {
+  const {
+    case_id,
+    caseContent,
+    projectId,
+    initialConditionData,
+    onConditionChange,
+  } = props;
   const { token } = useToken();
-  const timeoutRef = useRef<any>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
+  const actionRef = useRef<ActionType>();
+
   const [conditionForm] = Form.useForm();
+  const [conditionAPI, setConditionAPI] = useState<IInterfaceAPI[]>([]);
   const [choiceGroupOpen, setChoiceGroupOpen] = useState(false);
   const [choiceOpen, setChoiceOpen] = useState(false);
-  const [conditionAPI, setConditionAPI] = useState<IInterfaceAPI[]>([]);
-  const actionRef = useRef<ActionType>();
   const [showAPIDetail, setShowAPIDetail] = useState(false);
   const [currentApiId, setCurrentApiId] = useState<number>();
   const [showValueInput, setShowValueInput] = useState(true);
-  const refresh = () => {
-    actionRef.current?.reload();
-    setChoiceGroupOpen(false);
-    setChoiceOpen(false);
-  };
+  const [showSaveSuccess, setShowSaveSuccess] = useState(false);
 
+  /**
+   * 初始化表单数据
+   * @description 当 initialConditionData 变化时，同步表单值和状态
+   */
+  useEffect(() => {
+    if (initialConditionData) {
+      conditionForm.setFieldsValue(initialConditionData);
+      const operator = initialConditionData.condition_operator;
+      setShowValueInput(operator !== 3 && operator !== 4);
+    }
+  }, [initialConditionData, conditionForm]);
+
+  /**
+   * 获取条件接口列表
+   * @description 从服务端获取条件关联的接口列表
+   */
   const fetchConditionAPIS = useCallback(async () => {
     const { code, data } = await queryConditionAPI(caseContent.target_id);
     return queryData(code, data, setConditionAPI);
-  }, [caseContent]);
+  }, [caseContent.target_id]);
 
-  useEffect(() => {
-    if (!caseContent) return;
-    getConditionContentInfo(caseContent.target_id).then(
-      async ({ code, data }) => {
-        if (code === 0) {
-          setKey(data.condition_key);
-          setValue(data.condition_value);
-          setOperator(OperatorOption[data.condition_operator]);
+  /**
+   * 刷新表格数据
+   * @description 重新加载表格并关闭选择弹窗
+   */
+  const refresh = useCallback(() => {
+    actionRef.current?.reload();
+    setChoiceGroupOpen(false);
+    setChoiceOpen(false);
+  }, []);
 
-          conditionForm.setFieldsValue(data);
-          if (data.condition_operator === 3 || data.condition_operator === 4) {
-            setShowValueInput(false);
-          }
-        }
-      },
-    );
-  }, [caseContent]);
+  /**
+   * 拖拽排序结束处理
+   * @description 更新本地状态并同步排序结果到服务器
+   */
+  const handleDragSortEnd = useCallback(
+    async (_: number, __: number, newDataSource: IInterfaceAPI[]) => {
+      setConditionAPI(newDataSource);
+      const reorderIds: number[] = newDataSource.map((item) => item.id);
+      await reorderAssociationAPI({
+        interface_id_list: reorderIds,
+        condition_id: caseContent.target_id,
+      });
+    },
+    [caseContent.target_id],
+  );
 
-  const handleDragSortEnd = async (
-    _: number,
-    __: number,
-    newDataSource: IInterfaceAPI[],
-  ) => {
-    setConditionAPI(newDataSource);
-    const reorderIds: number[] = newDataSource.map((item) => item.id);
-    await reorderAssociationAPI({
-      interface_id_list: reorderIds,
+  /**
+   * 移除接口关联
+   * @description 从条件中移除指定的接口关联
+   */
+  const handleRemoveAssociation = useCallback(
+    async (apiId: number) => {
+      const { code, msg } = await removerAssociationAPI({
+        interface_id: apiId,
+        condition_id: caseContent.target_id,
+      });
+      if (code === 0) {
+        message.success(msg);
+        refresh();
+      }
+    },
+    [caseContent.target_id, refresh],
+  );
+
+  /**
+   * 选择接口添加到条件
+   * @description 将选中的接口关联到当前条件
+   */
+  const handleSelectInterface2Condition = useCallback(
+    async (values: number[], copy: boolean) => {
+      const { code, msg } = await selectCommonAPI2ConditionAPI({
+        condition_id: caseContent.target_id,
+        interface_id_list: values,
+        copy,
+      });
+      if (code === 0) {
+        message.success(msg);
+        refresh();
+      }
+    },
+    [caseContent.target_id, refresh],
+  );
+
+  /**
+   * 创建私有API
+   * @description 创建新的私有接口并关联到当前条件
+   */
+  const handleCreateSelfApi = useCallback(async () => {
+    const { code, data } = await createInterfaceAssoiationCondition({
       condition_id: caseContent.target_id,
-    });
-  };
-
-  const removeAssociation = async (apiId: number) => {
-    const { code, msg } = await removerAssociationAPI({
-      interface_id: apiId,
-      condition_id: caseContent.target_id,
+      case_id,
     });
     if (code === 0) {
-      message.success(msg);
-      refresh();
+      actionRef.current?.reload();
+      setCurrentApiId(data.id);
+      setShowAPIDetail(true);
     }
-  };
+  }, [caseContent.target_id, case_id]);
 
-  const columns: ProColumns<IInterfaceAPI>[] = [
-    {
-      title: '排序',
-      dataIndex: 'sort',
-      className: 'drag-visible',
-      width: 60,
-      align: 'center',
+  /**
+   * 表单值变化处理（防抖保存）
+   * @description 条件配置变化时自动保存到服务端，防抖时间为2秒
+   */
+  const handleValuesChange = useCallback(
+    (_: unknown, allValues: Record<string, unknown>) => {
+      clearTimeout(timeoutRef.current);
+      const condition_key = allValues.condition_key as string;
+      const condition_operator = allValues.condition_operator as number;
+      const condition_value = conditionForm.getFieldValue('condition_value');
+      const isOperatorWithoutValue =
+        condition_operator === 3 || condition_operator === 4;
+      const needsConditionValue = !isOperatorWithoutValue;
+      const hasConditionValue =
+        condition_value !== undefined && condition_value !== '';
+      const isFormComplete =
+        condition_key &&
+        condition_operator &&
+        (!needsConditionValue || hasConditionValue);
+      if (!isFormComplete) return;
+
+      timeoutRef.current = setTimeout(async () => {
+        const { code, data } = await updateConditionContentInfo({
+          id: caseContent.target_id,
+          ...allValues,
+        });
+        if (code === 0) {
+          conditionForm.setFieldsValue(data);
+          setShowSaveSuccess(true);
+          onConditionChange();
+          setTimeout(() => setShowSaveSuccess(false), 2000);
+        }
+      }, 2000);
     },
-    {
-      title: '接口编号',
-      dataIndex: 'uid',
-      key: 'uid',
-      width: 120,
-      render: (_, record) => {
-        return (
+    [caseContent.target_id, conditionForm, onConditionChange],
+  );
+
+  /**
+   * 操作符变化处理
+   * @description 当操作符为大于或小于时，隐藏比较值输入框
+   */
+  const handleOperatorChange = useCallback((_: unknown, option: unknown) => {
+    const optionObj = option as { label: string; value: number };
+    setShowValueInput(optionObj?.value !== 3 && optionObj?.value !== 4);
+  }, []);
+
+  /**
+   * 表格列定义
+   * @description 定义条件接口列表表格的列信息
+   */
+  const columns: ProColumns<IInterfaceAPI>[] = useMemo(
+    () => [
+      {
+        title: '排序',
+        dataIndex: 'sort',
+        className: 'drag-visible',
+        width: 60,
+        align: 'center',
+      },
+      {
+        title: '接口编号',
+        dataIndex: 'uid',
+        key: 'uid',
+        width: 120,
+        render: (_, record) => (
           <a
             onClick={() => {
               setCurrentApiId(record.id);
               setShowAPIDetail(true);
             }}
+            style={{ color: '#8b5cf6', fontWeight: 500 }}
           >
             {record.uid}
           </a>
-        );
+        ),
       },
-    },
-    {
-      title: '名称',
-      dataIndex: 'name',
-      key: 'name',
-      ellipsis: true,
-    },
-    {
-      title: '优先级',
-      dataIndex: 'level',
-      valueType: 'select',
-      valueEnum: CONFIG.API_LEVEL_ENUM,
-      width: 100,
-      align: 'center',
-      render: (_, record) => {
-        return (
+      {
+        title: '名称',
+        dataIndex: 'interface_name',
+        key: 'interface_name',
+        ellipsis: true,
+      },
+      {
+        title: '标签',
+        dataIndex: 'is_common',
+        key: 'is_common',
+        render: (_, record) =>
+          record.is_common ? (
+            <Tag color="green">公共</Tag>
+          ) : (
+            <Tag color="red">私有</Tag>
+          ),
+      },
+      {
+        title: '优先级',
+        dataIndex: 'interface_level',
+        valueType: 'select',
+        valueEnum: CONFIG.API_LEVEL_ENUM,
+        align: 'center',
+        render: (_, record) => (
           <Tag
             style={{
-              background: token.colorPrimaryBg,
-              color: token.colorPrimary,
-              border: `1px solid ${token.colorPrimaryBorder}`,
-              borderRadius: token.borderRadiusSM,
+              background: 'rgba(139, 92, 246, 0.1)',
+              color: '#8b5cf6',
+              border: '1px solid rgba(139, 92, 246, 0.2)',
+              borderRadius: '4px',
             }}
           >
-            {record.level}
+            {record.interface_level}
           </Tag>
-        );
+        ),
       },
-    },
-    {
-      title: '状态',
-      dataIndex: 'status',
-      valueType: 'select',
-      width: 100,
-      align: 'center',
-      valueEnum: CONFIG.API_STATUS_ENUM,
-      render: (_, record) => {
-        return CONFIG.API_STATUS_ENUM[record.status].tag;
+      {
+        title: '创建人',
+        dataIndex: 'creatorName',
+        align: 'center',
+        render: (_, record) => (
+          <Tag style={{ borderRadius: '4px' }}>{record.creatorName}</Tag>
+        ),
       },
-    },
-    {
-      title: '创建人',
-      dataIndex: 'creatorName',
-      width: 100,
-      align: 'center',
-      render: (_, record) => {
-        return (
-          <Tag
-            style={{
-              background: token.colorBgLayout,
-              border: `1px solid ${token.colorBorder}`,
-              borderRadius: token.borderRadiusSM,
-            }}
-          >
-            {record.creatorName}
-          </Tag>
-        );
-      },
-    },
-    {
-      title: '操作',
-      valueType: 'option',
-      key: 'option',
-      width: 80,
-      align: 'center',
-      render: (_, record) => {
-        return (
+      {
+        title: '操作',
+        valueType: 'option',
+        key: 'option',
+        width: '10%',
+        align: 'center',
+        render: (_, record) => (
           <Popconfirm
             title="确认移除"
             description="确定要移除这个接口吗？"
-            onConfirm={async () => await removeAssociation(record.id)}
+            onConfirm={async () => await handleRemoveAssociation(record.id)}
             okText="确定"
             cancelText="取消"
           >
             <Button type="text" danger size="small" icon={<DeleteOutlined />} />
           </Popconfirm>
-        );
+        ),
       },
-    },
-  ];
+    ],
+    [handleRemoveAssociation],
+  );
 
-  const items: MenuProps['items'] = [
-    {
-      key: 'choice_common',
-      label: '选择公共API',
-      icon: <SelectOutlined style={{ color: token.colorPrimary }} />,
-      onClick: () => setChoiceOpen(true),
-    },
-  ];
+  /**
+   * 下拉菜单配置
+   * @description 提供添加接口的下拉菜单选项
+   */
+  const dropdownItems: MenuProps['items'] = useMemo(
+    () => [
+      {
+        key: 'choice_common',
+        label: '选择公共API',
+        icon: <SelectOutlined style={{ color: '#8b5cf6' }} />,
+        onClick: () => setChoiceOpen(true),
+      },
+      {
+        key: 'create_self_api',
+        label: '创建私有API',
+        icon: <PlusOutlined style={{ color: '#8b5cf6' }} />,
+        onClick: handleCreateSelfApi,
+      },
+    ],
+    [handleCreateSelfApi],
+  );
 
-  const onValuesChange = (_: any, allValues: any) => {
-    clearTimeout(timeoutRef.current);
-    timeoutRef.current = setTimeout(async () => {
-      const { code, data } = await updateConditionContentInfo({
-        id: caseContent.target_id,
-        ...allValues,
-      });
-      if (code === 0) {
-        conditionForm.setFieldsValue(data);
-      }
-    }, 2000);
-  };
-  const formRender = (
-    <div
-      style={{
-        padding: '16px',
-        background: token.colorBgContainer,
-        borderRadius: token.borderRadius,
-        border: `1px solid ${token.colorBorder}`,
-      }}
-    >
-      <Form
-        form={conditionForm}
-        onValuesChange={onValuesChange}
-        layout="inline"
+  /**
+   * 条件表单渲染
+   * @description 渲染条件配置的表单区域
+   */
+  const formRender = useMemo(
+    () => (
+      <div
+        style={{
+          padding: '16px 20px',
+          background: token.colorBgContainer,
+          borderRadius: '12px',
+          border: `1px solid ${token.colorBorderSecondary}`,
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+        }}
       >
-        <Space size="middle" align="center" wrap>
-          <Text strong style={{ fontSize: '14px', color: token.colorText }}>
-            判断条件
-          </Text>
-          <Form.Item
-            name={'condition_key'}
-            rules={[{ required: true, message: '变量名不能为空' }]}
-            style={{ marginBottom: 0 }}
-          >
-            <Input
-              placeholder="条件值，支持{{变量名}}"
-              style={{ width: '200px' }}
-              onChange={(e) => {
-                setKey(e.target.value);
-              }}
-            />
-          </Form.Item>
-          <Form.Item
-            name={'condition_operator'}
-            rules={[{ required: true, message: '条件不能为空' }]}
-            style={{ marginBottom: 0 }}
-          >
-            <Select
-              style={{ width: '120px' }}
-              options={AssertOption}
-              onChange={(_: any, option: any) => {
-                setOperator(option.label);
-                if (option.value === 3 || option.value === 4) {
-                  setShowValueInput(false);
-                } else {
-                  setShowValueInput(true);
-                }
-              }}
-            />
-          </Form.Item>
-          {showValueInput && (
+        <Form
+          form={conditionForm}
+          onValuesChange={handleValuesChange}
+          layout="horizontal"
+          component={false}
+        >
+          <Space size="middle" align="center" wrap>
+            {showSaveSuccess && (
+              <LoadingOutlined style={{ fontSize: '14px', color: '#8b5cf6' }} />
+            )}
+            <Text strong style={{ fontSize: '14px', color: token.colorText }}>
+              判断条件
+            </Text>
             <Form.Item
-              name={'condition_value'}
-              rules={[{ required: true, message: '比较值不能为空' }]}
+              name={'condition_key'}
+              rules={[{ required: true, message: '变量名不能为空' }]}
               style={{ marginBottom: 0 }}
             >
               <Input
-                placeholder="输入比较值"
-                style={{ width: '200px' }}
-                onChange={(e) => {
-                  setValue(e.target.value);
-                }}
+                placeholder="条件值，支持{{变量名}}"
+                style={{ width: '200px', borderRadius: '8px' }}
               />
             </Form.Item>
-          )}
-        </Space>
-      </Form>
-    </div>
+            <Form.Item
+              name={'condition_operator'}
+              rules={[{ required: true, message: '条件不能为空' }]}
+              style={{ marginBottom: 0 }}
+            >
+              <Select
+                style={{ width: '120px', borderRadius: '8px' }}
+                options={AssertOption}
+                onChange={handleOperatorChange}
+              />
+            </Form.Item>
+            {showValueInput && (
+              <Form.Item
+                name={'condition_value'}
+                rules={[{ required: true, message: '比较值不能为空' }]}
+                style={{ marginBottom: 0 }}
+              >
+                <Input
+                  placeholder="输入比较值"
+                  style={{ width: '200px', borderRadius: '8px' }}
+                />
+              </Form.Item>
+            )}
+          </Space>
+        </Form>
+      </div>
+    ),
+    [
+      token,
+      showSaveSuccess,
+      showValueInput,
+      conditionForm,
+      handleValuesChange,
+      handleOperatorChange,
+    ],
   );
 
-  const selectInterface2Condition = async (values: number[]) => {
-    const { code, msg } = await selectCommonAPI2ConditionAPI({
-      condition_id: caseContent.target_id,
-      interface_id_list: values,
-    });
-
-    if (code === 0) {
-      message.success(msg);
-      refresh();
-    }
-  };
   return (
     <>
       <div
         style={{
-          background: token.colorBgContainer,
-          borderRadius: token.borderRadius,
-          padding: '16px',
+          background: `linear-gradient(180deg, ${token.colorBgContainer} 0%, ${token.colorBgLayout} 100%)`,
+          padding: '20px 24px',
         }}
       >
         {formRender}
@@ -357,18 +440,46 @@ const ApiCondition: FC<SelfProps> = ({
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            marginBottom: '12px',
+            marginBottom: '16px',
           }}
         >
-          <Text strong style={{ fontSize: '14px' }}>
+          <Text
+            strong
+            style={{
+              fontSize: '15px',
+              color: token.colorText,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+          >
+            <span
+              style={{
+                background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+                width: '4px',
+                height: '16px',
+                borderRadius: '2px',
+                display: 'inline-block',
+              }}
+            />
             条件接口列表
           </Text>
-          <Dropdown arrow menu={{ items }} placement="bottomRight">
+          <Dropdown
+            arrow
+            menu={{ items: dropdownItems }}
+            placement="bottomRight"
+          >
             <Button
               type="primary"
               icon={<PlusOutlined />}
               style={{
-                borderRadius: token.borderRadius,
+                background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+                border: 'none',
+                borderRadius: '8px',
+                boxShadow: '0 4px 12px rgba(139, 92, 246, 0.35)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
               }}
             >
               添加接口
@@ -378,7 +489,6 @@ const ApiCondition: FC<SelfProps> = ({
         <DragSortTable
           actionRef={actionRef}
           columns={columns}
-          options={false}
           rowKey="id"
           request={fetchConditionAPIS}
           search={false}
@@ -387,26 +497,26 @@ const ApiCondition: FC<SelfProps> = ({
           dragSortKey="sort"
           onDragSortEnd={handleDragSortEnd}
           style={{
-            border: `1px solid ${token.colorBorder}`,
-            borderRadius: token.borderRadius,
+            borderRadius: '8px',
+            overflow: 'hidden',
           }}
         />
       </div>
       <MyDrawer width={'75%'} open={showAPIDetail} setOpen={setShowAPIDetail}>
-        <InterfaceApiDetail interfaceId={currentApiId} callback={() => {}} />;
+        <InterfaceApiDetail interfaceId={currentApiId} callback={() => {}} />
       </MyDrawer>
       <MyDrawer open={choiceGroupOpen} setOpen={setChoiceGroupOpen}>
         <GroupApiChoiceTable
           projectId={projectId}
           refresh={refresh}
-          currentCaseId={case_id}
           condition_api_id={caseContent.id}
         />
       </MyDrawer>
       <MyDrawer open={choiceOpen} setOpen={setChoiceOpen}>
         <InterfaceCaseChoiceApiTable
           projectId={projectId}
-          onSelect={selectInterface2Condition}
+          radio={false}
+          onSelect={handleSelectInterface2Condition}
         />
       </MyDrawer>
     </>

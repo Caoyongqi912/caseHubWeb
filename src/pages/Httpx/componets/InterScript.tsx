@@ -116,7 +116,9 @@ const InterScript: FC<SelfProps> = ({ form, tag }) => {
 
   const formSetter = (value: string | null) => {
     form.setFieldsValue({
-      [tag === 'before_script' ? 'before_script' : 'after_script']: value,
+      [tag === 'before_script'
+        ? 'interface_before_script'
+        : 'interface_after_script']: value,
     });
   };
 

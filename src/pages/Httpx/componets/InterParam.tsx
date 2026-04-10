@@ -73,10 +73,9 @@ const InterParam: FC<SelfProps> = ({ form, readonly = false }) => {
                   index={record?.id}
                   setValue={(index, newData) => {
                     editorFormRef.current?.setRowData?.(index, newData);
-                    // 更新表单数据
                     form.setFieldsValue({
-                      params: form
-                        .getFieldValue('params')
+                      interface_params: form
+                        .getFieldValue('interface_params')
                         .map((item: any) =>
                           item.id === index
                             ? { ...item, value: newData.value }
@@ -122,13 +121,13 @@ const InterParam: FC<SelfProps> = ({ form, readonly = false }) => {
     <>
       <SetKv2Query
         callBack={(resultArray: any) => {
-          form.setFieldValue('params', resultArray);
+          form.setFieldValue('interface_params', resultArray);
           setParamsEditableRowKeys(
             resultArray.map((item: any) => item.id) || [],
           );
         }}
       />
-      <ProForm.Item name={'params'} trigger={'onValuesChange'}>
+      <ProForm.Item name={'interface_params'} trigger={'onValuesChange'}>
         <EditableProTable<IParams>
           editableFormRef={editorFormRef}
           rowKey={'id'}
@@ -145,12 +144,12 @@ const InterParam: FC<SelfProps> = ({ form, readonly = false }) => {
           editable={{
             type: 'multiple',
             editableKeys: paramsEditableKeys,
-            onChange: setParamsEditableRowKeys, // Update editable keys
+            onChange: setParamsEditableRowKeys,
             onDelete: async (key) => {
-              await FormEditableOnValueRemove(form, 'params', key);
+              await FormEditableOnValueRemove(form, 'interface_params', key);
             },
             onSave: async () => {
-              await FormEditableOnValueChange(form, 'params');
+              await FormEditableOnValueChange(form, 'interface_params');
             },
             actionRender: (_, __, dom) => {
               return [dom.save, dom.cancel, dom.delete];

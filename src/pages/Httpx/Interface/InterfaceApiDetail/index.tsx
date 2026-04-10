@@ -174,7 +174,6 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
   const SaveOrUpdate = async () => {
     await interApiForm.validateFields();
     const values = interApiForm.getFieldsValue(true);
-    values.is_common = 1;
     if (interId !== undefined || values.id !== undefined) {
       //修改
       const { code, msg } = await updateInterApiById(values);
@@ -185,6 +184,7 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
         return true;
       }
     } else {
+      values.is_common = 1;
       //新增
       const { code, data } = await insertInterApi(values);
       if (code === 0) {

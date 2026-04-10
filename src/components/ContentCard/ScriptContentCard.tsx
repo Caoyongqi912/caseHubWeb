@@ -19,27 +19,18 @@ import InfiniteScroll from 'react-infinite-scroll-component';
 const { Text } = Typography;
 const { useToken } = theme;
 
-/**
- * 脚本内容信息接口
- */
 export interface ScriptContentInfo {
   id: number;
   content_name?: string;
   script_text?: string;
 }
 
-/**
- * 更新脚本函数类型
- */
 export type UpdateScriptFunc = (data: {
   id: number;
   script_text?: string;
   content_name?: string;
 }) => Promise<any>;
 
-/**
- * 脚本内容卡片组件Props
- */
 interface Props {
   id: number;
   step: number;
@@ -53,15 +44,8 @@ interface Props {
   updateScript: UpdateScriptFunc;
 }
 
-/**
- * 脚本示例列表
- */
 const ScriptList = [
-  {
-    label: '设置一个变量 1',
-    value: 'key = 1',
-    desc: 'python 写法',
-  },
+  { label: '设置一个变量 1', value: 'key = 1', desc: 'python 写法' },
   {
     label: '设置一个变量 2',
     value: 'hub_variables_set("name","cyq")',
@@ -130,9 +114,6 @@ const ScriptList = [
   },
 ];
 
-/**
- * 脚本内容子组件Props
- */
 interface ScriptContentChildProps {
   script_text?: string;
   onChange: (value: string) => void;
@@ -152,15 +133,14 @@ const ScriptContentChild: FC<ScriptContentChildProps> = ({
   const [scriptData, setScriptData] = useState('');
 
   useEffect(() => {
-    if (script_text) {
-      setScriptData(script_text);
-    }
+    if (script_text) setScriptData(script_text);
   }, [script_text]);
 
   const useDemoScript = (value: string) => {
     if (scriptData) {
-      setScriptData(scriptData + '\n' + value);
-      onChange(scriptData + '\n' + value);
+      const newValue = scriptData + '\n' + value;
+      setScriptData(newValue);
+      onChange(newValue);
     } else {
       setScriptData(value);
       onChange(value);
@@ -168,25 +148,37 @@ const ScriptContentChild: FC<ScriptContentChildProps> = ({
   };
 
   return (
-    <div style={{ padding: '16px' }}>
+    <div
+      style={{
+        background: `linear-gradient(180deg, ${token.colorBgContainer} 0%, ${token.colorBgLayout} 100%)`,
+        padding: '20px 24px',
+      }}
+    >
       {isSave && (
         <Alert
-          message="已自动保存"
+          message="脚本已自动保存"
           type="success"
           icon={<SaveOutlined />}
           showIcon
           closable
-          style={{ marginBottom: '12px' }}
+          style={{
+            marginBottom: '16px',
+            borderRadius: '8px',
+            background: 'rgba(34, 197, 94, 0.1)',
+            border: '1px solid rgba(34, 197, 94, 0.2)',
+          }}
         />
       )}
       <div style={{ display: 'flex', gap: '16px', height: '35vh' }}>
         <div style={{ flex: '1' }}>
           <div
             style={{
-              border: `1px solid ${token.colorBorder}`,
-              borderRadius: token.borderRadius,
+              border: `1px solid ${token.colorBorderSecondary}`,
+              borderRadius: '12px',
               overflow: 'hidden',
               height: '100%',
+              boxShadow: 'inset 0 2px 8px rgba(0, 0, 0, 0.04)',
+              background: token.colorBgContainer,
             }}
           >
             <AceCodeEditor
@@ -199,63 +191,94 @@ const ScriptContentChild: FC<ScriptContentChildProps> = ({
         </div>
         <div
           style={{
-            width: '300px',
-            border: `1px solid ${token.colorBorder}`,
-            borderRadius: token.borderRadius,
-            overflow: 'auto',
+            width: '280px',
+            border: `1px solid ${token.colorBorderSecondary}`,
+            borderRadius: '12px',
             background: token.colorBgContainer,
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+            display: 'flex',
+            flexDirection: 'column',
+            maxHeight: '100%',
           }}
           id="scrollableDiv"
         >
           <div
             style={{
-              padding: '12px 16px',
-              borderBottom: `1px solid ${token.colorBorder}`,
+              padding: '14px 16px',
+              borderBottom: `1px solid ${token.colorBorderSecondary}`,
+              background: token.colorBgContainer,
+              flexShrink: 0,
             }}
           >
-            <Text strong style={{ fontSize: '14px' }}>
+            <Text
+              strong
+              style={{
+                fontSize: '14px',
+                color: token.colorText,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+            >
+              <span
+                style={{
+                  background:
+                    'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                  width: '4px',
+                  height: '14px',
+                  borderRadius: '2px',
+                  display: 'inline-block',
+                }}
+              />
               脚本示例
             </Text>
           </div>
-          <InfiniteScroll
-            dataLength={ScriptList.length}
-            hasMore={false}
-            endMessage={
-              <Divider plain style={{ margin: '12px 0' }}>
-                <Text type="secondary" style={{ fontSize: '12px' }}>
-                  没有更多示例了
-                </Text>
-              </Divider>
-            }
-            scrollableTarget="scrollableDiv"
-            loader={false}
-            next={() => {}}
-          >
-            <List
-              itemLayout="horizontal"
-              dataSource={ScriptList}
-              renderItem={(item) => (
-                <List.Item style={{ padding: '8px 16px' }}>
-                  <List.Item.Meta
-                    title={
-                      <Button
-                        type="link"
-                        onClick={() => useDemoScript(item.value)}
-                        style={{ padding: 0, height: 'auto' }}
-                      >
-                        {item.label}
-                      </Button>
-                    }
-                    description={
-                      <Text type="secondary" style={{ fontSize: '12px' }}>
-                        {typeof item.desc === 'string' ? item.desc : item.desc}
-                      </Text>
-                    }
-                  />
-                </List.Item>
-              )}
-            />
-          </InfiniteScroll>
+          <div style={{ flex: 1, overflow: 'auto' }}>
+            <InfiniteScroll
+              dataLength={ScriptList.length}
+              hasMore={false}
+              endMessage={
+                <Divider plain style={{ margin: '12px 0' }}>
+                  <Text type="secondary" style={{ fontSize: '12px' }}>
+                    没有更多示例了
+                  </Text>
+                </Divider>
+              }
+              scrollableTarget="scrollableDiv"
+              loader={false}
+              next={() => {}}
+            >
+              <List
+                itemLayout="horizontal"
+                dataSource={ScriptList}
+                renderItem={(item) => (
+                  <List.Item style={{ padding: '10px 16px' }}>
+                    <List.Item.Meta
+                      title={
+                        <Button
+                          type="link"
+                          onClick={() => useDemoScript(item.value)}
+                          style={{
+                            padding: 0,
+                            height: 'auto',
+                            color: '#2563eb',
+                            fontWeight: 500,
+                          }}
+                        >
+                          {item.label}
+                        </Button>
+                      }
+                      description={
+                        <Text type="secondary" style={{ fontSize: '12px' }}>
+                          {item.desc}
+                        </Text>
+                      }
+                    />
+                  </List.Item>
+                )}
+              />
+            </InfiniteScroll>
+          </div>
         </div>
       </div>
     </div>
@@ -268,8 +291,9 @@ const ScriptContentChild: FC<ScriptContentChildProps> = ({
  */
 const ScriptContentCard: FC<Props> = (props) => {
   const { token } = useToken();
-  const timeoutRef = useRef<any>(null);
-
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
   const {
     id,
     step,
@@ -279,7 +303,6 @@ const ScriptContentCard: FC<Props> = (props) => {
     onMouseLeave,
     updateScript,
   } = props;
-
   const [showOption, setShowOption] = useState(false);
   const [showEditIcon, setShowEditIcon] = useState(false);
   const [showScriptInput, setShowScriptInput] = useState(true);
@@ -293,29 +316,20 @@ const ScriptContentCard: FC<Props> = (props) => {
       setScriptTextName(content_name);
       setShowScriptInput(false);
     }
-    if (script_text) {
-      setScriptText(script_text);
-    }
-  }, [
-    contentInfo.content_name,
-    contentInfo.script_text,
-    contentInfo.script_text,
-  ]);
+    if (script_text) setScriptText(script_text);
+  }, [contentInfo.content_name, contentInfo.script_text]);
 
   const handleScriptOnChange = (value: string) => {
     clearTimeout(timeoutRef.current);
     setScriptText(value);
     timeoutRef.current = setTimeout(async () => {
-      const updateData: any = {
+      const { code } = await updateScript({
         id: contentInfo.id,
         script_text: value,
-      };
-      const { code } = await updateScript(updateData);
+      });
       if (code === 0) {
         setSaveScript(true);
-        setTimeout(() => {
-          setSaveScript(false);
-        }, 2000);
+        setTimeout(() => setSaveScript(false), 2000);
       }
     }, 3000);
   };
@@ -338,12 +352,13 @@ const ScriptContentCard: FC<Props> = (props) => {
   const SCRIPT = () => {
     if (scriptTextName && !showScriptInput) {
       return (
-        <Space size={8}>
+        <Space size={8} align="center">
           <Text
             strong
             style={{
-              fontSize: '14px',
+              fontSize: '15px',
               color: token.colorText,
+              letterSpacing: '0.5px',
             }}
           >
             {scriptTextName}
@@ -351,8 +366,12 @@ const ScriptContentCard: FC<Props> = (props) => {
           {showEditIcon && (
             <EditOutlined
               style={{
-                color: token.colorPrimary,
+                color: '#2563eb',
                 cursor: 'pointer',
+                fontSize: '14px',
+                transition: 'all 0.2s ease',
+                padding: '4px',
+                borderRadius: '4px',
               }}
               onClick={(event) => {
                 event.stopPropagation();
@@ -362,25 +381,21 @@ const ScriptContentCard: FC<Props> = (props) => {
           )}
         </Space>
       );
-    } else {
-      return (
-        <Input
-          style={{ width: '100%', maxWidth: '300px' }}
-          variant={'outlined'}
-          onChange={(e) => {
-            e.stopPropagation();
-            if (e.target.value) setScriptTextName(e.target.value);
-          }}
-          onClick={(e) => {
-            e.stopPropagation();
-          }}
-          onBlur={async () => await handleUpdateContentTitle(scriptTextName)}
-          onPressEnter={async () =>
-            await handleUpdateContentTitle(scriptTextName)
-          }
-        />
-      );
     }
+    return (
+      <Input
+        style={{ width: '100%', maxWidth: '280px', borderRadius: '6px' }}
+        variant="borderless"
+        placeholder="输入脚本名称..."
+        onChange={(e) => {
+          e.stopPropagation();
+          if (e.target.value) setScriptTextName(e.target.value);
+        }}
+        onClick={(e) => e.stopPropagation()}
+        onBlur={() => handleUpdateContentTitle(scriptTextName)}
+        onPressEnter={() => handleUpdateContentTitle(scriptTextName)}
+      />
+    );
   };
 
   return (
@@ -389,13 +404,17 @@ const ScriptContentCard: FC<Props> = (props) => {
       collapsible
       hoverable
       defaultCollapsed
+      bodyStyle={{ padding: 0 }}
       style={{
-        borderRadius: token.borderRadiusLG,
+        borderRadius: '16px',
         boxShadow: showOption
-          ? `0 4px 12px ${token.colorPrimaryBg}`
-          : `0 1px 3px ${token.colorBgLayout}`,
-        transition: 'all 0.3s ease',
-        borderColor: showOption ? token.colorPrimaryBorder : token.colorBorder,
+          ? `0 8px 32px rgba(37, 99, 235, 0.15), 0 2px 8px rgba(0, 0, 0, 0.08)`
+          : `0 2px 12px rgba(0, 0, 0, 0.06)`,
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        border: showOption
+          ? `1px solid rgba(37, 99, 235, 0.3)`
+          : `1px solid ${token.colorBorderSecondary}`,
+        overflow: 'hidden',
       }}
       extra={extra}
       onMouseEnter={() => {
@@ -408,28 +427,30 @@ const ScriptContentCard: FC<Props> = (props) => {
         setShowEditIcon(false);
         onMouseLeave?.();
       }}
-      collapsibleIconRender={() => {
-        return (
-          <Space size={8} align="center">
-            <Handler id={id} step={step} />
-            <Tag
-              icon={<CodeOutlined />}
-              style={{
-                background: '#eff6ff',
-                color: '#2563eb',
-                border: '1px solid #2563eb20',
-                fontWeight: 600,
-                fontSize: '12px',
-                padding: '2px 8px',
-                borderRadius: token.borderRadiusSM,
-              }}
-            >
-              脚本
-            </Tag>
-            {SCRIPT()}
-          </Space>
-        );
-      }}
+      collapsibleIconRender={() => (
+        <Space size={10} align="center">
+          <Handler id={id} step={step} />
+          <Tag
+            icon={<CodeOutlined />}
+            style={{
+              background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+              color: '#fff',
+              border: 'none',
+              fontWeight: 600,
+              fontSize: '12px',
+              padding: '4px 10px',
+              borderRadius: '6px',
+              boxShadow: '0 2px 8px rgba(37, 99, 235, 0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+            }}
+          >
+            脚本
+          </Tag>
+          {SCRIPT()}
+        </Space>
+      )}
     >
       <ScriptContentChild
         script_text={scriptText}

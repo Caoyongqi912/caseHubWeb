@@ -1,8 +1,4 @@
 import { IModuleEnum, IObjGet } from '@/api';
-import {
-  selectCommonGroups2Case,
-  selectCommonGroups2ConditionAPI,
-} from '@/api/inter/interCase';
 import { pageInterfaceGroup } from '@/api/inter/interGroup';
 import { queryProjectEnum } from '@/components/CommonFunc';
 import MyProTable from '@/components/Table/MyProTable';
@@ -17,7 +13,7 @@ import {
   UserOutlined,
 } from '@ant-design/icons';
 import { ActionType, ProColumns } from '@ant-design/pro-components';
-import { Button, message, Space, Tag, theme } from 'antd';
+import { Button, Space, Tag, theme } from 'antd';
 import { TableRowSelection } from 'antd/es/table/interface';
 import React, {
   FC,
@@ -30,14 +26,14 @@ import React, {
 
 interface SelfProps {
   projectId?: number;
-  currentCaseId: number;
   condition_api_id?: number;
   refresh?: () => void;
+  onSelect?: (group_id_list: number[]) => void;
 }
 
 const GroupApiChoiceTable: FC<SelfProps> = (props) => {
   const { token } = theme.useToken();
-  const { currentCaseId, refresh, condition_api_id, projectId } = props;
+  const { refresh, condition_api_id, projectId, onSelect } = props;
   const actionRef = useRef<ActionType>();
   const [selectProjectId, setSelectProjectId] = useState<number | undefined>(
     projectId,
@@ -161,23 +157,25 @@ const GroupApiChoiceTable: FC<SelfProps> = (props) => {
     },
     {
       title: '组名',
-      dataIndex: 'name',
-      key: 'name',
+      dataIndex: 'interface_group_name',
+      key: 'interface_group_name',
       width: 200,
       render: (_, record) => (
         <Tag style={styles.nameTag}>
           <FolderOutlined style={{ marginRight: 6, opacity: 0.6 }} />
-          {record.name}
+          {record.interface_group_name}
         </Tag>
       ),
     },
     {
       title: '接口数',
-      dataIndex: 'api_num',
-      key: 'api_num',
+      dataIndex: 'interface_group_api_num',
+      key: 'interface_group_api_num',
       width: 100,
       render: (_, record) => (
-        <Tag style={styles.apiNumTag}>{record.api_num || 0}</Tag>
+        <Tag style={styles.apiNumTag}>
+          {record.interface_group_api_num || 0}
+        </Tag>
       ),
     },
     {
@@ -215,27 +213,28 @@ const GroupApiChoiceTable: FC<SelfProps> = (props) => {
               style={styles.addBtn}
               icon={<PlusOutlined />}
               onClick={async () => {
-                if (condition_api_id) {
-                  const { code, msg } = await selectCommonGroups2ConditionAPI({
-                    condition_api_id: condition_api_id,
-                    group_id_list: selectedRowKeys as number[],
-                  });
-                  if (code === 0) {
-                    message.success(msg);
-                    refresh?.();
-                  }
-                  return;
-                }
-                if (currentCaseId) {
-                  const { code, msg } = await selectCommonGroups2Case({
-                    interface_case_id: currentCaseId,
-                    api_group_id_list: selectedRowKeys as number[],
-                  });
-                  if (code === 0) {
-                    message.success(msg);
-                    refresh?.();
-                  }
-                }
+                onSelect?.(selectedRowKeys as number[]);
+                // if (condition_api_id) {
+                //   const { code, msg } = await selectCommonGroups2ConditionAPI({
+                //     condition_api_id: condition_api_id,
+                //     group_id_list: selectedRowKeys as number[],
+                //   });
+                //   if (code === 0) {
+                //     message.success(msg);
+                //     refresh?.();
+                //   }
+                //   return;
+                // }
+                // if (currentCaseId) {
+                //   const { code, msg } = await selectCommonGroups2Case({
+                //     interface_case_id: currentCaseId,
+                //     api_group_id_list: selectedRowKeys as number[],
+                //   });
+                //   if (code === 0) {
+                //     message.success(msg);
+                //     refresh?.();
+                //   }
+                // }
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-2px)';
@@ -254,7 +253,6 @@ const GroupApiChoiceTable: FC<SelfProps> = (props) => {
       rowSelection={rowSelection}
       columns={columns}
       rowKey="id"
-      x={1000}
       actionRef={actionRef}
       request={fetchInterfaceGroup}
     />

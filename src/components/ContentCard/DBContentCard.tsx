@@ -35,7 +35,14 @@ import {
   theme,
   Typography,
 } from 'antd';
-import React, { FC, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  FC,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import Handler from '../DnDDraggable/handler';
 
 const { Text, Paragraph } = Typography;
@@ -164,6 +171,7 @@ const DBContentCard: FC<Props> = (props) => {
   const [hasLoaded, setHasLoaded] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(true);
 
+  console.log(contentInfo);
   useEffect(() => {
     const { content_name } = contentInfo;
     if (content_name) {
@@ -172,40 +180,54 @@ const DBContentCard: FC<Props> = (props) => {
     }
   }, [contentInfo.content_name]);
 
-  const loadData = () => {
-    if (hasLoaded || !contentInfo.target_id) return;
+  /**
+   * 加载数据
+   * 获取DB内容信息和数据库配置选项
+   */
+  const loadData = useCallback(() => {
+    if (!contentInfo.target_id) return;
 
     getDBContentInfo(contentInfo.target_id).then(async ({ code, data }) => {
-      const { db_id, sql_text, sql_extracts } = data;
-      if (code === 0) {
+      if (code === 0 && data) {
+        const { db_id, sql_text, sql_extracts } = data;
         setCurrentDBId(db_id);
         setSqlValue(sql_text);
         setDatasource(sql_extracts || []);
         setHasLoaded(true);
       }
     });
+  }, [contentInfo.target_id]);
 
+  /**
+   * 加载数据库配置选项
+   */
+  const loadDBOptions = useCallback(() => {
     queryDBConfig().then(async ({ code, data }) => {
-      if (code === 0) {
+      if (code === 0 && data) {
         setDBOptions(
-          data.map((item: IDBConfig) => {
-            return {
-              label: item.db_name,
-              value: item.id,
-            };
-          }),
+          data.map((item: IDBConfig) => ({
+            label: item.db_name,
+            value: item.id,
+          })),
         );
       }
     });
-  };
+  }, []);
 
-  const handleCollapse = (collapsed: boolean) => {
-    setIsCollapsed(collapsed);
-    onCollapse?.(collapsed);
-    if (!collapsed) {
-      loadData();
-    }
-  };
+  /**
+   * 展开/折叠处理
+   */
+  const handleCollapse = useCallback(
+    (collapsed: boolean) => {
+      setIsCollapsed(collapsed);
+      onCollapse?.(collapsed);
+      if (!collapsed && !hasLoaded) {
+        loadData();
+        loadDBOptions();
+      }
+    },
+    [hasLoaded, loadData, loadDBOptions, onCollapse],
+  );
 
   useEffect(() => {
     if (sqlValue) {

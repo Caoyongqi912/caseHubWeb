@@ -120,13 +120,13 @@ const InterBeforeSql: FC<SelfProps> = (props) => {
    * 初始化SQL和数据库ID
    */
   useEffect(() => {
-    const before_sql = form.getFieldValue('before_sql');
-    const before_db_id = form.getFieldValue('before_db_id');
-    if (before_db_id) {
-      setBeforeDbId(before_db_id);
+    const interface_before_sql = form.getFieldValue('interface_before_sql');
+    const interface_before_db_id = form.getFieldValue('interface_before_db_id');
+    if (interface_before_db_id) {
+      setBeforeDbId(interface_before_db_id);
     }
-    if (before_sql) {
-      setSqlValue(before_sql);
+    if (interface_before_sql) {
+      setSqlValue(interface_before_sql);
     }
   }, []);
 
@@ -150,9 +150,8 @@ const InterBeforeSql: FC<SelfProps> = (props) => {
     if (sqlValue && beforeDbId && InterfaceId) {
       const { code, msg } = await updateInterApiById({
         id: InterfaceId,
-        // @ts-ignore
-        before_db_id: beforeDbId,
-        before_sql: sqlValue,
+        interface_before_db_id: beforeDbId,
+        interface_before_sql: sqlValue,
       });
       if (code === 0) {
         message.success(msg);
@@ -160,19 +159,15 @@ const InterBeforeSql: FC<SelfProps> = (props) => {
     }
   };
 
-  /**
-   * 删除SQL配置
-   */
   const removeSqlValue = async () => {
     const InterfaceId = form.getFieldValue('id');
-    form.setFieldValue('before_sql', null);
-    form.setFieldValue('before_db_id', null);
+    form.setFieldValue('interface_before_sql', null);
+    form.setFieldValue('interface_before_db_id', null);
     setSqlValue('');
     const { code, msg } = await updateInterApiById({
       id: InterfaceId,
-      // @ts-ignore
-      before_db_id: null,
-      before_sql: null,
+      interface_before_db_id: null,
+      interface_before_sql: null,
     });
     if (code === 0) {
       message.success(msg);
@@ -355,7 +350,7 @@ const InterBeforeSql: FC<SelfProps> = (props) => {
             disabled={false}
             noStyle={true}
             width={'md'}
-            name={'before_db_id'}
+            name={'interface_before_db_id'}
             required={true}
             placeholder="请选择数据库"
             request={async () => {
@@ -373,7 +368,7 @@ const InterBeforeSql: FC<SelfProps> = (props) => {
             onChange={(value: number) => {
               setBeforeDbId(value);
               form.setFieldsValue({
-                before_db_id: value,
+                interface_before_db_id: value,
               });
             }}
           />
@@ -453,7 +448,10 @@ const InterBeforeSql: FC<SelfProps> = (props) => {
           </Popover>
         }
       >
-        <ProForm.Item name={'before_sql_extracts'} trigger={'onValuesChange'}>
+        <ProForm.Item
+          name={'interface_before_sql_extracts'}
+          trigger={'onValuesChange'}
+        >
           <EditableProTable<IBeforeSQLExtract>
             rowKey={'id'}
             search={false}
@@ -471,12 +469,15 @@ const InterBeforeSql: FC<SelfProps> = (props) => {
               editableKeys: beforeSQLParamsEditableKeys,
               onChange: setBeforeSQLParamsEditableRowKeys,
               onSave: async () => {
-                await FormEditableOnValueChange(form, 'before_sql_extracts');
+                await FormEditableOnValueChange(
+                  form,
+                  'interface_before_sql_extracts',
+                );
               },
               onDelete: async (key) => {
                 await FormEditableOnValueRemove(
                   form,
-                  'before_sql_extracts',
+                  'interface_before_sql_extracts',
                   key,
                 );
               },

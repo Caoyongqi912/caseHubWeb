@@ -18,7 +18,7 @@ const ApiBaseForm: FC = () => {
       </ProForm.Group>
       <ProForm.Group>
         <ProFormSelect
-          name="level"
+          name="interface_level"
           label="优先级"
           width={'md'}
           initialValue={'P1'}
@@ -27,7 +27,7 @@ const ApiBaseForm: FC = () => {
           rules={[{ required: true, message: '用例优先级必选' }]}
         />
         <ProFormSelect
-          name="status"
+          name="interface_status"
           label="用例状态"
           initialValue={'DEBUG'}
           width={'md'}

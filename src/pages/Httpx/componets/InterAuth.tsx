@@ -35,19 +35,19 @@ const InterAuth: FC<IProps> = ({ form, currentMode }) => {
     <>
       <ProFormText
         disabled={currentMode === 1}
-        name={['auth', 'key']}
+        name={['interface_auth', 'key']}
         label={'Key'}
         width={'lg'}
       />
       <ProFormText
         disabled={currentMode === 1}
-        name={['auth', 'value']}
+        name={['interface_auth', 'value']}
         label={'Value'}
         width={'lg'}
       />
       <ProFormSelect
         disabled={currentMode === 1}
-        name={['auth', 'target']}
+        name={['interface_auth', 'target']}
         width={'lg'}
         label={'添加位置'}
         options={[
@@ -62,13 +62,13 @@ const InterAuth: FC<IProps> = ({ form, currentMode }) => {
     <>
       <ProFormText
         disabled={currentMode === 1}
-        name={['auth', 'username']}
+        name={['interface_auth', 'username']}
         width={'lg'}
         label={'Username'}
       />
       <ProFormText
         disabled={currentMode === 1}
-        name={['auth', 'password']}
+        name={['interface_auth', 'password']}
         width={'lg'}
         label={'Password'}
       />
@@ -78,7 +78,7 @@ const InterAuth: FC<IProps> = ({ form, currentMode }) => {
   const BearerAuth = (
     <ProFormText
       disabled={currentMode === 1}
-      name={['auth', 'token']}
+      name={['interface_auth', 'token']}
       width={'lg'}
       label={'token'}
     />
@@ -88,7 +88,7 @@ const InterAuth: FC<IProps> = ({ form, currentMode }) => {
     <>
       <ProFormSelect
         disabled={currentMode === 1}
-        name={['auth', 'target']}
+        name={['interface_auth', 'target']}
         width={'lg'}
         label={'添加位置'}
         options={[
@@ -98,7 +98,7 @@ const InterAuth: FC<IProps> = ({ form, currentMode }) => {
       />
       <ProFormSelect
         disabled={currentMode === 1}
-        name={['auth', 'algorithm']}
+        name={['interface_auth', 'algorithm']}
         width={'lg'}
         label={'Algorithm'}
         options={[
@@ -109,7 +109,7 @@ const InterAuth: FC<IProps> = ({ form, currentMode }) => {
       />
       <ProFormText
         disabled={currentMode === 1}
-        name={['auth', 'secret']}
+        name={['interface_auth', 'secret']}
         width={'lg'}
         label={'Secret'}
       />
@@ -122,24 +122,23 @@ const InterAuth: FC<IProps> = ({ form, currentMode }) => {
         <ProForm.Group disabled={currentMode === 1}>
           <ProFormSelect
             disabled={currentMode === 1}
-            name={'auth_type'}
+            name={'interface_auth_type'}
             width={'lg'}
             label={'类型'}
             options={AuthTypeOption}
             required
             onChange={() => {
-              form.resetFields(['auth']);
+              form.resetFields(['interface_auth']);
             }}
           />
         </ProForm.Group>
         <ProForm.Group disabled={currentMode === 1}>
-          <ProFormDependency name={['auth_type']}>
-            {({ auth_type }) => {
-              console.log('auth_type:', auth_type, 'type:', typeof auth_type);
-
-              // 确保处理各种可能的类型
+          <ProFormDependency name={['interface_auth_type']}>
+            {({ interface_auth_type }) => {
               const authType =
-                typeof auth_type === 'string' ? parseInt(auth_type) : auth_type;
+                typeof interface_auth_type === 'string'
+                  ? parseInt(interface_auth_type)
+                  : interface_auth_type;
 
               switch (authType) {
                 case AuthTarget.NoAuth:

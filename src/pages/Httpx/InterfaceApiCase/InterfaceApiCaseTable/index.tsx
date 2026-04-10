@@ -1,11 +1,10 @@
 import { IModuleEnum } from '@/api';
-import { searchUser } from '@/api/base';
 import {
   copyApiCase,
   insertApiCase,
   pageInterApiCase,
   removeApiCase,
-  setApiCase,
+  updateApiCase,
 } from '@/api/inter/interCase';
 import MyModal from '@/components/MyModal';
 import MyProTable from '@/components/Table/MyProTable';
@@ -104,19 +103,6 @@ const Index: FC<SelfProps> = ({
     },
     [currentModuleId],
   );
-
-  const queryUser: any = async (value: any) => {
-    const { keyWords } = value;
-    if (keyWords) {
-      const { code, data } = await searchUser({ username: keyWords });
-      if (code === 0) {
-        return data.map((item) => ({
-          label: item.username,
-          value: item.id,
-        }));
-      }
-    }
-  };
 
   const styles = useMemo(
     () => ({
@@ -242,20 +228,20 @@ const Index: FC<SelfProps> = ({
     },
     {
       title: '名称',
-      dataIndex: 'title',
-      key: 'title',
+      dataIndex: 'case_title',
+      key: 'case_title',
       ellipsis: true,
       width: 200,
       render: (_, record) => (
         <Tag style={styles.nameTag}>
           <FileTextOutlined style={{ marginRight: 6, opacity: 0.6 }} />
-          {record.title}
+          {record.case_title}
         </Tag>
       ),
     },
     {
       title: '步骤数量',
-      dataIndex: 'apiNum',
+      dataIndex: 'case_api_num',
       valueType: 'text',
       width: 100,
       render: (_, record) => (
@@ -269,37 +255,37 @@ const Index: FC<SelfProps> = ({
             border: `1px solid ${token.colorInfoBorder}`,
           }}
         >
-          {record.apiNum || 0}
+          {record.case_api_num || 0}
         </Tag>
       ),
     },
     {
       title: '优先级',
-      dataIndex: 'level',
+      dataIndex: 'case_level',
       valueType: 'select',
       valueEnum: CONFIG.API_LEVEL_ENUM,
       width: 100,
       render: (_, record) => (
         <Tag
           color={
-            CONFIG.API_LEVEL_ENUM[record.level]?.status === 'Success'
+            CONFIG.API_LEVEL_ENUM[record.case_level]?.status === 'Success'
               ? 'success'
               : 'processing'
           }
           style={{ borderRadius: 6, fontSize: 12, padding: '4px 12px' }}
         >
-          {record.level}
+          {record.case_level}
         </Tag>
       ),
     },
     {
       title: '状态',
-      dataIndex: 'status',
+      dataIndex: 'case_status',
       valueType: 'select',
       valueEnum: CONFIG.API_STATUS_ENUM,
       width: 100,
       render: (_, record) => {
-        return CONFIG.API_STATUS_ENUM[record.status].tag;
+        return CONFIG.API_STATUS_ENUM[record.case_status].tag;
       },
     },
     {
@@ -423,7 +409,7 @@ const Index: FC<SelfProps> = ({
         open={openModal}
         onOk={async () => {
           const values = await form.validateFields();
-          const { code, msg } = await setApiCase({
+          const { code, msg } = await updateApiCase({
             id: currentCaseId,
             ...values,
           });

@@ -34,7 +34,9 @@ const ApidbCard: FC<Props> = (props) => {
     id: number;
     content_name?: string;
   }) => {
-    return updateCaseContent(data);
+    return updateCaseContent({
+      content_id: data.id,
+    });
   };
 
   /**

@@ -74,26 +74,28 @@ const AssociationApis: FC<IAssociationApisProps> = ({
     },
     {
       title: '名称',
-      dataIndex: 'name',
-      key: 'name',
-      render: (_, record) => <Tag color={'success'}>{record.name}</Tag>,
+      dataIndex: 'interface_name',
+      key: 'interface_name',
+      render: (_, record) => (
+        <Tag color={'success'}>{record.interface_name}</Tag>
+      ),
     },
     {
       title: '优先级',
-      dataIndex: 'level',
+      dataIndex: 'interface_level',
       valueType: 'select',
       valueEnum: CONFIG.API_LEVEL_ENUM,
       render: (_, record) => {
-        return <Tag color={'blue'}>{record.level}</Tag>;
+        return <Tag color={'blue'}>{record.interface_level}</Tag>;
       },
     },
     {
       title: '状态',
-      dataIndex: 'status',
+      dataIndex: 'interface_status',
       valueType: 'select',
       valueEnum: CONFIG.API_STATUS_ENUM,
       render: (_, record) => {
-        return CONFIG.API_STATUS_ENUM[record.status].tag;
+        return CONFIG.API_STATUS_ENUM[record.interface_status].tag;
       },
     },
     {

@@ -31,11 +31,10 @@ interface ISelfProps {
 }
 
 const InterExtractList: FC<ISelfProps> = ({ form, readonly = false }) => {
-  const [editingIndex, setEditingIndex] = useState<number | null>(0); // 当前正在编辑的行索引
+  const [editingIndex, setEditingIndex] = useState<number | null>(0);
 
   useEffect(() => {
-    console.log('====', readonly);
-    const extracts = form.getFieldValue('extracts');
+    const extracts = form.getFieldValue('interface_extracts');
     if (extracts === null || extracts?.length === 0) {
       setEditingIndex(0);
     } else setEditingIndex(null);
@@ -50,21 +49,21 @@ const InterExtractList: FC<ISelfProps> = ({ form, readonly = false }) => {
     } catch (e) {
       return;
     }
-    setEditingIndex(null); // 取消编辑
-    await FormEditableOnValueChange(form, 'extracts');
+    setEditingIndex(null);
+    await FormEditableOnValueChange(form, 'interface_extracts');
   };
 
   return (
     <>
       <ProFormList
-        name={'extracts'}
+        name={'interface_extracts'}
         onAfterAdd={async (_, index) => {
           if (index) {
             setEditingIndex(index);
           }
         }}
         onAfterRemove={async () => {
-          await FormEditableOnValueChange(form, 'extracts');
+          await FormEditableOnValueChange(form, 'interface_extracts');
         }}
         copyIconProps={{ tooltipText: '复制当前行', Icon: CopyTwoTone }}
         deleteIconProps={{

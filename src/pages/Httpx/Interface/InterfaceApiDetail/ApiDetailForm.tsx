@@ -35,10 +35,10 @@ const ApiDetailForm: FC<IProps> = (props) => {
 
   useEffect(() => {
     if (interfaceApiInfo) {
-      setQueryLength(interfaceApiInfo.params?.length);
-      setHeadersLength(interfaceApiInfo.headers?.length);
-      if (interfaceApiInfo.body_type) {
-        if (interfaceApiInfo.body_type !== 0) {
+      setQueryLength(interfaceApiInfo.interface_params?.length);
+      setHeadersLength(interfaceApiInfo.interface_headers?.length);
+      if (interfaceApiInfo.interface_body_type) {
+        if (interfaceApiInfo.interface_body_type !== 0) {
           setBodyLength(1);
         } else {
           setBodyLength(undefined);
@@ -91,14 +91,13 @@ const ApiDetailForm: FC<IProps> = (props) => {
       />
     </>
   );
-  // url after METHOD
   const addonAfter = (
     <>
       <ProFormSelect
         disabled={currentMode === 1}
         noStyle
         className={'method'}
-        name={'method'}
+        name={'interface_method'}
         label={'method'}
         initialValue={'POST'}
         options={API_REQUEST_METHOD}
@@ -176,7 +175,7 @@ const ApiDetailForm: FC<IProps> = (props) => {
         <ProFormText
           disabled={currentMode === 1}
           label={'接口名称'}
-          name={'name'}
+          name={'interface_name'}
           width={'md'}
           required={true}
           rules={[{ required: true, message: '步骤名称不能为空' }]}
@@ -186,7 +185,7 @@ const ApiDetailForm: FC<IProps> = (props) => {
           label={'URL'}
           disabled={currentMode === 1}
           addonBefore={addonBefore}
-          name={'url'}
+          name={'interface_url'}
           width={'md'}
           rules={[{ required: true, message: '请输入请求url' }]}
           addonAfter={addonAfter}
@@ -199,7 +198,7 @@ const ApiDetailForm: FC<IProps> = (props) => {
         <ProFormTextArea
           label={'步骤描述'}
           disabled={currentMode === 1}
-          name={'description'}
+          name={'interface_desc'}
           width={'lg'}
           required={true}
           fieldProps={{

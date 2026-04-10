@@ -16,7 +16,7 @@ const Index: FC<SelfProps> = (props) => {
   const { readonly = false } = props;
   const [bodyType, setBodyType] = useState(0);
   useEffect(() => {
-    const t = props.form.getFieldValue('body_type');
+    const t = props.form.getFieldValue('interface_body_type');
     if (t) {
       setBodyType(t);
     }
@@ -52,8 +52,8 @@ const Index: FC<SelfProps> = (props) => {
 
   const onGroupChange = async (e: RadioChangeEvent) => {
     setBodyType(e.target.value);
-    props.form.setFieldValue('body_type', e.target.value);
-    await FormEditableOnValueChange(props.form, 'body_type', false);
+    props.form.setFieldValue('interface_body_type', e.target.value);
+    await FormEditableOnValueChange(props.form, 'interface_body_type', false);
   };
   return (
     <>
@@ -85,10 +85,10 @@ const Index: FC<SelfProps> = (props) => {
                   hidden={bodyType !== 1}
                   noStyle
                   onChange={async (value) => {
-                    props.form.setFieldValue('raw_type', value);
+                    props.form.setFieldValue('interface_raw_type', value);
                     await FormEditableOnValueChange(
                       props.form,
-                      'raw_type',
+                      'interface_raw_type',
                       false,
                     );
                   }}
@@ -102,7 +102,7 @@ const Index: FC<SelfProps> = (props) => {
                       value: 'text',
                     },
                   ]}
-                  name={'raw_type'}
+                  name={'interface_raw_type'}
                 />
               </Space>
             ),

@@ -133,26 +133,26 @@ const GroupInterfaceTable: FC<SelfProps> = (props) => {
     },
     {
       title: '名称',
-      dataIndex: 'name',
-      key: 'name',
+      dataIndex: 'interface_name',
+      key: 'interface_name',
       fixed: 'left',
       width: '18%',
       render: (_, record) => (
         <span style={styles.nameTag}>
           <ApiOutlined style={{ color: token.colorPrimary, fontSize: 12 }} />
-          {record.name}
+          {record.interface_name}
         </span>
       ),
     },
     {
       title: '优先级',
-      dataIndex: 'level',
+      dataIndex: 'interface_level',
       valueType: 'select',
       valueEnum: CONFIG.API_LEVEL_ENUM,
       width: '12%',
       render: (_, record) => {
         const levelConfig =
-          levelColors[record.level as keyof typeof levelColors] ||
+          levelColors[record.interface_level as keyof typeof levelColors] ||
           levelColors.P2;
         return (
           <span
@@ -164,19 +164,19 @@ const GroupInterfaceTable: FC<SelfProps> = (props) => {
             }}
           >
             <FlagOutlined style={{ fontSize: 11 }} />
-            {record.level}
+            {record.interface_level}
           </span>
         );
       },
     },
     {
       title: '状态',
-      dataIndex: 'status',
+      dataIndex: 'interface_status',
       valueType: 'select',
       width: '12%',
       valueEnum: CONFIG.API_STATUS_ENUM,
       render: (_, record) => {
-        return CONFIG.API_STATUS_ENUM[record.status].tag;
+        return CONFIG.API_STATUS_ENUM[record.interface_status].tag;
       },
     },
     {
@@ -206,7 +206,6 @@ const GroupInterfaceTable: FC<SelfProps> = (props) => {
         columns={columns}
         search={false}
         rowKey={'id'}
-        x={800}
         actionRef={actionRef}
         request={fetchInterface}
       />

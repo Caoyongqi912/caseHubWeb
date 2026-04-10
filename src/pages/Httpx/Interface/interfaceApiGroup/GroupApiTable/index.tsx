@@ -237,13 +237,13 @@ const Index: FC<SelfProps> = ({
     },
     {
       title: '组名',
-      dataIndex: 'name',
-      key: 'name',
+      dataIndex: 'interface_group_name',
+      key: 'interface_group_name',
       width: 200,
       render: (_, record) => (
         <MyModal
           form={groupForm}
-          title={record.name}
+          title={record.interface_group_name}
           onFinish={saveBaseInfo}
           trigger={
             <Tag
@@ -254,7 +254,7 @@ const Index: FC<SelfProps> = ({
               }}
             >
               <FolderOutlined style={{ marginRight: 6, opacity: 0.6 }} />
-              {record.name}
+              {record.interface_group_name}
             </Tag>
           }
         >
@@ -264,15 +264,15 @@ const Index: FC<SelfProps> = ({
     },
     {
       title: '描述',
-      dataIndex: 'description',
-      key: 'description',
+      dataIndex: 'interface_group_desc',
+      key: 'interface_group_desc',
       ellipsis: true,
       width: 300,
     },
     {
       title: '接口数',
-      dataIndex: 'api_num',
-      key: 'api_num',
+      dataIndex: 'interface_group_api_num',
+      key: 'interface_group_api_num',
       width: 100,
       render: (_, record) => (
         <Tag
@@ -285,7 +285,7 @@ const Index: FC<SelfProps> = ({
             border: `1px solid ${token.colorInfoBorder}`,
           }}
         >
-          {record.api_num || 0}
+          {record.interface_group_api_num || 0}
         </Tag>
       ),
     },
@@ -435,7 +435,6 @@ const Index: FC<SelfProps> = ({
         persistenceKey={perKey}
         columns={columns}
         rowKey="id"
-        x={1200}
         actionRef={actionRef}
         request={fetchInterfaceGroup}
         toolBarRender={() => [
@@ -459,7 +458,7 @@ const Index: FC<SelfProps> = ({
                   e.currentTarget.style.boxShadow = `0 2px 8px ${token.colorPrimaryBg}`;
                 }}
               >
-                添加
+                添加接口组
               </Button>
             }
           >

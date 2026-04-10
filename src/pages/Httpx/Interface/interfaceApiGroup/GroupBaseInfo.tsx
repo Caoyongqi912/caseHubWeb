@@ -24,15 +24,15 @@ const GroupBaseInfo: FC = () => {
       </ProForm.Group>
 
       <ProFormText
-        width={'md'}
-        name={'name'}
+        width={'lg'}
+        name={'interface_group_name'}
         label={'组名'}
         required={true}
         rules={[{ required: true, message: '组名必填' }]}
       />
       <ProFormTextArea
-        width={'md'}
-        name={'description'}
+        width={'lg'}
+        name={'interface_group_desc'}
         label={'描述'}
         required={true}
         rules={[{ required: true, message: '组描述必填' }]}

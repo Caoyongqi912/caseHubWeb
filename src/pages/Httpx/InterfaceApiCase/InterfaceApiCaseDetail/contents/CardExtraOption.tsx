@@ -8,7 +8,6 @@ import { CaseContentType } from '@/utils/config';
 import {
   CopyOutlined,
   DeleteOutlined,
-  EyeOutlined,
   PlayCircleOutlined,
   StopOutlined,
 } from '@ant-design/icons';
@@ -54,7 +53,7 @@ const CardExtraOption: FC<SelfProps> = ({
   const removeContentStep = async () => {
     const { code, msg } = await removeCaseContentStep({
       case_id: caseId,
-      content_step_id: caseContent.id,
+      content_id: caseContent.id,
     });
     if (code === 0) {
       message.success(msg);
@@ -66,36 +65,21 @@ const CardExtraOption: FC<SelfProps> = ({
     <Space size={4}>
       {show && (
         <Space size={4}>
-          {caseContent.content_type === CaseContentType.GROUP && (
-            <Tooltip title="查看分组详情">
+          {caseContent.content_type !== CaseContentType.GROUP && (
+            <Tooltip title="复制步骤">
               <Button
                 type="text"
                 size="small"
-                icon={<EyeOutlined />}
-                onClick={() =>
-                  window.open(
-                    `/interface/group/detail/groupId=${caseContent.target_id}`,
-                  )
-                }
+                icon={<CopyOutlined />}
+                onClick={copyContentStep}
                 style={{
-                  color: token.colorPrimary,
+                  color: token.colorInfo,
                   borderRadius: token.borderRadiusSM,
                 }}
               />
             </Tooltip>
           )}
-          <Tooltip title="复制步骤">
-            <Button
-              type="text"
-              size="small"
-              icon={<CopyOutlined />}
-              onClick={copyContentStep}
-              style={{
-                color: token.colorInfo,
-                borderRadius: token.borderRadiusSM,
-              }}
-            />
-          </Tooltip>
+
           <Popconfirm
             title="确认删除"
             description="确定要删除这个步骤吗？"
@@ -135,8 +119,8 @@ const CardExtraOption: FC<SelfProps> = ({
             marginLeft: 8,
           }}
           onClick={async (checked, _) => {
-            const { code, data } = await updateCaseContent({
-              id: caseContent.id,
+            const { code } = await updateCaseContent({
+              content_id: caseContent.id,
               enable: checked,
             });
             if (code === 0) {

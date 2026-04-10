@@ -51,6 +51,10 @@ interface Props {
   updateAssert: UpdateAssertFunc;
 }
 
+/**
+ * 断言内容卡片组件
+ * 用于显示和管理断言步骤内容，支持多个断言条件的配置
+ */
 const AssertContentCard: FC<Props> = (props) => {
   const [form] = Form.useForm();
   const { token } = useToken();
@@ -69,17 +73,26 @@ const AssertContentCard: FC<Props> = (props) => {
   const [showAssertInput, setShowAssertInput] = useState(true);
   const [assertName, setAssertName] = useState<string>();
 
+  /**
+   * 监听 contentInfo 变化，初始化断言名称和表单数据
+   * @description 当 contentInfo 变化时，更新断言名称和表单初始值
+   */
   useEffect(() => {
-    const { content_name } = contentInfo;
+    const { content_name, assert_list } = contentInfo;
     if (content_name) {
       setAssertName(content_name);
       setShowAssertInput(false);
     }
-    if (contentInfo.assert_list) {
-      form.setFieldsValue({ assert_list: contentInfo.assert_list });
+    if (assert_list) {
+      form.setFieldsValue({ assert_list });
     }
-  }, [contentInfo]);
+  }, [contentInfo, form]);
 
+  /**
+   * 更新内容标题
+   * @description 保存编辑后的断言标题到服务端
+   * @param value - 新的标题内容
+   */
   const updateContentTitle = async (value: string | undefined) => {
     if (value) {
       const { code, data } = await updateAssert({
@@ -95,15 +108,20 @@ const AssertContentCard: FC<Props> = (props) => {
     }
   };
 
+  /**
+   * 断言标题组件
+   * @description 根据状态渲染文本或输入框，支持点击编辑图标进入编辑模式
+   */
   const Assert = useMemo(() => {
     if (assertName && !showAssertInput) {
       return (
-        <Space size={8}>
+        <Space size={8} align="center">
           <Text
             strong
             style={{
-              fontSize: '14px',
+              fontSize: '15px',
               color: token.colorText,
+              letterSpacing: '0.5px',
             }}
           >
             {assertName}
@@ -111,8 +129,12 @@ const AssertContentCard: FC<Props> = (props) => {
           {showEditIcon && (
             <EditOutlined
               style={{
-                color: token.colorPrimary,
+                color: '#059669',
                 cursor: 'pointer',
+                fontSize: '14px',
+                transition: 'all 0.2s ease',
+                padding: '4px',
+                borderRadius: '4px',
               }}
               onClick={(event) => {
                 event.stopPropagation();
@@ -122,39 +144,45 @@ const AssertContentCard: FC<Props> = (props) => {
           )}
         </Space>
       );
-    } else {
-      return (
-        <Input
-          style={{ width: '100%', maxWidth: '300px' }}
-          variant="borderless"
-          onChange={(e) => {
-            e.stopPropagation();
-            if (e.target.value) setAssertName(e.target.value);
-          }}
-          onClick={(e) => {
-            e.stopPropagation();
-          }}
-          onBlur={async () => await updateContentTitle(assertName)}
-          onPressEnter={async () => await updateContentTitle(assertName)}
-        />
-      );
     }
+    return (
+      <Input
+        style={{ width: '100%', maxWidth: '280px', borderRadius: '6px' }}
+        variant="borderless"
+        placeholder="输入断言名称..."
+        onChange={(e) => {
+          e.stopPropagation();
+          if (e.target.value) setAssertName(e.target.value);
+        }}
+        onClick={(e) => e.stopPropagation()}
+        onBlur={() => updateContentTitle(assertName)}
+        onPressEnter={() => updateContentTitle(assertName)}
+      />
+    );
   }, [assertName, showAssertInput, showEditIcon, token]);
 
+  /**
+   * 卡片标题渲染
+   * @description 渲染带有断言标签和步骤信息的卡片标题
+   */
   const cardTitle = useMemo(
     () => (
-      <Space size={8} align="center">
+      <Space size={10} align="center">
         <Handler id={id} step={step} />
         <Tag
           icon={<CheckCircleOutlined />}
           style={{
-            background: '#d1fae5',
-            color: '#059669',
-            border: '1px solid #05966920',
+            background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+            color: '#fff',
+            border: 'none',
             fontWeight: 600,
             fontSize: '12px',
-            padding: '2px 8px',
-            borderRadius: token.borderRadiusSM,
+            padding: '4px 10px',
+            borderRadius: '6px',
+            boxShadow: '0 2px 8px rgba(5, 150, 105, 0.3)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
           }}
         >
           断言
@@ -171,16 +199,17 @@ const AssertContentCard: FC<Props> = (props) => {
       collapsible
       hoverable
       defaultCollapsed
+      bodyStyle={{ padding: 0 }}
       style={{
-        borderRadius: token.borderRadiusLG,
+        borderRadius: '16px',
         boxShadow: showOption
-          ? `0 4px 12px ${token.colorPrimaryBg}`
-          : `0 1px 3px ${token.colorBgLayout}`,
-        transition: 'all 0.3s ease',
-        borderColor: showOption ? token.colorPrimaryBorder : token.colorBorder,
-      }}
-      bodyStyle={{
-        padding: 0,
+          ? `0 8px 32px rgba(5, 150, 105, 0.15), 0 2px 8px rgba(0, 0, 0, 0.08)`
+          : `0 2px 12px rgba(0, 0, 0, 0.06)`,
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        border: showOption
+          ? `1px solid rgba(5, 150, 105, 0.3)`
+          : `1px solid ${token.colorBorderSecondary}`,
+        overflow: 'hidden',
       }}
       onMouseEnter={() => {
         setShowOption(true);
@@ -198,8 +227,8 @@ const AssertContentCard: FC<Props> = (props) => {
       <ProCard
         bordered={false}
         style={{
-          background: token.colorBgContainer,
-          padding: '16px',
+          background: `linear-gradient(180deg, ${token.colorBgContainer} 0%, ${token.colorBgLayout} 100%)`,
+          padding: '20px 24px',
         }}
       >
         <Form form={form} layout="vertical">
@@ -217,16 +246,17 @@ const AssertContentCard: FC<Props> = (props) => {
                     <div
                       key={field.key}
                       style={{
-                        padding: '16px',
-                        background: token.colorBgLayout,
-                        borderRadius: token.borderRadius,
-                        border: `1px solid ${token.colorBorder}`,
+                        padding: '16px 20px',
+                        background: token.colorBgContainer,
+                        borderRadius: '12px',
+                        border: `1px solid ${token.colorBorderSecondary}`,
+                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
                         transition: 'all 0.3s ease',
                       }}
                     >
                       <Row gutter={16} align="middle">
                         <Col flex="auto">
-                          <Row gutter={16}>
+                          <Row gutter={12}>
                             <Col span={8}>
                               <Form.Item
                                 {...field}
@@ -246,6 +276,7 @@ const AssertContentCard: FC<Props> = (props) => {
                                       变量
                                     </Text>
                                   }
+                                  style={{ borderRadius: '8px' }}
                                 />
                               </Form.Item>
                             </Col>
@@ -261,6 +292,7 @@ const AssertContentCard: FC<Props> = (props) => {
                                 <Select
                                   placeholder="选择条件"
                                   options={AssertOption}
+                                  style={{ borderRadius: '8px' }}
                                 />
                               </Form.Item>
                             </Col>
@@ -283,6 +315,7 @@ const AssertContentCard: FC<Props> = (props) => {
                                       值
                                     </Text>
                                   }
+                                  style={{ borderRadius: '8px' }}
                                 />
                               </Form.Item>
                             </Col>
@@ -312,9 +345,11 @@ const AssertContentCard: FC<Props> = (props) => {
                   block
                   icon={<PlusOutlined />}
                   style={{
-                    borderRadius: token.borderRadius,
+                    borderRadius: '10px',
                     height: '48px',
                     fontSize: '14px',
+                    borderColor: 'rgba(5, 150, 105, 0.3)',
+                    color: '#059669',
                   }}
                 >
                   添加断言
@@ -325,7 +360,7 @@ const AssertContentCard: FC<Props> = (props) => {
         </Form>
         <div
           style={{
-            marginTop: '16px',
+            marginTop: '20px',
             display: 'flex',
             justifyContent: 'flex-end',
           }}
@@ -344,10 +379,13 @@ const AssertContentCard: FC<Props> = (props) => {
               }
             }}
             style={{
-              borderRadius: token.borderRadius,
+              background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+              border: 'none',
+              borderRadius: '8px',
+              boxShadow: '0 4px 12px rgba(5, 150, 105, 0.35)',
             }}
           >
-            保存
+            保存断言
           </Button>
         </div>
       </ProCard>
