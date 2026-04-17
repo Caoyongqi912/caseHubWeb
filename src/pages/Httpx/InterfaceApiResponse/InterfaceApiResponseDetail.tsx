@@ -5,7 +5,7 @@ import RequestHeaders from '@/pages/Httpx/InterfaceApiResponse/RequestHeaders';
 import RequestInfo from '@/pages/Httpx/InterfaceApiResponse/RequestInfo';
 import ResponseExtractColumns from '@/pages/Httpx/InterfaceApiResponse/ResponseExtract';
 import RespProTable from '@/pages/Httpx/InterfaceApiResponse/RespProTable';
-import { IInterfaceResultByCase } from '@/pages/Httpx/types';
+import { IResponseInfo } from '@/pages/Httpx/types';
 import { CONFIG } from '@/utils/config';
 import { ProCard } from '@ant-design/pro-components';
 import { Space, Tag, Typography } from 'antd';
@@ -14,15 +14,15 @@ import { FC } from 'react';
 const { Text } = Typography;
 
 interface SelfProps {
-  responses?: any[];
+  responses?: IResponseInfo[];
 }
 
 const InterfaceApiResponseDetail: FC<SelfProps> = ({ responses }) => {
   const { API_STATUS } = CONFIG;
 
-  const tabExtra = (response: IInterfaceResultByCase) => {
+  const tabExtra = (response: IResponseInfo) => {
     if (!response.response_status) return null;
-    const { response_status, useTime, startTime } = response;
+    const { response_status, start_time, use_time } = response;
     const { color, text = '' } = API_STATUS[response_status!] || {
       color: '#F56C6C',
       text: '',
@@ -122,7 +122,7 @@ const InterfaceApiResponseDetail: FC<SelfProps> = ({ responses }) => {
                   fontWeight: 600,
                 }}
               >
-                {startTime}
+                {start_time || '-'}
               </span>
             </div>
 
@@ -143,7 +143,7 @@ const InterfaceApiResponseDetail: FC<SelfProps> = ({ responses }) => {
                   fontWeight: 600,
                 }}
               >
-                {useTime}ms
+                {use_time}ms
               </span>
             </div>
           </div>
@@ -155,15 +155,15 @@ const InterfaceApiResponseDetail: FC<SelfProps> = ({ responses }) => {
   const TabTitle = (title: string) => (
     <span style={{ color: 'orange' }}>{title}</span>
   );
-  const renderResponseBody = (item: IInterfaceResultByCase) => {
-    const { response_txt } = item;
+  const renderResponseBody = (item: IResponseInfo) => {
+    const { response_text } = item;
     try {
-      const jsonValue = JSON.parse(response_txt);
+      const jsonValue = JSON.parse(response_text);
       const value = JSON.stringify(jsonValue, null, 2);
       return <AceCodeEditor value={value} readonly={true} />;
     } catch (e) {
       return (
-        <AceCodeEditor value={response_txt} _mode={'html'} readonly={true} />
+        <AceCodeEditor value={response_text} _mode={'html'} readonly={true} />
       );
     }
   };
@@ -174,135 +174,128 @@ const InterfaceApiResponseDetail: FC<SelfProps> = ({ responses }) => {
 
   return (
     <div>
-      {responses?.map((item: any, index: number) => {
-        if (item.is_group) {
-          return (
-            <ProCard
-              key={index}
-              bodyStyle={{ padding: 10 }}
-              extra={tabExtra(item)}
-              bordered
-              style={{ borderRadius: '5px', marginTop: 5 }}
-              title={
-                <>
-                  <Tag color={'blue'}>组</Tag>
-                  <Tag color={'green'}>{`API (${item.groupAPINums})`}</Tag>
-                  <Tag color={item.result === false ? '#f50' : '#87d068'}>
-                    {item.groupName}
-                  </Tag>
-                </>
-              }
-              headerBordered
-              collapsible
-              defaultCollapsed
-            >
-              <InterfaceApiResponseDetail responses={item.data} />
-            </ProCard>
-          );
-        } else if (item.is_condition) {
-          return (
-            <ProCard
-              key={index}
-              bodyStyle={{ padding: 10 }}
-              extra={tabExtra(item)}
-              bordered
-              style={{ borderRadius: '5px', marginTop: 5 }}
-              title={
-                <>
-                  <Tag color={'blue'}>IF</Tag>
-                  <Tag color={'green'}>{`API (${item.conditionAPINums})`}</Tag>
-                  <Tag color={item.result === false ? '#f50' : '#87d068'}>
-                    {item.conditionName}
-                  </Tag>
-                </>
-              }
-              headerBordered
-              collapsible
-              defaultCollapsed
-            >
-              <InterfaceApiResponseDetail responses={item.data} />
-            </ProCard>
-          );
-        } else {
-          return (
-            <ProCard
-              extra={tabExtra(item)}
-              bordered
-              style={{ borderRadius: '5px', marginTop: 5 }}
-              title={
-                <>
-                  <Tag color={'blue'}>API</Tag>
-                  <Tag
-                    color={
-                      item.result?.toLowerCase() === 'error'
-                        ? '#f50'
-                        : '#87d068'
-                    }
-                  >
-                    {item.interfaceName}
-                  </Tag>
-                  <Text type={'secondary'}>{setDesc(item.interfaceDesc)}</Text>
-                </>
-              }
-              headerBordered
-              collapsible
-              defaultCollapsed
-            >
-              <MyTabs
-                type={'line'}
-                defaultActiveKey={'3'}
-                items={[
-                  {
-                    key: '1',
-                    label: TabTitle('请求头'),
-                    children: <RequestHeaders header={item.request_head} />,
-                  },
-                  {
-                    key: '2',
-                    label: TabTitle('响应头'),
-                    children: <RequestHeaders header={item.response_head} />,
-                  },
-                  {
-                    key: '3',
-                    label: TabTitle('响应体'),
-                    children: renderResponseBody(item),
-                  },
-                  {
-                    key: '4',
-                    label: TabTitle('变量提取'),
-                    children: (
-                      <RespProTable
-                        columns={ResponseExtractColumns}
-                        dataSource={item.extracts}
-                      />
-                    ),
-                  },
-                  {
-                    key: '5',
-                    label: TabTitle('接口断言'),
-                    children: (
-                      <RespProTable
-                        columns={AssertColumns}
-                        dataSource={item.asserts}
-                      />
-                    ),
-                  },
-                  {
-                    key: '6',
-                    label: TabTitle('实际请求'),
-                    children: (
-                      <RequestInfo
-                        method={item.request_method}
-                        interfaceApiInfo={item.request_info}
-                      />
-                    ),
-                  },
-                ]}
-                size={'small'}
-              />
-            </ProCard>
-          );
-        }
+      {responses?.map((item: IResponseInfo, index: number) => {
+        //   if (item.is_group) {
+        //     return (
+        //       <ProCard
+        //         key={index}
+        //         bodyStyle={{ padding: 10 }}
+        //         extra={tabExtra(item)}
+        //         bordered
+        //         style={{ borderRadius: '5px', marginTop: 5 }}
+        //         title={
+        //           <>
+        //             <Tag color={'blue'}>组</Tag>
+        //             <Tag color={'green'}>{`API (${item.groupAPINums})`}</Tag>
+        //             <Tag color={item.result === false ? '#f50' : '#87d068'}>
+        //               {item.groupName}
+        //             </Tag>
+        //           </>
+        //         }
+        //         headerBordered
+        //         collapsible
+        //         defaultCollapsed
+        //       >
+        //         <InterfaceApiResponseDetail responses={item.data} />
+        //       </ProCard>
+        //     );
+        //   } else if (item.is_condition) {
+        //     return (
+        //       <ProCard
+        //         key={index}
+        //         bodyStyle={{ padding: 10 }}
+        //         extra={tabExtra(item)}
+        //         bordered
+        //         style={{ borderRadius: '5px', marginTop: 5 }}
+        //         title={
+        //           <>
+        //             <Tag color={'blue'}>IF</Tag>
+        //             <Tag color={'green'}>{`API (${item.conditionAPINums})`}</Tag>
+        //             <Tag color={item.result === false ? '#f50' : '#87d068'}>
+        //               {item.conditionName}
+        //             </Tag>
+        //           </>
+        //         }
+        //         headerBordered
+        //         collapsible
+        //         defaultCollapsed
+        //       >
+        //         <InterfaceApiResponseDetail responses={item.data} />
+        //       </ProCard>
+        //     );
+        //   } else {
+        //     return (
+
+        //     );
+        //   }
+        // })
+        return (
+          <ProCard
+            extra={tabExtra(item)}
+            bordered
+            style={{ borderRadius: '5px', marginTop: 5 }}
+            title={
+              <>
+                <Tag color={'blue'}>API</Tag>
+                <Tag color={item.result === false ? '#f50' : '#87d068'}>
+                  {item.interface_name}
+                </Tag>
+                <Text type={'secondary'}>{setDesc(item.interface_desc)}</Text>
+              </>
+            }
+            headerBordered
+            collapsible
+            defaultCollapsed
+          >
+            <MyTabs
+              type={'line'}
+              defaultActiveKey={'3'}
+              items={[
+                {
+                  key: '1',
+                  label: TabTitle('请求头'),
+                  children: <RequestHeaders header={item.request_headers} />,
+                },
+                {
+                  key: '2',
+                  label: TabTitle('响应头'),
+                  children: <RequestHeaders header={item.response_headers} />,
+                },
+                {
+                  key: '3',
+                  label: TabTitle('响应体'),
+                  children: renderResponseBody(item),
+                },
+                {
+                  key: '4',
+                  label: TabTitle('变量提取'),
+                  children: (
+                    <RespProTable
+                      columns={ResponseExtractColumns}
+                      dataSource={item.extracts}
+                    />
+                  ),
+                },
+                {
+                  key: '5',
+                  label: TabTitle('接口断言'),
+                  children: (
+                    <RespProTable
+                      columns={AssertColumns}
+                      dataSource={item.asserts}
+                    />
+                  ),
+                },
+                {
+                  key: '6',
+                  label: TabTitle('实际请求'),
+                  children: <RequestInfo info={item} />,
+                },
+              ]}
+              size={'small'}
+            />
+          </ProCard>
+        );
       })}
     </div>
   );

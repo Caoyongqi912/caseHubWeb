@@ -468,7 +468,7 @@ export const runApiCaseBack = async (
   },
   opt?: IObjGet,
 ) => {
-  return request<IResponse<null>>('/api/interface/case/execute/back', {
+  return request<IResponse<null>>('/api/interfaceCase/execute/back', {
     method: 'POST',
     data: data,
     ...(opt || {}),
@@ -515,7 +515,7 @@ export const copyCaseContentStep = async (
  */
 export const caseAPIResultDetail = async (data: string, opt?: IObjGet) => {
   return request<IResponse<IInterfaceCaseResult>>(
-    `/api/interface/result/case/detail/${data}`,
+    `/api/interfaceResult/detail/${data}`,
     {
       method: 'GET',
       ...(opt || {}),
@@ -601,10 +601,10 @@ export const removeCaseAPIResults = async (
   opt?: IObjGet,
 ) => {
   return request<IResponse<IInterfaceCaseResult>>(
-    `/api/interface/result/case/removeAll`,
+    `/api/interfaceResult/removeCaseResults`,
     {
-      method: 'POST',
-      data: { interfaceCaseID: data },
+      method: 'GET',
+      params: { case_id: data },
       ...(opt || {}),
     },
   );
@@ -648,12 +648,12 @@ export const caseAPIResults = async (
  */
 export const caseAPIResultsByCase = async (
   data: {
-    caseResultId: string | number;
+    case_result_id: string | number;
   },
   opt?: IObjGet,
 ) => {
   return request<IResponse<ICaseContentResult[]>>(
-    `/api/interface/result/queryByCaseResultId`,
+    `/api/interfaceResult/queryStepResult`,
     {
       method: 'GET',
       params: data,
@@ -668,7 +668,7 @@ export const caseAPIResultsByCase = async (
  */
 export const pageInterCaseResult = async (data: ISearch, options?: IObjGet) => {
   return request<IResponse<IPage<IInterfaceAPI>>>(
-    '/api/interface/result/case/page',
+    '/api/interfaceResult/pageCaseResult',
     {
       method: 'POST',
       data: data,

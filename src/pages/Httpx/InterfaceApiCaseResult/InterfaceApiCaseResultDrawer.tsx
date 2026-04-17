@@ -115,9 +115,9 @@ const InterfaceApiCaseResultDrawer: FC<SelfProps> = ({
         const { code, data } = await caseAPIResultDetail(caseResultId);
         if (code === 0 && !isCancelled) {
           setCaseResultInfo(data);
-          const { interfaceLog } = data;
-          if (interfaceLog) {
-            setLogMessage(interfaceLog.split('\n'));
+          const { interface_log } = data;
+          if (interface_log) {
+            setLogMessage(interface_log.split('\n'));
           } else {
             setLogMessage([]);
           }

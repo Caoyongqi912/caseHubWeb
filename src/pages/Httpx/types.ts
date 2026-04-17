@@ -151,20 +151,20 @@ export interface ITryResponseInfo extends IBaseField {
 }
 
 export interface IInterfaceCaseResult extends IBaseField {
-  interfaceCaseID: number;
-  interfaceCaseName: string;
-  interfaceCaseUid: string;
-  interfaceCaseDesc: string;
-  interfaceCaseProjectId: number;
-  interfaceCaseModuleId: number;
-  starterId: number;
-  starterName: string;
+  interface_case_id: number;
+  interface_case_name: string;
+  interface_case_uid: string;
+  interface_case_desc: string;
+  project_id: number;
+  module_id: number;
+  starter_id: number;
+  starter_name: string;
   total_num: number;
-  useTime: string;
-  startTime: string;
-  interfaceLog?: string;
+  use_time: string;
+  start_time: string;
+  interface_log?: string;
   progress: number;
-  interface_task_result_Id?: number;
+  interface_task_result_id?: number;
   result?: 'SUCCESS' | 'ERROR';
   status: 'RUNNING' | 'OVER' | 'ERROR';
 
@@ -316,7 +316,7 @@ export interface ICaseContentResult extends IBaseField {
   starter_id: number;
   starter_name: string;
   content_result: boolean;
-  data?: ITryResponseInfo[];
+  data?: IResponseInfo[];
 }
 
 export interface LoopContent {
@@ -328,4 +328,31 @@ export interface LoopContent {
   loop_item_key?: string;
   loop_condition?: IObjGet;
   max_loop?: number;
+}
+
+export interface IResponseInfo {
+  interface_id: number;
+  interface_name: string;
+  interface_uid: string;
+  interface_desc: string;
+  starter_id: number;
+  starter_name: string;
+  request_url: string;
+  request_method: string;
+  request_params: any;
+
+  request_body_type: number; // 0无 1raw 2data
+  request_json: any;
+  request_data: any;
+  request_headers: any;
+  extracts: IExtract[];
+  asserts: any;
+  running_env_id: number;
+  running_env_name: string;
+  response_status: number;
+  response_text: string;
+  response_headers: IObjGet;
+  use_time: string;
+  result: boolean;
+  start_time: string;
 }

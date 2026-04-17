@@ -252,7 +252,7 @@ const Index: FC<SelfProps> = ({ interfaceCase, hiddenRunButton }) => {
           case_id: currentCaseId,
         });
         if (code === 0) {
-          setResultReloadCount((prev) => prev + 1);
+          // setResultReloadCount((prev) => prev + 1);
           message.success('后台运行中');
         }
       } else {

@@ -2,7 +2,7 @@ import { IObjGet, IPage, IResponse } from '@/api';
 import {
   IInterfaceAPI,
   IInterfaceAPIRecord,
-  ITryResponseInfo,
+  IResponseInfo,
 } from '@/pages/Httpx/types';
 import { request } from '@@/plugin-request/request';
 
@@ -119,7 +119,7 @@ export const tryInterApi = async (
   data: { interface_id: string | number; env_id: number },
   options?: IObjGet,
 ) => {
-  return request<IResponse<ITryResponseInfo[]>>('/api/interface/try', {
+  return request<IResponse<IResponseInfo[]>>('/api/interface/try', {
     method: 'POST',
     data: data,
     ...(options || {}),

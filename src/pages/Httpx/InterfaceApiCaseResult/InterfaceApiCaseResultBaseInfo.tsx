@@ -35,7 +35,7 @@ const InterfaceApiCaseResultBaseInfo: FC<SelfProps> = ({ caseResultInfo }) => {
     );
   }
 
-  const isSuccess = caseResultInfo.result === 'SUCCESS';
+  const isSuccess = caseResultInfo.result;
 
   return (
     <div style={{ padding: '16px' }}>
@@ -52,14 +52,14 @@ const InterfaceApiCaseResultBaseInfo: FC<SelfProps> = ({ caseResultInfo }) => {
           <Col flex="auto">
             <Space direction="vertical" size={4} style={{ width: '100%' }}>
               <Title level={4} style={{ margin: 0 }}>
-                {caseResultInfo.interfaceCaseName || '未命名测试'}
+                {caseResultInfo.interface_case_name || '未命名测试'}
               </Title>
               <Space size={8}>
                 <Text type="secondary" style={{ fontSize: '13px' }}>
-                  <IdcardOutlined /> {caseResultInfo.interfaceCaseUid}
+                  <IdcardOutlined /> {caseResultInfo.interface_case_uid}
                 </Text>
                 <Text type="secondary" style={{ fontSize: '13px' }}>
-                  结果ID: {caseResultInfo.uid}
+                  结果ID: {caseResultInfo.interface_case_id}
                 </Text>
               </Space>
             </Space>
@@ -87,7 +87,7 @@ const InterfaceApiCaseResultBaseInfo: FC<SelfProps> = ({ caseResultInfo }) => {
         </Row>
 
         {/* 用例描述 */}
-        {caseResultInfo.interfaceCaseDesc && (
+        {caseResultInfo.interface_case_desc && (
           <div style={{ marginTop: '12px' }}>
             <Paragraph
               type="secondary"
@@ -97,7 +97,7 @@ const InterfaceApiCaseResultBaseInfo: FC<SelfProps> = ({ caseResultInfo }) => {
                 lineHeight: 1.6,
               }}
             >
-              {caseResultInfo.interfaceCaseDesc}
+              {caseResultInfo.interface_case_desc}
             </Paragraph>
           </div>
         )}
@@ -133,7 +133,7 @@ const InterfaceApiCaseResultBaseInfo: FC<SelfProps> = ({ caseResultInfo }) => {
                 <Text type="secondary" style={{ fontSize: '12px' }}>
                   <UserOutlined /> 执行人
                 </Text>
-                <Text strong>{caseResultInfo.starterName || '未知'}</Text>
+                <Text strong>{caseResultInfo.starter_name || '未知'}</Text>
               </Space>
             </div>
           </Col>
@@ -173,7 +173,7 @@ const InterfaceApiCaseResultBaseInfo: FC<SelfProps> = ({ caseResultInfo }) => {
                 <Text type="secondary" style={{ fontSize: '12px' }}>
                   <ClockCircleOutlined /> 开始时间
                 </Text>
-                <Text strong>{caseResultInfo.startTime || '未记录'}</Text>
+                <Text strong>{caseResultInfo.start_time || '未记录'}</Text>
               </Space>
             </div>
           </Col>
@@ -193,8 +193,8 @@ const InterfaceApiCaseResultBaseInfo: FC<SelfProps> = ({ caseResultInfo }) => {
                   <FieldTimeOutlined /> 总用时
                 </Text>
                 <Text strong style={{ color: token.colorPrimary }}>
-                  {caseResultInfo.useTime
-                    ? `${caseResultInfo.useTime} ms`
+                  {caseResultInfo.use_time
+                    ? `${caseResultInfo.use_time} ms`
                     : '未统计'}
                 </Text>
               </Space>
@@ -248,7 +248,7 @@ const InterfaceApiCaseResultBaseInfo: FC<SelfProps> = ({ caseResultInfo }) => {
                     )
                   }
                 >
-                  {caseResultInfo.result || '未知'}
+                  {caseResultInfo.result ? '通过' : '未知'}
                 </Tag>
               </Space>
             </div>

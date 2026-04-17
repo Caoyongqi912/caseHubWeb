@@ -36,7 +36,7 @@ const Index: FC<Props> = ({ caseResultId }) => {
 
   useEffect(() => {
     if (caseResultId) {
-      caseAPIResultsByCase({ caseResultId: caseResultId }).then(
+      caseAPIResultsByCase({ case_result_id: caseResultId }).then(
         ({ code, data }) => {
           if (code === 0) {
             console.log(data);

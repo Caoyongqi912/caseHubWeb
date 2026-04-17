@@ -18,7 +18,7 @@ import ApiBaseForm from '@/pages/Httpx/Interface/InterfaceApiDetail/ApiBaseForm'
 import ApiBeforeItems from '@/pages/Httpx/Interface/InterfaceApiDetail/ApiBeforeItems';
 import ApiDetailForm from '@/pages/Httpx/Interface/InterfaceApiDetail/ApiDetailForm';
 import InterfaceApiResponseDetail from '@/pages/Httpx/InterfaceApiResponse/InterfaceApiResponseDetail';
-import { IInterfaceAPI, ITryResponseInfo } from '@/pages/Httpx/types';
+import { IInterfaceAPI, IResponseInfo } from '@/pages/Httpx/types';
 import {
   ApiOutlined,
   CheckCircleOutlined,
@@ -71,7 +71,7 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
     [],
   );
   const [tryLoading, setTryLoading] = useState(false);
-  const [responseInfo, setResponseInfo] = useState<ITryResponseInfo[]>();
+  const [responseInfo, setResponseInfo] = useState<IResponseInfo[]>();
   const [currentInterAPIId, setCurrentInterAPIId] = useState<number>();
   const [openDoc, setOpenDoc] = useState(false);
   const [runningEnv, setRunningEnv] = useState<number>();
@@ -247,6 +247,7 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
       env_id: runningEnv,
     }).then(({ code, data }) => {
       if (code === 0) {
+        console.log('try interface response', data);
         setResponseInfo(data);
         setTryLoading(false);
       }

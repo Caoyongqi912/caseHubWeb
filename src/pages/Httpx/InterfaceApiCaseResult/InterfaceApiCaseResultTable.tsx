@@ -69,8 +69,8 @@ const InterfaceApiCaseResultTable: FC<SelfProps> = (props) => {
         ...params,
         sort: sort,
       };
-      searchData.interfaceCaseID = apiCaseId ? apiCaseId : undefined;
-      searchData.interface_task_result_Id = taskResultId
+      searchData.interface_case_id = apiCaseId ? apiCaseId : undefined;
+      searchData.interface_task_result_id = taskResultId
         ? taskResultId
         : undefined;
       const { code, data } = await pageInterCaseResult(searchData);
@@ -189,14 +189,14 @@ const InterfaceApiCaseResultTable: FC<SelfProps> = (props) => {
   const columns: ProColumns<IInterfaceCaseResult>[] = [
     {
       title: '执行用例',
-      dataIndex: 'interfaceCaseName',
-      key: 'interfaceCaseName',
+      dataIndex: 'interface_case_name',
+      key: 'interface_case_name',
       ellipsis: true,
       width: 200,
       render: (_, record) => (
         <Tag style={styles.nameTag}>
           <PlayCircleOutlined style={{ marginRight: 6, opacity: 0.6 }} />
-          {record.interfaceCaseName}
+          {record.interface_case_name}
         </Tag>
       ),
     },
@@ -206,22 +206,27 @@ const InterfaceApiCaseResultTable: FC<SelfProps> = (props) => {
       key: 'result',
       valueType: 'select',
       width: 100,
-      valueEnum: { SUCCESS: { text: '成功' }, ERROR: { text: '失败' } },
+      valueEnum: { SUCCESS: { text: true }, ERROR: { text: false } },
       render: (_, record) => (
         <Tag
-          color={record.result === 'SUCCESS' ? 'success' : 'error'}
+          color={record.result ? 'success' : 'error'}
           style={{
             borderRadius: 6,
             fontWeight: 500,
             padding: '4px 12px',
           }}
         >
-          {record.result === 'SUCCESS' ? (
-            <CheckCircleOutlined style={{ marginRight: 4 }} />
+          {record.result ? (
+            <>
+              <CheckCircleOutlined style={{ marginRight: 4 }} />
+              通过
+            </>
           ) : (
-            <CloseCircleOutlined style={{ marginRight: 4 }} />
+            <>
+              <CloseCircleOutlined style={{ marginRight: 4 }} />
+              失败
+            </>
           )}
-          {record.result}
         </Tag>
       ),
     },
@@ -255,8 +260,8 @@ const InterfaceApiCaseResultTable: FC<SelfProps> = (props) => {
     },
     {
       title: '执行人',
-      dataIndex: 'starterId',
-      key: 'starterId',
+      dataIndex: 'starter_id',
+      key: 'starter_id',
       valueType: 'select',
       width: 120,
       renderFormItem: () => {
@@ -265,7 +270,7 @@ const InterfaceApiCaseResultTable: FC<SelfProps> = (props) => {
       render: (_, record) => (
         <Tag style={styles.userTag}>
           <UserOutlined style={{ marginRight: 4, opacity: 0.7 }} />
-          {record.starterName}
+          {record.starter_name}
         </Tag>
       ),
     },
@@ -273,7 +278,7 @@ const InterfaceApiCaseResultTable: FC<SelfProps> = (props) => {
       title: '执行时间',
       dataIndex: 'create_time',
       valueType: 'dateTime',
-      key: 'startTime',
+      key: 'create_time',
       width: 180,
       render: (_, record) => (
         <Tag style={styles.timeTag}>
@@ -328,14 +333,6 @@ const InterfaceApiCaseResultTable: FC<SelfProps> = (props) => {
       ),
     },
   ];
-
-  const removeCaseResult = async (caseResultUid: string) => {
-    const { code, msg } = await removeCaseAPIResult(caseResultUid);
-    if (code === 0) {
-      message.success(msg);
-      actionRef.current?.reload();
-    }
-  };
 
   const removeCaseResults = async () => {
     if (apiCaseId) {

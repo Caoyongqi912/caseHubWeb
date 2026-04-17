@@ -5,7 +5,7 @@ import RequestHeaders from '@/pages/Httpx/InterfaceApiResponse/RequestHeaders';
 import RequestInfo from '@/pages/Httpx/InterfaceApiResponse/RequestInfo';
 import ResponseExtractColumns from '@/pages/Httpx/InterfaceApiResponse/ResponseExtract';
 import RespProTable from '@/pages/Httpx/InterfaceApiResponse/RespProTable';
-import { ICaseContentResult, ITryResponseInfo } from '@/pages/Httpx/types';
+import { ICaseContentResult, IResponseInfo } from '@/pages/Httpx/types';
 import { CONFIG } from '@/utils/config';
 import {
   ApiOutlined,
@@ -25,23 +25,23 @@ interface Props {
 
 const ApiResult: FC<Props> = ({ result, prefix }) => {
   const { API_STATUS } = CONFIG;
-
-  const renderResponseBody = (item: any) => {
-    const { response_txt } = item;
+  console.log(result);
+  const renderResponseBody = (item: IResponseInfo) => {
+    const { response_text } = item;
     try {
-      const jsonValue = JSON.parse(response_txt);
+      const jsonValue = JSON.parse(response_text);
       const value = JSON.stringify(jsonValue, null, 2);
       return <AceCodeEditor value={value} readonly={true} />;
     } catch (e) {
       return (
-        <AceCodeEditor value={response_txt} _mode={'html'} readonly={true} />
+        <AceCodeEditor value={response_text} _mode={'html'} readonly={true} />
       );
     }
   };
 
-  const tabExtra = (response: ITryResponseInfo) => {
+  const tabExtra = (response: IResponseInfo) => {
     if (!response.response_status) return null;
-    const { response_status, useTime, startTime } = response;
+    const { response_status, use_time, start_time } = response;
     const { color, text = '' } = API_STATUS[response_status!] || {
       color: '#F56C6C',
       text: '',
@@ -142,7 +142,7 @@ const ApiResult: FC<Props> = ({ result, prefix }) => {
                   fontWeight: 600,
                 }}
               >
-                {startTime}
+                {start_time}
               </span>
             </div>
 
@@ -163,7 +163,7 @@ const ApiResult: FC<Props> = ({ result, prefix }) => {
                   fontWeight: 600,
                 }}
               >
-                {useTime}ms
+                {use_time}ms
               </span>
             </div>
           </div>
@@ -191,7 +191,7 @@ const ApiResult: FC<Props> = ({ result, prefix }) => {
     <>
       {result.data && result.data.length > 0 && (
         <>
-          {result.data.map((item: ITryResponseInfo, index: number) => (
+          {result.data.map((item: IResponseInfo, index: number) => (
             <ProCard
               extra={tabExtra(item)}
               bordered
@@ -208,13 +208,13 @@ const ApiResult: FC<Props> = ({ result, prefix }) => {
                     <Tooltip title={'接口'}>
                       <Tag color={'gold-inverse'} icon={<ApiOutlined />} />
                     </Tooltip>
-                    {item.result === 'SUCCESS' ? (
+                    {item.result ? (
                       <CheckCircleTwoTone twoToneColor="#52c41a" />
                     ) : (
                       <CloseCircleTwoTone twoToneColor={'#c20000'} />
                     )}
                     <Text type={'secondary'} style={{ marginLeft: 20 }}>
-                      {item.interfaceName}
+                      {item.interface_name}
                     </Text>
                   </Space>
                 );
@@ -230,12 +230,12 @@ const ApiResult: FC<Props> = ({ result, prefix }) => {
                   {
                     key: '1',
                     label: '请求头',
-                    children: <RequestHeaders header={item.request_head} />,
+                    children: <RequestHeaders header={item.request_headers} />,
                   },
                   {
                     key: '2',
                     label: '响应头',
-                    children: <RequestHeaders header={item.response_head} />,
+                    children: <RequestHeaders header={item.response_headers} />,
                   },
                   {
                     key: '3',
@@ -265,12 +265,7 @@ const ApiResult: FC<Props> = ({ result, prefix }) => {
                   {
                     key: '6',
                     label: '实际请求',
-                    children: (
-                      <RequestInfo
-                        method={item.request_method}
-                        interfaceApiInfo={item.request_info}
-                      />
-                    ),
+                    children: <RequestInfo info={item} />,
                   },
                 ]}
                 size={'small'}
