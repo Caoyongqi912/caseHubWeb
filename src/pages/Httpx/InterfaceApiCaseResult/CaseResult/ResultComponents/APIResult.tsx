@@ -13,10 +13,11 @@ import {
   CloseCircleTwoTone,
 } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
-import { Space, Tag, Tooltip, Typography } from 'antd';
-import { FC } from 'react';
+import { Space, Tag, theme, Tooltip, Typography } from 'antd';
+import { FC, useMemo } from 'react';
 
 const { Text } = Typography;
+const { useToken } = theme;
 
 interface Props {
   prefix: string;
@@ -24,8 +25,52 @@ interface Props {
 }
 
 const ApiResult: FC<Props> = ({ result, prefix }) => {
+  const { token } = useToken();
   const { API_STATUS } = CONFIG;
-  console.log(result);
+
+  const styles = useMemo(
+    () => ({
+      card: {
+        borderRadius: token.borderRadiusSM,
+        borderLeft: `3px solid ${
+          result.result ? token.colorSuccess : token.colorError
+        }`,
+        marginTop: token.marginXS,
+      },
+      cardExtra: {
+        display: 'flex',
+        alignItems: 'center',
+        flexWrap: 'wrap' as const,
+        rowGap: token.paddingXS,
+        padding: `${token.paddingSM}px ${token.paddingMD}px`,
+        backgroundColor: token.colorBgLayout,
+        borderRadius: token.borderRadiusSM,
+      },
+      tagGroup: {
+        display: 'flex',
+        alignItems: 'center',
+        flexWrap: 'wrap' as const,
+        gap: token.paddingSM,
+        fontSize: token.fontSize,
+      },
+      tagLabel: {
+        color: token.colorTextSecondary,
+        fontWeight: 500,
+        marginRight: token.marginXS,
+      },
+      tagValue: (color: string) => ({
+        color: color,
+        fontWeight: 600,
+        padding: `${token.paddingXS}px ${token.paddingSM}px`,
+        backgroundColor: `${color}15`,
+        borderRadius: token.borderRadiusSM,
+      }),
+      successColor: token.colorSuccess,
+      errorColor: token.colorError,
+    }),
+    [token, result.result],
+  );
+
   const renderResponseBody = (item: IResponseInfo) => {
     const { response_text } = item;
     try {
@@ -43,124 +88,56 @@ const ApiResult: FC<Props> = ({ result, prefix }) => {
     if (!response.response_status) return null;
     const { response_status, use_time, start_time } = response;
     const { color, text = '' } = API_STATUS[response_status!] || {
-      color: '#F56C6C',
+      color: token.colorError,
       text: '',
     };
     return (
-      <Space
-        size={12}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          rowGap: 8,
-          padding: '8px 12px',
-          backgroundColor: '#f8f9fa',
-          borderRadius: 6,
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: 12,
-            fontSize: 14,
-          }}
-        >
-          {/* Method 标签 */}
+      <Space size={token.paddingSM} style={styles.cardExtra}>
+        <div style={styles.tagGroup}>
           <div style={{ display: 'flex', alignItems: 'center' }}>
-            <span
-              style={{
-                color: '#6c757d',
-                fontWeight: 500,
-                marginRight: 4,
-              }}
-            >
-              Method:
-            </span>
-            <span
-              style={{
-                color: color,
-                fontWeight: 600,
-                padding: '2px 8px',
-                backgroundColor: `${color}10`,
-                borderRadius: 4,
-              }}
-            >
+            <span style={styles.tagLabel}>Method:</span>
+            <span style={styles.tagValue(color)}>
               {response.request_method}
             </span>
           </div>
 
-          {/* Status Code 标签 */}
           <div style={{ display: 'flex', alignItems: 'center' }}>
-            <span
-              style={{
-                color: '#6c757d',
-                fontWeight: 500,
-                marginRight: 4,
-              }}
-            >
-              Status:
-            </span>
-            <span
-              style={{
-                color: color,
-                fontWeight: 600,
-                padding: '2px 8px',
-                backgroundColor: `${color}10`,
-                borderRadius: 4,
-              }}
-            >
+            <span style={styles.tagLabel}>Status:</span>
+            <span style={styles.tagValue(color)}>
               {response_status}
-              {text && <span style={{ marginLeft: 4 }}>{text}</span>}
+              {text && (
+                <span style={{ marginLeft: token.marginXS }}>{text}</span>
+              )}
             </span>
           </div>
 
-          {/* Time 标签组 */}
           <div
             style={{
               display: 'flex',
-              gap: 12,
+              gap: token.paddingSM,
               alignItems: 'center',
             }}
           >
-            {/* Request Time */}
             <div style={{ display: 'flex', alignItems: 'center' }}>
+              <span style={styles.tagLabel}>Request_Time:</span>
               <span
                 style={{
-                  color: '#6c757d',
-                  fontWeight: 500,
-                  marginRight: 4,
-                }}
-              >
-                Request_Time:
-              </span>
-              <span
-                style={{
-                  color: '#67C23A',
-                  fontWeight: 600,
+                  ...styles.tagValue(styles.successColor),
+                  background: 'none',
+                  padding: 0,
                 }}
               >
                 {start_time}
               </span>
             </div>
 
-            {/* Use Time */}
             <div style={{ display: 'flex', alignItems: 'center' }}>
+              <span style={styles.tagLabel}>Latency:</span>
               <span
                 style={{
-                  color: '#6c757d',
-                  fontWeight: 500,
-                  marginRight: 4,
-                }}
-              >
-                Latency:
-              </span>
-              <span
-                style={{
-                  color: '#67C23A',
-                  fontWeight: 600,
+                  ...styles.tagValue(styles.successColor),
+                  background: 'none',
+                  padding: 0,
                 }}
               >
                 {use_time}ms
@@ -173,20 +150,13 @@ const ApiResult: FC<Props> = ({ result, prefix }) => {
   };
 
   const stepTag = (index: number) => {
-    if (prefix === 'STEP') {
-      return (
-        <Tag color={'green-inverse'}>
-          {prefix}_{result.content_step}
-        </Tag>
-      );
-    } else {
-      return (
-        <Tag color={'green-inverse'}>
-          {prefix}_{index + 1}
-        </Tag>
-      );
-    }
+    return (
+      <Tag color={'green-inverse'}>
+        {prefix}_{prefix === 'STEP' ? result.content_step : index + 1}
+      </Tag>
+    );
   };
+
   return (
     <>
       {result.data && result.data.length > 0 && (
@@ -195,27 +165,29 @@ const ApiResult: FC<Props> = ({ result, prefix }) => {
             <ProCard
               extra={tabExtra(item)}
               bordered
-              style={{
-                borderRadius: '5px',
-                borderLeft: `3px solid ${item.result ? '#52c41a' : '#ff4d4f'}`,
-
-                marginTop: 5,
-              }}
+              style={styles.card}
               collapsibleIconRender={({}) => {
                 return (
-                  <Space>
-                    {stepTag(index)}
-                    <Tooltip title={'接口'}>
-                      <Tag color={'gold-inverse'} icon={<ApiOutlined />} />
-                    </Tooltip>
-                    {item.result ? (
-                      <CheckCircleTwoTone twoToneColor="#52c41a" />
-                    ) : (
-                      <CloseCircleTwoTone twoToneColor={'#c20000'} />
-                    )}
-                    <Text type={'secondary'} style={{ marginLeft: 20 }}>
-                      {item.interface_name}
-                    </Text>
+                  <Space
+                    style={{ width: '100%', justifyContent: 'space-between' }}
+                  >
+                    <Space>
+                      {stepTag(index)}
+                      <Tooltip title={'接口'}>
+                        <Tag color={'gold-inverse'} icon={<ApiOutlined />} />
+                      </Tooltip>
+                      {item.result ? (
+                        <CheckCircleTwoTone twoToneColor={token.colorSuccess} />
+                      ) : (
+                        <CloseCircleTwoTone twoToneColor={token.colorError} />
+                      )}
+                      <Text
+                        type={'secondary'}
+                        style={{ marginLeft: token.marginLG }}
+                      >
+                        {item.interface_name}
+                      </Text>
+                    </Space>
                   </Space>
                 );
               }}

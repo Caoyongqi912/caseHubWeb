@@ -2,10 +2,11 @@ import APIResult from '@/pages/Httpx/InterfaceApiCaseResult/CaseResult/ResultCom
 import { ICaseContentResult } from '@/pages/Httpx/types';
 import { CheckCircleTwoTone, CloseCircleTwoTone } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
-import { Space, Tag, Tooltip, Typography } from 'antd';
-import { FC } from 'react';
+import { Space, Tag, theme, Tooltip, Typography } from 'antd';
+import { FC, useMemo } from 'react';
 
 const { Text } = Typography;
+const { useToken } = theme;
 
 interface Props {
   result: ICaseContentResult;
@@ -23,47 +24,97 @@ const OperatorOption: { [key: number]: string } = {
 };
 
 const ConditionResult: FC<Props> = ({ result }) => {
+  const { token } = useToken();
   const { content_condition } = result;
+
+  const styles = useMemo(
+    () => ({
+      card: {
+        borderRadius: token.borderRadiusSM,
+        borderLeft: `3px solid ${
+          result.result ? token.colorSuccess : token.colorError
+        }`,
+        marginTop: token.marginXS,
+      },
+      conditionBadge: {
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: token.paddingSM,
+        padding: `${token.paddingXS}px ${token.paddingSM}px`,
+        backgroundColor: content_condition?.result
+          ? `${token.colorSuccess}15`
+          : `${token.colorWarning}15`,
+        borderRadius: token.borderRadiusSM,
+        border: `1px solid ${
+          content_condition?.result
+            ? `${token.colorSuccess}30`
+            : `${token.colorWarning}30`
+        }`,
+      },
+      keyText: {
+        color: token.colorPrimary,
+        fontWeight: 600,
+        fontFamily: 'Monaco, Consolas, monospace',
+        fontSize: token.fontSizeSM,
+      },
+      operatorText: {
+        color: token.colorText,
+        fontWeight: 500,
+        fontSize: token.fontSizeSM,
+        padding: `0 ${token.paddingXS}px`,
+      },
+      valueText: {
+        color: content_condition?.result
+          ? token.colorSuccess
+          : token.colorWarning,
+        fontWeight: 600,
+        fontFamily: 'Monaco, Consolas, monospace',
+        fontSize: token.fontSizeSM,
+      },
+      divider: {
+        color: token.colorTextSecondary,
+        margin: `0 ${token.paddingXS}px`,
+      },
+    }),
+    [token, result.result, content_condition?.result],
+  );
+
+  const renderConditionDisplay = () => {
+    if (!content_condition) return null;
+
+    return (
+      <div style={styles.conditionBadge}>
+        <span style={styles.keyText}>{content_condition.key}</span>
+        <span style={styles.operatorText}>
+          {OperatorOption[content_condition.operator]}
+        </span>
+        <span style={styles.valueText}>{content_condition.value}</span>
+      </div>
+    );
+  };
 
   return (
     <ProCard
       bordered
-      style={{
-        borderRadius: '5px',
-        borderLeft: `3px solid ${
-          result.content_result ? '#52c41a' : '#ff4d4f'
-        }`,
-        marginTop: 5,
-      }}
-      collapsibleIconRender={({}) => {
-        return (
+      style={styles.card}
+      title={
+        <Space style={{ width: '100%', justifyContent: 'space-between' }}>
           <Space>
             <Tag color={'green-inverse'}>STEP_{result.content_step}</Tag>
             <Tooltip title={'条件组'}>
               <Tag color={'purple-inverse'}>IF</Tag>
             </Tooltip>
-            {result.content_result ? (
-              <CheckCircleTwoTone twoToneColor="#52c41a" />
+            {result.result ? (
+              <CheckCircleTwoTone twoToneColor={token.colorSuccess} />
             ) : (
-              <CloseCircleTwoTone twoToneColor={'#fca760'} />
-            )}
-            {content_condition && (
-              <Space style={{ marginLeft: 20 }}>
-                <Text strong> {content_condition.key}</Text>
-                <Text
-                  style={{
-                    color: result.content_condition?.condition_result
-                      ? '#52c41a'
-                      : '#FCA760FF',
-                  }}
-                >
-                  {OperatorOption[content_condition.operator]}
-                </Text>
-                <Text strong> {content_condition.value}</Text>
-              </Space>
+              <CloseCircleTwoTone twoToneColor={token.colorWarning} />
             )}
           </Space>
-        );
+          {renderConditionDisplay()}
+        </Space>
+      }
+      collapsibleIconRender={({}) => {
+        return null;
       }}
       headerBordered
       collapsible

@@ -189,24 +189,32 @@ const ApiCondition: FC<SelfProps> = (props) => {
   /**
    * 表单值变化处理（防抖保存）
    * @description 条件配置变化时自动保存到服务端，防抖时间为2秒
+   * 只有当 condition_key、condition_operator、condition_value 三个值都存在时才发送请求
    */
   const handleValuesChange = useCallback(
     (_: unknown, allValues: Record<string, unknown>) => {
-      clearTimeout(timeoutRef.current);
-      const condition_key = allValues.condition_key as string;
-      const condition_operator = allValues.condition_operator as number;
-      const condition_value = conditionForm.getFieldValue('condition_value');
+      const condition_key = allValues.condition_key as string | undefined;
+      const condition_operator = allValues.condition_operator as
+        | number
+        | undefined;
+      const condition_value = allValues.condition_value as string | undefined;
+
       const isOperatorWithoutValue =
         condition_operator === 3 || condition_operator === 4;
       const needsConditionValue = !isOperatorWithoutValue;
-      const hasConditionValue =
-        condition_value !== undefined && condition_value !== '';
-      const isFormComplete =
-        condition_key &&
-        condition_operator &&
-        (!needsConditionValue || hasConditionValue);
-      if (!isFormComplete) return;
 
+      const hasKey = condition_key !== undefined && condition_key !== '';
+      const hasOperator = condition_operator !== undefined;
+      const hasValue = condition_value !== undefined && condition_value !== '';
+      const isFormComplete =
+        hasKey && hasOperator && (!needsConditionValue || hasValue);
+
+      if (!isFormComplete) {
+        clearTimeout(timeoutRef.current);
+        return;
+      }
+
+      clearTimeout(timeoutRef.current);
       timeoutRef.current = setTimeout(async () => {
         const { code, data } = await updateConditionContentInfo({
           id: caseContent.target_id,

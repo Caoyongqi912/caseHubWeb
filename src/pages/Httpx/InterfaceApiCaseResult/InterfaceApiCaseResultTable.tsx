@@ -275,6 +275,19 @@ const InterfaceApiCaseResultTable: FC<SelfProps> = (props) => {
       ),
     },
     {
+      title: '耗时',
+      dataIndex: 'use_time',
+      valueType: 'dateTime',
+      key: 'use_time',
+      width: 180,
+      render: (_, record) => (
+        <Tag style={styles.timeTag}>
+          <ScheduleOutlined style={{ marginRight: 4, opacity: 0.6 }} />
+          {record.use_time}
+        </Tag>
+      ),
+    },
+    {
       title: '执行时间',
       dataIndex: 'create_time',
       valueType: 'dateTime',

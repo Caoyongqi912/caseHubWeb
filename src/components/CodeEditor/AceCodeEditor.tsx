@@ -74,7 +74,7 @@ const AceCodeEditor: FC<selfProps> = (props) => {
           readOnly: readonly || false,
           enableLiveAutocompletion: true,
           autoScrollEditorIntoView: true,
-          useWorker: true,
+          useWorker: false,
           useSoftTabs: true,
         }}
         key={`${editorTheme}_${_mode}`} // 关键修复：添加key强制重新渲染

@@ -305,18 +305,26 @@ export interface ICaseContentResult extends IBaseField {
   script_extracts: null;
   content_asserts: CaseContentAssertResult[] | null;
   wait_time: number | null;
-  content_condition: {
-    key: any;
-    operator: number;
-    value: any;
-    condition_result?: boolean;
-  } | null;
+
   start_time: string;
   use_time: string | number | null;
   starter_id: number;
   starter_name: string;
-  content_result: boolean;
+  result: boolean;
   data?: IResponseInfo[];
+
+  // group 私有
+  success_api_num?: number;
+  total_api_num?: number;
+  fail_api_num?: number;
+
+  // condition 私有
+  content_condition: {
+    key: any;
+    operator: number;
+    value: any;
+    result?: boolean;
+  } | null;
 }
 
 export interface LoopContent {

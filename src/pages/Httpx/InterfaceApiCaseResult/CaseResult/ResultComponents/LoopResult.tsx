@@ -17,9 +17,7 @@ const LoopResult: FC<Props> = ({ result }) => {
       bordered
       style={{
         borderRadius: '5px',
-        borderLeft: `3px solid ${
-          result.content_result ? '#52c41a' : '#ff4d4f'
-        }`,
+        borderLeft: `3px solid ${result.result ? '#52c41a' : '#ff4d4f'}`,
         marginTop: 5,
       }}
       collapsibleIconRender={({}) => {
@@ -29,7 +27,7 @@ const LoopResult: FC<Props> = ({ result }) => {
             <Tooltip title={'条件组'}>
               <Tag color={'purple-inverse'}>LOOP</Tag>
             </Tooltip>
-            {result.content_result ? (
+            {result.result ? (
               <CheckCircleTwoTone twoToneColor="#52c41a" />
             ) : (
               <CloseCircleTwoTone twoToneColor={'#fca760'} />
