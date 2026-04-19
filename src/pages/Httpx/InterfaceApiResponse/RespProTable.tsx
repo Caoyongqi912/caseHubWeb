@@ -10,6 +10,7 @@ interface SelfProps {
 const RespProTable: FC<SelfProps> = ({ columns, dataSource }) => {
   return (
     <ProTable
+      pagination={false}
       search={false}
       toolBarRender={false}
       columns={columns}

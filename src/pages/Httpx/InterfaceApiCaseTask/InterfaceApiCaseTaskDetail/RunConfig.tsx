@@ -98,19 +98,25 @@ const RunConfig: FC<SelfProps> = ({
             运行环境
           </Text>
         </div>
-        <Select
-          placeholder="请选择运行环境"
+        <div
           style={{
             width: '100%',
-            borderRadius: '8px',
           }}
-          options={apiEnvs}
-          onChange={onEnvChange}
-          allowClear
-          showSearch
-          optionFilterProp="label"
-          size="large"
-        />
+        >
+          <Select
+            placeholder="请选择运行环境"
+            style={{
+              width: '100%',
+              borderRadius: '8px',
+            }}
+            options={apiEnvs}
+            onChange={onEnvChange}
+            allowClear
+            showSearch
+            optionFilterProp="label"
+            size="large"
+          />
+        </div>
       </div>
 
       {/* 选择运行卡片 */}

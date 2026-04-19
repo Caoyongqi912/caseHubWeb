@@ -1,4 +1,5 @@
 import {
+  associationCasesByTaskId,
   queryAssociationCasesByTaskId,
   removeAssociationCasesByTaskId,
   reorderAssociationCasesByTaskId,
@@ -36,7 +37,7 @@ const AssociationCases: FC<IInterfaceApiCaseTaskDetailProps> = ({
   const queryCasesByTask = useCallback(async () => {
     if (currentTaskId) {
       const { code, data } = await queryAssociationCasesByTaskId({
-        taskId: currentTaskId,
+        task_id: currentTaskId,
       });
       setCaseLength(data.length);
       return queryData(code, data);
@@ -51,13 +52,27 @@ const AssociationCases: FC<IInterfaceApiCaseTaskDetailProps> = ({
     const reorderCaseIds: number[] = newDataSource.map((item) => item.id);
     if (currentTaskId) {
       const { code, msg } = await reorderAssociationCasesByTaskId({
-        taskId: currentTaskId,
-        caseIds: reorderCaseIds,
+        task_id: currentTaskId,
+        case_ids: reorderCaseIds,
       });
       if (code === 0) {
         actionRef.current?.reload();
         message.success(msg);
       }
+    }
+  };
+
+  const onCaseSelected = async (selectedRowKeys: number[]) => {
+    if (!currentTaskId) {
+      return;
+    }
+    const { code } = await associationCasesByTaskId({
+      task_id: currentTaskId,
+      case_ids: selectedRowKeys,
+    });
+    if (code === 0) {
+      actionRef.current?.reload();
+      setChoiceApiCaseOpen(false);
     }
   };
 
@@ -74,34 +89,34 @@ const AssociationCases: FC<IInterfaceApiCaseTaskDetailProps> = ({
     },
     {
       title: '名称',
-      dataIndex: 'title',
-      key: 'title',
-      render: (_, record) => <Tag color={'success'}>{record.title}</Tag>,
+      dataIndex: 'case_title',
+      key: 'case_title',
+      render: (_, record) => <Tag color={'success'}>{record.case_title}</Tag>,
     },
     {
       title: 'API数量',
-      dataIndex: 'apiNum',
+      dataIndex: 'case_api_num',
       valueType: 'text',
       render: (_, record) => {
-        return <Tag color={'blue'}>{record.apiNum}</Tag>;
+        return <Tag color={'blue'}>{record.case_api_num}</Tag>;
       },
     },
     {
       title: '优先级',
-      dataIndex: 'level',
+      dataIndex: 'case_level',
       valueType: 'select',
       valueEnum: CONFIG.API_LEVEL_ENUM,
       render: (_, record) => {
-        return <Tag color={'blue'}>{record.level}</Tag>;
+        return <Tag color={'blue'}>{record.case_level}</Tag>;
       },
     },
     {
       title: '状态',
-      dataIndex: 'status',
+      dataIndex: 'case_status',
       valueType: 'select',
       valueEnum: CONFIG.API_STATUS_ENUM,
       render: (_, record) => {
-        return CONFIG.API_STATUS_ENUM[record.status].tag;
+        return CONFIG.API_STATUS_ENUM[record.case_status].tag;
       },
     },
     {
@@ -155,18 +170,17 @@ const AssociationCases: FC<IInterfaceApiCaseTaskDetailProps> = ({
   return (
     <>
       <MyDrawer
-        width={'75%'}
+        width={'80%'}
         open={choiceApiCaseOpen}
         setOpen={setChoiceApiCaseOpen}
       >
         <ChoiceApiCasesTable
           currentProjectId={currentProjectId}
-          currentTaskId={currentTaskId}
-          reload={actionRef.current?.reload}
+          onCaseSelected={onCaseSelected}
         />
       </MyDrawer>
       <MyDrawer
-        name={currentCase?.title || ''}
+        name={currentCase?.case_title || ''}
         open={caseDetailDrawerOpen}
         setOpen={setCaseDetailDrawerOpen}
         width={'80%'}

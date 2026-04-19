@@ -121,7 +121,7 @@ const Index = () => {
     },
     {
       key: '1',
-      label: '关联API用例',
+      label: '关联接口用例',
       children: (
         <AssociationApis
           currentTaskId={taskId}

@@ -34,7 +34,7 @@ interface Props {
 }
 
 const AssertResult: FC<Props> = ({ result }) => {
-  const { content_asserts } = result;
+  const { assert_data } = result;
 
   return (
     <ProCard
@@ -43,9 +43,7 @@ const AssertResult: FC<Props> = ({ result }) => {
         borderRadius: '8px',
         marginTop: 8,
         overflow: 'hidden',
-        borderLeft: `4px solid ${
-          result.content_result ? '#52c41a' : '#ff4d4f'
-        }`,
+        borderLeft: `4px solid ${result.result ? '#52c41a' : '#ff4d4f'}`,
       }}
       collapsibleIconRender={({}) => {
         return (
@@ -56,7 +54,7 @@ const AssertResult: FC<Props> = ({ result }) => {
                 <Tag color={'red-inverse'} icon={<QuestionOutlined />} />
               </Tooltip>
             </Space>
-            {result.content_result ? (
+            {result.result ? (
               <CheckCircleTwoTone twoToneColor="#52c41a" />
             ) : (
               <CloseCircleTwoTone twoToneColor={'#c20000'} />
@@ -80,12 +78,12 @@ const AssertResult: FC<Props> = ({ result }) => {
       collapsible
       defaultCollapsed
       extra={
-        content_asserts && (
-          <Text type="secondary">共 {content_asserts.length} 个断言项</Text>
+        assert_data && (
+          <Text type="secondary">共 {assert_data.length} 个断言项</Text>
         )
       }
     >
-      {content_asserts && content_asserts.length > 0 && (
+      {assert_data && assert_data.length > 0 && (
         <div style={{ marginTop: 8 }}>
           <Divider orientation="left" plain>
             <Space>
@@ -94,7 +92,7 @@ const AssertResult: FC<Props> = ({ result }) => {
             </Space>
           </Divider>
 
-          {content_asserts.map((item, index) => (
+          {assert_data.map((item, index) => (
             <ProCard
               size="small"
               style={{
@@ -237,7 +235,7 @@ const AssertResult: FC<Props> = ({ result }) => {
           ))}
 
           {/* 统计信息 */}
-          {content_asserts.length > 1 && (
+          {assert_data.length > 1 && (
             <div style={{ marginTop: 16 }}>
               <Card size="small">
                 <Row justify="space-between" align="middle">
@@ -256,9 +254,8 @@ const AssertResult: FC<Props> = ({ result }) => {
                             通过：
                             <Text strong>
                               {
-                                content_asserts.filter(
-                                  (item) => item.assert_result,
-                                ).length
+                                assert_data.filter((item) => item.assert_result)
+                                  .length
                               }
                             </Text>
                           </Text>
@@ -271,7 +268,7 @@ const AssertResult: FC<Props> = ({ result }) => {
                             失败：
                             <Text strong>
                               {
-                                content_asserts.filter(
+                                assert_data.filter(
                                   (item) => !item.assert_result,
                                 ).length
                               }

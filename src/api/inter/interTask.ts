@@ -16,14 +16,11 @@ export const insertApiTask = async (
   data: IInterfaceAPITask,
   options?: IObjGet,
 ) => {
-  return request<IResponse<IInterfaceAPITask>>(
-    '/api/interface/task/insertTask',
-    {
-      method: 'POST',
-      data: data,
-      ...(options || {}),
-    },
-  );
+  return request<IResponse<IInterfaceAPITask>>('/api/interface/task/insert', {
+    method: 'POST',
+    data: data,
+    ...(options || {}),
+  });
 };
 
 /**
@@ -107,10 +104,10 @@ export const pageApiTask = async (data: ISearch, options?: IObjGet) => {
  * @param options
  */
 export const associationCasesByTaskId = async (
-  data: { taskId: string; caseIds: number[] },
+  data: { task_id: string | number; case_ids: number[] },
   options?: IObjGet,
 ) => {
-  return request<IResponse<boolean>>('/api/interface/task/association/cases', {
+  return request<IResponse<boolean>>('/api/interface/task/associate/cases', {
     method: 'POST',
     data: data,
     ...(options || {}),
@@ -122,10 +119,10 @@ export const associationCasesByTaskId = async (
  * @param options
  */
 export const associationApisByTaskId = async (
-  data: { taskId: string | number; apiIds: number[] },
+  data: { task_id: string | number; interface_ids: number[] },
   options?: IObjGet,
 ) => {
-  return request<IResponse<null>>('/api/interface/task/association/apis', {
+  return request<IResponse<null>>('/api/interface/task/associate/interfaces', {
     method: 'POST',
     data: data,
     ...(options || {}),
@@ -174,11 +171,11 @@ export const removeAssociationApisByTaskId = async (
  * @param options
  */
 export const queryAssociationCasesByTaskId = async (
-  data: { taskId: string | number },
+  data: { task_id: string | number },
   options?: IObjGet,
 ) => {
   return request<IResponse<IInterfaceAPICase[]>>(
-    '/api/interface/task/query/cases',
+    '/api/interface/task/associate/query_cases',
     {
       method: 'GET',
       params: data,
@@ -192,14 +189,17 @@ export const queryAssociationCasesByTaskId = async (
  * @param options
  */
 export const queryAssociationApisByTaskId = async (
-  data: string,
+  data: { task_id: string | number },
   options?: IObjGet,
 ) => {
-  return request<IResponse<IInterfaceAPI[]>>('/api/interface/task/query/apis', {
-    method: 'GET',
-    params: { taskId: data },
-    ...(options || {}),
-  });
+  return request<IResponse<IInterfaceAPI[]>>(
+    '/api/interface/task/associate/query_interfaces',
+    {
+      method: 'GET',
+      params: data,
+      ...(options || {}),
+    },
+  );
 };
 /**
  * 重新排序关联用例
@@ -207,14 +207,17 @@ export const queryAssociationApisByTaskId = async (
  * @param options
  */
 export const reorderAssociationCasesByTaskId = async (
-  data: { taskId: string | number; caseIds: number[] },
+  data: { task_id: string | number; case_ids: number[] },
   options?: IObjGet,
 ) => {
-  return request<IResponse<null>>('/api/interface/task/reorder/cases', {
-    method: 'POST',
-    data: data,
-    ...(options || {}),
-  });
+  return request<IResponse<null>>(
+    '/api/interface/task/associate/reorder_cases',
+    {
+      method: 'POST',
+      data: data,
+      ...(options || {}),
+    },
+  );
 };
 
 /**
@@ -241,9 +244,9 @@ export const getApiTaskBaseDetail = async (
   data: string | number,
   options?: IObjGet,
 ) => {
-  return request<IResponse<IInterfaceAPITask>>('/api/interface/task/detail', {
+  return request<IResponse<IInterfaceAPITask>>('/api/interface/task/basic', {
     method: 'GET',
-    params: { id: data },
+    params: { task_id: data },
     ...(options || {}),
   });
 };
@@ -275,7 +278,7 @@ export const executeTask = async (
  */
 export const pageInterTaskResult = async (data: ISearch, options?: IObjGet) => {
   return request<IResponse<IPage<IInterfaceTaskResult>>>(
-    '/api/interface/task/queryResults',
+    '/api/interfaceResult/task/pageResults',
     {
       method: 'POST',
       data: data,
@@ -294,10 +297,10 @@ export const getInterTaskResultDetail = async (
   options?: IObjGet,
 ) => {
   return request<IResponse<IInterfaceTaskResult>>(
-    '/api/interface/result/task/resultDetail',
+    '/api/interfaceResult/task/resultDetail',
     {
       method: 'GET',
-      params: { resultId: data },
+      params: { task_result_id: data },
       ...(options || {}),
     },
   );
@@ -313,10 +316,10 @@ export const removeInterTaskResultDetail = async (
   options?: IObjGet,
 ) => {
   return request<IResponse<IInterfaceTaskResult>>(
-    '/api/interface/task/removeResult',
+    '/api/interfaceResult/task/removeResult',
     {
-      method: 'POST',
-      data: { resultId: data },
+      method: 'GET',
+      params: { result_id: data },
       ...(options || {}),
     },
   );

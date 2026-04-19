@@ -1,7 +1,7 @@
 import { pageInterApiResult } from '@/api/inter/interCase';
 import MyProTable from '@/components/Table/MyProTable';
 import InterfaceApiResponseDetail from '@/pages/Httpx/InterfaceApiResponse/InterfaceApiResponseDetail';
-import { ITryResponseInfo } from '@/pages/Httpx/types';
+import { IResponseInfo } from '@/pages/Httpx/types';
 import { pageData } from '@/utils/somefunc';
 import { ActionType, ProCard, ProColumns } from '@ant-design/pro-components';
 import { Button, Tag, theme } from 'antd';
@@ -25,7 +25,7 @@ const InterfaceApiResultTable: FC<SelfProps> = ({ taskResultId }) => {
 
   const dataSource = useMemo(() => {
     if (failOnly) {
-      return allData.filter((item) => item.result === 'ERROR');
+      return allData.filter((item) => item.result === false);
     }
     return allData;
   }, [failOnly, allData]);
@@ -34,7 +34,7 @@ const InterfaceApiResultTable: FC<SelfProps> = ({ taskResultId }) => {
     async (params: any, sort: any) => {
       const searchData = {
         ...params,
-        interface_task_result_Id: taskResultId,
+        task_result_id: taskResultId,
         sort: sort,
       };
       const { code, data } = await pageInterApiResult(searchData);
@@ -75,15 +75,14 @@ const InterfaceApiResultTable: FC<SelfProps> = ({ taskResultId }) => {
     [token],
   );
 
-  const columns: ProColumns<ITryResponseInfo>[] = [
+  const columns: ProColumns<IResponseInfo>[] = [
     {
       title: '执行用例',
-      dataIndex: 'interfaceName',
-      width: 200,
+      dataIndex: 'interface_name',
       render: (_, record) => (
         <Tag style={styles.nameTag}>
           <PlayCircleOutlined style={{ marginRight: 6, opacity: 0.6 }} />
-          {record.interfaceName}
+          {record.interface_name}
         </Tag>
       ),
     },
@@ -91,41 +90,45 @@ const InterfaceApiResultTable: FC<SelfProps> = ({ taskResultId }) => {
       title: '测试结果',
       dataIndex: 'result',
       valueType: 'select',
-      width: 100,
       valueEnum: { SUCCESS: { text: '成功' }, ERROR: { text: '失败' } },
       render: (_, record) => (
         <Tag
-          color={record.result === 'SUCCESS' ? 'success' : 'error'}
+          color={record.result ? 'success' : 'error'}
           style={{
             borderRadius: 6,
             fontWeight: 500,
             padding: '4px 12px',
           }}
         >
-          {record.result === 'SUCCESS' ? (
+          {record.result ? (
             <CheckCircleOutlined style={{ marginRight: 4 }} />
           ) : (
             <CloseCircleOutlined style={{ marginRight: 4 }} />
           )}
-          {record.result}
+          {record.result ? '成功' : '失败'}
         </Tag>
       ),
     },
     {
       title: '运行时间',
-      dataIndex: 'startTime',
+      dataIndex: 'start_time',
       valueType: 'dateTime',
       sorter: true,
-      width: 180,
       render: (_, record) => (
-        <Tag style={styles.timeTag}>{record.startTime}</Tag>
+        <Tag style={styles.timeTag}>{record.start_time}</Tag>
+      ),
+    },
+    {
+      title: '运行环境',
+      dataIndex: 'running_env_name',
+      render: (_, record) => (
+        <Tag style={styles.timeTag}>{record.running_env_name}</Tag>
       ),
     },
     {
       title: '执行人',
-      dataIndex: 'starterName',
+      dataIndex: 'starter_name',
       key: 'starterId',
-      width: 120,
       render: (_, record) => (
         <Tag
           style={{
@@ -137,13 +140,13 @@ const InterfaceApiResultTable: FC<SelfProps> = ({ taskResultId }) => {
             border: `1px solid ${token.colorWarningBorder}`,
           }}
         >
-          {record.starterName}
+          {record.starter_name}
         </Tag>
       ),
     },
   ];
 
-  const expandedRowRender = (record: ITryResponseInfo) => {
+  const expandedRowRender = (record: IResponseInfo) => {
     return <InterfaceApiResponseDetail responses={[record]} />;
   };
 
@@ -175,7 +178,6 @@ const InterfaceApiResultTable: FC<SelfProps> = ({ taskResultId }) => {
         request={fetchResults}
         search={false}
         columns={columns}
-        x={1000}
       />
     </ProCard>
   );

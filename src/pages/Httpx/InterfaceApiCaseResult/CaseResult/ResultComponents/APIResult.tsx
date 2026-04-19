@@ -174,7 +174,9 @@ const ApiResult: FC<Props> = ({ result, prefix }) => {
                     <Space>
                       {stepTag(index)}
                       <Tooltip title={'接口'}>
-                        <Tag color={'gold-inverse'} icon={<ApiOutlined />} />
+                        <Tag color={'gold-inverse'} icon={<ApiOutlined />}>
+                          API
+                        </Tag>
                       </Tooltip>
                       {item.result ? (
                         <CheckCircleTwoTone twoToneColor={token.colorSuccess} />

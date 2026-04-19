@@ -13,7 +13,7 @@ interface Props {
 }
 
 const BdResult: FC<Props> = ({ result }) => {
-  const { script_extracts } = result;
+  const { db_query_result } = result;
 
   const columns: ProColumns[] = [
     {
@@ -52,17 +52,15 @@ const BdResult: FC<Props> = ({ result }) => {
   return (
     <ProCard
       extra={
-        script_extracts && (
+        db_query_result && (
           // @ts-ignore
-          <Text type="secondary">共 {script_extracts.length} 个变量</Text>
+          <Text type="secondary">共 {db_query_result.length} 个变量</Text>
         )
       }
       bordered
       style={{
         borderRadius: '5px',
-        borderLeft: `3px solid ${
-          result.content_result ? '#52c41a' : '#ff4d4f'
-        }`,
+        borderLeft: `3px solid ${db_query_result ? '#52c41a' : '#ff4d4f'}`,
         marginTop: 5,
       }}
       collapsibleIconRender={({}) => {
@@ -83,7 +81,7 @@ const BdResult: FC<Props> = ({ result }) => {
       collapsible
       defaultCollapsed
     >
-      <RespProTable columns={columns} dataSource={result.script_extracts} />
+      <RespProTable columns={columns} dataSource={db_query_result} />
     </ProCard>
   );
 };

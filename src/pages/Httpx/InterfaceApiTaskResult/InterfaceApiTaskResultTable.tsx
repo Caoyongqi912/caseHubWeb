@@ -178,7 +178,7 @@ const InterfaceApiTaskResultTable: FC<SelfProps> = ({ apiCaseTaskId, job }) => {
   const columns: ProColumns<IInterfaceTaskResult>[] = [
     {
       title: '所属项目',
-      dataIndex: 'interfaceProjectId',
+      dataIndex: 'project_id',
       hideInTable: true,
       valueType: 'select',
       valueEnum: projectEnumMap,
@@ -190,7 +190,7 @@ const InterfaceApiTaskResultTable: FC<SelfProps> = ({ apiCaseTaskId, job }) => {
     },
     {
       title: '所属模块',
-      dataIndex: 'interfaceModuleId',
+      dataIndex: 'module_id',
       hideInTable: true,
       valueType: 'treeSelect',
       fieldProps: {
@@ -209,11 +209,11 @@ const InterfaceApiTaskResultTable: FC<SelfProps> = ({ apiCaseTaskId, job }) => {
     },
     {
       title: '任务名',
-      dataIndex: 'taskName',
+      dataIndex: 'task_name',
       ellipsis: true,
       width: 200,
       render: (_, record) => (
-        <Tag style={styles.nameTag}>{record.taskName}</Tag>
+        <Tag style={styles.nameTag}>{record.task_name}</Tag>
       ),
     },
     {
@@ -225,19 +225,19 @@ const InterfaceApiTaskResultTable: FC<SelfProps> = ({ apiCaseTaskId, job }) => {
       valueEnum: { SUCCESS: { text: '成功' }, ERROR: { text: '失败' } },
       render: (_, record) => (
         <Tag
-          color={record.result === 'SUCCESS' ? 'success' : 'error'}
+          color={record.result ? 'success' : 'error'}
           style={{
             borderRadius: 6,
             fontWeight: 500,
             padding: '4px 12px',
           }}
         >
-          {record.result === 'SUCCESS' ? (
+          {record.result ? (
             <CheckCircleOutlined style={{ marginRight: 4 }} />
           ) : (
             <CloseCircleOutlined style={{ marginRight: 4 }} />
           )}
-          {record.result}
+          {record.result ? '成功' : '失败'}
         </Tag>
       ),
     },
@@ -255,19 +255,17 @@ const InterfaceApiTaskResultTable: FC<SelfProps> = ({ apiCaseTaskId, job }) => {
     },
     {
       title: '执行时间',
-      dataIndex: 'runDay',
-      key: 'runDay',
+      dataIndex: 'run_day',
+      key: 'run_day',
       valueType: 'dateRange',
       sorter: true,
       width: 180,
-      render: (_, record) => (
-        <Tag style={styles.timeTag}>{record.start_time}</Tag>
-      ),
+      render: (_, record) => <Tag style={styles.timeTag}>{record.run_day}</Tag>,
     },
     {
       title: '用时',
-      dataIndex: 'totalUseTime',
-      key: 'totalUseTime',
+      dataIndex: 'total_use_time',
+      key: 'total_use_time',
       valueType: 'time',
       hideInSearch: true,
       width: 100,
@@ -282,22 +280,23 @@ const InterfaceApiTaskResultTable: FC<SelfProps> = ({ apiCaseTaskId, job }) => {
             border: `1px solid ${token.colorInfoBorder}`,
           }}
         >
-          {record.totalUseTime}
+          {record.total_use_time}
         </Tag>
       ),
     },
     {
       title: '执行人',
-      dataIndex: 'starterName',
-      key: 'starterName',
+      dataIndex: 'starter_name',
+      key: 'starter_name',
       width: 120,
       render: (_, record) => (
-        <Tag style={styles.userTag}>{record.starterName}</Tag>
+        <Tag style={styles.userTag}>{record.starter_name}</Tag>
       ),
     },
     {
       title: '状态',
       dataIndex: 'status',
+      key: 'status',
       width: 100,
       valueEnum: {
         RUNNING: { text: '运行中', status: 'Processing' },
@@ -407,7 +406,6 @@ const InterfaceApiTaskResultTable: FC<SelfProps> = ({ apiCaseTaskId, job }) => {
         defaultPageSize: job ? 10 : 6,
         showSizeChanger: true,
       }}
-      x={1000}
       columns={columns}
     />
   );

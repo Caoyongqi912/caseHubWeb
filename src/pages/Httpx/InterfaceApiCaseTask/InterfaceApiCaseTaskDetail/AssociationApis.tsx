@@ -34,7 +34,9 @@ const AssociationApis: FC<IAssociationApisProps> = ({
   const [apiLength, setApiLength] = useState(0);
   const queryApisByTask = useCallback(async () => {
     if (currentTaskId) {
-      const { code, data } = await queryAssociationApisByTaskId(currentTaskId);
+      const { code, data } = await queryAssociationApisByTaskId({
+        task_id: currentTaskId,
+      });
       setApiLength(data.length);
       return queryData(code, data);
     }
@@ -149,8 +151,8 @@ const AssociationApis: FC<IAssociationApisProps> = ({
   const selectInterface2Task = async (values: number[]) => {
     if (!currentTaskId) return;
     const { code, msg } = await associationApisByTaskId({
-      taskId: currentTaskId,
-      apiIds: values,
+      task_id: currentTaskId,
+      interface_ids: values,
     });
     if (code === 0) {
       message.success(msg);
@@ -166,6 +168,7 @@ const AssociationApis: FC<IAssociationApisProps> = ({
         setOpen={setChoiceApiOpen}
       >
         <InterfaceCaseChoiceApiTable
+          onlyQuote={true}
           projectId={currentProjectId}
           onSelect={selectInterface2Task}
         />

@@ -28,12 +28,14 @@ interface SelfProps {
   projectId?: number;
   radio?: boolean;
   onSelect: (value: number[], copy: boolean) => Promise<any>;
+  onlyQuote?: boolean;
 }
 
 const InterfaceCaseChoiceApiTable: FC<SelfProps> = ({
   projectId,
   onSelect,
   radio = false,
+  onlyQuote = false,
 }) => {
   const { token } = theme.useToken();
   const actionRef = useRef<ActionType>();
@@ -216,24 +218,27 @@ const InterfaceCaseChoiceApiTable: FC<SelfProps> = ({
       tableAlertOptionRender={() => {
         return (
           <Space>
-            <Button
-              type="primary"
-              style={styles.addBtn}
-              icon={<PlusOutlined />}
-              onClick={async () => {
-                await onSelect(selectedRowKeys as number[], true);
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = `0 4px 16px ${token.colorPrimaryBg}`;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = `0 2px 8px ${token.colorPrimaryBg}`;
-              }}
-            >
-              复制添加
-            </Button>
+            {!onlyQuote && (
+              <Button
+                type="primary"
+                style={styles.addBtn}
+                icon={<PlusOutlined />}
+                onClick={async () => {
+                  await onSelect(selectedRowKeys as number[], true);
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = `0 4px 16px ${token.colorPrimaryBg}`;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = `0 2px 8px ${token.colorPrimaryBg}`;
+                }}
+              >
+                复制添加
+              </Button>
+            )}
+
             <Button
               type="primary"
               style={styles.addBtn}

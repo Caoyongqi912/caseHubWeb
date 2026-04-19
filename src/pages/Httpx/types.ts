@@ -114,18 +114,14 @@ export interface IInterfaceAPICase extends IBaseField {
 }
 
 export interface IInterfaceAPITask extends IBaseField {
-  title: string;
-  desc: string;
-  level: string;
-  cron: string;
-  switch: number | boolean;
-  status: string;
-  total_cases_num: number;
+  interface_task_title: string;
+  interface_task_desc: string;
+  interface_task_level: string;
+  interface_task_status: string;
+  interface_task_total_cases_num: number;
+  interface_task_total_apis_num: number;
   module_id: number;
-  total_apis_num: number;
   project_id: number;
-  is_auto: boolean;
-  push_id: number;
 }
 
 export interface ITryResponseInfo extends IBaseField {
@@ -173,22 +169,26 @@ export interface IInterfaceCaseResult extends IBaseField {
 }
 
 export interface IInterfaceTaskResult extends IBaseField {
-  interfaceProjectId: number;
-  interfaceModuleId: number;
-  startBy: number;
-  starterId: number;
-  starterName: string;
-  totalNumber: number;
-  successNumber: number;
-  failNumber: number;
-  totalUseTime: string;
+  project_id: number;
+  module_id: number;
+
+  start_by: number;
+  starter_id: number;
+  starter_name: string;
+
+  total_num: number;
+  success_num: number;
+  fail_num: number;
+
+  total_use_time: string;
   start_time: string;
   end_time: string;
-  taskId: number;
-  taskUid: string;
-  taskName: string;
-  runDay: string;
-  result?: 'SUCCESS' | 'FAIL';
+
+  task_id: number;
+  task_uid: string;
+  task_name: string;
+  run_day: string;
+  result?: boolean;
   progress: number;
   status: 'RUNNING' | 'OVER';
   running_env_id?: number;
@@ -302,16 +302,18 @@ export interface ICaseContentResult extends IBaseField {
   content_desc?: string;
   content_step: number | null;
   content_target_result_id: null | number;
-  script_extracts: null;
-  content_asserts: CaseContentAssertResult[] | null;
-  wait_time: number | null;
-
   start_time: string;
   use_time: string | number | null;
   starter_id: number;
   starter_name: string;
   result: boolean;
   data?: IResponseInfo[];
+  // 断言数据
+  assert_data: CaseContentAssertResult[] | null;
+  // 等待时间
+  wait_seconds: number | null;
+  // db 私有
+  db_query_result?: any;
 
   // group 私有
   success_api_num?: number;
@@ -325,6 +327,17 @@ export interface ICaseContentResult extends IBaseField {
     value: any;
     result?: boolean;
   } | null;
+
+  // script 私有
+  script_error?: string;
+  script_vars: any;
+
+  //loop
+  loop_count?: number;
+  loop_type?: number; // 1根据次数 2根据Items 3根据条件
+  loop_items?: string;
+  success_count?: number;
+  fail_count?: number;
 }
 
 export interface LoopContent {

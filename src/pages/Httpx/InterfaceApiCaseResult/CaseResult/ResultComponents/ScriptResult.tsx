@@ -22,9 +22,7 @@ const ScriptResult: FC<Props> = ({ result }) => {
       bordered
       style={{
         borderRadius: '5px',
-        borderLeft: `3px solid ${
-          result.content_result ? '#52c41a' : '#ff4d4f'
-        }`,
+        borderLeft: `3px solid ${result.result ? '#52c41a' : '#ff4d4f'}`,
 
         marginTop: 5,
       }}
@@ -35,7 +33,7 @@ const ScriptResult: FC<Props> = ({ result }) => {
             <Tooltip title={'脚本'}>
               <Tag color={'geekblue-inverse'} icon={<PythonOutlined />} />
             </Tooltip>
-            {result.content_result ? (
+            {result.result ? (
               <CheckCircleTwoTone twoToneColor={'#52c41a'} />
             ) : (
               <CloseCircleTwoTone twoToneColor={'#ff4d4f'} />
@@ -49,10 +47,17 @@ const ScriptResult: FC<Props> = ({ result }) => {
       headerBordered
       collapsible
       defaultCollapsed
+      extra={
+        result.script_vars?.length && (
+          <Text type={'secondary'} style={{ marginLeft: 20 }}>
+            {result.script_vars?.length} 个脚本变量
+          </Text>
+        )
+      }
     >
       <RespProTable
         columns={ResponseExtractColumns}
-        dataSource={result.script_extracts}
+        dataSource={result.script_vars || []}
       />
     </ProCard>
   );

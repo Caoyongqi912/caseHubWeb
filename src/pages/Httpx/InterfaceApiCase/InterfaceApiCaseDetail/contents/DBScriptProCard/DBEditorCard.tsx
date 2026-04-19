@@ -1,134 +1,80 @@
-import { queryDBConfig } from '@/api/base/dbConfig';
-import { updateCaseContentDBScript } from '@/api/inter/interCase';
-import { IDBConfig } from '@/pages/Httpx/types';
+import { tryDBScript } from '@/api/base/dbConfig';
+import AceCodeEditor from '@/components/CodeEditor/AceCodeEditor';
+import MyDrawer from '@/components/MyDrawer';
 import {
   DatabaseOutlined,
   PlayCircleOutlined,
   QuestionCircleOutlined,
-  SaveOutlined,
 } from '@ant-design/icons';
-import {
-  Alert,
-  Button,
-  message,
-  Popover,
-  Select,
-  Space,
-  theme,
-  Typography,
-} from 'antd';
-import { FC, useCallback, useEffect, useRef, useState } from 'react';
+import { Button, message, Popover, Select, Space, Typography } from 'antd';
+import { FC, useCallback, useEffect, useState } from 'react';
 
 const { Text, Paragraph } = Typography;
-const { useToken } = theme;
 
 interface DBEditorCardProps {
-  caseContentId: number;
-  currentDBId?: number;
-  sqlValue?: string;
+  dbId?: number;
   dbOptions: { label: string; value: number }[];
   onDBChange: (value: number) => void;
-  onSQLChange: (value: string) => void;
+  getSqlValue: () => string;
 }
 
-/**
- * 数据库SQL编辑器卡片组件
- * @description 包含数据库选择、SQL编辑器和执行测试功能
- */
 const DBEditorCard: FC<DBEditorCardProps> = ({
-  caseContentId,
-  currentDBId,
-  sqlValue,
+  dbId,
   dbOptions,
   onDBChange,
-  onSQLChange,
+  getSqlValue,
 }) => {
-  const { token } = useToken();
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
-  const [saveScript, setSaveScript] = useState(false);
-  const [canTry, setCanTry] = useState(false);
-  const [options, setOptions] =
-    useState<{ label: string; value: number }[]>(dbOptions);
+  const [localDBId, setLocalDBId] = useState<number | undefined>(dbId);
+  const [open, setOpen] = useState(false);
+  const [tryData, setTryData] = useState('');
 
-  /**
-   * 同步外部 dbOptions 到内部状态
-   * @description 当外部 dbOptions 变化时更新内部状态
-   */
   useEffect(() => {
-    setOptions(dbOptions);
-  }, [dbOptions]);
-
-  /**
-   * 监听 SQL 内容变化，更新 canTry 状态
-   * @description 只有当 SQL 内容存在时才显示执行测试按钮
-   */
-  useEffect(() => {
-    setCanTry(!!sqlValue);
-  }, [sqlValue]);
-
-  /**
-   * 加载数据库配置选项
-   * @description 获取所有可用的数据库配置列表，用于下拉选择
-   */
-  useEffect(() => {
-    if (dbOptions.length === 0) {
-      queryDBConfig().then(({ code, data }) => {
-        if (code === 0 && data) {
-          setOptions(
-            data.map((item: IDBConfig) => ({
-              label: item.db_name,
-              value: item.id,
-            })),
-          );
-        }
-      });
+    if (dbId) {
+      setLocalDBId(dbId);
     }
-  }, [dbOptions.length]);
+  }, [dbId]);
 
-  /**
-   * SQL内容变化处理（防抖保存）
-   * @description SQL内容变化时自动保存到服务端，防抖时间为3秒
-   * @param value - 新的SQL内容
-   */
-  const handleSQLChange = useCallback(
-    (value: string) => {
-      clearTimeout(timeoutRef.current);
-      onSQLChange(value);
-      if (!currentDBId) {
-        message.error('请选择数据库');
-        return;
-      }
-      timeoutRef.current = setTimeout(async () => {
-        const { code } = await updateCaseContentDBScript({
-          id: caseContentId,
-          sql_text: value,
-          db_id: currentDBId,
-        });
-        if (code === 0) {
-          setSaveScript(true);
-          setTimeout(() => setSaveScript(false), 2000);
-        }
-      }, 3000);
+  const handleDBChange = useCallback(
+    (value: number) => {
+      setLocalDBId(value);
+      onDBChange(value);
     },
-    [caseContentId, currentDBId, onSQLChange],
+    [onDBChange],
   );
 
-  /**
-   * 执行测试按钮点击处理
-   * @description 点击执行测试按钮，验证数据库选择后执行测试（功能开发中）
-   */
   const handleTry = useCallback(() => {
+    const currentDBId = dbId ?? localDBId;
     if (!currentDBId) {
       message.error('请选择数据库');
       return;
     }
-    if (sqlValue && currentDBId) {
-      message.info('执行测试功能开发中');
+    const sqlValue = getSqlValue();
+    if (!sqlValue) {
+      message.warning('请输入 SQL 语句');
+      return;
     }
-  }, [currentDBId, sqlValue]);
+    tryDBScript({ db_id: currentDBId, script: sqlValue }).then(
+      ({ code, data }) => {
+        if (code === 0) {
+          setTryData(JSON.stringify(data, null, 2));
+          setOpen(true);
+        } else {
+          message.error(data || '执行失败');
+        }
+      },
+    );
+  }, [dbId, localDBId, getSqlValue]);
 
   return (
     <div style={{ marginBottom: '16px' }}>
+      <MyDrawer name={'db'} open={open} setOpen={setOpen}>
+        <AceCodeEditor
+          value={tryData}
+          readonly={true}
+          _mode={'json'}
+          height={'100vh'}
+        />
+      </MyDrawer>
       <div
         style={{
           display: 'flex',
@@ -143,10 +89,10 @@ const DBEditorCard: FC<DBEditorCardProps> = ({
             <DatabaseOutlined style={{ color: '#9333ea', fontSize: '18px' }} />
             <Select
               placeholder="选择数据库"
-              value={currentDBId}
-              options={options}
+              value={localDBId}
+              options={dbOptions}
               style={{ minWidth: '180px' }}
-              onChange={onDBChange}
+              onChange={handleDBChange}
               dropdownStyle={{ borderRadius: '8px' }}
             />
           </div>
@@ -228,40 +174,23 @@ const DBEditorCard: FC<DBEditorCardProps> = ({
             </Button>
           </Popover>
         </Space>
-        {canTry && (
-          <Button
-            type="primary"
-            icon={<PlayCircleOutlined />}
-            onClick={handleTry}
-            style={{
-              background: 'linear-gradient(135deg, #9333ea 0%, #7c3aed 100%)',
-              border: 'none',
-              borderRadius: '8px',
-              boxShadow: '0 4px 12px rgba(147, 51, 234, 0.35)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-            }}
-          >
-            执行测试
-          </Button>
-        )}
-      </div>
-      {saveScript && (
-        <Alert
-          message="脚本已自动保存"
-          type="success"
-          icon={<SaveOutlined />}
-          showIcon
-          closable
+        <Button
+          type="primary"
+          icon={<PlayCircleOutlined />}
+          onClick={handleTry}
           style={{
-            marginTop: '12px',
+            background: 'linear-gradient(135deg, #9333ea 0%, #7c3aed 100%)',
+            border: 'none',
             borderRadius: '8px',
-            background: 'rgba(34, 197, 94, 0.1)',
-            border: '1px solid rgba(34, 197, 94, 0.2)',
+            boxShadow: '0 4px 12px rgba(147, 51, 234, 0.35)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
           }}
-        />
-      )}
+        >
+          执行测试
+        </Button>
+      </div>
     </div>
   );
 };

@@ -102,9 +102,11 @@ const DBExtractTable: FC<DBExtractTableProps> = ({
         _key: unknown,
         row: IBeforeSQLExtract & { index?: number },
       ) => {
-        const newData = dataSource.filter((item) => item.id !== row.id);
+        const newData = dataSource.filter(
+          (item: IBeforeSQLExtract) => item.id !== row.id,
+        );
         onDataChange(newData);
-        if (newData) {
+        if (newData.length > 0) {
           await updateCaseContentDBScript({
             id: caseContentId,
             sql_extracts: newData,

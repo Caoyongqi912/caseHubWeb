@@ -1,5 +1,8 @@
 import { getDBContentInfo, queryDBConfig } from '@/api/base/dbConfig';
-import { updateCaseContent } from '@/api/inter/interCase';
+import {
+  updateCaseContent,
+  updateCaseContentDBScript,
+} from '@/api/inter/interCase';
 import AceCodeEditor from '@/components/CodeEditor/AceCodeEditor';
 import Handler from '@/components/DnDDraggable/handler';
 import CardExtraOption from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/CardExtraOption';
@@ -8,8 +11,17 @@ import DBExtractTable from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetai
 import { IBeforeSQLExtract, IInterfaceCaseContent } from '@/pages/Httpx/types';
 import { DatabaseOutlined, EditOutlined } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
-import { Divider, Input, Space, Tag, theme, Typography } from 'antd';
-import { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  Alert,
+  Divider,
+  Input,
+  message,
+  Space,
+  Tag,
+  theme,
+  Typography,
+} from 'antd';
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 const { Text } = Typography;
 const { useToken } = theme;
@@ -19,17 +31,14 @@ interface Props {
   step: number;
   caseId: number;
   caseContent: IInterfaceCaseContent;
-  projectId?: number;
   callback?: () => void;
 }
 
-/**
- * 数据库脚本卡片组件
- * 用于显示和管理数据库脚本步骤内容，支持SQL编辑和变量提取
- */
 const Index: FC<Props> = (props) => {
   const { id, step, caseId, caseContent, callback } = props;
   const { token } = useToken();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const sqlValueRef = useRef<string>('');
 
   const [contentDBExecuteName, setContentDBExecuteName] = useState<string>();
   const [showDBExecuteTitleInput, setShowDBExecuteTitleInput] = useState(true);
@@ -43,11 +52,10 @@ const Index: FC<Props> = (props) => {
   >([]);
   const [dataSource, setDatasource] = useState<IBeforeSQLExtract[]>([]);
   const [editableKeys, setEditableKeys] = useState<React.Key[]>();
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>(
+    'idle',
+  );
 
-  /**
-   * 监听 caseContent 变化，初始化内容名称
-   * @description 当 caseContent 的 content_name 存在时，设置显示文本模式
-   */
   useEffect(() => {
     const { content_name } = caseContent;
     if (content_name) {
@@ -56,136 +64,104 @@ const Index: FC<Props> = (props) => {
     }
   }, [caseContent]);
 
-  /**
-   * 展开/折叠处理
-   * @description ProCard展开时触发数据加载，确保只有在展开状态且未加载过数据时才加载
-   * @param collapsed - 当前折叠状态，false表示展开
-   */
   const handleCollapse = useCallback(
     (collapsed: boolean) => {
       if (!collapsed && !hasLoaded) {
-        loadData();
-        loadDBOptions();
+        const targetId = caseContent.target_id;
+        if (!targetId) return;
+
+        getDBContentInfo(targetId).then(({ code, data }) => {
+          if (code === 0 && data) {
+            const { db_id, sql_text, sql_extracts } = data;
+            setCurrentDBId(db_id);
+            setSqlValue(sql_text);
+            sqlValueRef.current = sql_text || '';
+            setDatasource(sql_extracts || []);
+            setHasLoaded(true);
+          }
+        });
+
+        queryDBConfig().then(({ code, data }) => {
+          if (code === 0 && data) {
+            setDBOptions(
+              data.map((item: { db_name: string; id: number }) => ({
+                label: item.db_name,
+                value: item.id,
+              })),
+            );
+          }
+        });
       }
     },
-    [hasLoaded],
+    [hasLoaded, caseContent.target_id],
   );
 
-  /**
-   * 加载数据库脚本内容
-   * @description 获取指定target_id的数据库脚本信息，包括SQL文本和变量提取配置
-   */
-  const loadData = useCallback(() => {
-    if (!caseContent.target_id) return;
-    getDBContentInfo(caseContent.target_id).then(({ code, data }) => {
-      if (code === 0 && data) {
-        const { db_id, sql_text, sql_extracts } = data;
-        setCurrentDBId(db_id);
-        setSqlValue(sql_text);
-        setDatasource(sql_extracts || []);
-        setHasLoaded(true);
-      }
-    });
-  }, [caseContent.target_id]);
-
-  /**
-   * 加载数据库配置选项
-   * @description 获取所有可用的数据库配置列表，用于下拉选择
-   */
-  const loadDBOptions = useCallback(() => {
-    queryDBConfig().then(({ code, data }) => {
-      if (code === 0 && data) {
-        setDBOptions(
-          data.map((item) => ({
-            label: item.db_name,
-            value: item.id,
-          })),
-        );
-      }
-    });
-  }, []);
-
-  /**
-   * 鼠标进入事件处理
-   * @description 鼠标进入卡片时显示额外操作选项和编辑图标
-   */
-  const handleMouseEnter = useCallback(() => {
-    setShowEditIcon(true);
-    setShowOption(true);
-  }, []);
-
-  /**
-   * 鼠标离开事件处理
-   * @description 鼠标离开卡片时隐藏额外操作选项和编辑图标
-   */
-  const handleMouseLeave = useCallback(() => {
-    setShowEditIcon(false);
-    setShowOption(false);
-  }, []);
-
-  /**
-   * 数据库选择变化处理
-   * @description 选择数据库后更新状态
-   * @param value - 选中的数据库ID
-   */
   const handleDBChange = useCallback((value: number) => {
     setCurrentDBId(value);
   }, []);
 
-  /**
-   * SQL内容变化处理
-   * @description SQL内容变化时更新状态
-   * @param value - 新的SQL内容
-   */
-  const handleSQLChange = useCallback((value: string) => {
-    setSqlValue(value);
+  const handleSQLChange = useCallback(
+    (value: string) => {
+      setSqlValue(value);
+      sqlValueRef.current = value;
+
+      clearTimeout(timeoutRef.current);
+      if (!currentDBId) {
+        message.error('请先选择数据库');
+        return;
+      }
+      if (!value.trim()) {
+        return;
+      }
+
+      setSaveStatus('saving');
+      timeoutRef.current = setTimeout(async () => {
+        const { code } = await updateCaseContentDBScript({
+          id: caseContent.target_id,
+          sql_text: value,
+          db_id: currentDBId,
+        });
+        if (code === 0) {
+          setSaveStatus('saved');
+          setTimeout(() => setSaveStatus('idle'), 2000);
+        } else {
+          setSaveStatus('idle');
+        }
+      }, 3000);
+    },
+    [caseContent.target_id, currentDBId],
+  );
+
+  const getSqlValue = useCallback(() => {
+    return sqlValueRef.current;
   }, []);
 
-  /**
-   * 变量提取数据变化处理
-   * @description 更新变量提取数据源
-   * @param data - 新的变量提取数据
-   */
   const handleDataChange = useCallback((data: IBeforeSQLExtract[]) => {
     setDatasource(data);
   }, []);
 
-  /**
-   * 变量提取编辑keys变化处理
-   * @description 更新可编辑行keys
-   * @param keys - 新的编辑keys
-   */
   const handleEditableKeysChange = useCallback((keys: React.Key[]) => {
     setEditableKeys(keys);
   }, []);
 
-  /**
-   * 更新内容标题
-   * @description 保存编辑后的内容标题到服务端
-   * @param value - 新的标题内容
-   */
   const updateContentTitle = useCallback(
     async (value: string | undefined) => {
-      if (value) {
-        const { code, data } = await updateCaseContent({
-          content_id: caseContent.id,
-          content_name: value,
-        });
-        if (code === 0) {
-          setContentDBExecuteName(data.content_name);
-          setShowDBExecuteTitleInput(false);
-        }
-      } else {
+      if (!value?.trim()) {
         setShowDBExecuteTitleInput(true);
+        return;
+      }
+      const { code, data } = await updateCaseContent({
+        content_id: caseContent.id,
+        content_name: value,
+      });
+      if (code === 0) {
+        setContentDBExecuteName(data.content_name);
+        setShowDBExecuteTitleInput(false);
       }
     },
     [caseContent.id],
   );
 
-  /**
-   * 数据库卡片标题输入组件
-   * @description 根据状态渲染文本或输入框，支持点击编辑图标进入编辑模式
-   */
   const DBExecuteTitleInput = useMemo(() => {
     if (contentDBExecuteName && !showDBExecuteTitleInput) {
       return (
@@ -245,10 +221,6 @@ const Index: FC<Props> = (props) => {
     updateContentTitle,
   ]);
 
-  /**
-   * 卡片标题渲染
-   * @description 渲染带有数据库标签和步骤信息的卡片标题
-   */
   const cardTitle = useMemo(
     () => (
       <Space size={10} align="center">
@@ -274,7 +246,7 @@ const Index: FC<Props> = (props) => {
         {DBExecuteTitleInput}
       </Space>
     ),
-    [id, step, token, DBExecuteTitleInput],
+    [id, step, DBExecuteTitleInput],
   );
 
   return (
@@ -304,8 +276,14 @@ const Index: FC<Props> = (props) => {
           caseId={caseId}
         />
       }
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
+      onMouseEnter={() => {
+        setShowEditIcon(true);
+        setShowOption(true);
+      }}
+      onMouseLeave={() => {
+        setShowEditIcon(false);
+        setShowOption(false);
+      }}
       onCollapse={handleCollapse}
       collapsibleIconRender={() => cardTitle}
     >
@@ -316,12 +294,10 @@ const Index: FC<Props> = (props) => {
         }}
       >
         <DBEditorCard
-          caseContentId={caseContent.target_id!}
-          currentDBId={currentDBId}
-          sqlValue={sqlValue}
+          dbId={currentDBId}
           dbOptions={dbOptions}
           onDBChange={handleDBChange}
-          onSQLChange={handleSQLChange}
+          getSqlValue={getSqlValue}
         />
         <div
           style={{
@@ -332,6 +308,14 @@ const Index: FC<Props> = (props) => {
             background: token.colorBgContainer,
           }}
         >
+          {saveStatus === 'saved' && (
+            <Alert
+              message="脚本已保存"
+              type="success"
+              showIcon
+              style={{ marginBottom: '12px' }}
+            />
+          )}
           <AceCodeEditor
             value={sqlValue}
             onChange={handleSQLChange}
@@ -343,12 +327,7 @@ const Index: FC<Props> = (props) => {
       <Divider
         style={{ margin: '0', borderColor: token.colorBorderSecondary }}
       />
-      <div
-        style={{
-          padding: '20px 24px',
-          background: token.colorBgContainer,
-        }}
-      >
+      <div style={{ padding: '20px 24px', background: token.colorBgContainer }}>
         <DBExtractTable
           caseContentId={caseContent.target_id!}
           dataSource={dataSource}

@@ -16,9 +16,7 @@ const WaitResult: FC<Props> = ({ result }) => {
       bordered
       style={{
         borderRadius: '5px',
-        borderLeft: `3px solid ${
-          result.content_result ? '#52c41a' : '#ff4d4f'
-        }`,
+        borderLeft: `3px solid ${result.result ? '#52c41a' : '#ff4d4f'}`,
         marginTop: 5,
       }}
       collapsible={false}
@@ -32,7 +30,7 @@ const WaitResult: FC<Props> = ({ result }) => {
           </Tooltip>
           <CheckCircleTwoTone twoToneColor="#52c41a" />
           <Text type={'secondary'} style={{ marginLeft: 20 }}>
-            Sleep {result.wait_time} s
+            Sleep {result.wait_seconds || 0} s
           </Text>
         </Space>
       }

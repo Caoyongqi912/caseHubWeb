@@ -102,7 +102,9 @@ const Index: FC<SelfProps> = ({
   const saveTaskBase = async (values: IInterfaceAPITask) => {
     const { code, data } = await insertApiTask(values);
     if (code === 0) {
-      history.push(`/interface/task/detail/taskId=${data.id}`);
+      history.push(
+        `/interface/task/detail/taskId=${data.id}&projectId=${data.project_id}`,
+      );
       message.success('添加成功');
       actionRef.current?.reload();
     }
@@ -228,21 +230,21 @@ const Index: FC<SelfProps> = ({
     },
     {
       title: '名称',
-      dataIndex: 'title',
-      key: 'title',
+      dataIndex: 'interface_task_title',
+      key: 'interface_task_title',
       ellipsis: true,
       width: 200,
       render: (_, record) => (
         <Tag style={styles.nameTag}>
           <ScheduleOutlined style={{ marginRight: 6, opacity: 0.6 }} />
-          {record.title}
+          {record.interface_task_title}
         </Tag>
       ),
     },
     {
       title: '业务用例数',
-      dataIndex: 'total_cases_num',
-      key: 'total_cases_num',
+      dataIndex: 'interface_task_total_cases_num',
+      key: 'interface_task_total_cases_num',
       hideInSearch: true,
       width: 120,
       render: (_, record) => (
@@ -256,14 +258,14 @@ const Index: FC<SelfProps> = ({
             border: `1px solid ${token.colorSuccessBorder}`,
           }}
         >
-          {record.total_cases_num || 0}
+          {record.interface_task_total_cases_num || 0}
         </Tag>
       ),
     },
     {
       title: 'API数',
-      dataIndex: 'total_apis_num',
-      key: 'total_apis_num',
+      dataIndex: 'interface_task_total_apis_num',
+      key: 'interface_task_total_apis_num',
       hideInSearch: true,
       width: 100,
       render: (_, record) => (
@@ -277,13 +279,13 @@ const Index: FC<SelfProps> = ({
             border: `1px solid ${token.colorInfoBorder}`,
           }}
         >
-          {record.total_apis_num || 0}
+          {record.interface_task_total_apis_num || 0}
         </Tag>
       ),
     },
     {
       title: '状态',
-      dataIndex: 'status',
+      dataIndex: 'interface_task_status',
       valueType: 'select',
       valueEnum: CONFIG.API_STATUS_ENUM,
       render: (text) => {
@@ -299,13 +301,14 @@ const Index: FC<SelfProps> = ({
       render: (_, record) => (
         <Tag
           color={
-            CONFIG.API_LEVEL_ENUM[record.level]?.status === 'Success'
+            CONFIG.API_LEVEL_ENUM[record.interface_task_level]?.status ===
+            'Success'
               ? 'success'
               : 'processing'
           }
           style={{ borderRadius: 6, fontSize: 12, padding: '4px 12px' }}
         >
-          {record.level}
+          {record.interface_task_level}
         </Tag>
       ),
     },
@@ -448,7 +451,6 @@ const Index: FC<SelfProps> = ({
         persistenceKey={perKey}
         columns={taskColumns}
         rowKey="id"
-        x={1500}
         actionRef={actionRef}
         request={fetchPageTasks}
         toolBarRender={() => [

@@ -21,18 +21,8 @@ import {
   UserOutlined,
 } from '@ant-design/icons';
 import { ActionType, ProColumns } from '@ant-design/pro-components';
-import {
-  Button,
-  message,
-  Popconfirm,
-  Space,
-  Tag,
-  theme,
-  Typography,
-} from 'antd';
+import { Button, message, Popconfirm, Space, Tag, theme } from 'antd';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-
-const { Text, Paragraph } = Typography;
 
 interface SelfProps {
   apiCaseId?: number | string;
@@ -192,7 +182,6 @@ const InterfaceApiCaseResultTable: FC<SelfProps> = (props) => {
       dataIndex: 'interface_case_name',
       key: 'interface_case_name',
       ellipsis: true,
-      width: 200,
       render: (_, record) => (
         <Tag style={styles.nameTag}>
           <PlayCircleOutlined style={{ marginRight: 6, opacity: 0.6 }} />
@@ -205,7 +194,6 @@ const InterfaceApiCaseResultTable: FC<SelfProps> = (props) => {
       dataIndex: 'result',
       key: 'result',
       valueType: 'select',
-      width: 100,
       valueEnum: { SUCCESS: { text: true }, ERROR: { text: false } },
       render: (_, record) => (
         <Tag
@@ -234,7 +222,6 @@ const InterfaceApiCaseResultTable: FC<SelfProps> = (props) => {
       title: '进度',
       key: 'progress',
       dataIndex: 'progress',
-      width: 150,
       valueType: (item) => ({
         type: 'progress',
         status: item.status !== 'OVER' ? 'active' : 'success',
@@ -244,7 +231,6 @@ const InterfaceApiCaseResultTable: FC<SelfProps> = (props) => {
       title: '状态',
       dataIndex: 'status',
       key: 'status',
-      width: 100,
       valueEnum: {
         RUNNING: { text: '运行中', status: 'Processing' },
         OVER: { text: '完成', status: 'Success' },
@@ -263,7 +249,6 @@ const InterfaceApiCaseResultTable: FC<SelfProps> = (props) => {
       dataIndex: 'starter_id',
       key: 'starter_id',
       valueType: 'select',
-      width: 120,
       renderFormItem: () => {
         return <UserSelect />;
       },
@@ -279,7 +264,6 @@ const InterfaceApiCaseResultTable: FC<SelfProps> = (props) => {
       dataIndex: 'use_time',
       valueType: 'dateTime',
       key: 'use_time',
-      width: 180,
       render: (_, record) => (
         <Tag style={styles.timeTag}>
           <ScheduleOutlined style={{ marginRight: 4, opacity: 0.6 }} />
@@ -304,7 +288,6 @@ const InterfaceApiCaseResultTable: FC<SelfProps> = (props) => {
       title: '操作',
       valueType: 'option',
       fixed: 'right',
-      width: 150,
       render: (_, record) => (
         <Space size={4}>
           {record.status === 'OVER' ? (

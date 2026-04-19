@@ -617,9 +617,9 @@ export const removeAllTaskResults = async (
   data: number | string,
   opt?: IObjGet,
 ) => {
-  return request<IResponse<null>>(`/api/interface/result/task/removeAll`, {
-    method: 'POST',
-    data: { taskId: data },
+  return request<IResponse<null>>(`/api/interfaceResult/task/removeResults`, {
+    method: 'GET',
+    params: { task_id: data },
     ...(opt || {}),
   });
 };
@@ -684,7 +684,7 @@ export const pageInterCaseResult = async (data: ISearch, options?: IObjGet) => {
  */
 export const pageInterApiResult = async (data: ISearch, options?: IObjGet) => {
   return request<IResponse<IPage<IInterfaceAPI>>>(
-    '/api/interface/result/inter/page',
+    '/api/interfaceResult/task/interface/pageResult',
     {
       method: 'POST',
       data: data,

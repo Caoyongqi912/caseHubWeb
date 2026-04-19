@@ -4,7 +4,6 @@ import {
   queryApiRecord,
   startApiRecord,
 } from '@/api/inter';
-import MyProTable from '@/components/Table/MyProTable';
 import AddToApi from '@/pages/Httpx/InterfaceApiRecord/AddToApi';
 import AddToCase from '@/pages/Httpx/InterfaceApiRecord/AddToCase';
 import RecordDetail from '@/pages/Httpx/InterfaceApiRecord/RecordDetail';
@@ -19,7 +18,7 @@ import {
   ProFormSelect,
   ProFormText,
 } from '@ant-design/pro-components';
-import { Button, message, Tabs, Tag } from 'antd';
+import { Button, Empty, message, Tabs, Tag } from 'antd';
 import { useRef, useState } from 'react';
 
 const Index = () => {
@@ -179,7 +178,7 @@ const Index = () => {
           placeholder={'请输入URL 以过滤请求'}
         />
       </ModalForm>
-      <MyProTable
+      {/* <MyProTable
         actionRef={actionRef}
         // @ts-ignore
         polling={polling}
@@ -192,7 +191,8 @@ const Index = () => {
         request={queryRecord}
         dataSource={recordDataSource}
         toolBarRender={() => [recordBut]}
-      />
+      /> */}
+      <Empty description={'待开发'} />
     </ProCard>
   );
 };

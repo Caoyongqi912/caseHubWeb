@@ -283,13 +283,7 @@ export default [
         component:
           '@/pages/Httpx/InterfaceApiTaskResult/InterfaceApiTaskResultDetail.tsx',
       },
-      {
-        path: '/interface/task/detail/projectId=:projectId&moduleId=:moduleId',
-        name: 'API任务',
-        component:
-          '@/pages/Httpx/InterfaceApiCaseTask/InterfaceApiCaseTaskDetail',
-        hideInMenu: true,
-      },
+
       {
         path: '/interface/task/detail/taskId=:taskId&projectId=:projectId',
         name: 'API任务',
@@ -298,27 +292,27 @@ export default [
         hideInMenu: true,
       },
 
-      {
-        path: '/interface/interApi/record',
-        name: '接口录制',
-        component: '@/pages/Httpx/InterfaceApiRecord',
-      },
+      // {
+      //   path: '/interface/interApi/record',
+      //   name: '接口录制',
+      //   component: '@/pages/Httpx/InterfaceApiRecord',
+      // },
       {
         path: '/interface/interApi/config',
         name: '全局配置',
         component: '@/pages/Httpx/InterfaceConfig',
       },
-      {
-        path: '/interface/interApi/perf',
-        name: '压力测试',
-        component: '@/pages/Httpx/InterfacePerf',
-      },
-      {
-        path: '/interface/interApi/perf/detail/perfId=:perfId',
-        name: '压力测试看板',
-        hideInMenu: true,
-        component: '@/pages/Httpx/InterfacePerf/PerfDetail',
-      },
+      // {
+      //   path: '/interface/interApi/perf',
+      //   name: '压力测试',
+      //   component: '@/pages/Httpx/InterfacePerf',
+      // },
+      // {
+      //   path: '/interface/interApi/perf/detail/perfId=:perfId',
+      //   name: '压力测试看板',
+      //   hideInMenu: true,
+      //   component: '@/pages/Httpx/InterfacePerf/PerfDetail',
+      // },
       { component: '@/pages/404' },
     ],
   },

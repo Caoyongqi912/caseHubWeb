@@ -1,6 +1,5 @@
 import { IModuleEnum, IObjGet } from '@/api';
 import { pageInterApiCase } from '@/api/inter/interCase';
-import { associationCasesByTaskId } from '@/api/inter/interTask';
 import { queryProjectEnum } from '@/components/CommonFunc';
 import MyProTable from '@/components/Table/MyProTable';
 import { IInterfaceAPICase } from '@/pages/Httpx/types';
@@ -8,20 +7,18 @@ import { IUICase } from '@/pages/Play/componets/uiTypes';
 import { CONFIG, ModuleEnum } from '@/utils/config';
 import { fetchModulesEnum, pageData } from '@/utils/somefunc';
 import { ProColumns } from '@ant-design/pro-components';
-import { Button, message, Tag } from 'antd';
+import { Button, Tag } from 'antd';
 import { TableRowSelection } from 'antd/es/table/interface';
 import React, { FC, useCallback, useEffect, useState } from 'react';
 
 interface IChoiceApiCasesTableProps {
   currentProjectId?: number;
-  currentTaskId?: string;
-  reload?: () => void;
+  onCaseSelected: (selectedRowKeys: number[]) => void;
 }
 
 const ChoiceApiCasesTable: FC<IChoiceApiCasesTableProps> = ({
   currentProjectId,
-  currentTaskId,
-  reload,
+  onCaseSelected,
 }) => {
   const [selectProjectId, setSelectProjectId] = useState<number | undefined>(
     currentProjectId,
@@ -92,35 +89,35 @@ const ChoiceApiCasesTable: FC<IChoiceApiCasesTableProps> = ({
     },
     {
       title: '名称',
-      dataIndex: 'title',
+      dataIndex: 'case_title',
       key: 'title',
     },
     {
-      title: 'API数量',
-      dataIndex: 'apiNum',
+      title: '步骤数量',
+      dataIndex: 'case_api_num',
       valueType: 'text',
       hideInSearch: true,
       render: (_, record) => {
-        return <Tag color={'blue'}>{record.apiNum}</Tag>;
+        return <Tag color={'blue'}>{record.case_api_num}</Tag>;
       },
     },
     {
       title: '优先级',
-      dataIndex: 'level',
+      dataIndex: 'case_level',
       valueType: 'select',
       valueEnum: CONFIG.API_LEVEL_ENUM,
       width: '10%',
       render: (_, record) => {
-        return <Tag color={'blue'}>{record.level}</Tag>;
+        return <Tag color={'blue'}>{record.case_level}</Tag>;
       },
     },
     {
       title: '状态',
-      dataIndex: 'status',
+      dataIndex: 'case_status',
       valueType: 'select',
       valueEnum: CONFIG.API_STATUS_ENUM,
       render: (_, record) => {
-        return CONFIG.API_STATUS_ENUM[record.status].tag;
+        return CONFIG.API_STATUS_ENUM[record.case_status].tag;
       },
     },
     {
@@ -139,21 +136,7 @@ const ChoiceApiCasesTable: FC<IChoiceApiCasesTableProps> = ({
         return (
           <Button
             type={'primary'}
-            onClick={async () => {
-              if (currentTaskId) {
-                const { code, data, msg } = await associationCasesByTaskId({
-                  taskId: currentTaskId,
-                  caseIds: selectedRowKeys as number[],
-                });
-                if (code === 0) {
-                  message.success(msg);
-                  if (data) {
-                    message.warning('存在已关联业务用例、已过滤');
-                  }
-                  reload?.();
-                }
-              }
-            }}
+            onClick={() => onCaseSelected(selectedRowKeys as number[])}
           >
             确认添加
           </Button>
@@ -162,7 +145,6 @@ const ChoiceApiCasesTable: FC<IChoiceApiCasesTableProps> = ({
       rowSelection={rowSelection}
       columns={columns}
       rowKey={'id'}
-      x={800}
       request={pageInterfaceCase}
     />
   );

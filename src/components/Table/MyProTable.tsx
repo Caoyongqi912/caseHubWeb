@@ -91,7 +91,7 @@ const MyProTable: FC<MyProTableProps> = (props) => {
       dataSource={dataSource}
       columns={columns}
       actionRef={actionRef}
-      scroll={{ x: 'max-content' }}
+      scroll={{ x: 'auto' }}
       //@ts-ignore
       tableLayout={tableLayout}
       request={request}

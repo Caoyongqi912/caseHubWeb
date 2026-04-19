@@ -28,7 +28,7 @@ const Index: FC<Props> = ({ caseResultId }) => {
     if (originalData.length === 0) return;
 
     if (failOnly) {
-      setStepContentResult(originalData.filter((item) => !item.content_result));
+      setStepContentResult(originalData.filter((item) => !item.result));
     } else {
       setStepContentResult([...originalData]);
     }

@@ -31,7 +31,7 @@ const InterfaceApiTaskResultDetail: FC = () => {
         if (code === 0) {
           setInterfaceTaskResultInfo(data);
           const r = Math.trunc(
-            (data.successNumber / (data.failNumber + data.successNumber)) * 100,
+            (data.success_num / (data.fail_num + data.success_num)) * 100,
           );
           setRateNumber(r);
         }
@@ -41,11 +41,11 @@ const InterfaceApiTaskResultDetail: FC = () => {
   const PieData = [
     {
       type: '成功',
-      value: interfaceTaskResultInfo?.successNumber,
+      value: interfaceTaskResultInfo?.success_num,
     },
     {
       type: '失败',
-      value: interfaceTaskResultInfo?.failNumber,
+      value: interfaceTaskResultInfo?.fail_num,
     },
   ];
   const PieConfig = {
@@ -92,7 +92,7 @@ const InterfaceApiTaskResultDetail: FC = () => {
                   <StatisticCard
                     statistic={{
                       title: '用例总数',
-                      value: interfaceTaskResultInfo?.totalNumber,
+                      value: interfaceTaskResultInfo?.total_num,
                       prefix: <SmileTwoTone />,
                     }}
                   />
@@ -103,7 +103,7 @@ const InterfaceApiTaskResultDetail: FC = () => {
                   <StatisticCard
                     statistic={{
                       title: '成功数量',
-                      value: interfaceTaskResultInfo?.successNumber,
+                      value: interfaceTaskResultInfo?.success_num,
                       prefix: (
                         <CheckCircleTwoTone twoToneColor="rgb(63, 205, 127)" />
                       ),
@@ -116,7 +116,7 @@ const InterfaceApiTaskResultDetail: FC = () => {
                   <StatisticCard
                     statistic={{
                       title: '失败数量',
-                      value: interfaceTaskResultInfo?.failNumber,
+                      value: interfaceTaskResultInfo?.fail_num,
                       prefix: (
                         <CloseCircleTwoTone twoToneColor="rgb(230, 98, 97)" />
                       ),
@@ -157,7 +157,7 @@ const InterfaceApiTaskResultDetail: FC = () => {
               </DescriptionsItem>
               <DescriptionsItem label="执行人">
                 <Tag color={'orange'}>
-                  {interfaceTaskResultInfo?.starterName}
+                  {interfaceTaskResultInfo?.starter_name}
                 </Tag>
               </DescriptionsItem>
               <DescriptionsItem label="开始时间">
@@ -172,7 +172,7 @@ const InterfaceApiTaskResultDetail: FC = () => {
               </DescriptionsItem>
               <DescriptionsItem label="耗时">
                 <Tag color={'processing'}>
-                  {interfaceTaskResultInfo?.totalUseTime}
+                  {interfaceTaskResultInfo?.total_use_time}
                 </Tag>
               </DescriptionsItem>
             </Descriptions>
