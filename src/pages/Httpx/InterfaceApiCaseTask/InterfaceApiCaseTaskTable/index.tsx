@@ -5,10 +5,12 @@ import {
   removeApiTaskBaseInfo,
   updateApiTaskBaseInfo,
 } from '@/api/inter/interTask';
+import MyDrawer from '@/components/MyDrawer';
 import MyModal from '@/components/MyModal';
 import MyProTable from '@/components/Table/MyProTable';
 import UserSelect from '@/components/Table/UserSelect';
 import InterfaceTaskBaseForm from '@/pages/Httpx/InterfaceApiCaseTask/InterfaceApiCaseTaskDetail/InterfaceTaskBaseForm';
+import InterfaceApiTaskResultTable from '@/pages/Httpx/InterfaceApiTaskResult/InterfaceApiTaskResultTable';
 import { IInterfaceAPITask } from '@/pages/Httpx/types';
 import { CONFIG, ModuleEnum } from '@/utils/config';
 import { fetchModulesEnum, pageData } from '@/utils/somefunc';
@@ -18,6 +20,7 @@ import {
   DeleteOutlined,
   DeliveredProcedureOutlined,
   EyeOutlined,
+  HistoryOutlined,
   MoreOutlined,
   NumberOutlined,
   PlusOutlined,
@@ -65,7 +68,7 @@ const Index: FC<SelfProps> = ({
   const [moduleEnum, setModuleEnum] = useState<IModuleEnum[]>([]);
   const [copyProjectId, setCopyProjectId] = useState<number>();
   const [taskForm] = Form.useForm<IInterfaceAPITask>();
-
+  const [openHistory, setOpenHistory] = useState(false);
   useEffect(() => {
     actionRef.current?.reload();
     if (currentProjectId && currentModuleId) {
@@ -361,6 +364,15 @@ const Index: FC<SelfProps> = ({
                   type: 'divider',
                 },
                 {
+                  key: '4',
+                  icon: <HistoryOutlined />,
+                  label: '执行历史',
+                  onClick: () => {
+                    setCurrentTaskId(record.id);
+                    setOpenHistory(true);
+                  },
+                },
+                {
                   key: '3',
                   icon: <DeleteOutlined />,
                   danger: true,
@@ -401,6 +413,14 @@ const Index: FC<SelfProps> = ({
 
   return (
     <>
+      <MyDrawer
+        name={'任务详情'}
+        width={'85%'}
+        open={openHistory}
+        setOpen={setOpenHistory}
+      >
+        <InterfaceApiTaskResultTable apiCaseTaskId={currentTaskId} />
+      </MyDrawer>
       <Modal
         open={openModal}
         onOk={async () => {

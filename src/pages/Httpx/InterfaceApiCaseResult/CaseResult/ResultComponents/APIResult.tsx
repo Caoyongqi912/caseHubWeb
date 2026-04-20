@@ -13,7 +13,7 @@ import {
   CloseCircleTwoTone,
 } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
-import { Space, Tag, theme, Tooltip, Typography } from 'antd';
+import { Tag, theme, Tooltip, Typography } from 'antd';
 import { FC, useMemo } from 'react';
 
 const { Text } = Typography;
@@ -37,36 +37,6 @@ const ApiResult: FC<Props> = ({ result, prefix }) => {
         }`,
         marginTop: token.marginXS,
       },
-      cardExtra: {
-        display: 'flex',
-        alignItems: 'center',
-        flexWrap: 'wrap' as const,
-        rowGap: token.paddingXS,
-        padding: `${token.paddingSM}px ${token.paddingMD}px`,
-        backgroundColor: token.colorBgLayout,
-        borderRadius: token.borderRadiusSM,
-      },
-      tagGroup: {
-        display: 'flex',
-        alignItems: 'center',
-        flexWrap: 'wrap' as const,
-        gap: token.paddingSM,
-        fontSize: token.fontSize,
-      },
-      tagLabel: {
-        color: token.colorTextSecondary,
-        fontWeight: 500,
-        marginRight: token.marginXS,
-      },
-      tagValue: (color: string) => ({
-        color: color,
-        fontWeight: 600,
-        padding: `${token.paddingXS}px ${token.paddingSM}px`,
-        backgroundColor: `${color}15`,
-        borderRadius: token.borderRadiusSM,
-      }),
-      successColor: token.colorSuccess,
-      errorColor: token.colorError,
     }),
     [token, result.result],
   );
@@ -84,6 +54,46 @@ const ApiResult: FC<Props> = ({ result, prefix }) => {
     }
   };
 
+  const InfoItem = ({
+    label,
+    value,
+    color,
+    suffix,
+    noBg,
+  }: {
+    label: string;
+    value: string;
+    color?: string;
+    suffix?: string;
+    noBg?: boolean;
+  }) => (
+    <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+      <span
+        style={{
+          color: token.colorTextSecondary,
+          fontWeight: 500,
+          fontSize: 12,
+          marginRight: 4,
+        }}
+      >
+        {label}:
+      </span>
+      <span
+        style={{
+          color: color || token.colorSuccess,
+          fontWeight: 600,
+          fontSize: 12,
+          padding: noBg ? 0 : '1px 6px',
+          backgroundColor: noBg ? 'none' : `${color || token.colorSuccess}15`,
+          borderRadius: 3,
+        }}
+      >
+        {value}
+        {suffix && <span style={{ marginLeft: 4 }}>{suffix}</span>}
+      </span>
+    </div>
+  );
+
   const tabExtra = (response: IResponseInfo) => {
     if (!response.response_status) return null;
     const { response_status, use_time, start_time } = response;
@@ -92,60 +102,31 @@ const ApiResult: FC<Props> = ({ result, prefix }) => {
       text: '',
     };
     return (
-      <Space size={token.paddingSM} style={styles.cardExtra}>
-        <div style={styles.tagGroup}>
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <span style={styles.tagLabel}>Method:</span>
-            <span style={styles.tagValue(color)}>
-              {response.request_method}
-            </span>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <span style={styles.tagLabel}>Status:</span>
-            <span style={styles.tagValue(color)}>
-              {response_status}
-              {text && (
-                <span style={{ marginLeft: token.marginXS }}>{text}</span>
-              )}
-            </span>
-          </div>
-
-          <div
-            style={{
-              display: 'flex',
-              gap: token.paddingSM,
-              alignItems: 'center',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <span style={styles.tagLabel}>Request_Time:</span>
-              <span
-                style={{
-                  ...styles.tagValue(styles.successColor),
-                  background: 'none',
-                  padding: 0,
-                }}
-              >
-                {start_time}
-              </span>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <span style={styles.tagLabel}>Latency:</span>
-              <span
-                style={{
-                  ...styles.tagValue(styles.successColor),
-                  background: 'none',
-                  padding: 0,
-                }}
-              >
-                {use_time}ms
-              </span>
-            </div>
-          </div>
-        </div>
-      </Space>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 8,
+          padding: '4px 8px',
+          borderRadius: 4,
+          maxWidth: '100%',
+        }}
+      >
+        <InfoItem
+          label="Method"
+          value={response.request_method}
+          color={color}
+        />
+        <InfoItem
+          label="Status"
+          value={String(response_status)}
+          color={color}
+          suffix={text}
+        />
+        <InfoItem label="Request_Time" value={start_time || '-'} noBg />
+        <InfoItem label="Latency" value={`${use_time}ms`} noBg />
+      </div>
     );
   };
 
@@ -166,33 +147,27 @@ const ApiResult: FC<Props> = ({ result, prefix }) => {
               extra={tabExtra(item)}
               bordered
               style={styles.card}
-              collapsibleIconRender={({}) => {
-                return (
-                  <Space
-                    style={{ width: '100%', justifyContent: 'space-between' }}
-                  >
-                    <Space>
-                      {stepTag(index)}
-                      <Tooltip title={'接口'}>
-                        <Tag color={'gold-inverse'} icon={<ApiOutlined />}>
-                          API
-                        </Tag>
-                      </Tooltip>
-                      {item.result ? (
-                        <CheckCircleTwoTone twoToneColor={token.colorSuccess} />
-                      ) : (
-                        <CloseCircleTwoTone twoToneColor={token.colorError} />
-                      )}
-                      <Text
-                        type={'secondary'}
-                        style={{ marginLeft: token.marginLG }}
-                      >
-                        {item.interface_name}
-                      </Text>
-                    </Space>
-                  </Space>
-                );
-              }}
+              collapsibleIconRender={() => (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    gap: 8,
+                  }}
+                >
+                  {stepTag(index)}
+                  <Tooltip title={'接口'}>
+                    <Tag color={'gold-inverse'} icon={<ApiOutlined />} />
+                  </Tooltip>
+                  {item.result ? (
+                    <CheckCircleTwoTone twoToneColor={token.colorSuccess} />
+                  ) : (
+                    <CloseCircleTwoTone twoToneColor={token.colorError} />
+                  )}
+                  <Text type={'secondary'}>{item.interface_name}</Text>
+                </div>
+              )}
               headerBordered
               collapsible
               defaultCollapsed

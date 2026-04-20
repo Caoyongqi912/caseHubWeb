@@ -8,7 +8,7 @@ import RespProTable from '@/pages/Httpx/InterfaceApiResponse/RespProTable';
 import { IResponseInfo } from '@/pages/Httpx/types';
 import { CONFIG } from '@/utils/config';
 import { ProCard } from '@ant-design/pro-components';
-import { Space, Tag, Typography } from 'antd';
+import { Tag, Typography } from 'antd';
 import { FC } from 'react';
 
 const { Text } = Typography;
@@ -28,129 +28,71 @@ const InterfaceApiResponseDetail: FC<SelfProps> = ({ responses }) => {
       text: '',
     };
     return (
-      <Space
-        size={12}
+      <div
         style={{
           display: 'flex',
           alignItems: 'center',
           flexWrap: 'wrap',
-          rowGap: 8,
-          padding: '8px 12px',
-          borderRadius: 6,
+          gap: 3,
+          padding: '4px 8px',
+          borderRadius: 4,
+          maxWidth: '100%',
         }}
       >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: 12,
-            fontSize: 14,
-          }}
-        >
-          {/* Method 标签 */}
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <span
-              style={{
-                color: '#6c757d',
-                fontWeight: 500,
-                marginRight: 4,
-              }}
-            >
-              Method:
-            </span>
-            <span
-              style={{
-                color: color,
-                fontWeight: 600,
-                padding: '2px 8px',
-                backgroundColor: `${color}10`,
-                borderRadius: 4,
-              }}
-            >
-              {response.request_method}
-            </span>
-          </div>
-
-          {/* Status Code 标签 */}
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <span
-              style={{
-                color: '#6c757d',
-                fontWeight: 500,
-                marginRight: 4,
-              }}
-            >
-              Status:
-            </span>
-            <span
-              style={{
-                color: color,
-                fontWeight: 600,
-                padding: '2px 8px',
-                backgroundColor: `${color}10`,
-                borderRadius: 4,
-              }}
-            >
-              {response_status}
-              {text && <span style={{ marginLeft: 4 }}>{text}</span>}
-            </span>
-          </div>
-
-          {/* Time 标签组 */}
-          <div
-            style={{
-              display: 'flex',
-              gap: 12,
-              alignItems: 'center',
-            }}
-          >
-            {/* Request Time */}
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <span
-                style={{
-                  color: '#6c757d',
-                  fontWeight: 500,
-                  marginRight: 4,
-                }}
-              >
-                Request_Time:
-              </span>
-              <span
-                style={{
-                  color: '#67C23A',
-                  fontWeight: 600,
-                }}
-              >
-                {start_time || '-'}
-              </span>
-            </div>
-
-            {/* Use Time */}
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <span
-                style={{
-                  color: '#6c757d',
-                  fontWeight: 500,
-                  marginRight: 4,
-                }}
-              >
-                Latency:
-              </span>
-              <span
-                style={{
-                  color: '#67C23A',
-                  fontWeight: 600,
-                }}
-              >
-                {use_time}ms
-              </span>
-            </div>
-          </div>
-        </div>
-      </Space>
+        <InfoItem
+          label="Method"
+          value={response.request_method}
+          color={color}
+        />
+        <InfoItem
+          label="Status"
+          value={String(response_status)}
+          color={color}
+          suffix={text}
+        />
+        <InfoItem label="Request_Time" value={start_time || '-'} />
+        <InfoItem label="Latency" value={`${use_time}ms`} />
+      </div>
     );
   };
+
+  const InfoItem = ({
+    label,
+    value,
+    color,
+    suffix,
+  }: {
+    label: string;
+    value: string;
+    color?: string;
+    suffix?: string;
+  }) => (
+    <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+      <span
+        style={{
+          color: '#6c757d',
+          fontWeight: 500,
+          fontSize: 12,
+          marginRight: 4,
+        }}
+      >
+        {label}:
+      </span>
+      <span
+        style={{
+          color: color || '#67C23A',
+          // fontWeight: 600,
+          fontSize: 12,
+          padding: '1px 6px',
+          backgroundColor: `${color || '#67C23A'}10`,
+          borderRadius: 3,
+        }}
+      >
+        {value}
+        {suffix && <span style={{ marginLeft: 4 }}>{suffix}</span>}
+      </span>
+    </div>
+  );
 
   const TabTitle = (title: string) => (
     <span style={{ color: 'orange' }}>{title}</span>
@@ -175,77 +117,30 @@ const InterfaceApiResponseDetail: FC<SelfProps> = ({ responses }) => {
   return (
     <div>
       {responses?.map((item: IResponseInfo, index: number) => {
-        //   if (item.is_group) {
-        //     return (
-        //       <ProCard
-        //         key={index}
-        //         bodyStyle={{ padding: 10 }}
-        //         extra={tabExtra(item)}
-        //         bordered
-        //         style={{ borderRadius: '5px', marginTop: 5 }}
-        //         title={
-        //           <>
-        //             <Tag color={'blue'}>组</Tag>
-        //             <Tag color={'green'}>{`API (${item.groupAPINums})`}</Tag>
-        //             <Tag color={item.result === false ? '#f50' : '#87d068'}>
-        //               {item.groupName}
-        //             </Tag>
-        //           </>
-        //         }
-        //         headerBordered
-        //         collapsible
-        //         defaultCollapsed
-        //       >
-        //         <InterfaceApiResponseDetail responses={item.data} />
-        //       </ProCard>
-        //     );
-        //   } else if (item.is_condition) {
-        //     return (
-        //       <ProCard
-        //         key={index}
-        //         bodyStyle={{ padding: 10 }}
-        //         extra={tabExtra(item)}
-        //         bordered
-        //         style={{ borderRadius: '5px', marginTop: 5 }}
-        //         title={
-        //           <>
-        //             <Tag color={'blue'}>IF</Tag>
-        //             <Tag color={'green'}>{`API (${item.conditionAPINums})`}</Tag>
-        //             <Tag color={item.result === false ? '#f50' : '#87d068'}>
-        //               {item.conditionName}
-        //             </Tag>
-        //           </>
-        //         }
-        //         headerBordered
-        //         collapsible
-        //         defaultCollapsed
-        //       >
-        //         <InterfaceApiResponseDetail responses={item.data} />
-        //       </ProCard>
-        //     );
-        //   } else {
-        //     return (
-
-        //     );
-        //   }
-        // })
         return (
           <ProCard
             extra={tabExtra(item)}
             bordered
-            style={{ borderRadius: '5px', marginTop: 5 }}
-            title={
-              <>
-                <Tag color={'blue'}>API</Tag>
-                <Tag color={item.result === false ? '#f50' : '#87d068'}>
-                  {item.interface_name}
-                </Tag>
-                <Text type={'secondary'}>{setDesc(item.interface_desc)}</Text>
-              </>
-            }
+            style={{ borderRadius: '5px', marginTop: 15 }}
             headerBordered
             collapsible
             defaultCollapsed
+            collapsibleIconRender={() => (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: 8,
+                }}
+              >
+                <Tag color={'blue'}>API</Tag>
+                <Tag color={item.result === false ? '#f50' : '#87d067'}>
+                  {item.interface_name}
+                </Tag>
+                <Text type={'secondary'}>{setDesc(item.interface_desc)}</Text>
+              </div>
+            )}
           >
             <MyTabs
               type={'line'}

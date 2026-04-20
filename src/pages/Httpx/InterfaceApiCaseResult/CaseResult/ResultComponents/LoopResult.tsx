@@ -2,10 +2,11 @@ import APIResult from '@/pages/Httpx/InterfaceApiCaseResult/CaseResult/ResultCom
 import { ICaseContentResult } from '@/pages/Httpx/types';
 import { CheckCircleTwoTone, CloseCircleTwoTone } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
-import { Space, Tag, Tooltip, Typography } from 'antd';
+import { Tag, theme, Tooltip, Typography } from 'antd';
 import { FC, useMemo } from 'react';
 
 const { Text } = Typography;
+const { useToken } = theme;
 
 interface Props {
   result: ICaseContentResult;
@@ -87,7 +88,6 @@ const LoopBadge: FC<{
   loopItems?: string;
 }> = ({ loopType, loopCount, loopItems }) => {
   const config = loopTypeConfig[loopType as keyof typeof loopTypeConfig];
-
   const badgeStyle = useMemo(
     () => ({
       display: 'inline-flex',
@@ -120,7 +120,9 @@ const LoopBadge: FC<{
 
   if (loopType === 2) {
     return (
-      <Space size={4} style={{ marginLeft: '8px' }}>
+      <div
+        style={{ display: 'flex', alignItems: 'center', gap: 4, marginLeft: 8 }}
+      >
         <span style={badgeStyle}>
           {config.icon}
           {loopItems || '数据项'}
@@ -151,7 +153,7 @@ const LoopBadge: FC<{
         >
           {loopItems || '数据项'}
         </span>
-      </Space>
+      </div>
     );
   }
 
@@ -164,7 +166,9 @@ const LoopBadge: FC<{
 };
 
 const LoopResult: FC<Props> = ({ result }) => {
-  const statusColor = result.result ? '#52c41a' : '#ff4d4f';
+  const { token } = useToken();
+
+  const statusColor = result.result ? token.colorSuccess : token.colorError;
 
   const cardStyle = useMemo(
     () => ({
@@ -178,16 +182,24 @@ const LoopResult: FC<Props> = ({ result }) => {
 
   const headerContent = useMemo(
     () => (
-      <Space size="middle" wrap>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 8,
+        }}
+      >
         <Tag color={'green-inverse'}>STEP_{result.content_step}</Tag>
         <Tooltip title={'循环步骤'}>
           <Tag color={'purple-inverse'}>LOOP</Tag>
         </Tooltip>
         {result.result ? (
-          <CheckCircleTwoTone twoToneColor="#52c41a" />
+          <CheckCircleTwoTone twoToneColor={token.colorSuccess} />
         ) : (
-          <CloseCircleTwoTone twoToneColor={'#fca760'} />
+          <CloseCircleTwoTone twoToneColor={token.colorError} />
         )}
+        <span>{result.content_name}</span>
         {result?.loop_type && (
           <LoopBadge
             loopType={result.loop_type}
@@ -195,9 +207,9 @@ const LoopResult: FC<Props> = ({ result }) => {
             loopItems={result.loop_items}
           />
         )}
-      </Space>
+      </div>
     ),
-    [result],
+    [result, token],
   );
 
   return (

@@ -6,6 +6,7 @@ import {
   removeApiCase,
   updateApiCase,
 } from '@/api/inter/interCase';
+import MyDrawer from '@/components/MyDrawer';
 import MyModal from '@/components/MyModal';
 import MyProTable from '@/components/Table/MyProTable';
 import UserSelect from '@/components/Table/UserSelect';
@@ -21,6 +22,7 @@ import {
   DeliveredProcedureOutlined,
   EyeOutlined,
   FileTextOutlined,
+  HistoryOutlined,
   MoreOutlined,
   NumberOutlined,
   PlusOutlined,
@@ -44,6 +46,7 @@ import {
   theme,
 } from 'antd';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import InterfaceApiCaseResultTable from '../../InterfaceApiCaseResult/InterfaceApiCaseResultTable';
 
 interface SelfProps {
   currentProjectId?: number;
@@ -66,7 +69,7 @@ const Index: FC<SelfProps> = ({
   const projects = initialState?.projects || [];
   const [moduleEnum, setModuleEnum] = useState<IModuleEnum[]>([]);
   const [copyProjectId, setCopyProjectId] = useState<number>();
-
+  const [openHistory, setOpenHistory] = useState(false);
   useEffect(() => {
     if (copyProjectId) {
       fetchModulesEnum(
@@ -354,6 +357,15 @@ const Index: FC<SelfProps> = ({
                   type: 'divider',
                 },
                 {
+                  key: '5',
+                  icon: <HistoryOutlined />,
+                  label: '运行历史',
+                  onClick: () => {
+                    setCurrentCaseId(record.id);
+                    setOpenHistory(true);
+                  },
+                },
+                {
                   key: '2',
                   icon: <DeleteOutlined />,
                   danger: true,
@@ -405,6 +417,14 @@ const Index: FC<SelfProps> = ({
 
   return (
     <div>
+      <MyDrawer
+        name={'运行历史'}
+        open={openHistory}
+        width={'85%'}
+        setOpen={setOpenHistory}
+      >
+        <InterfaceApiCaseResultTable apiCaseId={currentCaseId} />
+      </MyDrawer>
       <Modal
         open={openModal}
         onOk={async () => {

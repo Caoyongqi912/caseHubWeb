@@ -173,7 +173,12 @@ const AssociationApis: FC<IAssociationApisProps> = ({
           onSelect={selectInterface2Task}
         />
       </MyDrawer>
-      <MyDrawer open={apiDetailDrawer} setOpen={setApiDetailDrawer}>
+      <MyDrawer
+        name={'接口详情'}
+        width={'85%'}
+        open={apiDetailDrawer}
+        setOpen={setApiDetailDrawer}
+      >
         <InterfaceApiDetail interfaceId={currentAPIDetail?.id} />
       </MyDrawer>
       <DragSortTable
