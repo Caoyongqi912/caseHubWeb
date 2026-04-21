@@ -6,6 +6,7 @@ import {
   IInterfaceCaseCondition,
   IInterfaceCaseContent,
   IInterfaceCaseContentAssert,
+  IInterfaceCaseDynemic,
   IInterfaceCaseResult,
   ITryResponseInfo,
   IVariable,
@@ -13,6 +14,25 @@ import {
 } from '@/pages/Httpx/types';
 import { IUIVars } from '@/pages/Play/componets/uiTypes';
 import { request } from '@@/plugin-request/request';
+
+/**
+ * 接口case变更详情
+ * @param data
+ * @param options
+ */
+export const queryCaseDynamicHistoryList = async (
+  data?: string | number,
+  options?: IObjGet,
+) => {
+  return request<IResponse<IInterfaceCaseDynemic[]>>(
+    '/api/interfaceCase/queryDynamicHis',
+    {
+      method: 'GET',
+      params: { case_id: data },
+      ...(options || {}),
+    },
+  );
+};
 
 /**
  * insertApiCase
@@ -87,7 +107,7 @@ export const associationApis = async (
   data: {
     case_id: number | string;
     interface_id_list?: number[];
-    copy?: boolean;
+    is_copy?: boolean;
   },
   opt?: IObjGet,
 ) => {
@@ -159,7 +179,7 @@ export const selectCommonGroups2ConditionAPI = async (
 export const selectCommonAPI2ConditionAPI = async (
   data: {
     condition_id: number | string;
-    copy: boolean;
+    is_copy: boolean;
     interface_id_list: number[];
   },
   opt?: IObjGet,
@@ -181,7 +201,7 @@ export const selectCommonAPI2ConditionAPI = async (
 export const selectCommonAPI2LoopAPI = async (
   data: {
     loop_id: number | string;
-    copy: boolean;
+    is_copy: boolean;
     interface_id_list: number[];
   },
   opt?: IObjGet,
@@ -451,7 +471,7 @@ export const runApiCaseIo = async (
   },
   opt?: IObjGet,
 ) => {
-  return request<IResponse<null>>('/api/interface/case/execute/io', {
+  return request<IResponse<null>>('/api/interfaceCase/execute/io', {
     method: 'POST',
     data,
     ...(opt || {}),

@@ -149,7 +149,7 @@ const LoopSteps: FC<LoopStepsProps> = ({
     async (values: number[], copy: boolean) => {
       const { code, msg } = await selectCommonAPI2LoopAPI({
         loop_id: caseContent.target_id,
-        copy,
+        is_copy: copy,
         interface_id_list: values,
       });
       if (code === 0) {

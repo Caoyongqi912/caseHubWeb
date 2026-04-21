@@ -377,3 +377,25 @@ export interface IResponseInfo {
   result: boolean;
   start_time: string;
 }
+
+export interface IInterfaceRemark extends IBaseField {
+  interface_id: number;
+  description: string;
+  id: number;
+  uid: string;
+  create_time: string;
+  update_time: string;
+  creator: number;
+  creatorName: string;
+}
+
+export interface IInterfaceCaseDynemic extends IBaseField {
+  case_id: number;
+  description: string;
+  id: number;
+  uid: string;
+  create_time: string;
+  update_time: string;
+  creator: number;
+  creatorName: string;
+}

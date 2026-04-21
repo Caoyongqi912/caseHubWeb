@@ -91,6 +91,8 @@ const TasksFiled: FC<Props> = ({ job_uid, type, refreshFlag }) => {
     return config;
   };
 
+  const isInterfaceAPIType = type === 1;
+
   const styles = useMemo(
     () => ({
       container: {
@@ -159,20 +161,123 @@ const TasksFiled: FC<Props> = ({ job_uid, type, refreshFlag }) => {
     [token, statusConfig],
   );
 
+  const getTaskTitle = (task: IInterfaceAPITask | IUITask) => {
+    return isInterfaceAPIType
+      ? (task as IInterfaceAPITask).interface_task_title
+      : (task as IUITask).title;
+  };
+
+  const getTaskStatus = (task: IInterfaceAPITask | IUITask) => {
+    return isInterfaceAPIType
+      ? (task as IInterfaceAPITask).interface_task_status
+      : (task as IUITask).status;
+  };
+
+  const getTaskCases = (task: IInterfaceAPITask | IUITask) => {
+    if (isInterfaceAPIType) {
+      return (task as IInterfaceAPITask).interface_task_total_cases_num;
+    }
+    return (task as IUITask).play_case_num;
+  };
+
+  const getTaskApis = (task: IInterfaceAPITask | IUITask) => {
+    if (isInterfaceAPIType) {
+      return (task as IInterfaceAPITask).interface_task_total_apis_num || 0;
+    }
+    return 0;
+  };
+
+  const getDisplayTitle = (task: IInterfaceAPITask | IUITask) => {
+    return getTaskTitle(task) || '未命名任务';
+  };
+
+  const renderTaskCard = (task: IInterfaceAPITask | IUITask) => {
+    const uid = task.uid;
+    const isHovered = hoveredId === uid;
+    const taskStatus = getTaskStatus(task);
+    const statusStyle = getStatusStyle(taskStatus);
+    const cases = getTaskCases(task);
+    const apis = getTaskApis(task);
+
+    return (
+      <div
+        key={uid}
+        style={styles.taskCard(isHovered, taskStatus)}
+        onMouseEnter={() => setHoveredId(uid)}
+        onMouseLeave={() => setHoveredId(null)}
+      >
+        <div style={styles.statusBadge(taskStatus)}>
+          {statusStyle.icon}
+          <span>{statusStyle.label}</span>
+        </div>
+
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              marginBottom: 4,
+            }}
+          >
+            <Text
+              strong
+              style={{ fontSize: 13 }}
+              ellipsis={{ tooltip: getDisplayTitle(task) }}
+            >
+              {getDisplayTitle(task)}
+            </Text>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span style={styles.metaItem}>
+              <FileTextOutlined style={{ color: '#1890ff', fontSize: 11 }} />
+              <span style={{ color: '#1890ff' }}>{cases}</span>
+            </span>
+            {isInterfaceAPIType && (
+              <span style={styles.metaItem}>
+                <ApiOutlined style={{ color: '#722ed1', fontSize: 11 }} />
+                <span style={{ color: '#722ed1' }}>{apis}</span>
+              </span>
+            )}
+            <span style={styles.metaItem}>
+              <UserOutlined
+                style={{ color: token.colorTextSecondary, fontSize: 11 }}
+              />
+              <Text type="secondary">{task.creatorName || '-'}</Text>
+            </span>
+            <span style={styles.metaItem}>
+              <ClockCircleOutlined
+                style={{ color: token.colorTextSecondary, fontSize: 11 }}
+              />
+              <Text type="secondary">
+                {task.create_time?.split(' ')[0] || '-'}
+              </Text>
+            </span>
+          </div>
+        </div>
+
+        <Tooltip title={uid}>
+          <span style={styles.uidTag}>{uid?.slice(0, 8)}</span>
+        </Tooltip>
+
+        <div
+          style={{ ...styles.deleteBtn, opacity: isHovered ? 1 : 0 }}
+          onClick={() => console.log(task)}
+        >
+          <DeleteOutlined style={{ fontSize: 12 }} />
+        </div>
+      </div>
+    );
+  };
+
   const totalCases = useMemo(
-    () =>
-      jobTasks.reduce(
-        (sum, task: any) =>
-          sum + (type === 1 ? task.total_cases_num : task.play_case_num || 0),
-        0,
-      ),
+    () => jobTasks.reduce((sum, task) => sum + getTaskCases(task), 0),
     [jobTasks, type],
   );
 
   const totalApis = useMemo(
-    () =>
-      jobTasks.reduce((sum, task: any) => sum + (task.total_apis_num || 0), 0),
-    [jobTasks],
+    () => jobTasks.reduce((sum, task) => sum + getTaskApis(task), 0),
+    [jobTasks, type],
   );
 
   if (loading) {
@@ -224,87 +329,7 @@ const TasksFiled: FC<Props> = ({ job_uid, type, refreshFlag }) => {
         </div>
       </div>
 
-      {jobTasks.map((task) => {
-        const isHovered = hoveredId === task.uid;
-        const statusStyle = getStatusStyle(task.status);
-        const taskAny = task as any;
-        const cases =
-          type === 1 ? taskAny.total_cases_num : taskAny.play_case_num || 0;
-
-        return (
-          <div
-            key={task.uid}
-            style={styles.taskCard(isHovered, task.status)}
-            onMouseEnter={() => setHoveredId(task.uid)}
-            onMouseLeave={() => setHoveredId(null)}
-          >
-            <div style={styles.statusBadge(task.status)}>
-              {statusStyle.icon}
-              <span>{statusStyle.label}</span>
-            </div>
-
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  marginBottom: 4,
-                }}
-              >
-                <Text
-                  strong
-                  style={{ fontSize: 13 }}
-                  ellipsis={{ tooltip: task.title }}
-                >
-                  {task.title || '未命名任务'}
-                </Text>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <span style={styles.metaItem}>
-                  <FileTextOutlined
-                    style={{ color: '#1890ff', fontSize: 11 }}
-                  />
-                  <span style={{ color: '#1890ff' }}>{cases}</span>
-                </span>
-                {type === 1 && (
-                  <span style={styles.metaItem}>
-                    <ApiOutlined style={{ color: '#722ed1', fontSize: 11 }} />
-                    <span style={{ color: '#722ed1' }}>
-                      {taskAny.total_apis_num || 0}
-                    </span>
-                  </span>
-                )}
-                <span style={styles.metaItem}>
-                  <UserOutlined
-                    style={{ color: token.colorTextSecondary, fontSize: 11 }}
-                  />
-                  <Text type="secondary">{task.creatorName || '-'}</Text>
-                </span>
-                <span style={styles.metaItem}>
-                  <ClockCircleOutlined
-                    style={{ color: token.colorTextSecondary, fontSize: 11 }}
-                  />
-                  <Text type="secondary">
-                    {task.create_time?.split(' ')[0] || '-'}
-                  </Text>
-                </span>
-              </div>
-            </div>
-
-            <Tooltip title={task.uid}>
-              <span style={styles.uidTag}>{task.uid?.slice(0, 8)}</span>
-            </Tooltip>
-
-            <div
-              style={{ ...styles.deleteBtn, opacity: isHovered ? 1 : 0 }}
-              onClick={() => console.log(task)}
-            >
-              <DeleteOutlined style={{ fontSize: 12 }} />
-            </div>
-          </div>
-        );
-      })}
+      {jobTasks.map((task) => renderTaskCard(task))}
     </div>
   );
 };

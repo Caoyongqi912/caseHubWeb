@@ -160,7 +160,7 @@ const ApiCondition: FC<SelfProps> = (props) => {
       const { code, msg } = await selectCommonAPI2ConditionAPI({
         condition_id: caseContent.target_id,
         interface_id_list: values,
-        copy,
+        is_copy: copy,
       });
       if (code === 0) {
         message.success(msg);

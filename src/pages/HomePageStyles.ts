@@ -10,52 +10,51 @@ export const useHomePageStyles = () => {
 
   const colors = {
     primary: token.colorPrimary,
-    primaryGlow: `${token.colorPrimary}60`,
-    secondary: token.colorInfo,
-    accent: '#00f5d4',
-    accentAlt: '#7b2cbf',
+    primaryLight: `${token.colorPrimary}cc`,
+    primaryGlow: `${token.colorPrimary}40`,
     success: token.colorSuccess,
+    successGlow: `${token.colorSuccess}40`,
     error: token.colorError,
+    errorGlow: `${token.colorError}40`,
     warning: token.colorWarning,
-    surface: isDark ? 'rgba(20, 20, 30, 0.8)' : 'rgba(255, 255, 255, 0.9)',
-    surfaceHover: isDark
-      ? 'rgba(30, 30, 45, 0.9)'
-      : 'rgba(255, 255, 255, 0.95)',
-    border: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)',
+    warningGlow: `${token.colorWarning}40`,
+    info: token.colorInfo,
     text: token.colorText,
     textSecondary: token.colorTextSecondary,
-    gradient1: `linear-gradient(135deg, ${token.colorPrimary} 0%, #7b2cbf 50%, #00f5d4 100%)`,
-    gradient2: `linear-gradient(135deg, #00f5d4 0%, ${token.colorPrimary} 100%)`,
-    gradient3: `linear-gradient(135deg, ${token.colorInfo} 0%, ${token.colorPrimary} 100%)`,
+    textTertiary: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)',
+    border: token.colorBorder,
+    borderLight: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+    bgContainer: token.colorBgContainer,
+    bgLayout: token.colorBgLayout,
+    bgElevated: token.colorBgElevated,
+    glass: isDark ? 'rgba(20, 20, 30, 0.75)' : 'rgba(255, 255, 255, 0.8)',
+    glassBorder: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)',
+    gradientPrimary: `linear-gradient(135deg, ${token.colorPrimary} 0%, ${token.colorInfo} 100%)`,
+    gradientSuccess: `linear-gradient(135deg, ${token.colorSuccess} 0%, #52c41a 100%)`,
+    gradientBg: isDark
+      ? 'linear-gradient(180deg, #0a0a14 0%, #0f0f1a 50%, #0a0a14 100%)'
+      : `linear-gradient(180deg, ${token.colorBgLayout} 0%, #f0f5ff 50%, ${token.colorBgLayout} 100%)`,
   };
 
   const container = (): CSSProperties => ({
     minHeight: '100vh',
-    background: isDark
-      ? 'linear-gradient(180deg, #0a0a0f 0%, #0f0f1a 50%, #0a0a0f 100%)'
-      : `linear-gradient(180deg, ${token.colorBgLayout} 0%, #f0f5ff 50%, ${token.colorBgLayout} 100%)`,
+    background: colors.gradientBg,
     position: 'relative',
     overflow: 'hidden',
-    fontFamily:
-      '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
   });
 
-  const animatedBackground = (): CSSProperties => ({
-    position: 'absolute',
+  const animatedBg = (): CSSProperties => ({
+    position: 'fixed',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    background: `
-      radial-gradient(ellipse 100% 100% at 20% -30%, ${colors.primary}15 0%, transparent 50%),
-      radial-gradient(ellipse 80% 80% at 80% 120%, ${colors.accent}10 0%, transparent 50%),
-      radial-gradient(ellipse 60% 60% at 50% 50%, ${colors.accentAlt}08 0%, transparent 60%)
-    `,
     pointerEvents: 'none',
+    zIndex: 0,
   });
 
   const gridOverlay = (): CSSProperties => ({
-    position: 'absolute',
+    position: 'fixed',
     top: 0,
     left: 0,
     right: 0,
@@ -63,196 +62,232 @@ export const useHomePageStyles = () => {
     backgroundImage: isDark
       ? 'linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)'
       : 'linear-gradient(rgba(0,0,0,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.02) 1px, transparent 1px)',
-    backgroundSize: '80px 80px',
-    pointerEvents: 'none',
+    backgroundSize: '60px 60px',
+  });
+
+  const glowOrb = (
+    color: string,
+    size: number,
+    top: string,
+    left: string,
+    animationDuration: string,
+  ): CSSProperties => ({
+    position: 'absolute',
+    width: size,
+    height: size,
+    borderRadius: '50%',
+    background: `radial-gradient(circle, ${color} 0%, transparent 70%)`,
+    top,
+    left,
+    filter: 'blur(60px)',
+    opacity: 0.5,
+    animation: `float ${animationDuration} ease-in-out infinite`,
   });
 
   const contentWrapper = (): CSSProperties => ({
     position: 'relative',
     zIndex: 1,
-    padding: '32px 40px',
-    maxWidth: 1680,
+    padding: '48px 56px',
+    maxWidth: 1800,
     margin: '0 auto',
   });
 
-  const header = (): CSSProperties => ({
-    marginBottom: 40,
+  const headerSection = (): CSSProperties => ({
     display: 'flex',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
+    marginBottom: 48,
+    flexWrap: 'wrap',
+    gap: 24,
   });
 
   const headerLeft = (): CSSProperties => ({
     display: 'flex',
-    alignItems: 'center',
-    gap: 20,
+    flexDirection: 'column',
+    gap: 8,
   });
 
   const logoContainer = (): CSSProperties => ({
-    position: 'relative',
-    width: 64,
-    height: 64,
+    display: 'flex',
+    alignItems: 'center',
+    gap: 16,
+    marginBottom: 8,
   });
 
-  const logoOuter = (): CSSProperties => ({
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    width: 64,
-    height: 64,
-    borderRadius: 20,
-    background: colors.gradient1,
-    padding: 2,
-    animation: 'logoRotate 8s linear infinite',
-  });
-
-  const logoInner = (): CSSProperties => ({
-    width: '100%',
-    height: '100%',
-    borderRadius: 18,
-    background: isDark ? '#0a0a0f' : '#fff',
+  const logoIcon = (): CSSProperties => ({
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    background: colors.gradientPrimary,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
+    boxShadow: `0 8px 32px ${colors.primaryGlow}`,
+    position: 'relative',
+    overflow: 'hidden',
   });
 
-  const logoGlow = (): CSSProperties => ({
+  const logoIconInner = (): CSSProperties => ({
     position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    width: 100,
-    height: 100,
-    background: `radial-gradient(circle, ${colors.primary}40 0%, transparent 70%)`,
-    animation: 'pulse 3s ease-in-out infinite',
-    pointerEvents: 'none',
+    inset: 2,
+    borderRadius: 14,
+    background: isDark ? '#0a0a14' : '#fff',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
   });
 
   const headerTitle = (): CSSProperties => ({
     margin: 0,
     fontSize: 32,
-    fontWeight: 800,
-    background: colors.gradient1,
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
-    backgroundClip: 'text',
+    fontWeight: 700,
+    color: colors.text,
+    lineHeight: 1.2,
     letterSpacing: '-0.5px',
   });
 
   const headerSubtitle = (): CSSProperties => ({
-    fontSize: 14,
+    fontSize: 15,
     color: colors.textSecondary,
-    marginTop: 4,
-    fontWeight: 500,
+    margin: 0,
+    letterSpacing: '0.5px',
   });
 
-  const metricsGrid = (): CSSProperties => ({
+  const headerRight = (): CSSProperties => ({
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+    flexWrap: 'wrap',
+  });
+
+  const statsGrid = (): CSSProperties => ({
     display: 'grid',
     gridTemplateColumns: 'repeat(4, 1fr)',
     gap: 24,
-    marginBottom: 40,
+    marginBottom: 32,
   });
 
-  const metricCard = (): CSSProperties => ({
-    position: 'relative',
-    background: colors.surface,
+  const statsCard = (): CSSProperties => ({
+    borderRadius: 20,
+    background: colors.glass,
     backdropFilter: 'blur(20px)',
-    borderRadius: 24,
-    padding: 28,
-    border: `1px solid ${colors.border}`,
+    border: `1px solid ${colors.glassBorder}`,
+    position: 'relative',
     overflow: 'hidden',
     transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-    cursor: 'pointer',
   });
 
-  const metricCardGlow = (color: string): CSSProperties => ({
+  const statsCardGlow = (color: string): CSSProperties => ({
     position: 'absolute',
-    top: -100,
-    right: -100,
-    width: 200,
-    height: 200,
-    background: `radial-gradient(circle, ${color}20 0%, transparent 70%)`,
+    top: -50,
+    right: -50,
+    width: 150,
+    height: 150,
+    background: `radial-gradient(circle, ${color}30 0%, transparent 70%)`,
     pointerEvents: 'none',
-    transition: 'all 0.4s ease',
   });
 
-  const metricIconWrapper = (color: string): CSSProperties => ({
-    width: 56,
-    height: 56,
-    borderRadius: 16,
-    background: `linear-gradient(135deg, ${color} 0%, ${color}cc 100%)`,
+  const statsCardContent = (): CSSProperties => ({
+    position: 'relative',
+    zIndex: 1,
+    padding: 28,
+  });
+
+  const statsCardHeader = (): CSSProperties => ({
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'center',
-    boxShadow: `0 8px 32px ${color}40`,
+    justifyContent: 'space-between',
     marginBottom: 20,
   });
 
-  const metricValue = (): CSSProperties => ({
-    fontSize: 42,
-    fontWeight: 800,
-    color: colors.text,
-    lineHeight: 1,
-    letterSpacing: '-2px',
-  });
-
-  const metricLabel = (): CSSProperties => ({
-    fontSize: 13,
-    color: colors.textSecondary,
-    fontWeight: 600,
-    marginTop: 8,
-    textTransform: 'uppercase' as const,
-    letterSpacing: '1px',
-  });
-
-  const metricGrowth = (isPositive: boolean): CSSProperties => ({
-    display: 'inline-flex',
+  const statsIconWrapper = (color: string): CSSProperties => ({
+    width: 52,
+    height: 52,
+    borderRadius: 14,
+    background: `linear-gradient(135deg, ${color}20 0%, ${color}10 100%)`,
+    border: `1px solid ${color}30`,
+    display: 'flex',
     alignItems: 'center',
-    gap: 6,
-    marginTop: 16,
-    padding: '6px 14px',
-    borderRadius: 12,
-    background: isPositive ? `${colors.success}15` : `${colors.error}15`,
-    fontSize: 13,
+    justifyContent: 'center',
+  });
+
+  const statsTrend = (isPositive: boolean): CSSProperties => ({
+    padding: '4px 10px',
+    borderRadius: 8,
+    fontSize: 12,
     fontWeight: 600,
+    background: isPositive ? `${colors.success}15` : `${colors.error}15`,
     color: isPositive ? colors.success : colors.error,
   });
 
-  const mainGrid = (): CSSProperties => ({
+  const statsValue = (): CSSProperties => ({
+    fontSize: 40,
+    fontWeight: 800,
+    color: colors.text,
+    lineHeight: 1,
+    marginBottom: 8,
+    letterSpacing: '-2px',
+  });
+
+  const statsLabel = (): CSSProperties => ({
+    fontSize: 14,
+    color: colors.textSecondary,
+    margin: 0,
+  });
+
+  const statsDescription = (): CSSProperties => ({
+    fontSize: 12,
+    color: colors.textTertiary,
+    margin: '8px 0 0 0',
+  });
+
+  const chartsGrid = (): CSSProperties => ({
     display: 'grid',
     gridTemplateColumns: 'repeat(2, 1fr)',
     gap: 24,
-    marginBottom: 24,
+    marginBottom: 32,
   });
 
   const card = (): CSSProperties => ({
-    background: colors.surface,
+    borderRadius: 20,
+    background: colors.glass,
     backdropFilter: 'blur(20px)',
-    borderRadius: 24,
-    border: `1px solid ${colors.border}`,
+    border: `1px solid ${colors.glassBorder}`,
     overflow: 'hidden',
     transition: 'all 0.3s ease',
   });
 
+  const cardHover = (): CSSProperties => ({
+    transform: 'translateY(-4px)',
+    boxShadow: `0 20px 60px ${colors.primaryGlow}`,
+    borderColor: `${colors.primary}30`,
+  });
+
   const cardHeader = (): CSSProperties => ({
     padding: '24px 28px',
-    borderBottom: `1px solid ${colors.border}`,
+    borderBottom: `1px solid ${colors.borderLight}`,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
+    background: 'transparent',
   });
 
   const cardTitle = (): CSSProperties => ({
     display: 'flex',
     alignItems: 'center',
-    gap: 14,
+    gap: 12,
+    fontSize: 16,
+    fontWeight: 600,
+    color: colors.text,
+    margin: 0,
   });
 
   const cardTitleIcon = (color: string): CSSProperties => ({
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     background: `${color}15`,
+    border: `1px solid ${color}30`,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -262,103 +297,88 @@ export const useHomePageStyles = () => {
     padding: 28,
   });
 
-  const statsRow = (): CSSProperties => ({
-    display: 'flex',
-    justifyContent: 'space-around',
-    padding: '24px 0',
-    gap: 16,
+  const chartContainer = (): CSSProperties => ({
+    height: 320,
+    width: '100%',
   });
 
-  const statCircle = (color: string): CSSProperties => ({
-    width: 80,
-    height: 80,
-    borderRadius: '50%',
-    background: `linear-gradient(135deg, ${color}20 0%, ${color}10 100%)`,
-    border: `3px solid ${color}40`,
+  const tableCard = (): CSSProperties => ({
+    borderRadius: 20,
+    background: colors.glass,
+    backdropFilter: 'blur(20px)',
+    border: `1px solid ${colors.glassBorder}`,
+    overflow: 'hidden',
+  });
+
+  const filterRow = (): CSSProperties => ({
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'column',
-    boxShadow: `0 8px 24px ${color}20`,
-    transition: 'all 0.3s ease',
-  });
-
-  const statValue = (): CSSProperties => ({
-    fontSize: 26,
-    fontWeight: 700,
-  });
-
-  const statLabel = (): CSSProperties => ({
-    fontSize: 12,
-    color: colors.textSecondary,
-    marginTop: 8,
-    fontWeight: 500,
-  });
-
-  const chartContainer = (): CSSProperties => ({
-    height: 300,
-    marginTop: 20,
+    gap: 12,
+    marginBottom: 16,
+    flexWrap: 'wrap',
   });
 
   const footer = (): CSSProperties => ({
-    marginTop: 40,
-    padding: '24px 32px',
-    background: colors.surface,
-    backdropFilter: 'blur(20px)',
-    borderRadius: 20,
-    border: `1px solid ${colors.border}`,
-    textAlign: 'center',
+    marginTop: 48,
+    padding: '32px 0',
+    borderTop: `1px solid ${colors.borderLight}`,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   });
 
   const footerText = (): CSSProperties => ({
     fontSize: 13,
-    color: colors.textSecondary,
+    color: colors.textTertiary,
   });
 
   const responsiveStyles = {
-    metricsGrid: {
+    statsGrid: {
       gridTemplateColumns: 'repeat(2, 1fr)',
     },
-    mainGrid: {
+    chartsGrid: {
       gridTemplateColumns: '1fr',
     },
     contentWrapper: {
-      padding: '20px 16px',
+      padding: '24px 20px',
     },
   };
 
   return {
     colors,
     container,
-    animatedBackground,
+    animatedBg,
     gridOverlay,
+    glowOrb,
     contentWrapper,
-    header,
+    headerSection,
     headerLeft,
     logoContainer,
-    logoOuter,
-    logoInner,
-    logoGlow,
+    logoIcon,
+    logoIconInner,
     headerTitle,
     headerSubtitle,
-    metricsGrid,
-    metricCard,
-    metricCardGlow,
-    metricIconWrapper,
-    metricValue,
-    metricLabel,
-    metricGrowth,
-    mainGrid,
+    headerRight,
+    statsGrid,
+    statsCard,
+    statsCardGlow,
+    statsCardContent,
+    statsCardHeader,
+    statsIconWrapper,
+    statsTrend,
+    statsValue,
+    statsLabel,
+    statsDescription,
+    chartsGrid,
     card,
+    cardHover,
     cardHeader,
     cardTitle,
     cardTitleIcon,
     cardBody,
-    statsRow,
-    statCircle,
-    statValue,
-    statLabel,
     chartContainer,
+    tableCard,
+    filterRow,
     footer,
     footerText,
     responsiveStyles,

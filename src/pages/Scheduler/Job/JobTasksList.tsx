@@ -200,7 +200,9 @@ const JobTasksList: FC<Props> = ({ setJobs, setShowChoiceTable, jobId }) => {
           <div style={styles.taskHeader}>
             <div style={styles.taskTitle}>
               <span style={styles.taskId}>{task.uid?.slice(0, 8)}</span>
-              <span style={styles.taskName}>{task.title || '未命名任务'}</span>
+              <span style={styles.taskName}>
+                {task.interface_task_title || '未命名任务'}
+              </span>
             </div>
             <Popconfirm
               title="确定要删除这个任务吗？"

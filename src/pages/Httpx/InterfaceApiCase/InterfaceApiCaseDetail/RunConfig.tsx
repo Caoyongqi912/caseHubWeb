@@ -22,6 +22,7 @@ interface Props {
   currentProjectId?: number;
   onEnvChange: (value: number) => void;
   onErrorJumpChange: (value: boolean) => void;
+  errorStop?: boolean;
   run: () => void;
 }
 
@@ -30,6 +31,7 @@ const RunConfig: FC<Props> = ({
   onErrorJumpChange,
   onEnvChange,
   currentProjectId,
+  errorStop,
   run,
 }) => {
   const { token } = useToken();
@@ -235,9 +237,9 @@ const RunConfig: FC<Props> = ({
           </div>
           <Switch
             onChange={onErrorJumpChange}
-            defaultChecked={false}
-            checkedChildren="开"
-            unCheckedChildren="关"
+            checked={errorStop}
+            checkedChildren="停止"
+            unCheckedChildren="继续"
             size="small"
           />
         </div>

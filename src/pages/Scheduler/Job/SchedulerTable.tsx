@@ -416,14 +416,6 @@ const SchedulerTable: FC<SelfProps> = (props) => {
               setDrawerOpen(true);
             }}
             style={styles.addBtn}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
-            }}
           >
             添加任务
           </Button>,

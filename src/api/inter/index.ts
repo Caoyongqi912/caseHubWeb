@@ -2,6 +2,7 @@ import { IObjGet, IPage, IResponse } from '@/api';
 import {
   IInterfaceAPI,
   IInterfaceAPIRecord,
+  IInterfaceRemark,
   IResponseInfo,
 } from '@/pages/Httpx/types';
 import { request } from '@@/plugin-request/request';
@@ -154,6 +155,25 @@ export const detailInterApiById = async (
     params: data,
     ...(options || {}),
   });
+};
+
+/**
+ * 接口api详情
+ * @param data
+ * @param options
+ */
+export const queryDynamicHistoryList = async (
+  data?: string | number,
+  options?: IObjGet,
+) => {
+  return request<IResponse<IInterfaceRemark[]>>(
+    '/api/interface/query_dynamic_his',
+    {
+      method: 'GET',
+      params: { interface_id: data },
+      ...(options || {}),
+    },
+  );
 };
 /**
  * 新增api

@@ -25,6 +25,7 @@ import {
   DownOutlined,
   EditOutlined,
   KeyOutlined,
+  LeftOutlined,
   LineChartOutlined,
   MoreOutlined,
   QuestionCircleOutlined,
@@ -46,6 +47,7 @@ import {
 } from 'antd';
 import { FC, useEffect, useMemo, useRef, useState } from 'react';
 import { history, useParams } from 'umi';
+import ApiRemark from './ApiRemark';
 
 interface SelfProps {
   interfaceId?: number;
@@ -79,6 +81,7 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
   const [windowWidth, setWindowWidth] = useState(
     typeof window !== 'undefined' ? window.innerWidth : 1200,
   );
+  const [openRemarkDrawer, setOpenRemarkDrawer] = useState(false);
 
   // 监听窗口大小变化
   useEffect(() => {
@@ -416,31 +419,29 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
           loading={tryLoading}
           disabled={currentMode !== 1}
           onClick={TryClick}
-          size={responsiveConfig.buttonSize}
-          style={{
-            boxShadow: '0 2px 8px rgba(24, 144, 255, 0.3)',
-            borderRadius: 8,
-            padding: '0 20px',
-            transition: 'all 0.3s ease',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.boxShadow =
-              '0 4px 16px rgba(24, 144, 255, 0.4)';
-            e.currentTarget.style.transform = 'translateY(-1px)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.boxShadow =
-              '0 2px 8px rgba(24, 144, 255, 0.3)';
-            e.currentTarget.style.transform = 'translateY(0)';
-          }}
         >
           Try
         </Button>
+        <Tooltip title="修改历史">
+          <Button
+            type="text"
+            icon={<LeftOutlined />}
+            onClick={() => setOpenRemarkDrawer(true)}
+            style={{ color: '#6c757d' }}
+          />
+        </Tooltip>
       </Space>
     </Space>
   );
   return (
     <>
+      <MyDrawer
+        width={'25%'}
+        open={openRemarkDrawer}
+        setOpen={setOpenRemarkDrawer}
+      >
+        <ApiRemark inteface_id={interId || currentInterAPIId} />
+      </MyDrawer>
       <MyDrawer
         name={'API Doc'}
         width={'60%'}

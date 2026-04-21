@@ -121,12 +121,14 @@ const ApiTaskChoiceTable: FC<IProps> = ({ setJobs, currentProjectId }) => {
     },
     {
       title: '名称',
-      dataIndex: 'title',
-      key: 'title',
+      dataIndex: 'interface_task_title',
+      key: 'interface_task_titletitle',
       render: (_, record) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <ApiOutlined style={{ color: '#6366f1', fontSize: 14 }} />
-          <span style={styles.titleTag}>{record.title || '未命名任务'}</span>
+          <span style={styles.titleTag}>
+            {record.interface_task_title || '未命名任务'}
+          </span>
         </div>
       ),
     },

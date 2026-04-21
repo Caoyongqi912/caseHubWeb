@@ -36,6 +36,7 @@ import {
   DatabaseOutlined,
   DownOutlined,
   FieldTimeOutlined,
+  LeftOutlined,
   PlusOutlined,
   PythonOutlined,
   RetweetOutlined,
@@ -54,11 +55,13 @@ import {
   Space,
   Splitter,
   TabsProps,
+  Tooltip,
 } from 'antd';
 import { RadioChangeEvent } from 'antd/lib/radio/interface';
 import { debounce } from 'lodash';
 import RcResizeObserver from 'rc-resize-observer';
 import { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import CaseDynamic from './caseDynamic';
 
 const CONTENT_TYPE_MAP = {
   WAIT: 6,
@@ -106,7 +109,8 @@ const Index: FC<SelfProps> = ({ interfaceCase, hiddenRunButton }) => {
   const [activeKey, setActiveKey] = useState('2');
   const [emptyApi, setEmptyApi] = useState<IInterfaceAPI>();
   const [isLoopModalOpen, setIsLoopModalOpen] = useState(false);
-
+  const [openDynamicHistoryDrawer, setOpenDynamicHistoryDrawer] =
+    useState(false);
   useEffect(() => {
     if (projectId && moduleId) {
       setCurrentProjectId(parseInt(projectId));
@@ -203,6 +207,7 @@ const Index: FC<SelfProps> = ({ interfaceCase, hiddenRunButton }) => {
   }, []);
 
   const onErrorJumpChange = useCallback((value: boolean) => {
+    console.log('isErrorStop', value);
     setIsErrorStop(value);
   }, []);
 
@@ -252,7 +257,7 @@ const Index: FC<SelfProps> = ({ interfaceCase, hiddenRunButton }) => {
           case_id: currentCaseId,
         });
         if (code === 0) {
-          // setResultReloadCount((prev) => prev + 1);
+          setResultReloadCount((prev) => prev + 1);
           message.success('后台运行中');
         }
       } else {
@@ -310,7 +315,7 @@ const Index: FC<SelfProps> = ({ interfaceCase, hiddenRunButton }) => {
       const { code, msg } = await associationApis({
         case_id: currentCaseId,
         interface_id_list: values,
-        copy,
+        is_copy: copy,
       });
       if (code === 0) {
         message.success(msg);
@@ -477,37 +482,7 @@ const Index: FC<SelfProps> = ({ interfaceCase, hiddenRunButton }) => {
   const ApisCardExtra = useMemo(
     () => (
       <Space size={10}>
-        <Button
-          icon={<SyncOutlined />}
-          onClick={handleRefreshSteps}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            height: '32px',
-            padding: '0 14px',
-            borderRadius: '8px',
-            border: '1px solid rgba(0, 0, 0, 0.1)',
-            background: '#fff',
-            color: '#595959',
-            fontSize: '13px',
-            fontWeight: 500,
-            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.04)',
-            transition: 'all 0.2s ease',
-            cursor: 'pointer',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = '#ca8a04';
-            e.currentTarget.style.color = '#ca8a04';
-            e.currentTarget.style.boxShadow =
-              '0 2px 8px rgba(202, 138, 4, 0.15)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = 'rgba(0, 0, 0, 0.1)';
-            e.currentTarget.style.color = '#595959';
-            e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.04)';
-          }}
-        >
+        <Button icon={<SyncOutlined />} onClick={handleRefreshSteps}>
           刷新
         </Button>
         <Dropdown
@@ -523,34 +498,7 @@ const Index: FC<SelfProps> = ({ interfaceCase, hiddenRunButton }) => {
             borderRadius: '10px',
           }}
         >
-          <Button
-            type="primary"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              height: '32px',
-              padding: '0 16px',
-              borderRadius: '8px',
-              border: 'none',
-              background: 'linear-gradient(135deg, #ca8a04 0%, #a16207 100%)',
-              color: '#fff',
-              fontSize: '13px',
-              fontWeight: 500,
-              boxShadow: '0 2px 8px rgba(202, 138, 4, 0.3)',
-              transition: 'all 0.2s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.boxShadow =
-                '0 4px 12px rgba(202, 138, 4, 0.4)';
-              e.currentTarget.style.transform = 'translateY(-1px)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.boxShadow =
-                '0 2px 8px rgba(202, 138, 4, 0.3)';
-              e.currentTarget.style.transform = 'translateY(0)';
-            }}
-          >
+          <Button type="primary">
             <PlusOutlined style={{ fontSize: '13px' }} />
             <span>添加步骤</span>
             <DownOutlined
@@ -558,6 +506,14 @@ const Index: FC<SelfProps> = ({ interfaceCase, hiddenRunButton }) => {
             />
           </Button>
         </Dropdown>
+        <Tooltip title="修改历史">
+          <Button
+            type="text"
+            icon={<LeftOutlined />}
+            onClick={() => setOpenDynamicHistoryDrawer(true)}
+            style={{ color: '#6c757d' }}
+          />
+        </Tooltip>
       </Space>
     ),
     [dropdownMenuItems, handleRefreshSteps],
@@ -565,6 +521,15 @@ const Index: FC<SelfProps> = ({ interfaceCase, hiddenRunButton }) => {
 
   return (
     <>
+      <MyDrawer
+        name="修改历史"
+        width={'25%'}
+        open={openDynamicHistoryDrawer}
+        setOpen={setOpenDynamicHistoryDrawer}
+      >
+        <CaseDynamic case_id={currentCaseId!} />
+      </MyDrawer>
+
       <LoopForm
         open={isLoopModalOpen}
         setOpen={setIsLoopModalOpen}
@@ -637,6 +602,7 @@ const Index: FC<SelfProps> = ({ interfaceCase, hiddenRunButton }) => {
                   run={executeTestCase}
                   onEnvChange={onEnvChange}
                   onErrorJumpChange={onErrorJumpChange}
+                  errorStop={isErrorStop}
                   currentProjectId={currentProjectId}
                 />
               </Splitter.Panel>
