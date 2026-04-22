@@ -9,8 +9,8 @@ import { useEffect, useState } from 'react';
 const Index = () => {
   const [currentModuleId, setCurrentModuleId] = useState<number>();
   const [currentProjectId, setCurrentProjectId] = useState<number>();
-  const PerKey = 'InterfaceTaskScheduler';
-  const PerKeySplitter = 'InterfaceTaskScheduler:Splitter';
+  const PerKey = 'InterfaceJOBScheduler';
+  const PerKeySplitter = 'InterfaceJOBScheduler:Splitter';
   const [sizes, setSizes] = useState<(number | string)[]>(['20%', '80%']);
 
   const onProjectChange = (projectId: number | undefined) => {

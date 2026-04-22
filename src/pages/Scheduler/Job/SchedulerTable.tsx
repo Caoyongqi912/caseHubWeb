@@ -347,6 +347,9 @@ const SchedulerTable: FC<SelfProps> = (props) => {
 
   const fetchJobData = useCallback(
     async (values: any) => {
+      if (!currentModuleId) {
+        return;
+      }
       const { code, data } = await page_aps_job({
         ...values,
         module_type: ModuleEnum.JOB,
