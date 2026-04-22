@@ -4,6 +4,7 @@ import {
   updateInterGlobalVariable,
 } from '@/api/inter/interGlobal';
 import { queryProjectEnum } from '@/components/CommonFunc';
+import { useGlassStyles } from '@/components/Glass';
 import MyProTable from '@/components/Table/MyProTable';
 import VarModalForm from '@/pages/Httpx/InterfaceConfig/VarModalForm';
 import { IInterfaceGlobalVariable } from '@/pages/Httpx/types';
@@ -14,7 +15,7 @@ import {
   PlusOutlined,
   UserOutlined,
 } from '@ant-design/icons';
-import { ActionType, ProCard, ProColumns } from '@ant-design/pro-components';
+import { ActionType, ProColumns } from '@ant-design/pro-components';
 import { Button, message, Space, Tag, Tooltip } from 'antd';
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
 import { useAccess } from 'umi';
@@ -25,6 +26,7 @@ interface IProps {
 
 const GlobalVariables: FC<IProps> = ({ projectId }) => {
   const { isAdmin } = useAccess();
+  const styles = useGlassStyles();
   const actionRef = useRef<ActionType>();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [projectEnum, setProjectEnum] = useState<any>([]);
@@ -96,7 +98,9 @@ const GlobalVariables: FC<IProps> = ({ projectId }) => {
       render: (text) => {
         return (
           <Space size={4} align="center">
-            <UserOutlined style={{ color: '#1890ff', fontSize: '14px' }} />
+            <UserOutlined
+              style={{ color: styles.colors.primary, fontSize: '14px' }}
+            />
             <Tag
               color={'blue'}
               style={{
@@ -126,7 +130,7 @@ const GlobalVariables: FC<IProps> = ({ projectId }) => {
                     action?.startEditable?.(record.uid);
                   }}
                   style={{
-                    color: '#1890ff',
+                    color: styles.colors.primary,
                     display: 'inline-flex',
                     alignItems: 'center',
                   }}
@@ -148,7 +152,7 @@ const GlobalVariables: FC<IProps> = ({ projectId }) => {
                     );
                   }}
                   style={{
-                    color: '#ff4d4f',
+                    color: styles.colors.error,
                     display: 'inline-flex',
                     alignItems: 'center',
                   }}
@@ -185,23 +189,21 @@ const GlobalVariables: FC<IProps> = ({ projectId }) => {
   };
 
   return (
-    <ProCard
-      title="全局变量配置"
-      headerBordered={true}
-      style={{
-        borderRadius: '8px',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.09)',
-      }}
-      bodyStyle={{
-        padding: '24px',
-      }}
-    >
+    <>
       <VarModalForm
         open={isModalOpen}
         setOpen={setIsModalOpen}
         callBack={() => actionRef.current?.reload()}
       />
       <MyProTable
+        cardStyle={{
+          borderRadius: '16px',
+          background: 'transparent',
+          border: 'none',
+          boxShadow: 'none',
+          overflow: 'hidden',
+        }}
+        headerTitle="全局变量配置"
         actionRef={actionRef}
         columns={columns}
         request={fetchInterApiVariables}
@@ -211,8 +213,10 @@ const GlobalVariables: FC<IProps> = ({ projectId }) => {
             icon={<PlusOutlined />}
             onClick={() => setIsModalOpen(true)}
             style={{
-              borderRadius: '6px',
-              boxShadow: '0 2px 0 rgba(0, 0, 0, 0.045)',
+              borderRadius: '8px',
+              background: styles.colors.gradientPrimary,
+              border: 'none',
+              boxShadow: `0 4px 16px ${styles.colors.primaryGlow}`,
             }}
           >
             添加变量
@@ -226,7 +230,7 @@ const GlobalVariables: FC<IProps> = ({ projectId }) => {
           showTotal: (total) => `共 ${total} 条记录`,
         }}
       />
-    </ProCard>
+    </>
   );
 };
 

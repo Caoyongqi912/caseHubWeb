@@ -235,7 +235,6 @@ const Index: React.FC<Props> = ({ projectId }) => {
     <MyProTable
       headerTitle={'用户表'}
       columns={columns}
-      x={1500}
       actionRef={actionRef}
       request={fetchUsers}
       rowKey={'uid'}

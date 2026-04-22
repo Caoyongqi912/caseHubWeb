@@ -6,7 +6,7 @@ let socketUrl = '';
 if (process.env.NODE_ENV === 'development') {
   socketUrl = 'http://10.1.6.39:5050/';
 } else {
-  socketUrl = 'wss://aijia-test.5i5j.com/';
+  socketUrl = 'wss://xx-xx.xx.com/';
 }
 export { socketUrl };
 

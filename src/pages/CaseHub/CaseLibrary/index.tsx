@@ -1,3 +1,4 @@
+import { useGlassStyles } from '@/components/Glass';
 import LeftComponents from '@/components/LeftComponents';
 import { ModuleEnum } from '@/utils/config';
 import { getSplitter, setSplitter } from '@/utils/token';
@@ -8,6 +9,8 @@ import useCaseHubTheme from '../styles';
 import CaseDataTable from './components/CaseDataTable';
 
 const Index = () => {
+  const styles = useGlassStyles();
+
   const { borderRadius, shadows } = useCaseHubTheme();
   const [currentModuleId, setCurrentModuleId] = useState<number | undefined>();
   const [currentProjectId, setCurrentProjectId] = useState<
@@ -35,7 +38,14 @@ const Index = () => {
   return (
     <>
       <ProCard
-        style={{ height: 'auto' }}
+        style={{
+          marginBottom: 24,
+          borderRadius: '16px',
+          background: styles.colors.glass,
+          backdropFilter: 'blur(20px)',
+          border: `1px solid ${styles.colors.glassBorder}`,
+          boxShadow: `0 8px 32px ${styles.colors.primaryGlow}20`,
+        }}
         bodyStyle={{
           height: '100%',
           minHeight: '90vh',

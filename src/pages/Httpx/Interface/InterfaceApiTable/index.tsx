@@ -7,6 +7,7 @@ import {
   removeInterApiById,
   updateInterApiById,
 } from '@/api/inter';
+import { useGlassStyles } from '@/components/Glass';
 import MyProTable from '@/components/Table/MyProTable';
 import UserSelect from '@/components/Table/UserSelect';
 import { IInterfaceAPI } from '@/pages/Httpx/types';
@@ -41,13 +42,12 @@ import {
   Popconfirm,
   Space,
   Tag,
-  theme,
   Typography,
 } from 'antd';
-import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { FC, useCallback, useEffect, useRef, useState } from 'react';
 import { history } from 'umi';
 
-const { Text, Paragraph } = Typography;
+const { Text } = Typography;
 
 interface SelfProps {
   currentProjectId?: number;
@@ -60,7 +60,7 @@ const Index: FC<SelfProps> = ({
   currentProjectId,
   perKey,
 }) => {
-  const { token } = theme.useToken();
+  const styles = useGlassStyles();
   const [copyForm] = Form.useForm();
   const actionRef = useRef<ActionType>();
   const [openModal, setOpenModal] = useState(false);
@@ -83,6 +83,7 @@ const Index: FC<SelfProps> = ({
 
   const fetchInterface = useCallback(
     async (params: any, sort: any) => {
+      if (!currentModuleId) return;
       const { code, data } = await pageInterApi({
         ...params,
         module_id: currentModuleId,
@@ -95,9 +96,31 @@ const Index: FC<SelfProps> = ({
     [currentModuleId],
   );
 
-  const styles = useMemo(
-    () => ({
-      actionBtn: {
+  const tagBaseStyle = {
+    borderRadius: 6,
+    fontSize: 12,
+    padding: '4px 12px',
+    fontWeight: 600,
+  };
+
+  const addBtnStyle = {
+    height: 36,
+    borderRadius: 8,
+    fontWeight: 500,
+    background: styles.colors.gradientPrimary,
+    border: 'none',
+    boxShadow: `0 4px 16px ${styles.colors.primaryGlow}`,
+  };
+
+  const ActionButton: FC<{
+    icon: React.ReactNode;
+    label: string;
+    type?: 'primary' | 'danger';
+    onClick?: () => void;
+  }> = ({ icon, label, type = 'primary', onClick }) => (
+    <a
+      onClick={onClick}
+      style={{
         display: 'inline-flex',
         alignItems: 'center',
         gap: 4,
@@ -105,107 +128,19 @@ const Index: FC<SelfProps> = ({
         borderRadius: 6,
         fontSize: 13,
         fontWeight: 500,
+        color: type === 'primary' ? styles.colors.primary : styles.colors.error,
+        backgroundColor:
+          type === 'primary'
+            ? `${styles.colors.primary}15`
+            : `${styles.colors.error}15`,
         transition: 'all 0.2s ease',
         cursor: 'pointer',
-      },
-      primaryBtn: {
-        color: token.colorPrimary,
-        backgroundColor: token.colorPrimaryBg,
-      },
-      successBtn: {
-        color: token.colorSuccess,
-        backgroundColor: token.colorSuccessBg,
-      },
-      dangerBtn: {
-        color: token.colorError,
-        backgroundColor: token.colorErrorBg,
-      },
-      warningBtn: {
-        color: token.colorWarning,
-        backgroundColor: token.colorWarningBg,
-      },
-      idTag: {
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 4,
-        fontFamily: '"SF Mono", "Fira Code", "JetBrains Mono", monospace',
-        fontSize: 12,
-        fontWeight: 700,
-        padding: '4px 10px',
-        borderRadius: 6,
-        background: `linear-gradient(135deg, ${token.colorPrimaryBg} 0%, ${token.colorPrimaryBorder} 100%)`,
-        color: token.colorPrimary,
-        border: `1px solid ${token.colorPrimaryBorder}`,
-        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1)',
-        letterSpacing: '0.5px',
-      },
-      nameTag: {
-        fontSize: 13,
-        fontWeight: 500,
-        padding: '4px 12px',
-        borderRadius: 6,
-        backgroundColor: token.colorBgTextActive,
-        color: token.colorText,
-        border: 'none',
-      },
-      urlText: {
-        fontFamily: 'monospace',
-        color: token.colorPrimary,
-        fontSize: 13,
-      },
-      creatorTag: {
-        fontSize: 12,
-        padding: '2px 10px',
-        borderRadius: 12,
-        backgroundColor: token.colorWarningBg,
-        color: token.colorWarningText,
-        border: `1px solid ${token.colorWarningBorder}`,
-      },
-      addBtn: {
-        height: 36,
-        borderRadius: 8,
-        fontWeight: 500,
-        boxShadow: `0 2px 8px ${token.colorPrimaryBg}`,
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-      },
-    }),
-    [token],
+      }}
+    >
+      {icon}
+      {label}
+    </a>
   );
-
-  const ActionButton: FC<{
-    icon: React.ReactNode;
-    label: string;
-    type?: 'primary' | 'success' | 'danger' | 'warning';
-    onClick?: () => void;
-  }> = ({ icon, label, type = 'primary', onClick }) => {
-    const styleMap = {
-      primary: styles.primaryBtn,
-      success: styles.successBtn,
-      danger: styles.dangerBtn,
-      warning: styles.warningBtn,
-    };
-
-    return (
-      <a
-        onClick={onClick}
-        style={{
-          ...styles.actionBtn,
-          ...styleMap[type],
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = 'translateY(-1px)';
-          e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = 'translateY(0)';
-          e.currentTarget.style.boxShadow = 'none';
-        }}
-      >
-        {icon}
-        {label}
-      </a>
-    );
-  };
 
   const columns: ProColumns<IInterfaceAPI>[] = [
     {
@@ -216,10 +151,24 @@ const Index: FC<SelfProps> = ({
       width: 140,
       copyable: true,
       render: (_, record) => (
-        <span style={styles.idTag}>
+        <Tag
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 4,
+            fontFamily: 'monospace',
+            fontSize: 12,
+            fontWeight: 700,
+            padding: '4px 10px',
+            borderRadius: 6,
+            background: `${styles.colors.primary}15`,
+            color: styles.colors.primary,
+            border: `1px solid ${styles.colors.primary}30`,
+          }}
+        >
           <NumberOutlined style={{ fontSize: 10, opacity: 0.7 }} />
           {record.uid}
-        </span>
+        </Tag>
       ),
     },
     {
@@ -230,7 +179,7 @@ const Index: FC<SelfProps> = ({
       width: 180,
       ellipsis: true,
       render: (_, record) => (
-        <Tag style={styles.nameTag}>
+        <Tag style={{ borderRadius: 6, fontSize: 13, padding: '4px 12px' }}>
           <ApiOutlined style={{ marginRight: 6, opacity: 0.6 }} />
           {record.interface_name}
         </Tag>
@@ -243,7 +192,14 @@ const Index: FC<SelfProps> = ({
       ellipsis: true,
       width: 300,
       render: (_, record) => (
-        <Text style={styles.urlText} ellipsis>
+        <Text
+          ellipsis
+          style={{
+            fontFamily: 'monospace',
+            color: styles.colors.primary,
+            fontSize: 13,
+          }}
+        >
           <LinkOutlined style={{ marginRight: 6, opacity: 0.6 }} />
           {record.interface_url}
         </Text>
@@ -262,15 +218,7 @@ const Index: FC<SelfProps> = ({
       render: (_, record) => {
         const methodConfig = CONFIG.API_METHOD_ENUM[record.interface_method];
         return (
-          <Tag
-            color={methodConfig?.color}
-            style={{
-              borderRadius: 6,
-              fontSize: 12,
-              padding: '4px 12px',
-              fontWeight: 600,
-            }}
-          >
+          <Tag color={methodConfig?.color} style={{ ...tagBaseStyle }}>
             {record.interface_method}
           </Tag>
         );
@@ -291,11 +239,7 @@ const Index: FC<SelfProps> = ({
         return (
           <Tag
             color={levelConfig?.status === 'Success' ? 'success' : 'processing'}
-            style={{
-              borderRadius: 6,
-              fontSize: 12,
-              padding: '4px 12px',
-            }}
+            style={tagBaseStyle}
           >
             {record.interface_level}
           </Tag>
@@ -312,9 +256,8 @@ const Index: FC<SelfProps> = ({
       onFilter: true,
       valueEnum: CONFIG.API_STATUS_ENUM,
       width: 100,
-      render: (_, record) => {
-        return CONFIG.API_STATUS_ENUM[record.interface_status].tag;
-      },
+      render: (_, record) =>
+        CONFIG.API_STATUS_ENUM[record.interface_status].tag,
     },
     {
       title: '创建人',
@@ -322,11 +265,11 @@ const Index: FC<SelfProps> = ({
       key: 'creator',
       valueType: 'select',
       width: 120,
-      renderFormItem: () => {
-        return <UserSelect />;
-      },
+      renderFormItem: () => <UserSelect />,
       render: (_, record) => (
-        <Tag style={styles.creatorTag}>{record.creatorName}</Tag>
+        <Tag style={{ fontSize: 12, padding: '2px 10px', borderRadius: 12 }}>
+          {record.creatorName}
+        </Tag>
       ),
     },
     {
@@ -340,7 +283,6 @@ const Index: FC<SelfProps> = ({
           <ActionButton
             icon={<EyeOutlined />}
             label="详情"
-            type="primary"
             onClick={() => {
               history.push(`/interface/interApi/detail/interId=${record.id}`);
             }}
@@ -380,9 +322,7 @@ const Index: FC<SelfProps> = ({
                     setOpenModal(true);
                   },
                 },
-                {
-                  type: 'divider',
-                },
+                { type: 'divider' },
                 {
                   key: '4',
                   icon: <DeleteOutlined />,
@@ -404,7 +344,7 @@ const Index: FC<SelfProps> = ({
                         }
                       }}
                     >
-                      <a style={{ color: token.colorError }}>删除</a>
+                      <a style={{ color: styles.colors.error }}>删除</a>
                     </Popconfirm>
                   ),
                 },
@@ -430,22 +370,18 @@ const Index: FC<SelfProps> = ({
           try {
             const values = await copyForm.validateFields();
             if (!currentApiId) return;
-            let response;
-            if (copyOrMove === 1) {
-              response = await copyApiTo({
-                interface_id: currentApiId,
-                project_id: values.project_id,
-                module_id: values.module_id,
-              });
-            } else if (copyOrMove === 2) {
-              response = await updateInterApiById({
-                id: currentApiId,
-                project_id: values.project_id,
-                module_id: values.module_id,
-              });
-            } else {
-              return;
-            }
+            const response =
+              copyOrMove === 1
+                ? await copyApiTo({
+                    interface_id: currentApiId,
+                    project_id: values.project_id,
+                    module_id: values.module_id,
+                  })
+                : await updateInterApiById({
+                    id: currentApiId,
+                    project_id: values.project_id,
+                    module_id: values.module_id,
+                  });
             if (response?.code === 0) {
               message.success(response.msg);
               copyForm.resetFields();
@@ -471,12 +407,8 @@ const Index: FC<SelfProps> = ({
             label="项目"
             name="project_id"
             required
-            onChange={(value) => {
-              setCopyProjectId(value as number);
-            }}
-            fieldProps={{
-              placeholder: '请选择目标项目',
-            }}
+            onChange={(value) => setCopyProjectId(value as number)}
+            fieldProps={{ placeholder: '请选择目标项目' }}
           />
           <ProFormTreeSelect
             required
@@ -485,9 +417,7 @@ const Index: FC<SelfProps> = ({
             rules={[{ required: true, message: '所属模块必选' }]}
             fieldProps={{
               treeData: moduleEnum,
-              fieldNames: {
-                label: 'title',
-              },
+              fieldNames: { label: 'title' },
               filterTreeNode: true,
               placeholder: '请选择目标模块',
             }}
@@ -506,20 +436,12 @@ const Index: FC<SelfProps> = ({
             key="add"
             hidden={currentModuleId === undefined}
             type="primary"
-            style={styles.addBtn}
+            style={addBtnStyle}
             icon={<PlusOutlined />}
             onClick={() => {
               window.open(
                 `/interface/interApi/detail/projectId=${currentProjectId}&moduleId=${currentModuleId}`,
               );
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = `0 4px 16px ${token.colorPrimaryBg}`;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = `0 2px 8px ${token.colorPrimaryBg}`;
             }}
           >
             添加接口
@@ -527,7 +449,7 @@ const Index: FC<SelfProps> = ({
           <Button
             key="export"
             type="primary"
-            style={styles.addBtn}
+            style={addBtnStyle}
             icon={<DownOutlined />}
             onClick={async () => {
               if (currentModuleId) {
@@ -535,14 +457,6 @@ const Index: FC<SelfProps> = ({
               } else {
                 message.warning('请选择模块');
               }
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = `0 4px 16px ${token.colorPrimaryBg}`;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = `0 2px 8px ${token.colorPrimaryBg}`;
             }}
           >
             接口导出

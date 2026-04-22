@@ -1,9 +1,10 @@
+import { useGlassStyles } from '@/components/Glass/useGlassStyles';
 import { ProTable } from '@ant-design/pro-components';
 import type { ActionType, ProColumns } from '@ant-design/pro-table/lib/typing';
 import { TablePaginationConfig, TableProps } from 'antd';
 import type { ExpandableConfig } from 'rc-table/lib/interface';
 import type { TableProps as RcTableProps } from 'rc-table/lib/Table';
-import { FC, MutableRefObject, useMemo } from 'react';
+import { CSSProperties, FC, MutableRefObject, useMemo } from 'react';
 
 export interface MyProTableProps {
   columns: ProColumns[];
@@ -29,6 +30,7 @@ export interface MyProTableProps {
     selectedRowKeys: React.Key[];
     selectedRows: any[];
   }) => React.ReactNode;
+  cardStyle?: CSSProperties;
 }
 
 const DEFAULT_PAGINATION: TablePaginationConfig = {
@@ -44,6 +46,8 @@ const DEFAULT_SEARCH_CONFIG = {
 };
 
 const MyProTable: FC<MyProTableProps> = (props) => {
+  const styles = useGlassStyles();
+
   const {
     columns,
     dataSource,
@@ -65,6 +69,7 @@ const MyProTable: FC<MyProTableProps> = (props) => {
     className,
     tableLayout,
     tableAlertOptionRender,
+    cardStyle,
   } = props;
 
   const resolvedPagination = useMemo(() => {
@@ -81,47 +86,55 @@ const MyProTable: FC<MyProTableProps> = (props) => {
   }, [search]);
 
   return (
-    <ProTable
-      tableAlertOptionRender={tableAlertOptionRender}
+    <div
+      style={{
+        ...styles.glassCard(),
+        ...styles.contentWrapper(),
+      }}
       className={className}
-      style={{ width: '100%' }}
-      tableStyle={{ width: '100%' }}
-      form={form}
-      formProps={{ labelAlign: 'left' }}
-      dataSource={dataSource}
-      columns={columns}
-      actionRef={actionRef}
-      scroll={{ x: 'auto' }}
-      //@ts-ignore
-      tableLayout={tableLayout}
-      request={request}
-      editable={{
-        type: 'single',
-        onSave: onSave,
-        onDelete: onDelete,
-      }}
-      columnsState={{
-        persistenceKey: persistenceKey ?? 'pro-table',
-        persistenceType: 'localStorage',
-      }}
-      rowKey={rowKey}
-      rowSelection={rowSelection || false}
-      search={resolvedSearch}
-      options={{
-        density: true,
-        setting: {
-          listsHeight: 400,
-        },
-        reload: reload as boolean | ((e: React.MouseEvent) => void),
-      }}
-      expandable={expandable}
-      pagination={resolvedPagination}
-      dateFormatter="string"
-      headerTitle={headerTitle ? headerTitle : null}
-      //@ts-ignore
-      toolBarRender={toolBarRender}
-      size={size}
-    />
+    >
+      <ProTable
+        tableAlertOptionRender={tableAlertOptionRender}
+        tableStyle={{ width: '100%', minHeight: '70vh' }}
+        form={form}
+        formProps={{ labelAlign: 'left' }}
+        dataSource={dataSource}
+        columns={columns}
+        actionRef={actionRef}
+        scroll={{ x: 'auto' }}
+        //@ts-ignore
+        tableLayout={tableLayout}
+        request={request}
+        editable={{
+          type: 'single',
+          onSave: onSave,
+          onDelete: onDelete,
+        }}
+        columnsState={{
+          persistenceKey: persistenceKey ?? 'pro-table',
+          persistenceType: 'localStorage',
+        }}
+        rowKey={rowKey}
+        rowSelection={rowSelection || false}
+        search={resolvedSearch}
+        options={{
+          density: true,
+          setting: {
+            listsHeight: 400,
+          },
+          reload: reload as boolean | ((e: React.MouseEvent) => void),
+        }}
+        expandable={expandable}
+        pagination={resolvedPagination}
+        dateFormatter="string"
+        headerTitle={headerTitle ? headerTitle : null}
+        //@ts-ignore
+        toolBarRender={toolBarRender}
+        size={size}
+        className={className}
+        cardStyle={cardStyle}
+      />
+    </div>
   );
 };
 
