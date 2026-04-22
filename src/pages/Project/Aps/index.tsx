@@ -1,4 +1,5 @@
 import { allJobs, setSwitch } from '@/api/base';
+import { useGlassStyles } from '@/components/Glass';
 import MyProTable from '@/components/Table/MyProTable';
 import { queryData } from '@/utils/somefunc';
 import { history } from '@@/core/history';
@@ -7,6 +8,7 @@ import { message, Switch, Tag } from 'antd';
 import { useCallback, useRef } from 'react';
 
 const Index = () => {
+  const styles = useGlassStyles();
   const actionRef = useRef<ActionType>(); //Table action 的引用，便于自定义触发
 
   const fetchJobs = useCallback(async () => {
@@ -109,6 +111,14 @@ const Index = () => {
 
   return (
     <MyProTable
+      cardStyle={{
+        borderRadius: '16px',
+        background: styles.colors.glass,
+        backdropFilter: 'blur(20px)',
+        border: `1px solid ${styles.colors.glassBorder}`,
+        boxShadow: `0 8px 32px ${styles.colors.primaryGlow}20`,
+        overflow: 'hidden',
+      }}
       search={false}
       // @ts-ignore
       actionRef={actionRef}

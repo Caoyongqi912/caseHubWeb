@@ -6,6 +6,7 @@ import {
   removeApiCase,
   updateApiCase,
 } from '@/api/inter/interCase';
+import { useGlassStyles } from '@/components/Glass';
 import MyDrawer from '@/components/MyDrawer';
 import MyModal from '@/components/MyModal';
 import MyProTable from '@/components/Table/MyProTable';
@@ -43,9 +44,8 @@ import {
   Popconfirm,
   Space,
   Tag,
-  theme,
 } from 'antd';
-import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { FC, useCallback, useEffect, useRef, useState } from 'react';
 import InterfaceApiCaseResultTable from '../../InterfaceApiCaseResult/InterfaceApiCaseResultTable';
 
 interface SelfProps {
@@ -59,7 +59,7 @@ const Index: FC<SelfProps> = ({
   currentProjectId,
   perKey,
 }) => {
-  const { token } = theme.useToken();
+  const styles = useGlassStyles();
   const actionRef = useRef<ActionType>();
   const [currentCaseId, setCurrentCaseId] = useState<number>();
   const [openModal, setOpenModal] = useState(false);
@@ -70,6 +70,7 @@ const Index: FC<SelfProps> = ({
   const [moduleEnum, setModuleEnum] = useState<IModuleEnum[]>([]);
   const [copyProjectId, setCopyProjectId] = useState<number>();
   const [openHistory, setOpenHistory] = useState(false);
+
   useEffect(() => {
     if (copyProjectId) {
       fetchModulesEnum(
@@ -95,21 +96,43 @@ const Index: FC<SelfProps> = ({
 
   const fetchInterfaceCase = useCallback(
     async (params: any, sort: any) => {
-      const searchData = {
+      if (!currentModuleId) return;
+      const { code, data } = await pageInterApiCase({
         ...params,
         module_id: currentModuleId,
         module_type: ModuleEnum.API_CASE,
         sort: sort,
-      };
-      const { code, data } = await pageInterApiCase(searchData);
+      });
       return pageData(code, data);
     },
     [currentModuleId],
   );
 
-  const styles = useMemo(
-    () => ({
-      actionBtn: {
+  const tagBaseStyle = {
+    borderRadius: 6,
+    fontSize: 12,
+    padding: '4px 12px',
+    fontWeight: 600,
+  };
+
+  const addBtnStyle = {
+    height: 36,
+    borderRadius: 8,
+    fontWeight: 500,
+    background: styles.colors.gradientPrimary,
+    border: 'none',
+    boxShadow: `0 4px 16px ${styles.colors.primaryGlow}`,
+  };
+
+  const ActionButton: FC<{
+    icon: React.ReactNode;
+    label: string;
+    type?: 'primary' | 'danger';
+    onClick?: () => void;
+  }> = ({ icon, label, type = 'primary', onClick }) => (
+    <a
+      onClick={onClick}
+      style={{
         display: 'inline-flex',
         alignItems: 'center',
         gap: 4,
@@ -117,102 +140,19 @@ const Index: FC<SelfProps> = ({
         borderRadius: 6,
         fontSize: 13,
         fontWeight: 500,
+        color: type === 'primary' ? styles.colors.primary : styles.colors.error,
+        backgroundColor:
+          type === 'primary'
+            ? `${styles.colors.primary}15`
+            : `${styles.colors.error}15`,
         transition: 'all 0.2s ease',
         cursor: 'pointer',
-      },
-      primaryBtn: {
-        color: token.colorPrimary,
-        backgroundColor: token.colorPrimaryBg,
-      },
-      successBtn: {
-        color: token.colorSuccess,
-        backgroundColor: token.colorSuccessBg,
-      },
-      dangerBtn: {
-        color: token.colorError,
-        backgroundColor: token.colorErrorBg,
-      },
-      warningBtn: {
-        color: token.colorWarning,
-        backgroundColor: token.colorWarningBg,
-      },
-      idTag: {
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 4,
-        fontFamily: '"SF Mono", "Fira Code", "JetBrains Mono", monospace',
-        fontSize: 12,
-        fontWeight: 700,
-        padding: '4px 10px',
-        borderRadius: 6,
-        background: `linear-gradient(135deg, ${token.colorPrimaryBg} 0%, ${token.colorPrimaryBorder} 100%)`,
-        color: token.colorPrimary,
-        border: `1px solid ${token.colorPrimaryBorder}`,
-        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1)',
-        letterSpacing: '0.5px',
-      },
-      nameTag: {
-        fontSize: 13,
-        fontWeight: 500,
-        padding: '4px 12px',
-        borderRadius: 6,
-        backgroundColor: token.colorBgTextActive,
-        color: token.colorText,
-        border: 'none',
-      },
-      creatorTag: {
-        fontSize: 12,
-        padding: '2px 10px',
-        borderRadius: 12,
-        backgroundColor: token.colorWarningBg,
-        color: token.colorWarningText,
-        border: `1px solid ${token.colorWarningBorder}`,
-      },
-      addBtn: {
-        height: 36,
-        borderRadius: 8,
-        fontWeight: 500,
-        boxShadow: `0 2px 8px ${token.colorPrimaryBg}`,
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-      },
-    }),
-    [token],
+      }}
+    >
+      {icon}
+      {label}
+    </a>
   );
-
-  const ActionButton: FC<{
-    icon: React.ReactNode;
-    label: string;
-    type?: 'primary' | 'success' | 'danger' | 'warning';
-    onClick?: () => void;
-  }> = ({ icon, label, type = 'primary', onClick }) => {
-    const styleMap = {
-      primary: styles.primaryBtn,
-      success: styles.successBtn,
-      danger: styles.dangerBtn,
-      warning: styles.warningBtn,
-    };
-
-    return (
-      <a
-        onClick={onClick}
-        style={{
-          ...styles.actionBtn,
-          ...styleMap[type],
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = 'translateY(-1px)';
-          e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = 'translateY(0)';
-          e.currentTarget.style.boxShadow = 'none';
-        }}
-      >
-        {icon}
-        {label}
-      </a>
-    );
-  };
 
   const columns: ProColumns<IInterfaceAPICase>[] = [
     {
@@ -223,10 +163,24 @@ const Index: FC<SelfProps> = ({
       copyable: true,
       fixed: 'left',
       render: (_, record) => (
-        <span style={styles.idTag}>
+        <Tag
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 4,
+            fontFamily: 'monospace',
+            fontSize: 12,
+            fontWeight: 700,
+            padding: '4px 10px',
+            borderRadius: 6,
+            background: `${styles.colors.primary}15`,
+            color: styles.colors.primary,
+            border: `1px solid ${styles.colors.primary}30`,
+          }}
+        >
           <NumberOutlined style={{ fontSize: 10, opacity: 0.7 }} />
           {record.uid}
-        </span>
+        </Tag>
       ),
     },
     {
@@ -236,7 +190,7 @@ const Index: FC<SelfProps> = ({
       ellipsis: true,
       width: 200,
       render: (_, record) => (
-        <Tag style={styles.nameTag}>
+        <Tag style={{ borderRadius: 6, fontSize: 13, padding: '4px 12px' }}>
           <FileTextOutlined style={{ marginRight: 6, opacity: 0.6 }} />
           {record.case_title}
         </Tag>
@@ -248,16 +202,7 @@ const Index: FC<SelfProps> = ({
       valueType: 'text',
       width: 100,
       render: (_, record) => (
-        <Tag
-          style={{
-            borderRadius: 6,
-            fontWeight: 500,
-            padding: '4px 12px',
-            backgroundColor: token.colorInfoBg,
-            color: token.colorInfo,
-            border: `1px solid ${token.colorInfoBorder}`,
-          }}
-        >
+        <Tag style={{ borderRadius: 6, fontWeight: 500, padding: '4px 12px' }}>
           {record.case_api_num || 0}
         </Tag>
       ),
@@ -268,18 +213,17 @@ const Index: FC<SelfProps> = ({
       valueType: 'select',
       valueEnum: CONFIG.API_LEVEL_ENUM,
       width: 100,
-      render: (_, record) => (
-        <Tag
-          color={
-            CONFIG.API_LEVEL_ENUM[record.case_level]?.status === 'Success'
-              ? 'success'
-              : 'processing'
-          }
-          style={{ borderRadius: 6, fontSize: 12, padding: '4px 12px' }}
-        >
-          {record.case_level}
-        </Tag>
-      ),
+      render: (_, record) => {
+        const levelConfig = CONFIG.API_LEVEL_ENUM[record.case_level];
+        return (
+          <Tag
+            color={levelConfig?.status === 'Success' ? 'success' : 'processing'}
+            style={tagBaseStyle}
+          >
+            {record.case_level}
+          </Tag>
+        );
+      },
     },
     {
       title: '状态',
@@ -287,20 +231,18 @@ const Index: FC<SelfProps> = ({
       valueType: 'select',
       valueEnum: CONFIG.API_STATUS_ENUM,
       width: 100,
-      render: (_, record) => {
-        return CONFIG.API_STATUS_ENUM[record.case_status].tag;
-      },
+      render: (_, record) => CONFIG.API_STATUS_ENUM[record.case_status].tag,
     },
     {
       title: '创建人',
       dataIndex: 'creator',
       valueType: 'select',
       width: 120,
-      renderFormItem: () => {
-        return <UserSelect />;
-      },
+      renderFormItem: () => <UserSelect />,
       render: (_, record) => (
-        <Tag style={styles.creatorTag}>{record.creatorName}</Tag>
+        <Tag style={{ fontSize: 12, padding: '2px 10px', borderRadius: 12 }}>
+          {record.creatorName}
+        </Tag>
       ),
     },
     {
@@ -322,7 +264,6 @@ const Index: FC<SelfProps> = ({
           <ActionButton
             icon={<EyeOutlined />}
             label="详情"
-            type="primary"
             onClick={() => {
               history.push(
                 `/interface/caseApi/detail/caseApiId=${record.id}&projectId=${record.project_id}&moduleId=${record.module_id}`,
@@ -353,9 +294,7 @@ const Index: FC<SelfProps> = ({
                     setOpenModal(true);
                   },
                 },
-                {
-                  type: 'divider',
-                },
+                { type: 'divider' },
                 {
                   key: '5',
                   icon: <HistoryOutlined />,
@@ -384,7 +323,7 @@ const Index: FC<SelfProps> = ({
                         }
                       }}
                     >
-                      <a style={{ color: token.colorError }}>删除</a>
+                      <a style={{ color: styles.colors.error }}>删除</a>
                     </Popconfirm>
                   ),
                 },
@@ -403,15 +342,14 @@ const Index: FC<SelfProps> = ({
   ];
 
   const saveBaseInfo = async (values: IInterfaceAPICase) => {
-    await insertApiCase(values).then(async ({ code, data }) => {
-      if (code === 0) {
-        message.success('添加成功');
-        actionRef.current?.reload();
-        history.push(
-          `/interface/caseApi/detail/caseApiId=${data.id}&projectId=${data.project_id}&moduleId=${data.module_id}`,
-        );
-      }
-    });
+    const { code, data } = await insertApiCase(values);
+    if (code === 0) {
+      message.success('添加成功');
+      actionRef.current?.reload();
+      history.push(
+        `/interface/caseApi/detail/caseApiId=${data.id}&projectId=${data.project_id}&moduleId=${data.module_id}`,
+      );
+    }
     return true;
   };
 
@@ -450,9 +388,7 @@ const Index: FC<SelfProps> = ({
             label="项目"
             name="project_id"
             required
-            onChange={(value) => {
-              setCopyProjectId(value as number);
-            }}
+            onChange={(value) => setCopyProjectId(value as number)}
           />
           <ProFormTreeSelect
             required
@@ -461,9 +397,7 @@ const Index: FC<SelfProps> = ({
             rules={[{ required: true, message: '所属模块必选' }]}
             fieldProps={{
               treeData: moduleEnum,
-              fieldNames: {
-                label: 'title',
-              },
+              fieldNames: { label: 'title' },
               filterTreeNode: true,
             }}
             width="md"
@@ -484,17 +418,9 @@ const Index: FC<SelfProps> = ({
               <Button
                 hidden={currentModuleId === undefined}
                 type="primary"
-                style={styles.addBtn}
+                style={addBtnStyle}
                 icon={<PlusOutlined />}
                 onClick={() => setCurrentCaseId(undefined)}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = `0 4px 16px ${token.colorPrimaryBg}`;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = `0 2px 8px ${token.colorPrimaryBg}`;
-                }}
               >
                 添加任务用例
               </Button>

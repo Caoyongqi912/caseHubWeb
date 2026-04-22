@@ -1,9 +1,10 @@
 import { pageDBConfig, removeDBConfig } from '@/api/base/dbConfig';
+import { useGlassStyles } from '@/components/Glass';
 import MyProTable from '@/components/Table/MyProTable';
 import DBModel from '@/pages/Project/Db/DBModel';
 import { pageData } from '@/utils/somefunc';
 import { useAccess } from '@@/exports';
-import { ActionType, ProCard, ProColumns } from '@ant-design/pro-components';
+import { ActionType, ProColumns } from '@ant-design/pro-components';
 import { Divider, Tag } from 'antd';
 import { FC, useRef, useState } from 'react';
 
@@ -12,10 +13,12 @@ interface IProps {
 }
 
 const Index: FC<IProps> = ({ projectId }) => {
-  const actionRef = useRef<ActionType>(); //Table action 的引用，便于自定义触发’
+  const styles = useGlassStyles();
+  const actionRef = useRef<ActionType>();
   const [open, setOpen] = useState(false);
   const { isAdmin } = useAccess();
   const [currentDBConfig, setCurrentDBConfig] = useState<string>();
+
   const queryDbs = async (params: any, sort: any) => {
     const values = {
       ...params,
@@ -24,6 +27,7 @@ const Index: FC<IProps> = ({ projectId }) => {
     const { code, data } = await pageDBConfig({ ...values, sort: sort });
     return pageData(code, data);
   };
+
   const isReload = async () => {
     await actionRef.current?.reload();
     setOpen(false);
@@ -56,7 +60,6 @@ const Index: FC<IProps> = ({ projectId }) => {
         ],
       },
     },
-
     {
       title: 'Database',
       dataIndex: 'db_database',
@@ -114,24 +117,29 @@ const Index: FC<IProps> = ({ projectId }) => {
   ];
 
   return (
-    <ProCard>
-      <MyProTable
-        toolBarRender={() => [
-          <DBModel
-            currentProjectId={projectId!}
-            callBack={isReload}
-            currentDBConfigId={currentDBConfig}
-            open={open}
-            setOpen={setOpen}
-          />,
-        ]}
-        headerTitle={'DB配置'}
-        actionRef={actionRef}
-        columns={columns}
-        request={queryDbs}
-        rowKey={'uid'}
-      />
-    </ProCard>
+    <MyProTable
+      cardStyle={{
+        borderRadius: '16px',
+        background: 'transparent',
+        border: 'none',
+        boxShadow: 'none',
+        overflow: 'hidden',
+      }}
+      toolBarRender={() => [
+        <DBModel
+          currentProjectId={projectId!}
+          callBack={isReload}
+          currentDBConfigId={currentDBConfig}
+          open={open}
+          setOpen={setOpen}
+        />,
+      ]}
+      headerTitle={'DB配置'}
+      actionRef={actionRef}
+      columns={columns}
+      request={queryDbs}
+      rowKey={'uid'}
+    />
   );
 };
 

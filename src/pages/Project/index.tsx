@@ -1,5 +1,6 @@
 import { IProject } from '@/api';
 import { newProject, putProject, queryProject, searchUser } from '@/api/base';
+import { GlassBackground, useGlassStyles } from '@/components/Glass';
 import { history } from '@@/core/history';
 import {
   ArrowRightOutlined,
@@ -37,6 +38,7 @@ const { Paragraph } = Typography;
  */
 const ProjectList: React.FC = () => {
   const { isAdmin } = useAccess();
+  const styles = useGlassStyles();
   const [projects, setProjects] = useState<IProject[]>([]);
   const [status, setStatus] = useState<number>(0);
   const [currentProjectId, setCurrentProjectId] = useState<string>();
@@ -95,17 +97,43 @@ const ProjectList: React.FC = () => {
   };
 
   return (
-    <div
-      style={{
-        padding: '24px',
-        minHeight: '100vh',
-      }}
-    >
-      <style>{`
-        .ant-pro-card:hover .card-arrow {
-          opacity: 1 !important;
+    <GlassBackground
+      glowOrbConfigs={[
+        {
+          color: styles.colors.primary,
+          size: 600,
+          top: '-10%',
+          left: '-10%',
+          animationDuration: '8s',
+        },
+        {
+          color: styles.colors.success,
+          size: 500,
+          top: '60%',
+          left: '70%',
+          animationDuration: '10s',
+        },
+        {
+          color: '#13c2c2',
+          size: 400,
+          top: '30%',
+          left: '80%',
+          animationDuration: '12s',
+        },
+      ]}
+      extraAnimations={`
+        .project-card-wrapper {
+          animation: slideUp 0.5s ease-out forwards;
+          opacity: 0;
         }
-      `}</style>
+        .project-card-wrapper:nth-child(1) { animation-delay: 0.05s; }
+        .project-card-wrapper:nth-child(2) { animation-delay: 0.1s; }
+        .project-card-wrapper:nth-child(3) { animation-delay: 0.15s; }
+        .project-card-wrapper:nth-child(4) { animation-delay: 0.2s; }
+        .project-card-wrapper:nth-child(5) { animation-delay: 0.25s; }
+        .project-card-wrapper:nth-child(6) { animation-delay: 0.3s; }
+      `}
+    >
       <ModalForm<IProject>
         title={`${title}项目`}
         form={currentForm}
@@ -157,8 +185,10 @@ const ProjectList: React.FC = () => {
               setOpenModel(true);
             }}
             style={{
-              borderRadius: '6px',
-              boxShadow: '0 2px 0 rgba(0, 0, 0, 0.045)',
+              borderRadius: '8px',
+              background: styles.colors.gradientPrimary,
+              border: 'none',
+              boxShadow: `0 4px 16px ${styles.colors.primaryGlow}`,
             }}
           >
             新建项目
@@ -166,8 +196,15 @@ const ProjectList: React.FC = () => {
         }
         style={{
           marginBottom: 24,
-          borderRadius: '8px',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.09)',
+          borderRadius: '16px',
+          background: styles.colors.glass,
+          backdropFilter: 'blur(20px)',
+          border: `1px solid ${styles.colors.glassBorder}`,
+          boxShadow: `0 8px 32px ${styles.colors.primaryGlow}20`,
+        }}
+        bodyStyle={{
+          padding: '24px',
+          background: 'transparent',
         }}
       >
         {projects.length > 0 ? (
@@ -181,6 +218,7 @@ const ProjectList: React.FC = () => {
                   lg={6}
                   key={index}
                   style={{ display: 'flex' }}
+                  className="project-card-wrapper"
                 >
                   <ProCard
                     onClick={() => {
@@ -192,9 +230,19 @@ const ProjectList: React.FC = () => {
                     style={{
                       flex: 1,
                       borderRadius: '12px',
-                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+                      background: styles.colors.glass,
+                      backdropFilter: 'blur(16px)',
+                      border: `1px solid ${styles.colors.glassBorder}`,
+                      boxShadow: `0 4px 20px ${styles.colors.primaryGlow}15`,
                       transition: 'all 0.3s ease',
                       cursor: 'pointer',
+                    }}
+                    headStyle={{
+                      background: 'transparent',
+                      borderBottom: `1px solid ${styles.colors.borderLight}`,
+                    }}
+                    bodyStyle={{
+                      background: 'transparent',
                     }}
                     actions={
                       isAdmin
@@ -242,7 +290,6 @@ const ProjectList: React.FC = () => {
                               style={{
                                 fontSize: '16px',
                                 fontWeight: 600,
-                                color: '#262626',
                               }}
                             >
                               {item.title}
@@ -310,9 +357,11 @@ const ProjectList: React.FC = () => {
             style={{
               textAlign: 'center',
               padding: '64px 24px',
-              backgroundColor: '#fafafa',
-              borderRadius: '8px',
+              background: styles.colors.glass,
+              backdropFilter: 'blur(16px)',
+              borderRadius: '12px',
               margin: '24px 0',
+              border: `1px solid ${styles.colors.glassBorder}`,
             }}
           >
             <Empty description="暂无项目数据" />
@@ -330,7 +379,7 @@ const ProjectList: React.FC = () => {
           </div>
         )}
       </ProCard>
-    </div>
+    </GlassBackground>
   );
 };
 

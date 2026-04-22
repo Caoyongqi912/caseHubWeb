@@ -1,5 +1,6 @@
 import { IEnv, ISearch } from '@/api';
 import { deleteEnv, pageEnv, updateEnv } from '@/api/base';
+import { useGlassStyles } from '@/components/Glass';
 import MyProTable from '@/components/Table/MyProTable';
 import AddEnv from '@/pages/Project/Env/AddEnv';
 import { pageData } from '@/utils/somefunc';
@@ -12,7 +13,9 @@ interface IProps {
 }
 
 const Index: FC<IProps> = ({ projectId }) => {
-  const actionRef = useRef<ActionType>(); //Table action 的引用，便于自定义触发’
+  const styles = useGlassStyles();
+  const actionRef = useRef<ActionType>();
+
   const pageEnvs = async (value: ISearch, sort: any) => {
     const searchData: any = {
       ...value,
@@ -28,6 +31,7 @@ const Index: FC<IProps> = ({ projectId }) => {
       actionRef.current?.reload();
     }
   };
+
   const columns: ProColumns[] = [
     {
       title: '名称',
@@ -98,6 +102,7 @@ const Index: FC<IProps> = ({ projectId }) => {
       }
     });
   };
+
   const onDelete = async (_: string, record: IEnv) => {
     await deleteEnv({ ...record }).then(({ code, msg }) => {
       if (code === 0) {
@@ -106,8 +111,16 @@ const Index: FC<IProps> = ({ projectId }) => {
       }
     });
   };
+
   return (
     <MyProTable
+      cardStyle={{
+        borderRadius: '16px',
+        background: 'transparent',
+        border: 'none',
+        boxShadow: 'none',
+        overflow: 'hidden',
+      }}
       headerTitle={'环境配置'}
       actionRef={actionRef}
       columns={columns}
@@ -119,4 +132,5 @@ const Index: FC<IProps> = ({ projectId }) => {
     />
   );
 };
+
 export default Index;

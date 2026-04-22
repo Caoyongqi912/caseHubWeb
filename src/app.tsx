@@ -9,6 +9,7 @@ import { ConfigProvider } from 'antd';
 import { useState } from 'react';
 import { history, RunTimeLayoutConfig } from 'umi';
 import defaultSetting from '../config/defaultSetting';
+import { GlassBackground } from './components/Glass';
 
 // 常量定义
 const loginPath = '/userLogin';
@@ -127,18 +128,11 @@ export const layout: RunTimeLayoutConfig = ({
     onPageChange: handlePageChange,
     unAccessible: <div>无访问权限</div>,
     childrenRender: (children) => (
-      <div
-        style={{
-          width: '100%',
-          height: '100%',
-          backgroundImage:
-            'radial-gradient(circle at 20% 80%, rgba(24, 144, 255, 0.1) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(82, 196, 26, 0.1) 0%, transparent 50%)',
-        }}
-      >
+      <GlassBackground>
         <ConfigProvider>
           {initialState?.loading ? <PageLoading /> : <>{children}</>}
         </ConfigProvider>
-      </div>
+      </GlassBackground>
     ),
     rightContentRender: () => (
       <LeftSetting

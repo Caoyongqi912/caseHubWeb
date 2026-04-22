@@ -1,3 +1,4 @@
+import { useGlassStyles } from '@/components/Glass';
 import LeftComponents from '@/components/LeftComponents';
 import InterfaceApiCaseTable from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseTable';
 import { ModuleEnum } from '@/utils/config';
@@ -7,6 +8,8 @@ import { Splitter } from 'antd';
 import { useEffect, useState } from 'react';
 
 const Index = () => {
+  const styles = useGlassStyles();
+
   const [currentModuleId, setCurrentModuleId] = useState<number>();
   const [currentProjectId, setCurrentProjectId] = useState<number>();
   const PerKey = 'InterfaceApiCase';
@@ -29,8 +32,17 @@ const Index = () => {
   }, []);
   return (
     <ProCard
+      style={{
+        marginBottom: 24,
+        borderRadius: '16px',
+        background: styles.colors.glass,
+        backdropFilter: 'blur(20px)',
+        border: `1px solid ${styles.colors.glassBorder}`,
+        boxShadow: `0 8px 32px ${styles.colors.primaryGlow}20`,
+      }}
       bodyStyle={{
-        minHeight: '100vh',
+        height: '100%',
+        minHeight: '90vh',
         padding: 0,
         overflow: 'hidden',
       }}
@@ -40,7 +52,12 @@ const Index = () => {
           setSizes(sizes);
           setSplitter(PerKeySplitter, sizes[0], sizes[1]);
         }}
-        style={{ boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)' }}
+        style={{
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+        }}
+        layout="horizontal"
       >
         <Splitter.Panel
           resizable={true}
