@@ -1,6 +1,6 @@
 import {
-  getDBContentInfo,
-  queryDBConfig,
+  getDBContentDetail,
+  queryAllDBConfigs,
   tryDBScript,
 } from '@/api/base/dbConfig';
 import { updateCaseContentDBScript } from '@/api/inter/interCase';
@@ -187,7 +187,7 @@ const DBContentCard: FC<Props> = (props) => {
   const loadData = useCallback(() => {
     if (!contentInfo.target_id) return;
 
-    getDBContentInfo(contentInfo.target_id).then(async ({ code, data }) => {
+    getDBContentDetail(contentInfo.target_id).then(async ({ code, data }) => {
       if (code === 0 && data) {
         const { db_id, sql_text, sql_extracts } = data;
         setCurrentDBId(db_id);
@@ -202,7 +202,7 @@ const DBContentCard: FC<Props> = (props) => {
    * 加载数据库配置选项
    */
   const loadDBOptions = useCallback(() => {
-    queryDBConfig().then(async ({ code, data }) => {
+    queryAllDBConfigs().then(async ({ code, data }) => {
       if (code === 0 && data) {
         setDBOptions(
           data.map((item: IDBConfig) => ({

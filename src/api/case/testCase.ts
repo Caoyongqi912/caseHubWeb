@@ -159,9 +159,9 @@ export const queryTestCaseDynamic = async (
 };
 
 /**
- * reorderTestCase
- * @param info
- * @param options
+ * 重排序测试用例
+ * @param info - 包含 requirement_id 和 caseIds
+ * @param options - 可选的请求配置
  */
 export const reorderTestCase = async (
   info: {
@@ -349,9 +349,9 @@ export const setAllTestCaseReview = async (
 };
 
 /**
- * pageTestCase
- * @param searchParams
- * @param options
+ * 分页查询测试用例
+ * @param searchParams - 查询参数
+ * @param options - 可选的请求配置
  */
 export const pageTestCase = async (searchParams: any, options?: IObjGet) => {
   return request<IResponse<IPage<ITestCase>>>('/api/hub/cases/page', {

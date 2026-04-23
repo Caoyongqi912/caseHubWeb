@@ -1,4 +1,4 @@
-import { page_aps_job, remove_aps_job } from '@/api/base/aps';
+import { deleteApsJob, pageApsJobs } from '@/api/base/aps';
 import { useGlassStyles } from '@/components/Glass';
 import MyDrawer from '@/components/MyDrawer';
 import MyProTable from '@/components/Table/MyProTable';
@@ -152,13 +152,23 @@ const SchedulerTable: FC<SelfProps> = (props) => {
         const hasEnv = !!record.job_env_name;
         return (
           <span
-            style={styles.tagBase({
-              bg: hasEnv ? `${styles.colors.primary}15` : undefined,
-              border: hasEnv ? `${styles.colors.primary}30` : undefined,
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+              padding: '4px 8px',
+              borderRadius: 6,
+              fontSize: 12,
+              backgroundColor: hasEnv
+                ? `${styles.colors.primary}15`
+                : 'transparent',
+              border: hasEnv
+                ? `1px solid ${styles.colors.primary}30`
+                : '1px solid transparent',
               color: hasEnv
                 ? styles.colors.primary
                 : styles.colors.textSecondary,
-            })}
+            }}
           >
             <EnvironmentOutlined style={{ fontSize: 11 }} />
             {record.job_env_name || '无'}
@@ -234,7 +244,7 @@ const SchedulerTable: FC<SelfProps> = (props) => {
             cancelText="取消"
             okButtonProps={{ danger: true }}
             onConfirm={async () => {
-              const { code, msg } = await remove_aps_job({
+              const { code, msg } = await deleteApsJob({
                 job_id: record.uid,
               });
               if (code === 0) {
@@ -265,7 +275,7 @@ const SchedulerTable: FC<SelfProps> = (props) => {
       if (!currentModuleId) {
         return;
       }
-      const { code, data } = await page_aps_job({
+      const { code, data } = await pageApsJobs({
         ...values,
         module_type: ModuleEnum.JOB,
         module_id: currentModuleId,

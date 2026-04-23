@@ -1,4 +1,4 @@
-import { getDBContentInfo, queryDBConfig } from '@/api/base/dbConfig';
+import { getDBContentDetail, queryAllDBConfigs } from '@/api/base/dbConfig';
 import {
   updateCaseContent,
   updateCaseContentDBScript,
@@ -70,7 +70,7 @@ const Index: FC<Props> = (props) => {
         const targetId = caseContent.target_id;
         if (!targetId) return;
 
-        getDBContentInfo(targetId).then(({ code, data }) => {
+        getDBContentDetail(targetId).then(({ code, data }) => {
           if (code === 0 && data) {
             const { db_id, sql_text, sql_extracts } = data;
             setCurrentDBId(db_id);
@@ -81,7 +81,7 @@ const Index: FC<Props> = (props) => {
           }
         });
 
-        queryDBConfig().then(({ code, data }) => {
+        queryAllDBConfigs().then(({ code, data }) => {
           if (code === 0 && data) {
             setDBOptions(
               data.map((item: { db_name: string; id: number }) => ({

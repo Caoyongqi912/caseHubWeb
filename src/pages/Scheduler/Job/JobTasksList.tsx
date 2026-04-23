@@ -1,4 +1,4 @@
-import { query_tasks_by_job } from '@/api/base/aps';
+import { queryJobTasks } from '@/api/base/aps';
 import {
   ApiOutlined,
   ClockCircleOutlined,
@@ -133,7 +133,7 @@ const JobTasksList: FC<Props> = ({ setJobs, setShowChoiceTable, jobId }) => {
 
   useEffect(() => {
     if (jobId) {
-      query_tasks_by_job(jobId).then(async ({ code, data }) => {
+      queryJobTasks(jobId).then(async ({ code, data }) => {
         if (code === 0) {
           setJobTasks(data);
         }

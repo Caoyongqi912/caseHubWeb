@@ -1,4 +1,4 @@
-import { queryDBConfig, tryDBScript } from '@/api/base/dbConfig';
+import { queryAllDBConfigs, tryDBScript } from '@/api/base/dbConfig';
 import { updateInterApiById } from '@/api/inter';
 import AceCodeEditor from '@/components/CodeEditor/AceCodeEditor';
 import MyDrawer from '@/components/MyDrawer';
@@ -354,7 +354,7 @@ const InterBeforeSql: FC<SelfProps> = (props) => {
             required={true}
             placeholder="请选择数据库"
             request={async () => {
-              const { code, data } = await queryDBConfig();
+              const { code, data } = await queryAllDBConfigs();
               if (code === 0) {
                 return data.map((item: IDBConfig) => {
                   return {

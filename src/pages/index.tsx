@@ -26,7 +26,7 @@ import {
   Tag,
   Typography,
 } from 'antd';
-import { Dayjs } from 'dayjs';
+import type { Dayjs } from 'dayjs';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHomePageStyles } from './HomePageStyles';
 
@@ -129,7 +129,10 @@ const StatisticsDashboard: React.FC = () => {
     fetchData();
   };
 
-  const handleDateRangeChange = (dates: [Dayjs, Dayjs] | null) => {
+  const handleDateRangeChange = (
+    dates: [Dayjs, Dayjs] | null,
+    dateStrings: [string, string],
+  ) => {
     setDateRange(dates);
     if (dates) {
       setDateType('custom');
@@ -670,8 +673,10 @@ const StatisticsDashboard: React.FC = () => {
               }
               extra={<Tag color="blue">7天数据</Tag>}
               style={styles.card()}
-              headStyle={styles.cardHeader()}
-              bodyStyle={styles.cardBody()}
+              styles={{
+                header: styles.cardHeader(),
+                body: styles.cardBody(),
+              }}
             >
               <div style={styles.chartContainer()}>
                 <Line {...lineConfig} />
@@ -692,8 +697,10 @@ const StatisticsDashboard: React.FC = () => {
               }
               extra={<Tag color="green">实时</Tag>}
               style={styles.card()}
-              headStyle={styles.cardHeader()}
-              bodyStyle={styles.cardBody()}
+              styles={{
+                header: styles.cardHeader(),
+                body: styles.cardBody(),
+              }}
             >
               <div style={styles.chartContainer()}>
                 <Pie {...pieConfig} />
@@ -721,8 +728,10 @@ const StatisticsDashboard: React.FC = () => {
               </Space>
             }
             style={styles.card()}
-            headStyle={styles.cardHeader()}
-            bodyStyle={styles.cardBody()}
+            styles={{
+              header: styles.cardHeader(),
+              body: styles.cardBody(),
+            }}
           >
             <div style={styles.chartContainer()}>
               <Column {...columnConfig} />
@@ -731,8 +740,10 @@ const StatisticsDashboard: React.FC = () => {
 
           <Card
             style={{ ...styles.tableCard(), marginTop: 24 }}
-            headStyle={styles.cardHeader()}
-            bodyStyle={{ padding: 0 }}
+            styles={{
+              header: styles.cardHeader(),
+              body: { padding: 0 },
+            }}
             title={
               <div style={styles.cardTitle()}>
                 <div style={styles.cardTitleIcon(styles.colors.primary)}>

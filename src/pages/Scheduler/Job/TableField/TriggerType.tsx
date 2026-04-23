@@ -1,5 +1,5 @@
 import { IObjGet } from '@/api';
-import { switch_job, update_aps_job } from '@/api/base/aps';
+import { toggleApsJob, updateApsJob } from '@/api/base/aps';
 import MyModal from '@/components/MyModal';
 import { IJob } from '@/pages/Project/types';
 import {
@@ -248,7 +248,7 @@ const TriggerType: FC<{ record: IJob; callback: () => void }> = ({
   const nextRunInfo = formatNextRunTime(record.next_run_time || '');
 
   const updateJobTrigger = async (values: any) => {
-    const { code } = await update_aps_job({ ...values, uid: record.uid });
+    const { code } = await updateApsJob({ ...values, uid: record.uid });
     if (code === 0) {
       message.success('保存成功');
       callback();
@@ -460,7 +460,7 @@ const TriggerType: FC<{ record: IJob; callback: () => void }> = ({
             size="small"
             value={record.job_enabled}
             onChange={async (checked) => {
-              const { code } = await switch_job({
+              const { code } = await toggleApsJob({
                 job_id: record.uid,
                 enable: checked,
               });

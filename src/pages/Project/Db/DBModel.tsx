@@ -1,8 +1,8 @@
 import {
-  getDBConfig,
-  insertDBConfig,
-  testDBConfig,
-  updateDBConfig,
+  createDBConfig,
+  getDBConfigById,
+  testDBConnection,
+  updateDBConfigById,
 } from '@/api/base/dbConfig';
 import { IDBConfig } from '@/pages/Project/types';
 import { ModalForm, ProCard, ProFormText } from '@ant-design/pro-components';
@@ -30,9 +30,8 @@ const DBModel: FC<IProps> = ({
   const [canSave, setCanSave] = useState<boolean>(false);
 
   useEffect(() => {
-    // 详情模式 可修改
     if (currentDBConfigId) {
-      getDBConfig(currentDBConfigId).then(async ({ code, data }) => {
+      getDBConfigById(currentDBConfigId).then(async ({ code, data }) => {
         if (code === 0) {
           form.setFieldsValue(data);
           setCanSave(true);
@@ -52,7 +51,7 @@ const DBModel: FC<IProps> = ({
     const values = await form.validateFields();
     values.project_id = parseInt(currentProjectId);
     if (currentDBConfigId) {
-      await updateDBConfig({ ...values, uid: currentDBConfigId }).then(
+      await updateDBConfigById({ ...values, uid: currentDBConfigId }).then(
         ({ code, msg }) => {
           if (code === 0) {
             message.success(msg);
@@ -61,7 +60,7 @@ const DBModel: FC<IProps> = ({
         },
       );
     } else {
-      const { code, msg } = await insertDBConfig(values);
+      const { code, msg } = await createDBConfig(values);
       if (code === 0) {
         message.success(msg);
         callBack();
@@ -71,7 +70,7 @@ const DBModel: FC<IProps> = ({
 
   const test = async () => {
     const values = await form.validateFields();
-    const { code } = await testDBConfig(values);
+    const { code } = await testDBConnection(values);
     if (code === 0) {
       setCanSave(true);
       message.success('connect success');

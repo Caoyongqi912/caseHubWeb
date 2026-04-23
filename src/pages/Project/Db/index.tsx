@@ -1,5 +1,4 @@
-import { pageDBConfig, removeDBConfig } from '@/api/base/dbConfig';
-import { useGlassStyles } from '@/components/Glass';
+import { pageDBConfigs, removeDBConfigById } from '@/api/base/dbConfig';
 import MyProTable from '@/components/Table/MyProTable';
 import DBModel from '@/pages/Project/Db/DBModel';
 import { pageData } from '@/utils/somefunc';
@@ -13,7 +12,6 @@ interface IProps {
 }
 
 const Index: FC<IProps> = ({ projectId }) => {
-  const styles = useGlassStyles();
   const actionRef = useRef<ActionType>();
   const [open, setOpen] = useState(false);
   const { isAdmin } = useAccess();
@@ -24,7 +22,7 @@ const Index: FC<IProps> = ({ projectId }) => {
       ...params,
       project_id: projectId,
     };
-    const { code, data } = await pageDBConfig({ ...values, sort: sort });
+    const { code, data } = await pageDBConfigs({ ...values, sort: sort });
     return pageData(code, data);
   };
 
@@ -39,9 +37,9 @@ const Index: FC<IProps> = ({ projectId }) => {
       dataIndex: 'db_type',
       valueType: 'select',
       valueEnum: {
-        1: { text: 'mysql', value: 1 },
-        2: { text: 'oracle', value: 2 },
-        3: { text: 'redis', value: 3 },
+        1: { text: 'mysql' },
+        2: { text: 'oracle' },
+        3: { text: 'redis' },
       },
       render: (text) => {
         return <Tag color={'blue'}>{text}</Tag>;
@@ -101,7 +99,9 @@ const Index: FC<IProps> = ({ projectId }) => {
               <Divider type="vertical" />
               <a
                 onClick={async () => {
-                  const { code } = await removeDBConfig({ uid: record.uid });
+                  const { code } = await removeDBConfigById({
+                    uid: record.uid,
+                  });
                   if (code === 0) {
                     await actionRef.current?.reload();
                   }

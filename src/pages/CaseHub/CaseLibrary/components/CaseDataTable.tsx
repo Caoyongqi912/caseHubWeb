@@ -77,6 +77,20 @@ const CaseDataTable: FC<Props> = (props) => {
     }
   }, [currentModuleId, currentProjectId]);
 
+  const drawerStyles = useMemo(
+    () => ({
+      header: {
+        background: `linear-gradient(135deg, ${colors.primaryBg} 0%, ${colors.bgContainer} 100%)`,
+        borderBottom: `1px solid ${colors.border}`,
+      },
+      body: {
+        padding: spacing.lg,
+        background: colors.bgContainer,
+      },
+    }),
+    [colors, spacing],
+  );
+
   const download = async () => {
     try {
       const response = await downloadCaseExcel({ responseType: 'blob' });
@@ -288,6 +302,7 @@ const CaseDataTable: FC<Props> = (props) => {
         width={'40%'}
         open={showDynamic}
         setOpen={setShowDynamic}
+        drawerStyles={drawerStyles}
       >
         <DynamicInfo caseId={currentCaseId} />
       </MyDrawer>
@@ -295,6 +310,7 @@ const CaseDataTable: FC<Props> = (props) => {
         name={'用例详情'}
         open={showCaseDetail}
         setOpen={setShowCaseDetail}
+        drawerStyles={drawerStyles}
       >
         <TestCaseDetail
           testcase={currentCase}

@@ -180,12 +180,7 @@ const Index = () => {
             overflow: 'hidden',
           }}
         >
-          <Splitter
-            style={{
-              height: '100%',
-              boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
-            }}
-          >
+          <Splitter>
             <Splitter.Panel resizable={false} size={defaultSize} max="100%">
               <MyTabs defaultActiveKey={'2'} items={TabItem} />
             </Splitter.Panel>

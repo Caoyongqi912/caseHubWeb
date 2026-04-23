@@ -1,6 +1,6 @@
 import { IEnv } from '@/api';
 import { queryEnvBy } from '@/api/base';
-import { add_aps_job, update_aps_job } from '@/api/base/aps';
+import { createApsJob, updateApsJob } from '@/api/base/aps';
 import { IJob } from '@/pages/Project/types';
 import ApiTaskChoiceTable from '@/pages/Scheduler/Job/APITaskChoiceTable';
 import {
@@ -365,7 +365,7 @@ const JobDrawerForm: FC<SelfProps> = (props) => {
       };
 
       if (currentJob) {
-        const { code, msg } = await update_aps_job({
+        const { code, msg } = await updateApsJob({
           ...submitData,
           uid: currentJob.uid,
         });
@@ -375,7 +375,7 @@ const JobDrawerForm: FC<SelfProps> = (props) => {
         }
       } else {
         if (currentProjectId && currentModuleId) {
-          const { code, msg } = await add_aps_job({
+          const { code, msg } = await createApsJob({
             ...submitData,
             module_id: currentModuleId,
             project_id: currentProjectId,

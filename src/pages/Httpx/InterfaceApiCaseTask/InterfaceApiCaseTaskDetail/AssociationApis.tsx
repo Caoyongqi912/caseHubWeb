@@ -13,6 +13,7 @@ import { queryData } from '@/utils/somefunc';
 import {
   ActionType,
   DragSortTable,
+  ProCard,
   ProColumns,
 } from '@ant-design/pro-components';
 import { Button, Divider, message, Popconfirm, Tag, Typography } from 'antd';
@@ -161,7 +162,7 @@ const AssociationApis: FC<IAssociationApisProps> = ({
   };
 
   return (
-    <>
+    <ProCard ghost={true}>
       <MyDrawer
         name={'API用例选择'}
         open={choiceApiOpen}
@@ -203,7 +204,7 @@ const AssociationApis: FC<IAssociationApisProps> = ({
         dragSortKey="sort"
         onDragSortEnd={handleDragSortEnd}
       />
-    </>
+    </ProCard>
   );
 };
 

@@ -248,7 +248,7 @@ const InterfaceApiCaseResultBaseInfo: FC<SelfProps> = ({ caseResultInfo }) => {
                     )
                   }
                 >
-                  {caseResultInfo.result ? '通过' : '未知'}
+                  {caseResultInfo.result ? '通过' : '失败'}
                 </Tag>
               </Space>
             </div>

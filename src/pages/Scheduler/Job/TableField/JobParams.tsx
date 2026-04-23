@@ -1,4 +1,4 @@
-import { update_aps_job } from '@/api/base/aps';
+import { updateApsJob } from '@/api/base/aps';
 import AceCodeEditor from '@/components/CodeEditor/AceCodeEditor';
 import { IJob } from '@/pages/Project/types';
 import {
@@ -265,7 +265,7 @@ const JobParams: FC<Props> = ({ text, record, callback }) => {
         );
         return;
       }
-      const { code } = await update_aps_job({
+      const { code } = await updateApsJob({
         job_kwargs: parsedValue,
         uid: record.uid,
       } as any);

@@ -1,5 +1,5 @@
 import {
-  handelExecutePlayTask,
+  executePlayTask,
   insertPlayTask,
   pagePlayTask,
   removePlayTaskById,
@@ -350,7 +350,7 @@ const Index: FC<SelfProps> = (props) => {
             label="执行"
             type="success"
             onClick={async () => {
-              const { code, msg } = await handelExecutePlayTask({
+              const { code, msg } = await executePlayTask({
                 taskId: record.id,
               });
               if (code === 0) {

@@ -10,6 +10,7 @@ interface Props {
   open?: boolean;
   setOpen?: (open: boolean) => void;
   initialValues?: Record<string, any>;
+  children?: React.ReactNode;
 }
 
 const Index: FC<Props> = (props) => {

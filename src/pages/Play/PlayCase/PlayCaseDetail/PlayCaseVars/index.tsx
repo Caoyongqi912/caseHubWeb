@@ -1,8 +1,8 @@
 import {
-  addPlayCaeVars,
+  addPlayCaseVars,
   pagePlayCaseVars,
   removePlayCaseVars,
-  updatePlayCaeVars,
+  updatePlayCaseVars,
 } from '@/api/play/playCase';
 import ApiVariableFunc from '@/pages/Httpx/componets/ApiVariableFunc';
 import { IUIVars } from '@/pages/Play/componets/uiTypes';
@@ -149,12 +149,12 @@ const Index: FC<ISelfProps> = ({ currentCaseId }) => {
           console.log(data);
           data.play_case_id = parseInt(currentCaseId);
           if (data.uid) {
-            const { code, msg } = await updatePlayCaeVars(data);
+            const { code, msg } = await updatePlayCaseVars(data);
             if (code === 0) {
               message.success(msg);
             }
           } else {
-            const { code, msg } = await addPlayCaeVars(data);
+            const { code, msg } = await addPlayCaseVars(data);
             if (code === 0) {
               message.success(msg);
             }

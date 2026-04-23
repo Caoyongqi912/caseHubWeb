@@ -1,4 +1,4 @@
-import { query_tasks_by_job } from '@/api/base/aps';
+import { queryJobTasks } from '@/api/base/aps';
 import { IInterfaceAPITask } from '@/pages/Httpx/types';
 import { IUITask } from '@/pages/Play/componets/uiTypes';
 import {
@@ -36,7 +36,7 @@ const TasksFiled: FC<Props> = ({ job_uid, type, refreshFlag }) => {
     const fetchTasks = async () => {
       setLoading(true);
       try {
-        const { code, data } = await query_tasks_by_job(job_uid);
+        const { code, data } = await queryJobTasks(job_uid);
         if (code === 0) {
           setJobTasks(data || []);
         }

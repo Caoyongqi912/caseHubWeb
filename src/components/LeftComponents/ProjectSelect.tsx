@@ -134,7 +134,6 @@ const ProjectSelect: FC<IProps> = ({
                   fontSize: typography.fontSize.base,
                   color: token.colorText,
                   fontWeight: typography.fontWeight.medium,
-                  display: 'block',
                   lineHeight: typography.lineHeight.tight,
                 }}
               >
@@ -147,7 +146,7 @@ const ProjectSelect: FC<IProps> = ({
                     fontSize: typography.fontSize.xs,
                     color: token.colorTextSecondary,
                     lineHeight: typography.lineHeight.tight,
-                    display: 'block',
+
                     ...styleHelpers.truncate(1),
                   }}
                 >
@@ -237,7 +236,6 @@ const ProjectSelect: FC<IProps> = ({
                     fontSize: typography.fontSize.xs,
                     color: token.colorTextSecondary,
                     marginTop: spacing.xs,
-                    display: 'block',
                     ...styleHelpers.truncate(1),
                   }}
                 >

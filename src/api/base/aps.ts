@@ -3,11 +3,11 @@ import { IJob } from '@/pages/Project/types';
 import { request } from '@@/plugin-request';
 
 /**
- * 添加任务
- * @param data
- * @param opt
+ * 创建 APS 任务
+ * @param data - 任务信息
+ * @param opt - 可选的请求配置
  */
-export const add_aps_job = async (data: IJob, opt?: IObjGet) => {
+export const createApsJob = async (data: IJob, opt?: IObjGet) => {
   return request<IResponse<IJob>>('/api/aps/job/add', {
     method: 'POST',
     data,
@@ -16,11 +16,11 @@ export const add_aps_job = async (data: IJob, opt?: IObjGet) => {
 };
 
 /**
- * 添加任务
- * @param data
- * @param opt
+ * 更新 APS 任务
+ * @param data - 任务信息
+ * @param opt - 可选的请求配置
  */
-export const update_aps_job = async (data: IJob, opt?: IObjGet) => {
+export const updateApsJob = async (data: IJob, opt?: IObjGet) => {
   return request<IResponse<IJob>>('/api/aps/job/update', {
     method: 'POST',
     data,
@@ -29,14 +29,11 @@ export const update_aps_job = async (data: IJob, opt?: IObjGet) => {
 };
 
 /**
- * 添加任务
- * @param data
- * @param opt
+ * 删除 APS 任务
+ * @param data - 任务信息，包含 job_id
+ * @param opt - 可选的请求配置
  */
-export const remove_aps_job = async (
-  data: { job_id: string },
-  opt?: IObjGet,
-) => {
+export const deleteApsJob = async (data: { job_id: string }, opt?: IObjGet) => {
   return request<IResponse<IJob>>('/api/aps/job/delete', {
     method: 'POST',
     data,
@@ -45,11 +42,11 @@ export const remove_aps_job = async (
 };
 
 /**
- * 添加任务
- * @param data
- * @param opt
+ * 分页查询 APS 任务列表
+ * @param data - 查询参数
+ * @param opt - 可选的请求配置
  */
-export const page_aps_job = async (data: IJob, opt?: IObjGet) => {
+export const pageApsJobs = async (data: IJob, opt?: IObjGet) => {
   return request<IResponse<IPage<IJob>>>('/api/aps/job/pageJobs', {
     method: 'POST',
     data,
@@ -58,11 +55,11 @@ export const page_aps_job = async (data: IJob, opt?: IObjGet) => {
 };
 
 /**
- * query_tasks_by_job
- * @param data
- * @param opt
+ * 查询任务关联的 Job 列表
+ * @param data - Job ID
+ * @param opt - 可选的请求配置
  */
-export const query_tasks_by_job = async (data: string, opt?: IObjGet) => {
+export const queryJobTasks = async (data: string, opt?: IObjGet) => {
   return request<IResponse<any[]>>('/api/aps/job/queryJobTasks', {
     method: 'GET',
     params: { jobId: data },
@@ -71,11 +68,11 @@ export const query_tasks_by_job = async (data: string, opt?: IObjGet) => {
 };
 
 /**
- * switch_job
- * @param data
- * @param opt
+ * 切换 APS 任务状态（启用/禁用）
+ * @param data - 包含 job_id 和 enable 状态
+ * @param opt - 可选的请求配置
  */
-export const switch_job = async (
+export const toggleApsJob = async (
   data: { job_id: string; enable: boolean },
   opt?: IObjGet,
 ) => {

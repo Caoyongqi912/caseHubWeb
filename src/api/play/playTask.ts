@@ -117,11 +117,11 @@ export const removeAssociationPlayCasesByTaskId = async (
 };
 
 /**
- * 手动执行任务
- * @param data
- * @param options
+ * 手动执行 Play 任务
+ * @param data - 任务执行参数，包含 taskId
+ * @param options - 可选的请求配置
  */
-export const handelExecutePlayTask = async (
+export const executePlayTask = async (
   data: { taskId: number | string },
   options?: IObjGet,
 ) => {

@@ -1,4 +1,4 @@
-import { handelExecutePlayTask } from '@/api/play/playTask';
+import { executePlayTask } from '@/api/play/playTask';
 import MyTabs from '@/components/MyTabs';
 import PlayTaskResultTable from '@/pages/Play/PlayResult/PlayTaskResultTable';
 import AssociationUICases from '@/pages/Play/PlayTask/PlayTaskDetail/AssociationUICases';
@@ -27,7 +27,7 @@ const Index = () => {
 
   const runTask = async () => {
     if (taskId) {
-      const { code, msg } = await handelExecutePlayTask({ taskId: taskId });
+      const { code, msg } = await executePlayTask({ taskId: taskId });
       if (code === 0) {
         message.success(msg);
       }

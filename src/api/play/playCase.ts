@@ -328,11 +328,11 @@ export const queryPlayCaseVars = async (caseId: string, options?: IObjGet) => {
 };
 
 /**
- * 修改Vars
- * @param data
- * @param options
+ * 更新 Play 用例变量
+ * @param data - 变量信息
+ * @param options - 可选的请求配置
  */
-export const updatePlayCaeVars = async (data: IUIVars, options?: IObjGet) => {
+export const updatePlayCaseVars = async (data: IUIVars, options?: IObjGet) => {
   return request<IResponse<null>>('/api/play/case/edit_variable', {
     method: 'POST',
     data,
@@ -341,11 +341,11 @@ export const updatePlayCaeVars = async (data: IUIVars, options?: IObjGet) => {
 };
 
 /**
- * 添加 Vars
- * @param data
- * @param options
+ * 添加 Play 用例变量
+ * @param data - 变量信息
+ * @param options - 可选的请求配置
  */
-export const addPlayCaeVars = async (data: IUIVars, options?: IObjGet) => {
+export const addPlayCaseVars = async (data: IUIVars, options?: IObjGet) => {
   return request<IResponse<null>>('/api/play/case/add_variable', {
     method: 'POST',
     data,

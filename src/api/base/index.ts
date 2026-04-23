@@ -69,7 +69,10 @@ export async function currentUser(options?: IObjGet) {
   });
 }
 
-/** 删除用户  /user/current */
+/** 删除用户
+ * @param userId - 用户ID
+ * @param options - 可选的请求配置
+ */
 export async function removeUser(userId: number, options?: IObjGet) {
   return request<IResponse<null>>('/api/user/remove', {
     method: 'POST',
@@ -87,7 +90,10 @@ export async function updateUser(user: IUser, options?: IObjGet) {
   });
 }
 
-/** 删除用户  /user/current */
+/** 用户注册
+ * @param user - 用户信息
+ * @param options - 可选的请求配置
+ */
 export async function registerUser(user: IUser, options?: IObjGet) {
   return request<IResponse<null>>('/api/user/registerUser', {
     method: 'POST',
@@ -96,7 +102,10 @@ export async function registerUser(user: IUser, options?: IObjGet) {
   });
 }
 
-/** 模糊搜索用户 GET /users */
+/** 搜索用户（按用户名模糊搜索）
+ * @param params - 查询参数，包含 username
+ * @param options - 可选的请求配置
+ */
 export async function searchUser(
   params: { username: string },
   options?: IObjGet,
@@ -108,7 +117,9 @@ export async function searchUser(
   });
 }
 
-/** 模糊搜索用户 GET /users */
+/** 查询用户列表
+ * @param options - 可选的请求配置
+ */
 export async function queryUser(options?: IObjGet) {
   return request<IResponse<IUser[]>>('/api/user/query', {
     method: 'GET',
@@ -147,9 +158,10 @@ export const queryProjectInfoCount = async (
 };
 
 /**
- * 添加项目
+ * 启动 SSE 任务
+ * @param options - 可选的请求配置
  */
-export const start_sse_task = async (options?: IObjGet) => {
+export const startSseTask = async (options?: IObjGet) => {
   return request<any>('/api/project/start-task', {
     method: 'POST',
     ...(options || {}),

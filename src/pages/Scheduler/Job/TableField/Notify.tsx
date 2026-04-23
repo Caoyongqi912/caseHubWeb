@@ -1,5 +1,5 @@
 import { IObjGet } from '@/api';
-import { update_aps_job } from '@/api/base/aps';
+import { updateApsJob } from '@/api/base/aps';
 import { queryPushConfig } from '@/api/base/pushConfig';
 import MyModal from '@/components/MyModal';
 import { IJob } from '@/pages/Project/types';
@@ -126,7 +126,7 @@ const Notify: FC<Props> = ({ record, callback }) => {
   };
 
   const updateJobNotify = async (values: any) => {
-    const { code } = await update_aps_job({ ...values, uid: record.uid });
+    const { code } = await updateApsJob({ ...values, uid: record.uid });
     if (code === 0) {
       message.success('保存成功');
       callback();

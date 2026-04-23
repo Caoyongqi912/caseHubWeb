@@ -1,4 +1,4 @@
-import { start_sse_task } from '@/api/base';
+import { startSseTask } from '@/api/base';
 import AceCodeEditor from '@/components/CodeEditor/AceCodeEditor';
 import { useModel } from '@@/exports';
 import { Button, Card } from 'antd';
@@ -15,7 +15,7 @@ export default function TestSSE() {
   };
 
   const start = async () => {
-    await start_sse_task();
+    await startSseTask();
   };
 
   const connect = () => {
