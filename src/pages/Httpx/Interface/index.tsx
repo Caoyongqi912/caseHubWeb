@@ -4,10 +4,10 @@ import GroupApiTable from '@/pages/Httpx/Interface/interfaceApiGroup/GroupApiTab
 import InterfaceApiTable from '@/pages/Httpx/Interface/InterfaceApiTable';
 import InterfaceApiUpload from '@/pages/Httpx/Interface/InterfaceApiUpload';
 import { ModuleEnum } from '@/utils/config';
-import { getSplitter, setSplitter } from '@/utils/token';
 import { ProCard } from '@ant-design/pro-components';
-import { Splitter, TabsProps } from 'antd';
-import { useEffect, useState } from 'react';
+import { TabsProps } from 'antd';
+import { useState } from 'react';
+import { Group, Panel } from 'react-resizable-panels';
 
 const Index = () => {
   const styles = useGlassStyles();
@@ -16,9 +16,8 @@ const Index = () => {
   const [currentProjectId, setCurrentProjectId] = useState<number>();
   const PerKey = 'InterfaceApi';
   const PerGroupKey = 'InterfaceGroupApi';
-  const PerKeySplitter = 'InterfaceApi:Splitter';
-  const [sizes, setSizes] = useState<(number | string)[]>(['20%', '80%']);
-  const TabItems: TabsProps['items'] = [
+
+  const tabItems: TabsProps['items'] = [
     {
       key: 'api',
       label: '单接口用例',
@@ -30,7 +29,6 @@ const Index = () => {
         />
       ),
     },
-
     {
       key: 'group',
       label: '用例组',
@@ -48,6 +46,7 @@ const Index = () => {
       children: <InterfaceApiUpload />,
     },
   ];
+
   const onProjectChange = (projectId: number | undefined) => {
     setCurrentProjectId(projectId);
   };
@@ -56,12 +55,6 @@ const Index = () => {
     setCurrentModuleId(moduleId);
   };
 
-  useEffect(() => {
-    const data = getSplitter(PerKeySplitter);
-    if (data) {
-      setSizes([data.left, data.right]);
-    }
-  }, []);
   return (
     <>
       <ProCard
@@ -80,49 +73,25 @@ const Index = () => {
           overflow: 'hidden',
         }}
       >
-        <Splitter
-          onResize={(sizes: number[]) => {
-            setSizes(sizes);
-            setSplitter(PerKeySplitter, sizes[0], sizes[1]);
-          }}
-          style={{
-            width: '100%',
-            height: '100%',
-            display: 'flex',
-          }}
-          layout="horizontal"
-        >
-          <Splitter.Panel
-            resizable={true}
-            collapsible={true}
-            style={{
-              height: '100%',
-              minHeight: 0,
-              display: 'flex',
-              flexDirection: 'column',
-              overflow: 'hidden',
-            }}
-            size={sizes[0]}
-            min={0}
-            max={600}
-          >
+        <Group orientation="horizontal">
+          <Panel defaultSize={20} minSize={10} collapsible={true}>
             <LeftComponents
               moduleType={ModuleEnum.API}
               currentProjectId={currentProjectId}
               onProjectChange={onProjectChange}
               onModuleChange={onModuleChange}
             />
-          </Splitter.Panel>
-          <Splitter.Panel resizable={true} size={sizes[1]}>
+          </Panel>
+          <Panel defaultSize={80} minSize={30}>
             <ProCard
               bodyStyle={{ padding: 0 }}
               tabs={{
                 type: 'card',
-                items: TabItems,
+                items: tabItems,
               }}
             />
-          </Splitter.Panel>
-        </Splitter>
+          </Panel>
+        </Group>
       </ProCard>
     </>
   );

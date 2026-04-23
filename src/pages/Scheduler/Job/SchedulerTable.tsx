@@ -1,4 +1,5 @@
 import { page_aps_job, remove_aps_job } from '@/api/base/aps';
+import { useGlassStyles } from '@/components/Glass';
 import MyDrawer from '@/components/MyDrawer';
 import MyProTable from '@/components/Table/MyProTable';
 import InterfaceApiTaskResultTable from '@/pages/Httpx/InterfaceApiTaskResult/InterfaceApiTaskResultTable';
@@ -21,18 +22,8 @@ import {
   UserOutlined,
 } from '@ant-design/icons';
 import { ActionType, ProColumns } from '@ant-design/pro-components';
-import { Button, message, Popconfirm, Space, theme, Typography } from 'antd';
-import React, {
-  FC,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
-
-const { useToken } = theme;
-const { Text } = Typography;
+import { Button, message, Popconfirm, Space } from 'antd';
+import React, { FC, useCallback, useEffect, useRef, useState } from 'react';
 
 interface SelfProps {
   currentProjectId?: number;
@@ -41,7 +32,7 @@ interface SelfProps {
 }
 
 const SchedulerTable: FC<SelfProps> = (props) => {
-  const { token } = useToken();
+  const styles = useGlassStyles();
   const actionRef = useRef<ActionType>();
   const { currentProjectId, currentModuleId, perKey } = props;
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -49,91 +40,27 @@ const SchedulerTable: FC<SelfProps> = (props) => {
   const [expandedRowKeys, setExpandedRowKeys] = useState<React.Key[]>([]);
   const [openTaskHistory, setOpenTaskHistory] = useState(false);
 
-  const styles = useMemo(
-    () => ({
-      idTag: {
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 4,
-        fontFamily: '"SF Mono", "Fira Code", "JetBrains Mono", monospace',
-        fontSize: 12,
-        fontWeight: 700,
-        padding: '4px 10px',
-        borderRadius: 6,
-        background: `linear-gradient(135deg, ${token.colorPrimaryBg} 0%, ${token.colorPrimaryBorder} 100%)`,
-        color: token.colorPrimary,
-        border: `1px solid ${token.colorPrimaryBorder}`,
-        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1)',
-        letterSpacing: '0.5px',
-      },
-      nameTag: {
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 6,
-        padding: '4px 12px',
-        borderRadius: 6,
-        backgroundColor: token.colorBgTextActive,
-        color: token.colorText,
-        fontSize: 13,
-        fontWeight: 500,
-        border: 'none',
-      },
-      typeTag: {
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 4,
-        padding: '4px 12px',
-        borderRadius: 6,
-        fontWeight: 500,
-        fontSize: 12,
-      },
-      envTag: {
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 4,
-        padding: '4px 10px',
-        borderRadius: 6,
-        fontSize: 12,
-        fontWeight: 500,
-      },
-      userTag: {
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 4,
-        padding: '4px 12px',
-        borderRadius: 16,
-        background: `linear-gradient(135deg, ${token.colorWarningBg} 0%, ${token.colorWarningBorder} 100%)`,
-        color: token.colorWarningText,
-        fontWeight: 500,
-        fontSize: 12,
-        border: `1px solid ${token.colorWarningBorder}`,
-      },
-      addBtn: {
-        height: 36,
-        padding: '0 16px',
-        borderRadius: 8,
-        fontWeight: 500,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-      },
-    }),
-    [token],
-  );
-
   const ActionButton: FC<{
     label: string;
     type?: 'primary' | 'success' | 'danger' | 'warning';
     onClick?: () => void;
   }> = ({ label, type = 'primary', onClick }) => {
-    const colors = useMemo(
-      () => ({
-        primary: { color: token.colorPrimary, bg: token.colorPrimaryBg },
-        success: { color: token.colorSuccess, bg: token.colorSuccessBg },
-        danger: { color: token.colorError, bg: token.colorErrorBg },
-        warning: { color: token.colorWarning, bg: token.colorWarningBg },
-      }),
-      [token],
-    );
+    const typeColors = {
+      primary: {
+        color: styles.colors.primary,
+        bg: `${styles.colors.primary}15`,
+      },
+      success: {
+        color: styles.colors.success,
+        bg: `${styles.colors.success}15`,
+      },
+      danger: { color: styles.colors.error, bg: `${styles.colors.error}15` },
+      warning: {
+        color: styles.colors.warning,
+        bg: `${styles.colors.warning}15`,
+      },
+    };
+    const colors = typeColors[type];
 
     return (
       <span
@@ -147,13 +74,13 @@ const SchedulerTable: FC<SelfProps> = (props) => {
           fontSize: 13,
           fontWeight: 500,
           cursor: 'pointer',
-          color: colors[type].color,
-          backgroundColor: colors[type].bg,
+          color: colors.color,
+          backgroundColor: colors.bg,
           transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.transform = 'translateY(-1px)';
-          e.currentTarget.style.boxShadow = `0 2px 8px ${colors[type].bg}`;
+          e.currentTarget.style.boxShadow = `0 2px 8px ${colors.bg}`;
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.transform = 'translateY(0)';
@@ -173,7 +100,7 @@ const SchedulerTable: FC<SelfProps> = (props) => {
       fixed: 'left',
       width: '10%',
       render: (_, record) => (
-        <span style={styles.idTag}>
+        <span style={styles.tagMono()}>
           <NumberOutlined style={{ fontSize: 11 }} />
           {record.uid}
         </span>
@@ -186,9 +113,9 @@ const SchedulerTable: FC<SelfProps> = (props) => {
       fixed: 'left',
       width: '12%',
       render: (_, record) => (
-        <span style={styles.nameTag}>
+        <span style={styles.tagLabel()}>
           <ScheduleOutlined
-            style={{ fontSize: 12, color: token.colorPrimary }}
+            style={{ fontSize: 12, color: styles.colors.primary }}
           />
           {record.job_name}
         </span>
@@ -205,16 +132,7 @@ const SchedulerTable: FC<SelfProps> = (props) => {
       render: (_, record) => {
         const isApi = record.job_type === 1;
         return (
-          <span
-            style={{
-              ...styles.typeTag,
-              backgroundColor: isApi ? token.colorInfoBg : token.colorSuccessBg,
-              border: `1px solid ${
-                isApi ? token.colorInfoBorder : token.colorSuccessBorder
-              }`,
-              color: isApi ? token.colorInfoText : token.colorSuccessText,
-            }}
-          >
+          <span style={isApi ? styles.tagInfo() : styles.tagSuccess()}>
             {isApi ? (
               <ApiOutlined style={{ fontSize: 11 }} />
             ) : (
@@ -234,16 +152,13 @@ const SchedulerTable: FC<SelfProps> = (props) => {
         const hasEnv = !!record.job_env_name;
         return (
           <span
-            style={{
-              ...styles.envTag,
-              backgroundColor: hasEnv
-                ? token.colorPrimaryBg
-                : token.colorFillAlter,
-              border: `1px solid ${
-                hasEnv ? token.colorPrimaryBorder : token.colorBorderSecondary
-              }`,
-              color: hasEnv ? token.colorPrimary : token.colorTextSecondary,
-            }}
+            style={styles.tagBase({
+              bg: hasEnv ? `${styles.colors.primary}15` : undefined,
+              border: hasEnv ? `${styles.colors.primary}30` : undefined,
+              color: hasEnv
+                ? styles.colors.primary
+                : styles.colors.textSecondary,
+            })}
           >
             <EnvironmentOutlined style={{ fontSize: 11 }} />
             {record.job_env_name || '无'}
@@ -282,7 +197,7 @@ const SchedulerTable: FC<SelfProps> = (props) => {
       title: '创建人',
       dataIndex: 'creatorName',
       render: (_, record) => (
-        <span style={styles.userTag}>
+        <span style={styles.tagWarning()}>
           <UserOutlined style={{ fontSize: 11 }} />
           {record.creatorName}
         </span>
@@ -401,11 +316,6 @@ const SchedulerTable: FC<SelfProps> = (props) => {
         persistenceKey={perKey}
         actionRef={actionRef}
         columns={columns}
-        pagination={{
-          defaultPageSize: 5,
-          showQuickJumper: true,
-          showSizeChanger: true,
-        }}
         rowKey={'uid'}
         request={fetchJobData}
         toolBarRender={() => [
@@ -418,7 +328,7 @@ const SchedulerTable: FC<SelfProps> = (props) => {
               setCurrentJob(undefined);
               setDrawerOpen(true);
             }}
-            style={styles.addBtn}
+            style={styles.addButton()}
           >
             添加任务
           </Button>,

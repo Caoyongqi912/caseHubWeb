@@ -1,6 +1,5 @@
 import { IEnv, ISearch } from '@/api';
 import { deleteEnv, pageEnv, updateEnv } from '@/api/base';
-import { useGlassStyles } from '@/components/Glass';
 import MyProTable from '@/components/Table/MyProTable';
 import AddEnv from '@/pages/Project/Env/AddEnv';
 import { pageData } from '@/utils/somefunc';
@@ -13,7 +12,6 @@ interface IProps {
 }
 
 const Index: FC<IProps> = ({ projectId }) => {
-  const styles = useGlassStyles();
   const actionRef = useRef<ActionType>();
 
   const pageEnvs = async (value: ISearch, sort: any) => {
@@ -113,23 +111,18 @@ const Index: FC<IProps> = ({ projectId }) => {
   };
 
   return (
-    <MyProTable
-      cardStyle={{
-        borderRadius: '16px',
-        background: 'transparent',
-        border: 'none',
-        boxShadow: 'none',
-        overflow: 'hidden',
-      }}
-      headerTitle={'环境配置'}
-      actionRef={actionRef}
-      columns={columns}
-      request={pageEnvs}
-      rowKey={'uid'}
-      onSave={onSave}
-      onDelete={onDelete}
-      toolBarRender={() => [<AddEnv reload={isReload} />]}
-    />
+    <div>
+      <MyProTable
+        headerTitle={'环境配置'}
+        actionRef={actionRef}
+        columns={columns}
+        request={pageEnvs}
+        rowKey={'uid'}
+        onSave={onSave}
+        onDelete={onDelete}
+        toolBarRender={() => [<AddEnv reload={isReload} />]}
+      />
+    </div>
   );
 };
 

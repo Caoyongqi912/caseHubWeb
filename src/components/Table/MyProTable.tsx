@@ -89,7 +89,6 @@ const MyProTable: FC<MyProTableProps> = (props) => {
     <div
       style={{
         ...styles.glassCard(),
-        ...styles.contentWrapper(),
       }}
       className={className}
     >

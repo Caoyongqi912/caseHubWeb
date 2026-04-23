@@ -43,22 +43,6 @@ const RequirementTable: FC<SelfProps> = ({
   const [currentReqId, setCurrentReqId] = useState<number>();
   const { token, colors, spacing, borderRadius } = useCaseHubTheme();
 
-  const drawerStyles = useMemo(
-    () => ({
-      header: {
-        background: `linear-gradient(135deg, ${colors.primaryBg} 0%, ${colors.bgContainer} 100%)`,
-        borderBottom: `1px solid ${colors.border}`,
-        padding: `${token.paddingLG}px ${token.paddingXL}px`,
-        fontWeight: 600,
-      },
-      body: {
-        padding: spacing.lg,
-        background: colors.bgContainer,
-      },
-    }),
-    [colors, spacing, token],
-  );
-
   const columns: ProColumns<IRequirement>[] = useMemo(
     () => [
       {
@@ -292,7 +276,6 @@ const RequirementTable: FC<SelfProps> = ({
         name={'需求详情'}
         open={detailVisible}
         setOpen={setDetailVisible}
-        drawerStyles={drawerStyles}
       >
         <RequirementDetail
           requirementId={currentReqId}

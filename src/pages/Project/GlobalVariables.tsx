@@ -4,7 +4,6 @@ import {
   updateInterGlobalVariable,
 } from '@/api/inter/interGlobal';
 import { queryProjectEnum } from '@/components/CommonFunc';
-import { useGlassStyles } from '@/components/Glass';
 import MyProTable from '@/components/Table/MyProTable';
 import VarModalForm from '@/pages/Httpx/InterfaceConfig/VarModalForm';
 import { IInterfaceGlobalVariable } from '@/pages/Httpx/types';
@@ -26,7 +25,6 @@ interface IProps {
 
 const GlobalVariables: FC<IProps> = ({ projectId }) => {
   const { isAdmin } = useAccess();
-  const styles = useGlassStyles();
   const actionRef = useRef<ActionType>();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [projectEnum, setProjectEnum] = useState<any>([]);
@@ -98,9 +96,7 @@ const GlobalVariables: FC<IProps> = ({ projectId }) => {
       render: (text) => {
         return (
           <Space size={4} align="center">
-            <UserOutlined
-              style={{ color: styles.colors.primary, fontSize: '14px' }}
-            />
+            <UserOutlined />
             <Tag
               color={'blue'}
               style={{
@@ -129,11 +125,6 @@ const GlobalVariables: FC<IProps> = ({ projectId }) => {
                   onClick={async () => {
                     action?.startEditable?.(record.uid);
                   }}
-                  style={{
-                    color: styles.colors.primary,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                  }}
                 >
                   <EditOutlined style={{ marginRight: 4 }} />
                   编辑
@@ -150,11 +141,6 @@ const GlobalVariables: FC<IProps> = ({ projectId }) => {
                         }
                       },
                     );
-                  }}
-                  style={{
-                    color: styles.colors.error,
-                    display: 'inline-flex',
-                    alignItems: 'center',
                   }}
                 >
                   <DeleteOutlined style={{ marginRight: 4 }} />
@@ -196,13 +182,6 @@ const GlobalVariables: FC<IProps> = ({ projectId }) => {
         callBack={() => actionRef.current?.reload()}
       />
       <MyProTable
-        cardStyle={{
-          borderRadius: '16px',
-          background: 'transparent',
-          border: 'none',
-          boxShadow: 'none',
-          overflow: 'hidden',
-        }}
         headerTitle="全局变量配置"
         actionRef={actionRef}
         columns={columns}
@@ -212,12 +191,6 @@ const GlobalVariables: FC<IProps> = ({ projectId }) => {
             type={'primary'}
             icon={<PlusOutlined />}
             onClick={() => setIsModalOpen(true)}
-            style={{
-              borderRadius: '8px',
-              background: styles.colors.gradientPrimary,
-              border: 'none',
-              boxShadow: `0 4px 16px ${styles.colors.primaryGlow}`,
-            }}
           >
             添加变量
           </Button>,

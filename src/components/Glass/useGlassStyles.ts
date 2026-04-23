@@ -43,13 +43,14 @@ export const useGlassStyles = (): {
   ) => CSSProperties;
   contentWrapper: () => CSSProperties;
   glassCard: () => CSSProperties;
-  glassCardHover: () => CSSProperties;
-  pageHeader: () => CSSProperties;
-  pageTitle: () => CSSProperties;
-  pageSubtitle: () => CSSProperties;
-  pageActions: () => CSSProperties;
   footer: () => CSSProperties;
   footerText: () => CSSProperties;
+  tagMono: () => CSSProperties;
+  tagLabel: () => CSSProperties;
+  tagSuccess: () => CSSProperties;
+  tagWarning: () => CSSProperties;
+  tagInfo: () => CSSProperties;
+  addButton: () => CSSProperties;
 } => {
   const { token } = useToken();
   const isDark =
@@ -134,7 +135,6 @@ export const useGlassStyles = (): {
   const contentWrapper = (): CSSProperties => ({
     position: 'relative',
     zIndex: 1,
-    padding: '32px 40px',
     maxWidth: 1800,
     margin: '0 auto',
   });
@@ -146,44 +146,6 @@ export const useGlassStyles = (): {
     border: `1px solid ${colors.glassBorder}`,
     boxShadow: `0 8px 32px ${colors.primaryGlow}20`,
     overflow: 'hidden',
-  });
-
-  const glassCardHover = (): CSSProperties => ({
-    transform: 'translateY(-4px)',
-    boxShadow: `0 12px 40px ${colors.primaryGlow}`,
-    borderColor: `${colors.primary}30`,
-  });
-
-  const pageHeader = (): CSSProperties => ({
-    display: 'flex',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    marginBottom: 24,
-    flexWrap: 'wrap',
-    gap: 16,
-  });
-
-  const pageTitle = (): CSSProperties => ({
-    margin: 0,
-    fontSize: 28,
-    fontWeight: 700,
-    color: colors.text,
-    lineHeight: 1.2,
-    letterSpacing: '-0.5px',
-  });
-
-  const pageSubtitle = (): CSSProperties => ({
-    fontSize: 14,
-    color: colors.textSecondary,
-    margin: '8px 0 0 0',
-    letterSpacing: '0.5px',
-  });
-
-  const pageActions = (): CSSProperties => ({
-    display: 'flex',
-    alignItems: 'center',
-    gap: 12,
-    flexWrap: 'wrap',
   });
 
   const footer = (): CSSProperties => ({
@@ -200,6 +162,83 @@ export const useGlassStyles = (): {
     color: colors.textTertiary,
   });
 
+  const tagMono = (): CSSProperties => ({
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 4,
+    fontFamily: '"SF Mono", "Fira Code", "JetBrains Mono", monospace',
+    fontSize: 12,
+    fontWeight: 700,
+    padding: '4px 10px',
+    borderRadius: 6,
+    background: `linear-gradient(135deg, ${token.colorPrimaryBg} 0%, ${token.colorPrimaryBorder} 100%)`,
+    color: token.colorPrimary,
+    border: `1px solid ${token.colorPrimaryBorder}`,
+    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1)',
+    letterSpacing: '0.5px',
+  });
+
+  const tagLabel = (): CSSProperties => ({
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 6,
+    padding: '4px 12px',
+    borderRadius: 6,
+    backgroundColor: token.colorBgTextActive,
+    color: token.colorText,
+    fontSize: 13,
+    fontWeight: 500,
+    border: 'none',
+  });
+
+  const tagSuccess = (): CSSProperties => ({
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 4,
+    padding: '4px 12px',
+    borderRadius: 6,
+    fontWeight: 500,
+    fontSize: 12,
+    backgroundColor: token.colorSuccessBg,
+    color: token.colorSuccess,
+    border: `1px solid ${token.colorSuccessBorder}`,
+  });
+
+  const tagWarning = (): CSSProperties => ({
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 4,
+    padding: '4px 12px',
+    borderRadius: 16,
+    background: `linear-gradient(135deg, ${token.colorWarningBg} 0%, ${token.colorWarningBorder} 100%)`,
+    color: token.colorWarningText,
+    fontWeight: 500,
+    fontSize: 12,
+    border: `1px solid ${token.colorWarningBorder}`,
+  });
+
+  const tagInfo = (): CSSProperties => ({
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 4,
+    padding: '4px 12px',
+    borderRadius: 6,
+    fontWeight: 500,
+    fontSize: 12,
+    backgroundColor: token.colorInfoBg,
+    color: token.colorInfo,
+    border: `1px solid ${token.colorInfoBorder}`,
+  });
+
+  const addButton = (): CSSProperties => ({
+    height: 36,
+    padding: '0 16px',
+    borderRadius: 8,
+    fontWeight: 500,
+    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+  });
+
   return {
     colors,
     container,
@@ -208,12 +247,13 @@ export const useGlassStyles = (): {
     glowOrb,
     contentWrapper,
     glassCard,
-    glassCardHover,
-    pageHeader,
-    pageTitle,
-    pageSubtitle,
-    pageActions,
     footer,
     footerText,
+    tagMono,
+    tagLabel,
+    tagSuccess,
+    tagWarning,
+    tagInfo,
+    addButton,
   };
 };

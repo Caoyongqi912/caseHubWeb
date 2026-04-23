@@ -1,6 +1,6 @@
 import { IProject } from '@/api';
 import { newProject, putProject, queryProject, searchUser } from '@/api/base';
-import { GlassBackground, useGlassStyles } from '@/components/Glass';
+import { useGlassStyles } from '@/components/Glass';
 import { history } from '@@/core/history';
 import {
   ArrowRightOutlined,
@@ -97,43 +97,7 @@ const ProjectList: React.FC = () => {
   };
 
   return (
-    <GlassBackground
-      glowOrbConfigs={[
-        {
-          color: styles.colors.primary,
-          size: 600,
-          top: '-10%',
-          left: '-10%',
-          animationDuration: '8s',
-        },
-        {
-          color: styles.colors.success,
-          size: 500,
-          top: '60%',
-          left: '70%',
-          animationDuration: '10s',
-        },
-        {
-          color: '#13c2c2',
-          size: 400,
-          top: '30%',
-          left: '80%',
-          animationDuration: '12s',
-        },
-      ]}
-      extraAnimations={`
-        .project-card-wrapper {
-          animation: slideUp 0.5s ease-out forwards;
-          opacity: 0;
-        }
-        .project-card-wrapper:nth-child(1) { animation-delay: 0.05s; }
-        .project-card-wrapper:nth-child(2) { animation-delay: 0.1s; }
-        .project-card-wrapper:nth-child(3) { animation-delay: 0.15s; }
-        .project-card-wrapper:nth-child(4) { animation-delay: 0.2s; }
-        .project-card-wrapper:nth-child(5) { animation-delay: 0.25s; }
-        .project-card-wrapper:nth-child(6) { animation-delay: 0.3s; }
-      `}
-    >
+    <div>
       <ModalForm<IProject>
         title={`${title}项目`}
         form={currentForm}
@@ -199,8 +163,12 @@ const ProjectList: React.FC = () => {
           borderRadius: '16px',
           background: styles.colors.glass,
           backdropFilter: 'blur(20px)',
-          border: `1px solid ${styles.colors.glassBorder}`,
           boxShadow: `0 8px 32px ${styles.colors.primaryGlow}20`,
+          height: 'calc(100vh - 120px)',
+          minHeight: '600px',
+          maxHeight: '100%',
+          display: 'flex',
+          flexDirection: 'column' as const,
         }}
         bodyStyle={{
           padding: '24px',
@@ -379,7 +347,7 @@ const ProjectList: React.FC = () => {
           </div>
         )}
       </ProCard>
-    </GlassBackground>
+    </div>
   );
 };
 

@@ -1,25 +1,18 @@
 import { useGlassStyles } from '@/components/Glass';
 import LeftComponents from '@/components/LeftComponents';
 import { ModuleEnum } from '@/utils/config';
-import { getSplitter, setSplitter } from '@/utils/token';
 import { ProCard } from '@ant-design/pro-components';
-import { Splitter } from 'antd';
-import { useEffect, useState } from 'react';
-import useCaseHubTheme from '../styles';
+import { useState } from 'react';
+import { Group, Panel } from 'react-resizable-panels';
 import CaseDataTable from './components/CaseDataTable';
 
 const Index = () => {
   const styles = useGlassStyles();
-
-  const { borderRadius, shadows } = useCaseHubTheme();
   const [currentModuleId, setCurrentModuleId] = useState<number | undefined>();
   const [currentProjectId, setCurrentProjectId] = useState<
     number | undefined
   >();
-  const [sizes, setSizes] = useState<(number | string)[]>(['20%', '80%']);
-
   const PerKey = 'TEST_CASE';
-  const PerKeySplitter = 'TEST_CASE:Splitter';
 
   const onProjectChange = (projectId: number | undefined) => {
     setCurrentProjectId(projectId);
@@ -29,12 +22,6 @@ const Index = () => {
     setCurrentModuleId(moduleId);
   };
 
-  useEffect(() => {
-    const data = getSplitter(PerKeySplitter);
-    if (data) {
-      setSizes([data.left, data.right]);
-    }
-  }, []);
   return (
     <>
       <ProCard
@@ -53,42 +40,23 @@ const Index = () => {
           overflow: 'hidden',
         }}
       >
-        <Splitter
-          onResize={(sizes: number[]) => {
-            setSizes(sizes);
-            setSplitter(PerKeySplitter, sizes[0], sizes[1]);
-          }}
-          style={{
-            borderRadius: borderRadius.xl,
-            boxShadow: shadows.card,
-            overflow: 'hidden',
-          }}
-        >
-          <Splitter.Panel
-            collapsible={true}
-            size={sizes[0]}
-            style={{ height: 'auto' }}
-          >
+        <Group orientation="horizontal">
+          <Panel defaultSize={20} minSize={10} collapsible={true}>
             <LeftComponents
               moduleType={ModuleEnum.CASE}
               currentProjectId={currentProjectId}
               onModuleChange={onModuleChange}
               onProjectChange={onProjectChange}
             />
-          </Splitter.Panel>
-
-          <Splitter.Panel
-            size={sizes[1]}
-            min={'60%'}
-            style={{ height: 'auto', overflow: 'auto' }}
-          >
+          </Panel>
+          <Panel defaultSize={80} minSize={30}>
             <CaseDataTable
               perKey={PerKey}
               currentProjectId={currentProjectId}
               currentModuleId={currentModuleId}
             />
-          </Splitter.Panel>
-        </Splitter>
+          </Panel>
+        </Group>
       </ProCard>
     </>
   );

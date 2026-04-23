@@ -41,7 +41,7 @@ const RequirementForm: FC<Props> = ({
   const projects = initialState?.projects || [];
   const currentUser = initialState?.currentUser;
   const { CASE_LEVEL_OPTION } = CaseHubConfig;
-  const { token, colors, spacing, borderRadius } = useCaseHubTheme();
+  const { colors, spacing, borderRadius } = useCaseHubTheme();
 
   useEffect(() => {
     if (currentProjectId) {
@@ -78,21 +78,6 @@ const RequirementForm: FC<Props> = ({
       }
     }
   };
-
-  const drawerStyles = useMemo(
-    () => ({
-      header: {
-        background: `linear-gradient(135deg, ${colors.primaryBg} 0%, ${colors.bgContainer} 100%)`,
-        borderBottom: `1px solid ${colors.border}`,
-        padding: `${token.paddingLG}px ${token.paddingXL}px`,
-      },
-      body: {
-        padding: spacing.lg,
-        background: colors.bgContainer,
-      },
-    }),
-    [colors, spacing, token],
-  );
 
   const cardStyle = useMemo(
     () => ({
@@ -252,7 +237,6 @@ const RequirementForm: FC<Props> = ({
         width={'70%'}
         open={drawerVisible}
         setOpen={setDrawerVisible}
-        drawerStyles={drawerStyles}
       >
         <ProCard style={cardStyle}>
           <StepsForm<IRequirement>

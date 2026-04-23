@@ -1,19 +1,15 @@
 import LeftComponents from '@/components/LeftComponents';
 import { ModuleEnum } from '@/utils/config';
-import { getSplitter, setSplitter } from '@/utils/token';
 import { ProCard } from '@ant-design/pro-components';
-import { Splitter } from 'antd';
-import { useEffect, useState } from 'react';
-import useCaseHubTheme from '../styles';
+import { useState } from 'react';
+import { Group, Panel } from 'react-resizable-panels';
 import RequirementTable from './components/RequirementTable';
 
 const Index = () => {
   const [currentModuleId, setCurrentModuleId] = useState<number | undefined>();
   const [currentProjectId, setCurrentProjectId] = useState<number>();
-  const [sizes, setSizes] = useState<(number | string)[]>(['20%', '80%']);
-  const { borderRadius, shadows } = useCaseHubTheme();
   const PerKey = 'Requirement';
-  const PerKeySplitter = 'Requirement:Splitter';
+
   const onProjectChange = (projectId: number | undefined) => {
     setCurrentProjectId(projectId);
   };
@@ -22,60 +18,26 @@ const Index = () => {
     setCurrentModuleId(moduleId);
   };
 
-  useEffect(() => {
-    const data = getSplitter(PerKeySplitter);
-    if (data) {
-      setSizes([data.left, data.right]);
-    }
-  }, []);
-
   return (
     <>
-      <ProCard
-        style={{ height: 'auto' }}
-        bodyStyle={{
-          height: '100%',
-          minHeight: '90vh',
-          padding: 0,
-          overflow: 'hidden',
-        }}
-      >
-        <Splitter
-          onResize={(sizes: number[]) => {
-            setSizes(sizes);
-            setSplitter(PerKeySplitter, sizes[0], sizes[1]);
-          }}
-          style={{
-            borderRadius: borderRadius.xl,
-            boxShadow: shadows.card,
-            overflow: 'hidden',
-          }}
-        >
-          <Splitter.Panel
-            collapsible={true}
-            size={sizes[0]}
-            style={{ height: 'auto' }}
-          >
+      <ProCard ghost={true}>
+        <Group orientation="horizontal">
+          <Panel defaultSize={20} minSize={10} collapsible={true}>
             <LeftComponents
               moduleType={ModuleEnum.REQUIREMENT}
               currentProjectId={currentProjectId}
               onModuleChange={onModuleChange}
               onProjectChange={onProjectChange}
             />
-          </Splitter.Panel>
-
-          <Splitter.Panel
-            size={sizes[1]}
-            min={'60%'}
-            style={{ height: 'auto', overflow: 'auto' }}
-          >
+          </Panel>
+          <Panel defaultSize={80} minSize={30}>
             <RequirementTable
               perKey={PerKey}
               currentProjectId={currentProjectId}
               currentModuleId={currentModuleId}
             />
-          </Splitter.Panel>
-        </Splitter>
+          </Panel>
+        </Group>
       </ProCard>
     </>
   );

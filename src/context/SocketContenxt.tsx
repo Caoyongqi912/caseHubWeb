@@ -56,7 +56,7 @@ export const SocketProvider = ({
       if (code === 0) {
         addLog(msg);
       } else {
-        addLog('构造完成');
+        addLog('完成');
       }
     });
 
