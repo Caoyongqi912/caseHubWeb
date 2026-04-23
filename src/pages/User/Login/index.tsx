@@ -1,6 +1,6 @@
 import { ILoginParams } from '@/api';
 import { login } from '@/api/base';
-import { getToken, setToken } from '@/utils/token';
+import { setToken } from '@/utils/token';
 import {
   ApiOutlined,
   LockOutlined,
@@ -16,23 +16,10 @@ import {
 } from '@ant-design/pro-components';
 import { message, Typography } from 'antd';
 import React from 'react';
-import { history, useModel } from 'umi';
 
 const { Title, Text } = Typography;
 
 const Index: React.FC = () => {
-  const { initialState, setInitialState } = useModel('@@initialState');
-
-  const getCurrentUserInfo = async () => {
-    const userInfo = await initialState?.fetchUserInfo?.();
-    if (userInfo) {
-      await setInitialState((s) => ({
-        ...s,
-        currentUser: userInfo,
-      }));
-    }
-  };
-
   const handleSubmit = async (values: ILoginParams) => {
     try {
       const { code, data } = await login({ ...values });
@@ -41,12 +28,12 @@ const Index: React.FC = () => {
           content: '登录成功！欢迎使用 CaseHub',
           icon: <SafetyCertificateOutlined />,
         });
-        if (data && data !== getToken()) {
+        if (data) {
           setToken(data);
         }
-        await getCurrentUserInfo();
         const urlParams = new URL(window.location.href).searchParams;
-        history.push(urlParams.get('redirect') || '/');
+        const redirectUrl = urlParams.get('redirect') || '/';
+        window.location.href = redirectUrl;
         return Promise.resolve();
       }
     } catch (error) {
