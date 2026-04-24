@@ -3,6 +3,7 @@ import {
   ProCard,
   ProFormSelect,
   ProFormText,
+  ProFormTextArea,
 } from '@ant-design/pro-components';
 
 const PlayTaskBasicInfoForm = () => {
@@ -27,6 +28,14 @@ const PlayTaskBasicInfoForm = () => {
         options={API_LEVEL_SELECT}
         required={true}
         rules={[{ required: true, message: '任务优先级必选' }]}
+      />
+
+      <ProFormTextArea
+        name="description"
+        label="任务描述"
+        width={'lg'}
+        required={true}
+        rules={[{ required: true, message: '任务描述必填' }]}
       />
     </ProCard>
   );

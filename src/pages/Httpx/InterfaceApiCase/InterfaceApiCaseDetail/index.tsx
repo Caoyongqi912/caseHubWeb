@@ -33,10 +33,12 @@ import {
   AimOutlined,
   ApiOutlined,
   BranchesOutlined,
+  CloseOutlined,
   DatabaseOutlined,
   DownOutlined,
   FieldTimeOutlined,
   LeftOutlined,
+  PlayCircleOutlined,
   PlusOutlined,
   PythonOutlined,
   RetweetOutlined,
@@ -47,19 +49,18 @@ import {
 import { ProCard, ProForm } from '@ant-design/pro-components';
 import {
   Button,
+  Drawer,
   Dropdown,
   Empty,
   FloatButton,
   Form,
   message,
   Space,
-  Splitter,
   TabsProps,
+  theme,
   Tooltip,
 } from 'antd';
 import { RadioChangeEvent } from 'antd/lib/radio/interface';
-import { debounce } from 'lodash';
-import RcResizeObserver from 'rc-resize-observer';
 import { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import CaseDynamic from './caseDynamic';
 
@@ -69,15 +70,6 @@ const CONTENT_TYPE_MAP = {
   ASSERT: 8,
   DB_SCRIPT: 5,
 } as const;
-
-const DRAWER_SIZE_BREAKPOINTS = [
-  { maxWidth: 768, size: '75%' },
-  { maxWidth: 1030, size: '75%' },
-  { maxWidth: 1440, size: '80%' },
-  { maxWidth: 1920, size: '85%' },
-  { maxWidth: 2560, size: '90%' },
-  { maxWidth: Number.MAX_SAFE_INTEGER, size: '95%' },
-] as const;
 
 interface SelfProps {
   interfaceCase?: IInterfaceAPICase;
@@ -90,6 +82,7 @@ const Index: FC<SelfProps> = ({ interfaceCase, hiddenRunButton }) => {
     projectId: string;
     moduleId: string;
   }>();
+  const { token } = theme.useToken();
 
   const [form] = Form.useForm<IInterfaceAPICase>();
   const [caseContentElements, setCaseContentElements] = useState<any[]>([]);
@@ -105,12 +98,12 @@ const Index: FC<SelfProps> = ({ interfaceCase, hiddenRunButton }) => {
   const [selectedEnvId, setSelectedEnvId] = useState<number>();
   const [isErrorStop, setIsErrorStop] = useState(false);
   const [runMode, setRunMode] = useState(1);
-  const [drawerWidth, setDrawerWidth] = useState('80%');
   const [activeKey, setActiveKey] = useState('2');
   const [emptyApi, setEmptyApi] = useState<IInterfaceAPI>();
   const [isLoopModalOpen, setIsLoopModalOpen] = useState(false);
   const [openDynamicHistoryDrawer, setOpenDynamicHistoryDrawer] =
     useState(false);
+  const [isRunConfigVisible, setIsRunConfigVisible] = useState(false);
   useEffect(() => {
     if (projectId && moduleId) {
       setCurrentProjectId(parseInt(projectId));
@@ -188,16 +181,6 @@ const Index: FC<SelfProps> = ({ interfaceCase, hiddenRunButton }) => {
     setEmptyApi(undefined);
   }, []);
 
-  const handleResize = useCallback(
-    debounce(({ width }: { width: number }) => {
-      const breakpoint = DRAWER_SIZE_BREAKPOINTS.find(
-        (bp) => width <= bp.maxWidth,
-      );
-      setDrawerWidth(breakpoint?.size || '80%');
-    }, 100),
-    [],
-  );
-
   const onMenuClick = useCallback((e: RadioChangeEvent) => {
     setRunMode(e.target.value);
   }, []);
@@ -259,10 +242,12 @@ const Index: FC<SelfProps> = ({ interfaceCase, hiddenRunButton }) => {
         if (code === 0) {
           setResultReloadCount((prev) => prev + 1);
           message.success('后台运行中');
+          setIsRunConfigVisible(false);
         }
       } else {
         setResultReloadCount((prev) => prev + 1);
         setIsRunDrawerOpen(true);
+        setIsRunConfigVisible(false);
       }
     } catch {
       message.error('运行失败，请重试');
@@ -481,10 +466,21 @@ const Index: FC<SelfProps> = ({ interfaceCase, hiddenRunButton }) => {
 
   const ApisCardExtra = useMemo(
     () => (
-      <Space size={10}>
-        <Button icon={<SyncOutlined />} onClick={handleRefreshSteps}>
+      <Space size={12}>
+        <Button
+          icon={<SyncOutlined style={{ fontSize: 14 }} />}
+          onClick={handleRefreshSteps}
+          style={{
+            height: 32,
+            borderRadius: 6,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+          }}
+        >
           刷新
         </Button>
+
         <Dropdown
           menu={{
             items: dropdownMenuItems,
@@ -495,25 +491,75 @@ const Index: FC<SelfProps> = ({ interfaceCase, hiddenRunButton }) => {
           trigger={['click']}
           placement="bottomRight"
           overlayStyle={{
-            borderRadius: '10px',
+            borderRadius: 8,
           }}
         >
-          <Button type="primary">
-            <PlusOutlined style={{ fontSize: '13px' }} />
+          <Button
+            type="primary"
+            style={{
+              height: 32,
+              borderRadius: 6,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              fontWeight: 500,
+            }}
+          >
+            <PlusOutlined style={{ fontSize: 14 }} />
             <span>添加步骤</span>
-            <DownOutlined
-              style={{ fontSize: '10px', opacity: 0.85, marginLeft: '2px' }}
-            />
+            <DownOutlined style={{ fontSize: 10, opacity: 0.85 }} />
           </Button>
         </Dropdown>
+
         <Tooltip title="修改历史">
           <Button
             type="text"
-            icon={<LeftOutlined />}
+            icon={<LeftOutlined style={{ fontSize: 14 }} />}
             onClick={() => setOpenDynamicHistoryDrawer(true)}
-            style={{ color: '#6c757d' }}
+            style={{
+              height: 32,
+              width: 32,
+              padding: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#8c8c8c',
+              borderRadius: 6,
+            }}
           />
         </Tooltip>
+
+        {!hiddenRunButton && (
+          <Button
+            type="primary"
+            icon={<PlayCircleOutlined style={{ fontSize: 14 }} />}
+            onClick={() => setIsRunConfigVisible(true)}
+            style={{
+              height: 32,
+              borderRadius: 6,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              fontWeight: 500,
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              border: 'none',
+              boxShadow: '0 2px 8px rgba(102, 126, 234, 0.3)',
+              transition: 'all 0.2s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-1px)';
+              e.currentTarget.style.boxShadow =
+                '0 4px 12px rgba(102, 126, 234, 0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow =
+                '0 2px 8px rgba(102, 126, 234, 0.3)';
+            }}
+          >
+            运行配置
+          </Button>
+        )}
       </Space>
     ),
     [dropdownMenuItems, handleRefreshSteps],
@@ -539,7 +585,7 @@ const Index: FC<SelfProps> = ({ interfaceCase, hiddenRunButton }) => {
 
       <MyDrawer
         name="测试结果"
-        width={drawerWidth}
+        width={'80%'}
         open={isRunDrawerOpen}
         setOpen={setIsRunDrawerOpen}
       >
@@ -570,53 +616,71 @@ const Index: FC<SelfProps> = ({ interfaceCase, hiddenRunButton }) => {
         />
       </MyDrawer>
 
-      <RcResizeObserver onResize={handleResize}>
+      <Drawer
+        placement="right"
+        width={400}
+        open={isRunConfigVisible}
+        onClose={() => setIsRunConfigVisible(false)}
+        closable={true}
+        closeIcon={<CloseOutlined />}
+        styles={{
+          body: { padding: 0 },
+          header: {
+            borderBottom: `1px solid ${token.colorBorderSecondary}`,
+            padding: '16px 24px',
+          },
+        }}
+        style={{
+          background: token.colorBgContainer,
+        }}
+      >
+        <RunConfig
+          onMenuClick={onMenuClick}
+          run={executeTestCase}
+          onEnvChange={onEnvChange}
+          onErrorJumpChange={onErrorJumpChange}
+          errorStop={isErrorStop}
+          currentProjectId={currentProjectId}
+        />
+      </Drawer>
+
+      <div
+        style={{
+          height: '100vh',
+          overflow: 'hidden',
+          background: token.colorBgLayout,
+          position: 'relative',
+        }}
+      >
         <ProCard
           style={{ height: '100%' }}
-          bodyStyle={{ height: '100%', padding: 10, minHeight: '100vh' }}
+          bodyStyle={{ height: '100%', padding: 16, overflow: 'hidden' }}
         >
-          <Splitter
-            style={{ height: '100%', boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)' }}
-          >
-            <Splitter.Panel size={drawerWidth} max="100%">
-              <ProCard bodyStyle={{ minHeight: '100hv', overflow: 'auto' }}>
-                <MyTabs
-                  defaultActiveKey={activeKey}
-                  onChangeKey={setActiveKey}
-                  activeKey={activeKey}
-                  items={APIStepItems}
-                  tabBarExtraContent={ApisCardExtra}
-                  style={{
-                    padding: '0 16px',
-                    borderBottom: '1px solid #f0f0f0',
-                    flexWrap: 'nowrap',
-                    marginBottom: 16,
-                  }}
-                />
-              </ProCard>
-            </Splitter.Panel>
-            {!hiddenRunButton && (
-              <Splitter.Panel>
-                <RunConfig
-                  onMenuClick={onMenuClick}
-                  run={executeTestCase}
-                  onEnvChange={onEnvChange}
-                  onErrorJumpChange={onErrorJumpChange}
-                  errorStop={isErrorStop}
-                  currentProjectId={currentProjectId}
-                />
-              </Splitter.Panel>
-            )}
-          </Splitter>
+          <MyTabs
+            defaultActiveKey={activeKey}
+            onChangeKey={setActiveKey}
+            activeKey={activeKey}
+            items={APIStepItems}
+            tabBarExtraContent={ApisCardExtra}
+            style={{
+              padding: '0 16px',
+              borderBottom: '1px solid #f0f0f0',
+              flexWrap: 'nowrap',
+              marginBottom: 16,
+            }}
+          />
         </ProCard>
+
         <FloatButton.BackTop
           style={{
             boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
             borderRadius: '50%',
-            background: '#1890ff',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            right: 24,
+            bottom: 24,
           }}
         />
-      </RcResizeObserver>
+      </div>
     </>
   );
 };

@@ -54,23 +54,13 @@ const taskStatusColorMap: Record<string, string> = {
 const Index: FC<SelfProps> = (props) => {
   const { currentProjectId, currentModuleId, perKey } = props;
   const { token } = theme.useToken();
+  const [form] = Form.useForm<IUITask>();
   const actionRef = useRef<ActionType>();
   const { initialState } = useModel('@@initialState');
-  const [form] = Form.useForm();
   const [currentTaskId, setCurrentTaskId] = useState<number>();
 
   useEffect(() => {
     actionRef.current?.reload();
-  }, [currentModuleId, currentProjectId]);
-
-  useEffect(() => {
-    actionRef.current?.reload();
-    if (currentProjectId && currentModuleId) {
-      form.setFieldsValue({
-        project_id: currentProjectId,
-        module_id: currentModuleId,
-      });
-    }
   }, [currentModuleId, currentProjectId]);
 
   const fetchPageUITaskTable = useCallback(
@@ -86,79 +76,70 @@ const Index: FC<SelfProps> = (props) => {
     [currentProjectId, currentModuleId],
   );
 
-  const styles = useMemo(
+  const tagStyle = useMemo(
     () => ({
-      actionBtn: {
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 4,
-        padding: '4px 8px',
-        borderRadius: 6,
-        fontSize: 13,
-        fontWeight: 500,
-        transition: 'all 0.2s ease',
-        cursor: 'pointer',
-      },
-      primaryBtn: {
-        color: token.colorPrimary,
-        backgroundColor: token.colorPrimaryBg,
-      },
-      successBtn: {
-        color: token.colorSuccess,
-        backgroundColor: token.colorSuccessBg,
-      },
-      dangerBtn: {
-        color: token.colorError,
-        backgroundColor: token.colorErrorBg,
-      },
-      warningBtn: {
-        color: token.colorWarning,
-        backgroundColor: token.colorWarningBg,
-      },
-      idTag: {
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 4,
-        fontFamily: '"SF Mono", "Fira Code", "JetBrains Mono", monospace',
-        fontSize: 12,
-        fontWeight: 700,
-        padding: '4px 10px',
-        borderRadius: 6,
-        background: `linear-gradient(135deg, ${token.colorPrimaryBg} 0%, ${token.colorPrimaryBorder} 100%)`,
-        color: token.colorPrimary,
-        border: `1px solid ${token.colorPrimaryBorder}`,
-        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1)',
-        letterSpacing: '0.5px',
-      },
-      nameTag: {
-        fontSize: 13,
-        fontWeight: 500,
-        padding: '4px 12px',
-        borderRadius: 6,
-        backgroundColor: token.colorBgTextActive,
-        color: token.colorText,
-        border: 'none',
-        cursor: 'pointer',
-        transition: 'all 0.2s ease',
-      },
-      creatorTag: {
-        fontSize: 12,
-        padding: '2px 10px',
-        borderRadius: 12,
-        backgroundColor: token.colorWarningBg,
-        color: token.colorWarningText,
-        border: `1px solid ${token.colorWarningBorder}`,
-      },
-      addBtn: {
-        height: 36,
-        borderRadius: 8,
-        fontWeight: 500,
-        boxShadow: `0 2px 8px ${token.colorPrimaryBg}`,
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-      },
+      borderRadius: 6,
+      fontWeight: 500,
+      padding: '4px 12px',
+    }),
+    [],
+  );
+
+  const primaryTagStyle = useMemo(
+    () => ({
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 4,
+      padding: '4px 10px',
+      borderRadius: 6,
+      fontFamily: '"SF Mono", "Fira Code", "JetBrains Mono", monospace',
+      fontSize: 12,
+      fontWeight: 700,
+      background: `linear-gradient(135deg, ${token.colorPrimaryBg} 0%, ${token.colorPrimaryBorder} 100%)`,
+      color: token.colorPrimary,
+      border: `1px solid ${token.colorPrimaryBorder}`,
+      letterSpacing: '0.5px',
     }),
     [token],
   );
+
+  const actionBtnStyle = useMemo(
+    () => ({
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: 4,
+      padding: '4px 8px',
+      borderRadius: 6,
+      fontSize: 13,
+      fontWeight: 500,
+      transition: 'all 0.2s ease',
+      cursor: 'pointer',
+    }),
+    [],
+  );
+
+  const getActionBtnStyle = (type: string) => {
+    const styleMap: Record<string, any> = {
+      primary: {
+        color: token.colorPrimary,
+        backgroundColor: token.colorPrimaryBg,
+      },
+      success: {
+        color: token.colorSuccess,
+        backgroundColor: token.colorSuccessBg,
+      },
+      danger: {
+        color: token.colorError,
+        backgroundColor: token.colorErrorBg,
+      },
+      warning: {
+        color: token.colorWarning,
+        backgroundColor: token.colorWarningBg,
+      },
+    };
+    return { ...actionBtnStyle, ...styleMap[type] };
+  };
 
   const ActionButton: FC<{
     icon: React.ReactNode;
@@ -166,20 +147,10 @@ const Index: FC<SelfProps> = (props) => {
     type?: 'primary' | 'success' | 'danger' | 'warning';
     onClick?: () => void;
   }> = ({ icon, label, type = 'primary', onClick }) => {
-    const styleMap = {
-      primary: styles.primaryBtn,
-      success: styles.successBtn,
-      danger: styles.dangerBtn,
-      warning: styles.warningBtn,
-    };
-
     return (
       <a
         onClick={onClick}
-        style={{
-          ...styles.actionBtn,
-          ...styleMap[type],
-        }}
+        style={getActionBtnStyle(type)}
         onMouseEnter={(e) => {
           e.currentTarget.style.transform = 'translateY(-1px)';
           e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
@@ -204,7 +175,7 @@ const Index: FC<SelfProps> = (props) => {
       width: 100,
       copyable: true,
       render: (_, record) => (
-        <span style={styles.idTag}>
+        <span style={primaryTagStyle}>
           <NumberOutlined style={{ fontSize: 10, opacity: 0.7 }} />
           {record.uid}
         </span>
@@ -217,11 +188,21 @@ const Index: FC<SelfProps> = (props) => {
       width: 200,
       render: (_, record) => (
         <MyModal
-          onFinish={saveTask}
           form={form}
+          onFinish={saveTask}
           trigger={
             <Tag
-              style={styles.nameTag}
+              style={{
+                fontSize: 13,
+                fontWeight: 500,
+                padding: '4px 12px',
+                borderRadius: 6,
+                backgroundColor: token.colorBgTextActive,
+                color: token.colorText,
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+              }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = token.colorPrimaryBg;
               }}
@@ -251,11 +232,7 @@ const Index: FC<SelfProps> = (props) => {
       render: (_, record) => (
         <Tag
           color={CONFIG.RENDER_CASE_LEVEL[record.level]?.color || 'default'}
-          style={{
-            borderRadius: 6,
-            fontWeight: 500,
-            padding: '4px 12px',
-          }}
+          style={tagStyle}
         >
           {CONFIG.RENDER_CASE_LEVEL[record.level]?.text || '-'}
         </Tag>
@@ -270,11 +247,7 @@ const Index: FC<SelfProps> = (props) => {
       render: (_, record) => (
         <Tag
           color={taskStatusColorMap[record.status] || 'default'}
-          style={{
-            borderRadius: 6,
-            fontWeight: 500,
-            padding: '4px 12px',
-          }}
+          style={tagStyle}
         >
           {record.status || '-'}
         </Tag>
@@ -289,9 +262,7 @@ const Index: FC<SelfProps> = (props) => {
       render: (_, record) => (
         <Tag
           style={{
-            borderRadius: 6,
-            fontWeight: 500,
-            padding: '4px 12px',
+            ...tagStyle,
             backgroundColor: token.colorInfoBg,
             color: token.colorInfo,
             border: `1px solid ${token.colorInfoBorder}`,
@@ -310,7 +281,18 @@ const Index: FC<SelfProps> = (props) => {
         return <UserSelect />;
       },
       render: (_, record) => (
-        <Tag style={styles.creatorTag}>{record.creatorName || '-'}</Tag>
+        <Tag
+          style={{
+            fontSize: 12,
+            padding: '2px 10px',
+            borderRadius: 12,
+            backgroundColor: token.colorWarningBg,
+            color: token.colorWarningText,
+            border: `1px solid ${token.colorWarningBorder}`,
+          }}
+        >
+          {record.creatorName || '-'}
+        </Tag>
       ),
     },
     {
@@ -396,7 +378,15 @@ const Index: FC<SelfProps> = (props) => {
         actionRef.current?.reload();
       }
     } else {
-      const { code, data } = await insertPlayTask(values);
+      if (!currentModuleId || !currentProjectId) {
+        message.error('缺少必要参数');
+        return false;
+      }
+      const { code } = await insertPlayTask({
+        ...values,
+        module_id: currentModuleId,
+        project_id: currentProjectId,
+      });
       if (code === 0) {
         message.success('添加成功');
         actionRef.current?.reload();
@@ -406,24 +396,42 @@ const Index: FC<SelfProps> = (props) => {
   };
 
   const AddTaskButton = (
-    <Button
-      type="primary"
-      style={styles.addBtn}
-      icon={<PlusOutlined />}
-      onClick={() => {
-        setCurrentTaskId(undefined);
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = 'translateY(-2px)';
-        e.currentTarget.style.boxShadow = `0 4px 16px ${token.colorPrimaryBg}`;
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = 'translateY(0)';
-        e.currentTarget.style.boxShadow = `0 2px 8px ${token.colorPrimaryBg}`;
-      }}
-    >
-      添加任务
-    </Button>
+    <>
+      {currentModuleId && currentProjectId && (
+        <MyModal
+          onFinish={saveTask}
+          trigger={
+            <Button
+              type="primary"
+              style={{
+                height: 36,
+                borderRadius: 8,
+                fontWeight: 500,
+                boxShadow: `0 2px 8px ${token.colorPrimaryBg}`,
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              }}
+              icon={<PlusOutlined />}
+              onClick={() => {
+                setCurrentTaskId(undefined);
+                form.resetFields();
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = `0 4px 16px ${token.colorPrimaryBg}`;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = `0 2px 8px ${token.colorPrimaryBg}`;
+              }}
+            >
+              添加任务
+            </Button>
+          }
+        >
+          <PlayTaskBasicInfoForm />
+        </MyModal>
+      )}
+    </>
   );
 
   return (

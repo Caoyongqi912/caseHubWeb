@@ -48,7 +48,7 @@ const Index: FC<SelfProps> = (props) => {
         console.log('connect socket');
         if (caseId) {
           executeCaseByIO({
-            caseId: caseId,
+            case_id: caseId,
             error_continue: errorContinue,
           }).then();
         }
@@ -59,7 +59,7 @@ const Index: FC<SelfProps> = (props) => {
         if (code === 0) {
           setLogMessage((prevMessages) => [...prevMessages, data]);
         } else {
-          setCaseResultId(data.id);
+          setCaseResultId(data.rId);
         }
       });
 

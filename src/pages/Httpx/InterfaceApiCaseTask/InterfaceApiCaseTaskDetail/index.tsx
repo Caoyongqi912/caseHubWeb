@@ -11,42 +11,37 @@ import RunConfig from '@/pages/Httpx/InterfaceApiCaseTask/InterfaceApiCaseTaskDe
 import InterfaceApiTaskResultTable from '@/pages/Httpx/InterfaceApiTaskResult/InterfaceApiTaskResultTable';
 import { IInterfaceAPITask } from '@/pages/Httpx/types';
 import { useParams } from '@@/exports';
-import { PlayCircleOutlined } from '@ant-design/icons';
+import {
+  CloseOutlined,
+  PlayCircleOutlined,
+  ThunderboltOutlined,
+} from '@ant-design/icons';
 import { ProCard, ProForm } from '@ant-design/pro-components';
-import { Button, FloatButton, Form, message, Space, Splitter } from 'antd';
-import { debounce } from 'lodash';
-import RcResizeObserver from 'rc-resize-observer';
-import { useCallback, useEffect, useState } from 'react';
+import {
+  Button,
+  Drawer,
+  FloatButton,
+  Form,
+  message,
+  Space,
+  TabsProps,
+  theme,
+} from 'antd';
+import { FC, useEffect, useMemo, useState } from 'react';
 
-const Index = () => {
+const Index: FC = () => {
   const { taskId, projectId } = useParams<{
     taskId: string;
     projectId: string;
   }>();
+  const { token } = theme.useToken();
   const [form] = Form.useForm<IInterfaceAPITask>();
 
   const [runningEnvId, setRunningEnvId] = useState<number>();
   const [runningOption, setRunningOption] = useState<string[]>([]);
-  const [defaultSize, setDefaultSize] = useState('80%');
   const [runningLoading, setRunningLoading] = useState(false);
-  const handleResize = useCallback(
-    debounce(({ width }) => {
-      console.log('=====', width);
-      const breakpoints = [
-        { max: 768, size: '80%' }, // 平板及以下
-        { max: 1024, size: '80%' }, // 小笔记本
-        { max: 1440, size: '83%' }, // 普通显示器
-        { max: 1920, size: '88%' }, // 1K显示器
-        { max: 2560, size: '90%' }, // 2K显示器
-        { max: Infinity, size: '95%' }, // 4K+显示器
-      ];
-
-      const breakpoint = breakpoints.find((bp) => width <= bp.max);
-      console.log(breakpoint?.size);
-      setDefaultSize(breakpoint?.size || '80%');
-    }, 100),
-    [],
-  );
+  const [isRunConfigVisible, setIsRunConfigVisible] = useState(false);
+  const [activeKey, setActiveKey] = useState('2');
 
   useEffect(() => {
     if (taskId) {
@@ -85,6 +80,8 @@ const Index = () => {
       if (code === 0) {
         setRunningLoading(false);
         message.success(msg);
+        setIsRunConfigVisible(false);
+        setActiveKey('3');
       }
     }
   };
@@ -101,50 +98,6 @@ const Index = () => {
       }
     }
   };
-  const TabItem = [
-    {
-      key: '0',
-      label: '基本信息',
-      children: (
-        <ProCard
-          extra={
-            <Button type={'primary'} onClick={updateBaseInfo}>
-              保存
-            </Button>
-          }
-        >
-          <ProForm submitter={false} form={form}>
-            <InterfaceTaskBaseForm />
-          </ProForm>
-        </ProCard>
-      ),
-    },
-    {
-      key: '1',
-      label: '关联接口用例',
-      children: (
-        <AssociationApis
-          currentTaskId={taskId}
-          currentProjectId={parseInt(projectId!)}
-        />
-      ),
-    },
-    {
-      key: '2',
-      label: '关联业务流',
-      children: (
-        <AssociationCases
-          currentTaskId={taskId}
-          currentProjectId={parseInt(projectId!)}
-        />
-      ),
-    },
-    {
-      key: '3',
-      label: '执行历史',
-      children: <InterfaceApiTaskResultTable apiCaseTaskId={taskId} />,
-    },
-  ];
 
   const RUN = (
     <Button
@@ -154,12 +107,13 @@ const Index = () => {
       loading={runningLoading}
       style={{
         height: '48px',
-        borderRadius: '8px',
-        background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+        borderRadius: 8,
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
         border: 'none',
-        boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
-        fontSize: '16px',
+        boxShadow: '0 2px 12px rgba(102, 126, 234, 0.3)',
+        fontSize: '15px',
         fontWeight: 600,
+        width: '100%',
       }}
     >
       <Space>
@@ -168,35 +122,154 @@ const Index = () => {
       </Space>
     </Button>
   );
+
+  const TabItem: TabsProps['items'] = useMemo(
+    () => [
+      {
+        key: '0',
+        label: '基本信息',
+        children: (
+          <ProCard
+            extra={
+              <Button type={'primary'} onClick={updateBaseInfo}>
+                保存
+              </Button>
+            }
+          >
+            <ProForm submitter={false} form={form}>
+              <InterfaceTaskBaseForm />
+            </ProForm>
+          </ProCard>
+        ),
+      },
+      {
+        key: '1',
+        label: '关联接口用例',
+        children: (
+          <AssociationApis
+            currentTaskId={taskId}
+            currentProjectId={parseInt(projectId!)}
+          />
+        ),
+      },
+      {
+        key: '2',
+        label: '关联业务流',
+        children: (
+          <AssociationCases
+            currentTaskId={taskId}
+            currentProjectId={parseInt(projectId!)}
+          />
+        ),
+      },
+      {
+        key: '3',
+        label: '执行历史',
+        children: <InterfaceApiTaskResultTable apiCaseTaskId={taskId} />,
+      },
+    ],
+    [taskId, projectId, form],
+  );
+
   return (
     <>
-      <RcResizeObserver onResize={handleResize}>
+      <Drawer
+        title={
+          <Space>
+            <ThunderboltOutlined style={{ color: token.colorPrimary }} />
+            <span style={{ fontWeight: 600 }}>运行配置</span>
+          </Space>
+        }
+        placement="right"
+        width={400}
+        open={isRunConfigVisible}
+        onClose={() => setIsRunConfigVisible(false)}
+        closable={true}
+        closeIcon={<CloseOutlined />}
+        styles={{
+          body: { padding: 0 },
+          header: {
+            borderBottom: `1px solid ${token.colorBorderSecondary}`,
+            padding: '16px 24px',
+          },
+        }}
+        style={{
+          background: token.colorBgContainer,
+        }}
+      >
+        <RunConfig
+          runArea={RUN}
+          setRunningOption={onOptionChange}
+          currentProjectId={projectId}
+          onEnvChange={onEnvChange}
+        />
+      </Drawer>
+
+      <div
+        style={{
+          height: '100vh',
+          overflow: 'hidden',
+          background: token.colorBgLayout,
+          position: 'relative',
+        }}
+      >
         <ProCard
           style={{ height: '100%' }}
-          bodyStyle={{
-            height: '100%',
-            padding: 0,
-            minHeight: '90vh',
-            overflow: 'hidden',
-          }}
+          bodyStyle={{ height: '100%', padding: 16, overflow: 'hidden' }}
         >
-          <Splitter>
-            <Splitter.Panel resizable={false} size={defaultSize} max="100%">
-              <MyTabs defaultActiveKey={'2'} items={TabItem} />
-            </Splitter.Panel>
-            <Splitter.Panel resizable={false}>
-              <RunConfig
-                runArea={RUN}
-                setRunningOption={onOptionChange}
-                currentProjectId={projectId}
-                onEnvChange={onEnvChange}
-              />
-            </Splitter.Panel>
-          </Splitter>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: 16,
+              padding: '0 16px',
+            }}
+          >
+            <div style={{ flex: 1 }} />
+            <Button
+              type="primary"
+              icon={<PlayCircleOutlined style={{ fontSize: 14 }} />}
+              onClick={() => setIsRunConfigVisible(true)}
+              style={{
+                height: 32,
+                borderRadius: 6,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                fontWeight: 500,
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                border: 'none',
+                boxShadow: '0 2px 8px rgba(102, 126, 234, 0.3)',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.boxShadow =
+                  '0 4px 12px rgba(102, 126, 234, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow =
+                  '0 2px 8px rgba(102, 126, 234, 0.3)';
+              }}
+            >
+              运行配置
+            </Button>
+          </div>
+          <MyTabs defaultActiveKey={activeKey} items={TabItem} />
         </ProCard>
 
-        <FloatButton.BackTop />
-      </RcResizeObserver>
+        <FloatButton.BackTop
+          style={{
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            right: 24,
+            bottom: 24,
+          }}
+        />
+      </div>
     </>
   );
 };

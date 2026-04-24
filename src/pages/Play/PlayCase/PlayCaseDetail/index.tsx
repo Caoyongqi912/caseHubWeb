@@ -25,26 +25,38 @@ import { useParams } from '@@/exports';
 import {
   ApiOutlined,
   BranchesOutlined,
+  CloseOutlined,
   DatabaseOutlined,
   EditOutlined,
+  PlayCircleOutlined,
   PythonOutlined,
   QuestionOutlined,
   SelectOutlined,
+  ThunderboltOutlined,
   UngroupOutlined,
 } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
-import { Dropdown, Empty, FloatButton, message, Splitter } from 'antd';
+import {
+  Button,
+  Drawer,
+  Dropdown,
+  Empty,
+  FloatButton,
+  message,
+  Space,
+  TabsProps,
+  theme,
+} from 'antd';
 import { RadioChangeEvent } from 'antd/lib/radio/interface';
-import { debounce } from 'lodash';
-import RcResizeObserver from 'rc-resize-observer';
-import { useCallback, useEffect, useState } from 'react';
+import { FC, useEffect, useMemo, useState } from 'react';
 
-const Index = () => {
+const Index: FC = () => {
   const { caseId, projectId, moduleId } = useParams<{
     caseId: string;
     projectId: string;
     moduleId: string;
   }>();
+  const { token } = theme.useToken();
 
   const [uiStepsContent, setUIStepsContent] = useState<DraggableItem[]>([]);
   const [uiSteps, setUISteps] = useState<IPlayStepContent[]>([]);
@@ -57,8 +69,8 @@ const Index = () => {
   const [refresh, setRefresh] = useState<number>(0);
   const [runOpen, setRunOpen] = useState(false);
   const [varsNum, setVarsNum] = useState(0);
-  const [defaultSize, setDefaultSize] = useState('80%');
-  // 失败继续
+  const [isRunConfigVisible, setIsRunConfigVisible] = useState(false);
+  const [activeKey, setActiveKey] = useState('2');
   const [errorContinue, setErrorContinue] = useState<boolean>(false);
   const [runningStyle, setRunningStyle] = useState<number>(1);
 
@@ -150,7 +162,7 @@ const Index = () => {
   };
   const AddStepExtra = () => {
     return (
-      <>
+      <Space>
         <Dropdown.Button
           type={'primary'}
           menu={{
@@ -215,82 +227,100 @@ const Index = () => {
         >
           添加
         </Dropdown.Button>
-      </>
+
+        <Button
+          type="primary"
+          icon={<PlayCircleOutlined style={{ fontSize: 14 }} />}
+          onClick={() => setIsRunConfigVisible(true)}
+          style={{
+            height: 32,
+            borderRadius: 6,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            fontWeight: 500,
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            border: 'none',
+            boxShadow: '0 2px 8px rgba(102, 126, 234, 0.3)',
+            transition: 'all 0.2s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-1px)';
+            e.currentTarget.style.boxShadow =
+              '0 4px 12px rgba(102, 126, 234, 0.4)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow =
+              '0 2px 8px rgba(102, 126, 234, 0.3)';
+          }}
+        >
+          运行配置
+        </Button>
+      </Space>
     );
   };
 
-  const CornItems = [
-    {
-      key: '1',
-      label: (
-        <span>
-          变量 (<span style={{ color: 'green' }}>{varsNum}</span>)
-        </span>
-      ),
+  const CornItems: TabsProps['items'] = useMemo(
+    () => [
+      {
+        key: '1',
+        label: (
+          <span>
+            变量 (<span style={{ color: 'green' }}>{varsNum}</span>)
+          </span>
+        ),
 
-      children: <PlayCaseVars currentCaseId={caseId!} />,
-    },
-    {
-      key: '2',
-      label: (
-        <span>
-          步骤 (<span style={{ color: 'green' }}>{uiStepsContent.length}</span>)
-        </span>
-      ),
-      children: (
-        <div
-          style={{
-            height: 'calc(120vh - 280px)',
-            overflowY: 'auto',
-            overflowX: 'hidden',
-            padding: '12px 16px',
-            background: 'transparent',
-            borderRadius: 12,
-            border: '1px solid rgba(0, 0, 0, 0.1)',
-            transition: 'box-shadow 0.2s ease',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.boxShadow =
-              '0 4px 12px rgba(24, 144, 255, 0.2)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
-            e.currentTarget.style.borderColor = 'rgba(24, 144, 255, 0.3)';
-          }}
-        >
-          {uiSteps.length > 0 ? (
-            <DnDDraggable
-              items={uiStepsContent}
-              setItems={setUIStepsContent}
-              orderFetch={onDragEnd}
-            />
-          ) : (
-            <Empty description={'暂无数据'} />
-          )}
-        </div>
-      ),
-    },
-    {
-      key: '3',
-      label: '调试历史',
-      children: <PlayCaseResultTable caseId={parseInt(caseId!)} />,
-    },
-  ];
-
-  const handleResize = useCallback(
-    debounce(({ width }) => {
-      const breakpoints = [
-        { max: 768, size: '75%' }, // 平板及以下
-        { max: 1030, size: '75%' }, // 小笔记本
-        { max: 1440, size: '80%' }, // 普通显示器
-        { max: 1920, size: '85%' }, // 1K显示器
-        { max: 2560, size: '90%' }, // 2K显示器
-        { max: Infinity, size: '95%' }, // 4K+显示器
-      ];
-      const breakpoint = breakpoints.find((bp) => width <= bp.max);
-      setDefaultSize(breakpoint?.size || '80%');
-    }, 100),
-    [],
+        children: <PlayCaseVars currentCaseId={caseId!} />,
+      },
+      {
+        key: '2',
+        label: (
+          <span>
+            步骤 (
+            <span style={{ color: 'green' }}>{uiStepsContent.length}</span>)
+          </span>
+        ),
+        children: (
+          <div
+            style={{
+              height: 'calc(120vh - 280px)',
+              overflowY: 'auto',
+              overflowX: 'hidden',
+              padding: '12px 16px',
+              background: 'transparent',
+              borderRadius: 12,
+              border: '1px solid rgba(0, 0, 0, 0.1)',
+              transition: 'box-shadow 0.2s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.boxShadow =
+                '0 4px 12px rgba(24, 144, 255, 0.2)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
+              e.currentTarget.style.borderColor = 'rgba(24, 144, 255, 0.3)';
+            }}
+          >
+            {uiSteps.length > 0 ? (
+              <DnDDraggable
+                items={uiStepsContent}
+                setItems={setUIStepsContent}
+                orderFetch={onDragEnd}
+              />
+            ) : (
+              <Empty description={'暂无数据'} />
+            )}
+          </div>
+        ),
+      },
+      {
+        key: '3',
+        label: '调试历史',
+        children: <PlayCaseResultTable caseId={parseInt(caseId!)} />,
+      },
+    ],
+    [caseId, varsNum, uiStepsContent.length, uiSteps.length],
   );
 
   const runCase = async () => {
@@ -302,10 +332,13 @@ const Index = () => {
       }).then(async ({ code }) => {
         if (code === 0) {
           message.success('后台运行中。。');
+          setIsRunConfigVisible(false);
+          setActiveKey('3');
         }
       });
     } else {
       setRunOpen(true);
+      setIsRunConfigVisible(false);
     }
   };
 
@@ -343,80 +376,114 @@ const Index = () => {
 
   return (
     <>
-      <RcResizeObserver onResize={handleResize}>
+      <Drawer
+        title={
+          <Space>
+            <ThunderboltOutlined style={{ color: token.colorPrimary }} />
+            <span style={{ fontWeight: 600 }}>运行配置</span>
+          </Space>
+        }
+        placement="right"
+        width={400}
+        open={isRunConfigVisible}
+        onClose={() => setIsRunConfigVisible(false)}
+        closable={true}
+        closeIcon={<CloseOutlined />}
+        styles={{
+          body: { padding: 0 },
+          header: {
+            borderBottom: `1px solid ${token.colorBorderSecondary}`,
+            padding: '16px 24px',
+          },
+        }}
+        style={{
+          background: token.colorBgContainer,
+        }}
+      >
+        <RunConfig
+          onMenuClick={onMenuClick}
+          run={runCase}
+          onErrorContinueChange={onErrorContinueChange}
+        />
+      </Drawer>
+
+      <div
+        style={{
+          height: '100vh',
+          overflow: 'hidden',
+          background: token.colorBgLayout,
+          position: 'relative',
+        }}
+      >
         <ProCard
           style={{ height: '100%' }}
-          bodyStyle={{ height: '100%', padding: '10px', minHeight: '100vh' }}
+          bodyStyle={{ height: '100%', padding: 16, overflow: 'hidden' }}
         >
-          <Splitter
-            style={{ height: '100%', boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)' }}
-          >
-            <Splitter.Panel defaultSize={defaultSize} max="100%">
-              <ProCard bodyStyle={{ minHeight: '100hv', overflow: 'auto' }}>
-                <MyTabs
-                  defaultActiveKey={'2'}
-                  items={CornItems}
-                  tabBarExtraContent={<AddStepExtra />}
-                />
-              </ProCard>
-            </Splitter.Panel>
-            <Splitter.Panel>
-              <RunConfig
-                onMenuClick={onMenuClick}
-                run={runCase}
-                onErrorContinueChange={onErrorContinueChange}
-              />
-            </Splitter.Panel>
-          </Splitter>
+          <MyTabs
+            defaultActiveKey={activeKey}
+            activeKey={activeKey}
+            items={CornItems}
+            tabBarExtraContent={<AddStepExtra />}
+          />
         </ProCard>
-      </RcResizeObserver>
-      <FloatButton.BackTop />
-      <>
-        <MyDrawer
-          name={'添加私有步骤'}
-          width={'auto'}
-          open={openAddStepDrawer}
-          setOpen={setOpenAddStepDrawer}
-        >
-          {caseId && (
-            <PlayStepDetail
-              currentProjectId={parseInt(projectId!)}
-              currentModuleId={parseInt(moduleId!)}
-              play_case_id={parseInt(caseId)}
-              callback={handelRefresh}
-            />
-          )}
-        </MyDrawer>
-        <MyDrawer
-          name={'关联公共步骤'}
-          open={openChoiceStepDrawer}
-          setOpen={setOpenChoiceStepDrawer}
-        >
-          <PlayCommonChoiceTable
-            projectId={projectId}
-            onSelect={choice_common_steps}
-          />
-        </MyDrawer>
 
-        <MyDrawer
-          name={'关联公共步骤组'}
-          open={openChoiceGroupStepDrawer}
-          setOpen={setOpenChoiceGroupStepDrawer}
-        >
-          <PlayGroupChoiceTable
-            projectId={projectId}
-            caseId={caseId}
-            callBackFunc={handelRefresh}
+        <FloatButton.BackTop
+          style={{
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            right: 24,
+            bottom: 24,
+          }}
+        />
+      </div>
+
+      <MyDrawer
+        name={'添加私有步骤'}
+        width={'auto'}
+        open={openAddStepDrawer}
+        setOpen={setOpenAddStepDrawer}
+      >
+        {caseId && (
+          <PlayStepDetail
+            currentProjectId={parseInt(projectId!)}
+            currentModuleId={parseInt(moduleId!)}
+            play_case_id={parseInt(caseId)}
+            callback={handelRefresh}
           />
-        </MyDrawer>
-        <MyDrawer name={'UI Case Logs'} open={runOpen} setOpen={setRunOpen}>
-          <PlayCaseResultDetail
-            caseId={parseInt(caseId!)}
-            openStatus={runOpen}
-            errorContinue={errorContinue}
-          />
-        </MyDrawer>
-      </>
+        )}
+      </MyDrawer>
+
+      <MyDrawer
+        name={'关联公共步骤'}
+        open={openChoiceStepDrawer}
+        setOpen={setOpenChoiceStepDrawer}
+      >
+        <PlayCommonChoiceTable
+          projectId={projectId}
+          onSelect={choice_common_steps}
+        />
+      </MyDrawer>
+
+      <MyDrawer
+        name={'关联公共步骤组'}
+        open={openChoiceGroupStepDrawer}
+        setOpen={setOpenChoiceGroupStepDrawer}
+      >
+        <PlayGroupChoiceTable
+          projectId={projectId}
+          caseId={caseId}
+          callBackFunc={handelRefresh}
+        />
+      </MyDrawer>
+
+      <MyDrawer name={'UI Case Logs'} open={runOpen} setOpen={setRunOpen}>
+        <PlayCaseResultDetail
+          caseId={parseInt(caseId!)}
+          openStatus={runOpen}
+          errorContinue={errorContinue}
+        />
+      </MyDrawer>
 
       <MyDrawer open={openChoiceAPIDrawer} setOpen={setOpenChoiceAPIDrawer}>
         <InterfaceCaseChoiceApiTable
