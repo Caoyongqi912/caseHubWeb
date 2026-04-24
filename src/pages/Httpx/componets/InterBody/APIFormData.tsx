@@ -29,12 +29,16 @@ const APIFormData: FC<SelfProps> = ({ form }) => {
   const editorFormRef = useRef<EditableFormInstance<IFromData>>();
 
   const uploadData = async (info: any, index: number | undefined) => {
+    if (info.fileList.length === 0) return;
+
     const formData = new FormData();
     const file = info.fileList[0]?.originFileObj;
-    formData.append('data_file', file || null);
+    if (!file) return;
+
+    formData.append('data_file', file);
     formData.append('interfaceId', form.getFieldValue('uid'));
 
-    const { code, data, msg } = await uploadInterApiData(formData);
+    const { code, data } = await uploadInterApiData(formData);
     if (code === 0) {
       const currentData = form.getFieldValue('interface_data');
       const newData = currentData.map((item: any) =>
@@ -68,14 +72,24 @@ const APIFormData: FC<SelfProps> = ({ form }) => {
       title: 'value',
       dataIndex: 'value',
       width: '30%',
-      render: (text, record) => {
-        if (record?.value?.includes('{{$')) {
+      render: (text) => {
+        if (!text || typeof text !== 'string')
+          return <Tag color={'default'}>未设置</Tag>;
+        if (text.includes('{{$')) {
           return <Tag color={'orange'}>{text}</Tag>;
-        } else {
-          return <Tag color={'blue'}>{text}</Tag>;
         }
+        return <Tag color={'blue'}>{text}</Tag>;
       },
       renderFormItem: ({ index }, { record }) => {
+        const hasFile =
+          record?.value &&
+          typeof record.value === 'string' &&
+          !record.value.includes('{{$');
+        const fileName =
+          hasFile && typeof record.value === 'string'
+            ? record.value.split('/').pop()
+            : '';
+
         return (
           <ProFormText
             noStyle
@@ -86,23 +100,42 @@ const APIFormData: FC<SelfProps> = ({ form }) => {
                   <ProFormUploadButton
                     noStyle
                     name="value"
-                    label="上传文件"
+                    title={hasFile ? '重新上传文件' : '上传文件'}
                     max={1}
+                    accept="*"
                     fieldProps={{
                       listType: 'text',
-                      fileList: record?.value
+                      multiple: false,
+                      showUploadList: {
+                        showPreviewIcon: false,
+                        showRemoveIcon: true,
+                        showDownloadIcon: false,
+                      },
+                      fileList: hasFile
                         ? [
                             {
                               uid: '-1',
-                              name: record.value,
+                              name: fileName || '附件',
                               status: 'done',
+                              url: record.value,
                             },
                           ]
                         : [],
-                      beforeUpload: () => false, // 阻止自动上传
+                      beforeUpload: () => false,
                       onChange: (info) => uploadData(info, index),
                     }}
-                  />{' '}
+                  />
+                  {hasFile && (
+                    <a
+                      onClick={() => {
+                        window.open(record.value, '_blank');
+                      }}
+                      style={{ marginLeft: 8, color: '#1890ff' }}
+                      title="预览附件"
+                    >
+                      预览
+                    </a>
+                  )}
                   <ApiVariableFunc
                     value={record?.value}
                     index={record?.id}
