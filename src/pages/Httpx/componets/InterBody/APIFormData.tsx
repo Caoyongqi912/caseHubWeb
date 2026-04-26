@@ -10,14 +10,25 @@ import {
   EditableFormInstance,
   EditableProTable,
   ProForm,
+  ProFormSelect,
   ProFormText,
   ProFormUploadButton,
 } from '@ant-design/pro-components';
 import { ProColumns } from '@ant-design/pro-table/lib/typing';
-import { FormInstance, Tag, Typography } from 'antd';
+import { FormInstance, Input, Select, Space, Tag } from 'antd';
 import React, { FC, useRef, useState } from 'react';
 
-const { Text } = Typography;
+const VALUE_TYPE_OPTIONS = [
+  { label: 'Text', value: 'text' },
+  { label: 'Number', value: 'number' },
+  { label: 'Bool', value: 'bool' },
+  { label: 'File', value: 'file' },
+];
+
+const BOOL_OPTIONS = [
+  { label: 'true', value: 'true' },
+  { label: 'false', value: 'false' },
+];
 
 interface SelfProps {
   type: string;
@@ -26,6 +37,7 @@ interface SelfProps {
 
 const APIFormData: FC<SelfProps> = ({ form }) => {
   const [dataEditableKeys, setDataEditableRowKeys] = useState<React.Key[]>();
+  const [, forceUpdate] = useState({});
   const editorFormRef = useRef<EditableFormInstance<IFromData>>();
 
   const uploadData = async (info: any, index: number | undefined) => {
@@ -52,12 +64,196 @@ const APIFormData: FC<SelfProps> = ({ form }) => {
       });
     }
   };
+  const handleValueTypeChange = (newValueType: string, record: IFromData) => {
+    const currentValue = record?.value;
+    const currentValueType = record?.value_type || 'text';
+
+    const currentData = form.getFieldValue('interface_data') || [];
+
+    if (currentValueType !== newValueType && currentValue) {
+      const newData = currentData.map((item: IFromData) =>
+        item.id === record.id
+          ? { ...item, value_type: newValueType, value: undefined }
+          : item,
+      );
+      form.setFieldsValue({ interface_data: newData });
+      editorFormRef.current?.setRowData?.(
+        record.id as number,
+        {
+          value_type: newValueType,
+          value: undefined,
+        } as any,
+      );
+      forceUpdate({});
+    } else {
+      const newData = currentData.map((item: IFromData) =>
+        item.id === record.id ? { ...item, value_type: newValueType } : item,
+      );
+      form.setFieldsValue({ interface_data: newData });
+      editorFormRef.current?.setRowData?.(
+        record.id as number,
+        {
+          value_type: newValueType,
+        } as any,
+      );
+    }
+  };
+
+  const renderValueByType = (record: IFromData) => {
+    const valueType = record?.value_type || 'text';
+    const keyPrefix = `${record.id}-${valueType}`;
+
+    switch (valueType) {
+      case 'number':
+        return (
+          <ProFormText
+            noStyle
+            name="value"
+            key={`${keyPrefix}-number`}
+            fieldProps={{
+              type: 'number',
+              placeholder: '请输入数字',
+            }}
+            rules={[
+              { required: true, message: 'Value 必填' },
+              {
+                pattern: /^-?\d+(\.\d+)?$/,
+                message: '请输入有效的数字',
+              },
+            ]}
+          />
+        );
+
+      case 'bool':
+        return (
+          <ProFormSelect
+            noStyle
+            name="value"
+            key={`${keyPrefix}-bool`}
+            options={BOOL_OPTIONS}
+            placeholder="请选择布尔值"
+            rules={[{ required: true, message: 'Value 必填' }]}
+          />
+        );
+
+      case 'file':
+        const hasFile =
+          record?.value &&
+          typeof record.value === 'string' &&
+          !record.value.includes('{{$');
+        const fileName =
+          hasFile && typeof record.value === 'string'
+            ? record.value.split('/').pop()
+            : '';
+
+        return (
+          <Space key={`${keyPrefix}-file`}>
+            <ProFormUploadButton
+              noStyle
+              name="value_file"
+              title={hasFile ? '重新上传' : '上传文件'}
+              max={1}
+              accept="*"
+              fieldProps={{
+                listType: 'text',
+                multiple: false,
+                showUploadList: {
+                  showPreviewIcon: false,
+                  showRemoveIcon: true,
+                  showDownloadIcon: false,
+                },
+                fileList: hasFile
+                  ? [
+                      {
+                        uid: '-1',
+                        name: fileName || '附件',
+                        status: 'done',
+                        url: record.value,
+                      },
+                    ]
+                  : [],
+                beforeUpload: () => false,
+                onChange: (info) => uploadData(info, record.id as number),
+              }}
+            />
+            {hasFile && (
+              <a
+                onClick={() => {
+                  window.open(record.value, '_blank');
+                }}
+                style={{ color: '#1890ff' }}
+                title="预览附件"
+              >
+                预览
+              </a>
+            )}
+          </Space>
+        );
+
+      case 'text':
+      default:
+        return (
+          <ProFormText
+            noStyle
+            name="value"
+            key={`${keyPrefix}-text`}
+            fieldProps={{
+              placeholder: '请输入文本',
+              suffix: (
+                <ApiVariableFunc
+                  value={record?.value}
+                  index={record?.id}
+                  setValue={(idx, newData) => {
+                    editorFormRef.current?.setRowData?.(idx, newData);
+                    const currentData =
+                      form.getFieldValue('interface_data') || [];
+                    const newDataList = currentData.map((item: IFromData) =>
+                      item.id === idx
+                        ? { ...item, value: newData.value }
+                        : item,
+                    );
+                    form.setFieldsValue({ interface_data: newDataList });
+                  }}
+                />
+              ),
+            }}
+            rules={[{ required: true, message: 'Value 必填' }]}
+          />
+        );
+    }
+  };
+
+  const renderValueDisplay = (text: any, record: IFromData) => {
+    if (!text) return <Tag color="default">未设置</Tag>;
+
+    const valueType = record?.value_type || 'text';
+
+    if (typeof text === 'string' && text.includes('{{$')) {
+      return <Tag color="orange">{text}</Tag>;
+    }
+
+    switch (valueType) {
+      case 'number':
+        return <Tag color="blue">{text}</Tag>;
+      case 'bool':
+        return <Tag color={text === 'true' ? 'green' : 'red'}>{text}</Tag>;
+      case 'file':
+        const fileName =
+          typeof text === 'string' ? text.split('/').pop() : text;
+        return <Tag color="purple">{fileName}</Tag>;
+      default:
+        return <Tag color="blue">{text}</Tag>;
+    }
+  };
+
   const columns: ProColumns<IFromData>[] = [
     {
       title: 'Key',
       dataIndex: 'key',
-      width: '30%',
-      render: (_, record) => <Text strong>{record.key}</Text>,
+      width: '25%',
+      renderFormItem: (_, { record }) => {
+        return <Input placeholder="请输入 Key" disabled={!record} />;
+      },
       formItemProps: {
         required: true,
         rules: [
@@ -69,108 +265,69 @@ const APIFormData: FC<SelfProps> = ({ form }) => {
       },
     },
     {
-      title: 'value',
-      dataIndex: 'value',
-      width: '30%',
-      render: (text) => {
-        if (!text || typeof text !== 'string')
-          return <Tag color={'default'}>未设置</Tag>;
-        if (text.includes('{{$')) {
-          return <Tag color={'orange'}>{text}</Tag>;
-        }
-        return <Tag color={'blue'}>{text}</Tag>;
+      title: 'Type',
+      dataIndex: 'value_type',
+      width: '15%',
+      valueType: 'select',
+      valueEnum: {
+        text: { text: 'Text', status: 'Default' },
+        number: { text: 'Number', status: 'Processing' },
+        bool: { text: 'Bool', status: 'Success' },
+        file: { text: 'File', status: 'Warning' },
       },
-      renderFormItem: ({ index }, { record }) => {
-        const hasFile =
-          record?.value &&
-          typeof record.value === 'string' &&
-          !record.value.includes('{{$');
-        const fileName =
-          hasFile && typeof record.value === 'string'
-            ? record.value.split('/').pop()
-            : '';
-
+      renderFormItem: (_, { record }) => {
         return (
-          <ProFormText
-            noStyle
-            name={'value'}
-            fieldProps={{
-              suffix: (
-                <>
-                  <ProFormUploadButton
-                    noStyle
-                    name="value"
-                    title={hasFile ? '重新上传文件' : '上传文件'}
-                    max={1}
-                    accept="*"
-                    fieldProps={{
-                      listType: 'text',
-                      multiple: false,
-                      showUploadList: {
-                        showPreviewIcon: false,
-                        showRemoveIcon: true,
-                        showDownloadIcon: false,
-                      },
-                      fileList: hasFile
-                        ? [
-                            {
-                              uid: '-1',
-                              name: fileName || '附件',
-                              status: 'done',
-                              url: record.value,
-                            },
-                          ]
-                        : [],
-                      beforeUpload: () => false,
-                      onChange: (info) => uploadData(info, index),
-                    }}
-                  />
-                  {hasFile && (
-                    <a
-                      onClick={() => {
-                        window.open(record.value, '_blank');
-                      }}
-                      style={{ marginLeft: 8, color: '#1890ff' }}
-                      title="预览附件"
-                    >
-                      预览
-                    </a>
-                  )}
-                  <ApiVariableFunc
-                    value={record?.value}
-                    index={record?.id}
-                    setValue={(index, newData) => {
-                      editorFormRef.current?.setRowData?.(index, newData);
-                      form.setFieldsValue({
-                        interface_data: form
-                          .getFieldValue('interface_data')
-                          .map((item: any) =>
-                            item.id === index
-                              ? { ...item, value: newData.value }
-                              : item,
-                          ),
-                      });
-                    }}
-                  />
-                </>
-              ),
-              value: record?.value,
+          <Select
+            options={VALUE_TYPE_OPTIONS}
+            placeholder="选择类型"
+            onChange={(value) => {
+              if (record) {
+                handleValueTypeChange(value, record);
+              }
             }}
           />
         );
+      },
+      formItemProps: {
+        required: true,
+        rules: [
+          {
+            required: true,
+            message: 'Type 必填',
+          },
+        ],
+      },
+    },
+    {
+      title: 'Value',
+      dataIndex: 'value',
+      width: '30%',
+      render: (text, record) => renderValueDisplay(text, record),
+      renderFormItem: (_, { record }) => {
+        if (!record) return null;
+        const currentData = form.getFieldValue('interface_data') || [];
+        const currentRecord =
+          currentData.find((item: IFromData) => item.id === record.id) ||
+          record;
+        return renderValueByType(currentRecord);
       },
     },
     {
       title: 'Desc',
       dataIndex: 'desc',
       width: '20%',
+      renderFormItem: () => {
+        return <Input placeholder="请输入描述" />;
+      },
     },
     {
       title: 'Opt',
       valueType: 'option',
+      width: '10%',
       render: (_, record, __, action) => {
         return [
           <a
+            key="edit"
             onClick={() => {
               action?.startEditable?.(record.id);
             }}

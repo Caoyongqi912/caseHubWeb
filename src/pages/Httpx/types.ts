@@ -204,9 +204,12 @@ interface IBase {
 
 export interface IParams extends IBase {}
 
-export interface IFromData extends IBase {
-  content_type?: string;
+export interface IFromData {
+  id: React.Key;
+  key?: string;
   value_type?: string;
+  value?: any;
+  desc?: string;
 }
 
 export interface IHeaders extends IBase {}
