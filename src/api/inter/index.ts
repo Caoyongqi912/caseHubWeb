@@ -21,12 +21,28 @@ export const uploadInterApi = async (data: any, options?: IObjGet) => {
 };
 
 /**
- * page api
+ * uploadInterApiData api
  * @param data
  * @param options
  */
 export const uploadInterApiData = async (data: any, options?: IObjGet) => {
   return request<IResponse<any>>('/api/file/interface/data/upload', {
+    method: 'POST',
+    data: data,
+    ...(options || {}),
+  });
+};
+
+/**
+ * page api
+ * @param data
+ * @param options
+ */
+export const removeInterApiFileData = async (
+  data: { file_id: string },
+  options?: IObjGet,
+) => {
+  return request<IResponse<any>>('/api/file/interface/data/remove', {
     method: 'POST',
     data: data,
     ...(options || {}),

@@ -1,4 +1,4 @@
-import { uploadInterApiData } from '@/api/inter';
+import { removeInterApiFileData, uploadInterApiData } from '@/api/inter';
 import ApiVariableFunc from '@/pages/Httpx/componets/ApiVariableFunc';
 import {
   FormEditableOnValueChange,
@@ -6,28 +6,21 @@ import {
 } from '@/pages/Httpx/componets/FormEditableOnValueChange';
 import SetKv2Query from '@/pages/Httpx/componets/setKv2Query';
 import { IFromData, IInterfaceAPI } from '@/pages/Httpx/types';
+import { LoadingOutlined } from '@ant-design/icons';
 import {
   EditableFormInstance,
   EditableProTable,
   ProForm,
-  ProFormSelect,
   ProFormText,
   ProFormUploadButton,
 } from '@ant-design/pro-components';
 import { ProColumns } from '@ant-design/pro-table/lib/typing';
-import { FormInstance, Input, Select, Space, Tag } from 'antd';
+import { FormInstance, Input, Select, Tag } from 'antd';
 import React, { FC, useRef, useState } from 'react';
 
 const VALUE_TYPE_OPTIONS = [
   { label: 'Text', value: 'text' },
-  { label: 'Number', value: 'number' },
-  { label: 'Bool', value: 'bool' },
   { label: 'File', value: 'file' },
-];
-
-const BOOL_OPTIONS = [
-  { label: 'true', value: 'true' },
-  { label: 'false', value: 'false' },
 ];
 
 interface SelfProps {
@@ -39,6 +32,9 @@ const APIFormData: FC<SelfProps> = ({ form }) => {
   const [dataEditableKeys, setDataEditableRowKeys] = useState<React.Key[]>();
   const [, forceUpdate] = useState({});
   const editorFormRef = useRef<EditableFormInstance<IFromData>>();
+  const [fileUidMap, setFileUidMap] = useState<Record<number, string>>({});
+  const [fileNameMap, setFileNameMap] = useState<Record<string, string>>({});
+  const [fileLoading, setFileLoading] = useState<Record<number, boolean>>({});
 
   const uploadData = async (info: any, index: number | undefined) => {
     if (info.fileList.length === 0) return;
@@ -50,27 +46,83 @@ const APIFormData: FC<SelfProps> = ({ form }) => {
     formData.append('data_file', file);
     formData.append('interfaceId', form.getFieldValue('uid'));
 
+    setFileLoading((prev) => ({ ...prev, [index!]: true }));
+
     const { code, data } = await uploadInterApiData(formData);
     if (code === 0) {
       const currentData = form.getFieldValue('interface_data');
       const newData = currentData.map((item: any) =>
-        item.id === index ? { ...item, value: data } : item,
+        item.id === index ? { ...item, value: data.uid } : item,
       );
 
       form.setFieldsValue({ interface_data: newData });
       editorFormRef.current?.setRowData?.(index!, {
         ...currentData[index!],
-        value: data,
+        value: data.uid,
+      });
+      setFileUidMap((prev) => ({ ...prev, [index!]: data.uid }));
+      setFileNameMap((prev) => ({ ...prev, [data.uid]: data.file_name }));
+      setFileLoading((prev) => {
+        const newLoading = { ...prev };
+        delete newLoading[index!];
+        return newLoading;
+      });
+    } else {
+      setFileLoading((prev) => {
+        const newLoading = { ...prev };
+        delete newLoading[index!];
+        return newLoading;
       });
     }
   };
+
+  const clearFileValue = async (recordId: number) => {
+    const uid = fileUidMap[recordId];
+
+    setFileLoading((prev) => ({ ...prev, [recordId]: true }));
+
+    if (uid) {
+      await removeInterApiFileData({ file_id: uid });
+      setFileUidMap((prev) => {
+        const newMap = { ...prev };
+        delete newMap[recordId];
+        return newMap;
+      });
+      setFileNameMap((prev) => {
+        const newMap = { ...prev };
+        delete newMap[uid];
+        return newMap;
+      });
+    }
+
+    const currentData = form.getFieldValue('interface_data');
+    const newData = currentData.map((item: any) =>
+      item.id === recordId ? { ...item, value: undefined } : item,
+    );
+    form.setFieldsValue({ interface_data: newData });
+    editorFormRef.current?.setRowData?.(recordId, {
+      ...currentData.find((item: any) => item.id === recordId),
+      value: undefined,
+    } as any);
+    setFileLoading((prev) => {
+      const newLoading = { ...prev };
+      delete newLoading[recordId];
+      return newLoading;
+    });
+    forceUpdate({});
+  };
+
   const handleValueTypeChange = (newValueType: string, record: IFromData) => {
-    const currentValue = record?.value;
     const currentValueType = record?.value_type || 'text';
+
+    if (currentValueType === 'file' && newValueType !== 'file') {
+      clearFileValue(record.id as number);
+      return;
+    }
 
     const currentData = form.getFieldValue('interface_data') || [];
 
-    if (currentValueType !== newValueType && currentValue) {
+    if (currentValueType !== newValueType && record?.value) {
       const newData = currentData.map((item: IFromData) =>
         item.id === record.id
           ? { ...item, value_type: newValueType, value: undefined }
@@ -104,90 +156,45 @@ const APIFormData: FC<SelfProps> = ({ form }) => {
     const keyPrefix = `${record.id}-${valueType}`;
 
     switch (valueType) {
-      case 'number':
-        return (
-          <ProFormText
-            noStyle
-            name="value"
-            key={`${keyPrefix}-number`}
-            fieldProps={{
-              type: 'number',
-              placeholder: '请输入数字',
-            }}
-            rules={[
-              { required: true, message: 'Value 必填' },
-              {
-                pattern: /^-?\d+(\.\d+)?$/,
-                message: '请输入有效的数字',
-              },
-            ]}
-          />
-        );
-
-      case 'bool':
-        return (
-          <ProFormSelect
-            noStyle
-            name="value"
-            key={`${keyPrefix}-bool`}
-            options={BOOL_OPTIONS}
-            placeholder="请选择布尔值"
-            rules={[{ required: true, message: 'Value 必填' }]}
-          />
-        );
-
       case 'file':
         const hasFile =
-          record?.value &&
-          typeof record.value === 'string' &&
-          !record.value.includes('{{$');
-        const fileName =
-          hasFile && typeof record.value === 'string'
-            ? record.value.split('/').pop()
-            : '';
+          record?.value && typeof record.value === 'string' && record.value;
+        const fileName = hasFile
+          ? fileNameMap[record.value] || record.value
+          : '';
 
         return (
-          <Space key={`${keyPrefix}-file`}>
-            <ProFormUploadButton
-              noStyle
-              name="value_file"
-              title={hasFile ? '重新上传' : '上传文件'}
-              max={1}
-              accept="*"
-              fieldProps={{
-                listType: 'text',
-                multiple: false,
-                showUploadList: {
-                  showPreviewIcon: false,
-                  showRemoveIcon: true,
-                  showDownloadIcon: false,
-                },
-                fileList: hasFile
-                  ? [
-                      {
-                        uid: '-1',
-                        name: fileName || '附件',
-                        status: 'done',
-                        url: record.value,
-                      },
-                    ]
-                  : [],
-                beforeUpload: () => false,
-                onChange: (info) => uploadData(info, record.id as number),
-              }}
-            />
-            {hasFile && (
-              <a
-                onClick={() => {
-                  window.open(record.value, '_blank');
-                }}
-                style={{ color: '#1890ff' }}
-                title="预览附件"
-              >
-                预览
-              </a>
-            )}
-          </Space>
+          <ProFormUploadButton
+            noStyle
+            name="value_file"
+            title={hasFile ? '重新上传' : '上传文件'}
+            max={1}
+            accept="*"
+            fieldProps={{
+              listType: 'text',
+              multiple: false,
+              showUploadList: {
+                showPreviewIcon: false,
+                showRemoveIcon: true,
+                showDownloadIcon: false,
+              },
+              fileList: hasFile
+                ? [
+                    {
+                      uid: '-1',
+                      name: fileName,
+                      status: 'done',
+                    },
+                  ]
+                : [],
+              beforeUpload: () => false,
+              onChange: (info) => uploadData(info, record.id as number),
+              onRemove: () => {
+                clearFileValue(record.id as number);
+                return false;
+              },
+            }}
+          />
         );
 
       case 'text':
@@ -233,14 +240,17 @@ const APIFormData: FC<SelfProps> = ({ form }) => {
     }
 
     switch (valueType) {
-      case 'number':
-        return <Tag color="blue">{text}</Tag>;
-      case 'bool':
-        return <Tag color={text === 'true' ? 'green' : 'red'}>{text}</Tag>;
       case 'file':
-        const fileName =
-          typeof text === 'string' ? text.split('/').pop() : text;
-        return <Tag color="purple">{fileName}</Tag>;
+        const isLoading = fileLoading[record.id as number];
+        if (isLoading) {
+          return (
+            <Tag color="blue" icon={<LoadingOutlined spin />}>
+              {text || '处理中...'}
+            </Tag>
+          );
+        }
+        const displayName = fileNameMap[text] || text;
+        return <Tag color="purple">{displayName}</Tag>;
       default:
         return <Tag color="blue">{text}</Tag>;
     }
@@ -271,8 +281,6 @@ const APIFormData: FC<SelfProps> = ({ form }) => {
       valueType: 'select',
       valueEnum: {
         text: { text: 'Text', status: 'Default' },
-        number: { text: 'Number', status: 'Processing' },
-        bool: { text: 'Bool', status: 'Success' },
         file: { text: 'File', status: 'Warning' },
       },
       renderFormItem: (_, { record }) => {
