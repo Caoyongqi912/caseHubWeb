@@ -2,6 +2,7 @@ import { IUser } from '@/api';
 import { currentUser, queryProject } from '@/api/base';
 import LeftSetting from '@/components/LeftSetting';
 import { errorConfig } from '@/requestErrorConfig';
+import '@/warningFilter';
 import { RequestConfig } from '@@/plugin-request/request';
 import { PageLoading } from '@ant-design/pro-components';
 import { Settings as LayoutSettings } from '@ant-design/pro-layout';

@@ -144,12 +144,29 @@ const Index: FC<SelfProps> = ({ groupId, projectId }) => {
         open={showTryResponses}
         setOpen={setShowTryResponses}
       >
-        <Spin
-          tip={'接口请求中。。'}
-          size={'large'}
-          spinning={showTryResponsesLoading}
-        >
-          <InterfaceApiResponseDetail responses={tryResponses} />
+        <Spin size={'large'} spinning={showTryResponsesLoading}>
+          <div
+            style={{
+              position: 'relative',
+              minHeight: showTryResponsesLoading ? 400 : 'auto',
+            }}
+          >
+            {showTryResponsesLoading && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  zIndex: 1,
+                  color: '#1890ff',
+                }}
+              >
+                接口请求中..
+              </div>
+            )}
+            <InterfaceApiResponseDetail responses={tryResponses} />
+          </div>
         </Spin>
       </MyDrawer>
       <ProCard

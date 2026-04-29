@@ -37,7 +37,7 @@ import {
   DatabaseOutlined,
   DownOutlined,
   FieldTimeOutlined,
-  LeftOutlined,
+  MessageTwoTone,
   PlayCircleOutlined,
   PlusOutlined,
   PythonOutlined,
@@ -467,6 +467,23 @@ const Index: FC<SelfProps> = ({ interfaceCase, hiddenRunButton }) => {
   const ApisCardExtra = useMemo(
     () => (
       <Space size={12}>
+        <Tooltip title="修改历史">
+          <Button
+            type="text"
+            icon={<MessageTwoTone style={{ fontSize: 14 }} />}
+            onClick={() => setOpenDynamicHistoryDrawer(true)}
+            style={{
+              height: 32,
+              width: 32,
+              padding: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#8c8c8c',
+              borderRadius: 6,
+            }}
+          />
+        </Tooltip>
         <Button
           icon={<SyncOutlined style={{ fontSize: 14 }} />}
           onClick={handleRefreshSteps}
@@ -510,24 +527,6 @@ const Index: FC<SelfProps> = ({ interfaceCase, hiddenRunButton }) => {
             <DownOutlined style={{ fontSize: 10, opacity: 0.85 }} />
           </Button>
         </Dropdown>
-
-        <Tooltip title="修改历史">
-          <Button
-            type="text"
-            icon={<LeftOutlined style={{ fontSize: 14 }} />}
-            onClick={() => setOpenDynamicHistoryDrawer(true)}
-            style={{
-              height: 32,
-              width: 32,
-              padding: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#8c8c8c',
-              borderRadius: 6,
-            }}
-          />
-        </Tooltip>
 
         {!hiddenRunButton && (
           <Button

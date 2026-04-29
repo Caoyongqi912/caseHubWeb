@@ -74,12 +74,12 @@ const ApiDetailForm: FC<IProps> = (props) => {
     <>
       <ProFormSelect
         disabled={currentMode === 1}
-        noStyle
         name={'env_id'}
         options={envs}
-        required={true}
+        width={'xs'}
         placeholder={'环境选择'}
-        label={'Env'}
+        label={'URL'}
+        required={true}
         fieldProps={{
           suffixIcon: <GlobalOutlined />,
           dropdownStyle: { minWidth: 200 },
@@ -91,21 +91,7 @@ const ApiDetailForm: FC<IProps> = (props) => {
       />
     </>
   );
-  const addonAfter = (
-    <>
-      <ProFormSelect
-        disabled={currentMode === 1}
-        noStyle
-        className={'method'}
-        name={'interface_method'}
-        label={'method'}
-        initialValue={'POST'}
-        options={API_REQUEST_METHOD}
-        required={true}
-        rules={[{ required: true, message: 'method 不能为空' }]}
-      />
-    </>
-  );
+  const addonAfter = <></>;
   const onModelFinish = async () => {
     if (script) {
       const { code, data } = await setCurl2InterApi({ script: script });
@@ -153,6 +139,52 @@ const ApiDetailForm: FC<IProps> = (props) => {
     </>
   );
 
+  const URL = (
+    <>
+      <Space.Compact>
+        <ProFormSelect
+          disabled={currentMode === 1}
+          name={'env_id'}
+          options={envs}
+          width={'xs'}
+          placeholder={'环境选择'}
+          label={'URL'}
+          required={true}
+          fieldProps={{
+            suffixIcon: <GlobalOutlined />,
+            dropdownStyle: { minWidth: 200 },
+            style: {
+              borderTopRightRadius: 0,
+              borderBottomRightRadius: 0,
+            },
+          }}
+        />
+        <ProFormText
+          label={' '}
+          disabled={currentMode === 1}
+          name={'interface_url'}
+          width={'md'}
+          required={false}
+          rules={[{ required: true, message: '请输入请求url' }]}
+          fieldProps={{
+            prefix: <LinkOutlined style={{ color: '#8c8c8c' }} />,
+          }}
+        />
+        <ProFormSelect
+          disabled={currentMode === 1}
+          className={'method'}
+          name={'interface_method'}
+          label={' '}
+          width={'xs'}
+          initialValue={'POST'}
+          required={false}
+          options={API_REQUEST_METHOD}
+          rules={[{ required: true, message: 'method 不能为空' }]}
+        />
+      </Space.Compact>
+    </>
+  );
+
   return (
     <div style={{ padding: 8 }}>
       <Modal
@@ -180,19 +212,7 @@ const ApiDetailForm: FC<IProps> = (props) => {
           required={true}
           rules={[{ required: true, message: '步骤名称不能为空' }]}
         />
-
-        <ProFormText
-          label={'URL'}
-          disabled={currentMode === 1}
-          addonBefore={addonBefore}
-          name={'interface_url'}
-          width={'md'}
-          rules={[{ required: true, message: '请输入请求url' }]}
-          addonAfter={addonAfter}
-          fieldProps={{
-            prefix: <LinkOutlined style={{ color: '#8c8c8c' }} />,
-          }}
-        />
+        {URL}
       </ProForm.Group>
       <ProForm.Group>
         <ProFormTextArea

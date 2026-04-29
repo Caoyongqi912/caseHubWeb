@@ -25,8 +25,8 @@ import {
   DownOutlined,
   EditOutlined,
   KeyOutlined,
-  LeftOutlined,
   LineChartOutlined,
+  MessageTwoTone,
   MoreOutlined,
   QuestionCircleOutlined,
   SaveOutlined,
@@ -425,7 +425,7 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
         <Tooltip title="修改历史">
           <Button
             type="text"
-            icon={<LeftOutlined />}
+            icon={<MessageTwoTone />}
             onClick={() => setOpenRemarkDrawer(true)}
             style={{ color: '#6c757d' }}
           />
@@ -495,10 +495,31 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
           </ProCard>
         </ProForm>
         <div ref={responseRef}>
-          <Spin tip={'接口请求中...'} size="large" spinning={tryLoading}>
-            {responseInfo && (
-              <InterfaceApiResponseDetail responses={responseInfo} />
-            )}
+          <Spin size="large" spinning={tryLoading}>
+            <div
+              style={{
+                position: 'relative',
+                minHeight: tryLoading ? 400 : 'auto',
+              }}
+            >
+              {tryLoading && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    zIndex: 1,
+                    color: '#1890ff',
+                  }}
+                >
+                  接口请求中...
+                </div>
+              )}
+              {responseInfo && (
+                <InterfaceApiResponseDetail responses={responseInfo} />
+              )}
+            </div>
           </Spin>
         </div>
         <FloatButton
