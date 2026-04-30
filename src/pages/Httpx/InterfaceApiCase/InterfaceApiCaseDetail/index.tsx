@@ -34,10 +34,10 @@ import {
   ApiOutlined,
   BranchesOutlined,
   CloseOutlined,
+  CommentOutlined,
   DatabaseOutlined,
   DownOutlined,
   FieldTimeOutlined,
-  MessageTwoTone,
   PlayCircleOutlined,
   PlusOutlined,
   PythonOutlined,
@@ -58,7 +58,6 @@ import {
   Space,
   TabsProps,
   theme,
-  Tooltip,
 } from 'antd';
 import { RadioChangeEvent } from 'antd/lib/radio/interface';
 import { FC, useCallback, useEffect, useMemo, useState } from 'react';
@@ -467,23 +466,6 @@ const Index: FC<SelfProps> = ({ interfaceCase, hiddenRunButton }) => {
   const ApisCardExtra = useMemo(
     () => (
       <Space size={12}>
-        <Tooltip title="修改历史">
-          <Button
-            type="text"
-            icon={<MessageTwoTone style={{ fontSize: 14 }} />}
-            onClick={() => setOpenDynamicHistoryDrawer(true)}
-            style={{
-              height: 32,
-              width: 32,
-              padding: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#8c8c8c',
-              borderRadius: 6,
-            }}
-          />
-        </Tooltip>
         <Button
           icon={<SyncOutlined style={{ fontSize: 14 }} />}
           onClick={handleRefreshSteps}
@@ -670,15 +652,15 @@ const Index: FC<SelfProps> = ({ interfaceCase, hiddenRunButton }) => {
           />
         </ProCard>
 
-        <FloatButton.BackTop
-          style={{
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-            borderRadius: '50%',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            right: 24,
-            bottom: 24,
-          }}
-        />
+        <FloatButton.Group shape="circle" style={{ insetInlineEnd: 94 }}>
+          <FloatButton
+            tooltip="查看记录"
+            onClick={() => setOpenDynamicHistoryDrawer(true)}
+            type="primary"
+            icon={<CommentOutlined style={{ fontSize: 20 }} />}
+          />
+          <FloatButton.BackTop type="primary" visibilityHeight={0} />
+        </FloatButton.Group>
       </div>
     </>
   );
