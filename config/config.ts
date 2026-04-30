@@ -17,6 +17,7 @@ export default defineConfig({
   routes,
   model: {},
   antd: {
+    configProvider: {},
     theme: {},
   },
   request: {
@@ -34,6 +35,5 @@ export default defineConfig({
     chainWebpack(config: any) {
       return config;
     },
-    excludes: ['mind-elixir'],
   },
 });

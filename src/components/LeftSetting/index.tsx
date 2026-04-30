@@ -22,7 +22,7 @@ type ThemeType = 'realDark' | 'light';
 interface SelfProps {
   collapsed: boolean;
   currentTheme: string;
-  toggleTheme: (t: ThemeType) => void;
+  toggleTheme: () => void;
 }
 
 const Index: FC<SelfProps> = ({ collapsed, currentTheme, toggleTheme }) => {
@@ -47,7 +47,7 @@ const Index: FC<SelfProps> = ({ collapsed, currentTheme, toggleTheme }) => {
   }
 
   const handleThemeChange = (value: string) => {
-    toggleTheme(value as ThemeType);
+    toggleTheme();
   };
 
   const items: MenuProps['items'] = [

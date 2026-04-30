@@ -6,9 +6,9 @@ import '@/warningFilter';
 import { RequestConfig } from '@@/plugin-request/request';
 import { PageLoading } from '@ant-design/pro-components';
 import { Settings as LayoutSettings } from '@ant-design/pro-layout';
-import { ConfigProvider } from 'antd';
+import { theme } from 'antd';
 import { useState } from 'react';
-import { history, RunTimeLayoutConfig } from 'umi';
+import { history, RunTimeLayoutConfig, useAntdConfigSetter } from 'umi';
 import defaultSetting from '../config/defaultSetting';
 import { GlassBackground } from './components/Glass';
 
@@ -101,10 +101,21 @@ export const layout: RunTimeLayoutConfig = ({
 }) => {
   const [collapsed, setCollapsed] = useState(true);
   const currentTheme = initialState?.theme || 'light';
+  const setAntdConfig = useAntdConfigSetter();
 
   const handleToggleTheme = () => {
     const newTheme = currentTheme === 'light' ? 'realDark' : 'light';
-    initialState?.setTheme?.(newTheme);
+
+    setAntdConfig({
+      theme: {
+        algorithm:
+          newTheme === 'realDark'
+            ? theme.darkAlgorithm
+            : theme.defaultAlgorithm,
+      },
+    });
+
+    themeUtils.setTheme(newTheme);
     setInitialState((prev) => ({
       ...prev,
       theme: newTheme,
@@ -130,9 +141,7 @@ export const layout: RunTimeLayoutConfig = ({
     unAccessible: <div>无访问权限</div>,
     childrenRender: (children) => (
       <GlassBackground>
-        <ConfigProvider>
-          {initialState?.loading ? <PageLoading /> : <>{children}</>}
-        </ConfigProvider>
+        {initialState?.loading ? <PageLoading /> : <>{children}</>}
       </GlassBackground>
     ),
     rightContentRender: () => (
