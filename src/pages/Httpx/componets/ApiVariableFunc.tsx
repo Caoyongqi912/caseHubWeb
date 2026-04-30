@@ -10,78 +10,25 @@ import {
   IInterfaceGlobalFunc,
   IInterfaceGlobalVariable,
 } from '@/pages/Httpx/types';
-import { GoogleSquareFilled, SearchOutlined } from '@ant-design/icons';
+import { FunctionOutlined, GoogleSquareFilled } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
-import { Button, Popover, Select, Space, Typography } from 'antd';
-import React, { FC, useEffect, useState } from 'react';
+import { Button, Popover, Select, Space, theme, Typography } from 'antd';
+import React, { FC, useEffect, useMemo, useState } from 'react';
 
 const { Text } = Typography;
 
 interface ISelfProps {
   value?: string | undefined;
   setValue?: ((rowIndex: string | number, data: any) => void) | undefined;
-  index?: React.Key | undefined;
+  index?: string | number;
 }
-
-/**
- * 公共样式配置
- */
-const commonStyles = {
-  cardBody: {
-    padding: '8px',
-  },
-  cardBodyCompact: {
-    padding: '4px',
-  },
-  cardBodyMinimal: {
-    padding: 0,
-  },
-  popover: {
-    borderRadius: '8px',
-    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-  },
-  button: {
-    borderRadius: '6px',
-    transition: 'all 0.3s ease',
-  },
-  buttonPrimary: {
-    borderRadius: '6px',
-    boxShadow: '0 2px 0 rgba(24, 144, 255, 0.2)',
-    transition: 'all 0.3s ease',
-  },
-  icon: {
-    color: '#1890ff',
-    fontSize: '14px',
-    cursor: 'pointer',
-    transition: 'all 0.3s ease',
-  },
-  iconHover: {
-    color: '#40a9ff',
-    transform: 'scale(1.1)',
-  },
-  label: {
-    color: '#8c8c8c',
-    fontSize: '12px',
-    marginBottom: '4px',
-  },
-  code: {
-    fontSize: '12px',
-    padding: '4px 8px',
-    backgroundColor: '#f5f5f5',
-    borderRadius: '4px',
-    fontFamily: 'monospace',
-  },
-  googleIcon: {
-    color: '#1890ff',
-    fontSize: '14px',
-  },
-};
 
 /**
  * API变量和函数选择组件
  * 用于快速插入变量、函数和自定义变量到接口参数中
  */
 const ApiVariableFunc: FC<ISelfProps> = ({ value, index, setValue }) => {
+  const { token } = theme.useToken();
   const [open, setOpen] = useState(false);
   const [currentActiveKey, setCurrentActiveKey] = useState<string>('1');
   const [currentValue, setCurrentValue] = useState<IInterfaceGlobalFunc>();
@@ -93,6 +40,146 @@ const ApiVariableFunc: FC<ISelfProps> = ({ value, index, setValue }) => {
   const [myData, setMyData] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [refresh, setRefresh] = useState(false);
+  const [hoveredIcon, setHoveredIcon] = useState(false);
+
+  const commonStyles = useMemo(
+    () => ({
+      cardBody: {
+        padding: token.paddingMD,
+      },
+      cardBodyCompact: {
+        padding: token.paddingSM,
+      },
+      cardBodyMinimal: {
+        padding: 0,
+      },
+      popover: {
+        borderRadius: token.borderRadiusLG,
+        boxShadow: token.boxShadow,
+        overflow: 'hidden',
+      },
+      button: {
+        borderRadius: token.borderRadiusSM,
+        transition: 'all 0.2s ease',
+        fontWeight: 500,
+      },
+      buttonPrimary: {
+        borderRadius: token.borderRadiusSM,
+        boxShadow: `0 2px 8px ${token.colorPrimaryBg}`,
+        transition: 'all 0.2s ease',
+        fontWeight: 500,
+      },
+      icon: {
+        color: token.colorTextSecondary,
+        fontSize: '16px',
+        cursor: 'pointer',
+        transition: 'all 0.2s ease',
+        padding: '4px',
+      },
+      iconHover: {
+        color: token.colorPrimary,
+        transform: 'scale(1.15)',
+      },
+      label: {
+        color: token.colorTextTertiary,
+        fontSize: '12px',
+        marginBottom: 4,
+        fontWeight: 500,
+        textTransform: 'uppercase',
+        letterSpacing: '0.5px',
+      },
+      code: {
+        fontSize: '13px',
+        padding: `${token.paddingXS}px ${token.paddingSM}px`,
+        backgroundColor: token.colorBgContainer,
+        borderRadius: token.borderRadiusSM,
+        fontFamily: "'Fira Code', 'Monaco', 'Consolas', monospace",
+      },
+      codeHighlight: {
+        fontSize: '14px',
+        padding: '8px 12px',
+        borderRadius: token.borderRadiusSM,
+        fontFamily: "'Fira Code', 'Monaco', 'Consolas', monospace",
+        color: token.colorPrimary,
+        fontWeight: 500,
+      },
+      googleIcon: {
+        color: token.colorPrimary,
+        fontSize: '13px',
+        opacity: 0.8,
+      },
+      tabItem: {
+        padding: '8px 16px',
+        borderRadius: token.borderRadiusSM,
+        transition: 'all 0.2s ease',
+      },
+      selectWrapper: {
+        borderRadius: token.borderRadiusSM,
+        overflow: 'hidden',
+      },
+      detailPanel: {
+        background: token.colorBgContainer,
+        borderLeft: `1px solid ${token.colorBorderSecondary}`,
+      },
+      buttonGroup: {
+        display: 'flex',
+        gap: '8px',
+        alignItems: 'center',
+      },
+      emptyText: {
+        color: token.colorTextQuaternary,
+        fontSize: '13px',
+      },
+      infoItem: {
+        marginBottom: 16,
+      },
+      infoItemLast: {
+        marginBottom: 0,
+      },
+      badge: {
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 4,
+        padding: '2px 8px',
+        borderRadius: 4,
+        fontSize: '12px',
+        fontWeight: 500,
+      },
+      badgeFunc: {
+        backgroundColor: token.colorPrimaryBg,
+        color: token.colorPrimary,
+      },
+      badgeVar: {
+        backgroundColor: token.colorSuccessBg,
+        color: token.colorSuccess,
+      },
+      badgeMy: {
+        backgroundColor: token.colorWarningBg,
+        color: token.colorWarning,
+      },
+      sectionDivider: {
+        height: 1,
+        backgroundColor: token.colorBorderSecondary,
+        margin: '12px 0',
+      },
+      iconBadge: {
+        width: 32,
+        height: 32,
+        borderRadius: 8,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: token.colorPrimaryBg,
+        marginBottom: 12,
+      },
+    }),
+    [token],
+  );
+
+  const iconStyle: React.CSSProperties = {
+    ...commonStyles.icon,
+    ...(hoveredIcon ? commonStyles.iconHover : {}),
+  };
 
   /**
    * 通用数据获取函数
@@ -219,74 +306,144 @@ const ApiVariableFunc: FC<ISelfProps> = ({ value, index, setValue }) => {
    * 渲染内容面板
    * 统一渲染逻辑，减少代码重复
    */
-  const renderContentPanel = (data: any, type: 'func' | 'var' | 'my') => (
-    <ProCard bodyStyle={commonStyles.cardBodyCompact}>
-      {data && (
-        <Space direction="vertical" size="small" style={{ width: '100%' }}>
-          <Text style={commonStyles.label}>
-            {type === 'func' ? '表达式' : '变量名'}
-          </Text>
-          <Text code copyable style={commonStyles.code}>
-            {type === 'func' ? selectValue : data.key}
-          </Text>
-          <Text style={commonStyles.label}>变量值</Text>
-          <Text
-            code
-            ellipsis={{ tooltip: data.value }}
-            style={commonStyles.code}
+  const renderContentPanel = (data: any, type: 'func' | 'var' | 'my') => {
+    return (
+      <ProCard
+        bodyStyle={commonStyles.cardBodyCompact}
+        style={commonStyles.detailPanel}
+      >
+        {data ? (
+          <div style={{ width: '100%' }}>
+            <div style={commonStyles.infoItem}>
+              <Text style={commonStyles.label}>
+                {type === 'func' ? '表达式' : '变量名'}
+              </Text>
+              <Text code copyable style={commonStyles.codeHighlight}>
+                {type === 'func' ? selectValue : data.key}
+              </Text>
+            </div>
+            <div style={commonStyles.sectionDivider} />
+            {/* <div style={commonStyles.infoItem}>
+              <Text style={commonStyles.label}>变量值</Text>
+              <Text
+                code
+                copyable
+                ellipsis={{ tooltip: data.value }}
+                style={commonStyles.code}
+              >
+                {data.value?.length > 35
+                  ? `${data.value.substring(0, 35)}...`
+                  : data.value}
+              </Text>
+            </div> */}
+            {type === 'func' && (
+              <>
+                <div style={commonStyles.infoItem}>
+                  <Text
+                    style={{
+                      fontSize: '13px',
+                      color: token.colorTextSecondary,
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    {data.description}
+                  </Text>
+                </div>
+                <div style={commonStyles.infoItem}>
+                  <Text style={commonStyles.label}>使用示例</Text>
+                  <Text code style={commonStyles.code}>
+                    {data.demo}
+                  </Text>
+                </div>
+              </>
+            )}
+          </div>
+        ) : (
+          <div
+            style={{
+              textAlign: 'center',
+              color: token.colorTextQuaternary,
+              padding: '20px 0',
+            }}
           >
-            {data.value?.length > 40
-              ? `${data.value.substring(0, 40)}...`
-              : data.value}
-          </Text>
-          {type === 'func' && (
-            <>
-              <Text style={commonStyles.label}>描述</Text>
-              <Text>{data.description}</Text>
-            </>
-          )}
-        </Space>
-      )}
-    </ProCard>
-  );
+            <div style={{ marginBottom: 8 }}>
+              <GoogleSquareFilled
+                style={{ fontSize: '24px', color: token.colorTextQuaternary }}
+              />
+            </div>
+            <Text style={commonStyles.emptyText}>请从左侧选择变量</Text>
+          </div>
+        )}
+      </ProCard>
+    );
+  };
 
   /**
    * 渲染详情面板
    * 统一渲染逻辑，减少代码重复
    */
   const renderDetailPanel = (data: any, type: 'func' | 'var' | 'my') => (
-    <ProCard bodyStyle={commonStyles.cardBodyCompact}>
-      {data && (
-        <Space direction="vertical" size="small" style={{ width: '100%' }}>
-          <Text style={commonStyles.label}>变量名</Text>
-          <Text code style={commonStyles.code}>
-            {data.label || data.key}
-          </Text>
-          <Text style={commonStyles.label}>变量值</Text>
-          <Text
-            code
-            ellipsis={{
-              tooltip: type === 'func' ? data.description : data.value,
-            }}
-            style={commonStyles.code}
-          >
-            {type === 'func'
-              ? data.description
-              : type === 'var'
-              ? data.value
-              : data.value?.length > 15
-              ? `${data.value.substring(0, 15)}...`
-              : data.value}
-          </Text>
+    <ProCard
+      bodyStyle={commonStyles.cardBodyCompact}
+      style={commonStyles.detailPanel}
+    >
+      {data ? (
+        <div style={{ width: '100%' }}>
+          <div style={commonStyles.iconBadge}>
+            <GoogleSquareFilled
+              style={{ color: token.colorPrimary, fontSize: '16px' }}
+            />
+          </div>
+          <div style={commonStyles.infoItem}>
+            <Text style={commonStyles.label}>变量名</Text>
+            <Text code style={commonStyles.codeHighlight}>
+              {data.label || data.key}
+            </Text>
+          </div>
+          <div style={commonStyles.sectionDivider} />
+          <div style={commonStyles.infoItem}>
+            <Text style={commonStyles.label}>预览值</Text>
+            <Text
+              code
+              copyable
+              ellipsis={{
+                tooltip: type === 'func' ? data.description : data.value,
+              }}
+              style={commonStyles.code}
+            >
+              {type === 'func'
+                ? data.description
+                : type === 'var'
+                ? data.value
+                : data.value?.length > 20
+                ? `${data.value.substring(0, 20)}...`
+                : data.value}
+            </Text>
+          </div>
           {type === 'func' && (
-            <>
-              <Text style={commonStyles.label}>预览</Text>
+            <div style={commonStyles.infoItemLast}>
+              <Text style={commonStyles.label}>使用示例</Text>
               <Text code style={commonStyles.code}>
                 {data.demo}
               </Text>
-            </>
+            </div>
           )}
-        </Space>
+        </div>
+      ) : (
+        <div
+          style={{
+            textAlign: 'center',
+            color: token.colorTextQuaternary,
+            padding: '20px 0',
+          }}
+        >
+          <div style={{ marginBottom: 8 }}>
+            <GoogleSquareFilled
+              style={{ fontSize: '24px', color: token.colorTextQuaternary }}
+            />
+          </div>
+          <Text style={commonStyles.emptyText}>悬停查看详情</Text>
+        </div>
       )}
     </ProCard>
   );
@@ -297,9 +454,7 @@ const ApiVariableFunc: FC<ISelfProps> = ({ value, index, setValue }) => {
    */
   const createSelectConfig = (
     options: any[],
-    currentData: any,
     setCurrentData: (data: any) => void,
-    type: 'func' | 'var' | 'my',
   ) => ({
     allowClear: true,
     showSearch: true,
@@ -313,13 +468,26 @@ const ApiVariableFunc: FC<ISelfProps> = ({ value, index, setValue }) => {
       setCurrentData(undefined);
     },
     options,
-    dropdownRender: (menu: React.ReactNode) => (
-      <ProCard split={'vertical'} style={{ minWidth: '400px' }}>
-        <ProCard bodyStyle={commonStyles.cardBodyMinimal}>{menu}</ProCard>
-        {renderDetailPanel(currentData, type)}
-      </ProCard>
-    ),
+    popupMatchSelectWidth: 400,
+    listHeight: 300,
   });
+
+  const dropdownRender = (
+    menu: React.ReactNode,
+    type: 'func' | 'var' | 'my',
+  ) => (
+    <ProCard split={'vertical'} style={{ minWidth: '400px' }}>
+      <ProCard bodyStyle={commonStyles.cardBodyMinimal}>{menu}</ProCard>
+      {renderDetailPanel(
+        type === 'func'
+          ? currentValue
+          : type === 'var'
+          ? currentData
+          : currentMyData,
+        type,
+      )}
+    </ProCard>
+  );
   const items = [
     {
       key: '1',
@@ -328,12 +496,8 @@ const ApiVariableFunc: FC<ISelfProps> = ({ value, index, setValue }) => {
         <ProCard split={'horizontal'}>
           <ProCard bodyStyle={commonStyles.cardBodyCompact}>
             <Select
-              {...createSelectConfig(
-                funcData,
-                currentValue,
-                setCurrentValue,
-                'func',
-              )}
+              {...createSelectConfig(funcData, setCurrentValue)}
+              dropdownRender={(menu) => dropdownRender(menu, 'func')}
             />
           </ProCard>
           {renderContentPanel(currentValue, 'func')}
@@ -347,12 +511,8 @@ const ApiVariableFunc: FC<ISelfProps> = ({ value, index, setValue }) => {
         <ProCard split={'horizontal'} bodyStyle={{ minHeight: 100 }}>
           <ProCard bodyStyle={commonStyles.cardBodyCompact}>
             <Select
-              {...createSelectConfig(
-                varData,
-                currentData,
-                setCurrentData,
-                'var',
-              )}
+              {...createSelectConfig(varData, setCurrentData)}
+              dropdownRender={(menu) => dropdownRender(menu, 'var')}
             />
           </ProCard>
           {renderContentPanel(currentData, 'var')}
@@ -366,12 +526,8 @@ const ApiVariableFunc: FC<ISelfProps> = ({ value, index, setValue }) => {
         <ProCard split={'horizontal'} bodyStyle={{ minHeight: 100 }}>
           <ProCard bodyStyle={commonStyles.cardBodyCompact}>
             <Select
-              {...createSelectConfig(
-                myData,
-                currentMyData,
-                setCurrentMyData,
-                'my',
-              )}
+              {...createSelectConfig(myData, setCurrentMyData)}
+              dropdownRender={(menu) => dropdownRender(menu, 'my')}
               autoFocus={true}
             />
           </ProCard>
@@ -471,16 +627,10 @@ const ApiVariableFunc: FC<ISelfProps> = ({ value, index, setValue }) => {
         overlayStyle={commonStyles.popover}
         placement="bottomRight"
       >
-        <SearchOutlined
-          style={commonStyles.icon}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.color = commonStyles.iconHover.color;
-            e.currentTarget.style.transform = commonStyles.iconHover.transform;
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.color = commonStyles.icon.color;
-            e.currentTarget.style.transform = 'scale(1)';
-          }}
+        <FunctionOutlined
+          style={iconStyle}
+          onMouseEnter={() => setHoveredIcon(true)}
+          onMouseLeave={() => setHoveredIcon(false)}
         />
       </Popover>
     </>

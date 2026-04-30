@@ -13,7 +13,6 @@ import InterAuth from '@/pages/Httpx/componets/InterAuth';
 import InterDoc from '@/pages/Httpx/componets/InterDoc';
 import InterExtractList from '@/pages/Httpx/componets/InterExtractList';
 import InterOtherSetting from '@/pages/Httpx/componets/InterOtherSetting';
-import InterPerf from '@/pages/Httpx/componets/InterPerf';
 import ApiBaseForm from '@/pages/Httpx/Interface/InterfaceApiDetail/ApiBaseForm';
 import ApiBeforeItems from '@/pages/Httpx/Interface/InterfaceApiDetail/ApiBeforeItems';
 import ApiDetailForm from '@/pages/Httpx/Interface/InterfaceApiDetail/ApiDetailForm';
@@ -26,7 +25,6 @@ import {
   DownOutlined,
   EditOutlined,
   KeyOutlined,
-  LineChartOutlined,
   MoreOutlined,
   QuestionCircleOutlined,
   SaveOutlined,
@@ -40,12 +38,11 @@ import {
   Form,
   message,
   Select,
-  Space,
   Spin,
   TabsProps,
   Tooltip,
 } from 'antd';
-import { FC, useEffect, useMemo, useRef, useState } from 'react';
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { history, useParams } from 'umi';
 import ApiRemark from './ApiRemark';
 
@@ -54,17 +51,36 @@ interface SelfProps {
   callback?: () => void;
 }
 
+const CUSTOM_ENV_VALUE = 99999;
+
+const TAB_KEYS = {
+  BEFORE: '1',
+  BASE: '2',
+  AUTH: '7',
+  EXTRACT: '3',
+  ASSERT: '4',
+  OTHER: '8',
+} as const;
+
+const MODE = {
+  DETAIL: 1,
+  ADD: 2,
+  EDIT: 3,
+} as const;
+
+type TabKey = (typeof TAB_KEYS)[keyof typeof TAB_KEYS];
+type ModeType = (typeof MODE)[keyof typeof MODE];
+
 const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
   const { interId, moduleId, projectId } = useParams<{
     interId: string;
     projectId: string;
     moduleId: string;
   }>();
-  const responseRef = useRef<any>(null);
-  const containerRef = useRef<any>(null);
+  const responseRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [interApiForm] = Form.useForm<IInterfaceAPI>();
-  // 1详情 2新增 3 修改
-  const [currentMode, setCurrentMode] = useState(1);
+  const [currentMode, setCurrentMode] = useState<ModeType>(MODE.DETAIL);
   const [currentProjectId, setCurrentProjectId] = useState<number>();
   const [tryEnvs, setTryEnvs] = useState<{ value: number; label: string }[]>(
     [],
@@ -75,41 +91,24 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
   const [tryLoading, setTryLoading] = useState(false);
   const [responseInfo, setResponseInfo] = useState<IResponseInfo[]>();
   const [currentInterAPIId, setCurrentInterAPIId] = useState<number>();
-  const [openDoc, setOpenDoc] = useState(false);
+  const [drawers, setDrawers] = useState({
+    remark: false,
+    doc: false,
+  });
   const [runningEnv, setRunningEnv] = useState<number>();
-  const [activeKey, setActiveKey] = useState('2');
-  const [windowWidth, setWindowWidth] = useState(
-    typeof window !== 'undefined' ? window.innerWidth : 1200,
+  const [activeKey, setActiveKey] = useState<TabKey>(TAB_KEYS.BASE);
+
+  const fetchInterfaceDetails = useCallback(
+    async (id: string | number) => {
+      const { code, data } = await detailInterApiById({ interface_id: id });
+      if (code === 0) {
+        interApiForm.setFieldsValue(data);
+        setCurrentProjectId(data.project_id);
+      }
+    },
+    [interApiForm],
   );
-  const [openRemarkDrawer, setOpenRemarkDrawer] = useState(false);
 
-  // 监听窗口大小变化
-  useEffect(() => {
-    const handleResize = () => {
-      setWindowWidth(window.innerWidth);
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, []);
-
-  // 响应式配置
-  const responsiveConfig: any = useMemo(() => {
-    const isTablet = windowWidth >= 768 && windowWidth < 1024;
-    const isDesktop = windowWidth >= 1024;
-
-    return {
-      isTablet,
-      isDesktop,
-      cardPadding: 24,
-      tabBarPadding: 24,
-      buttonSize: 'middle',
-      selectWidth: 160,
-    };
-  }, [windowWidth]);
-  //路由进入。空白页
   useEffect(() => {
     if (projectId && moduleId) {
       interApiForm.setFieldsValue({
@@ -120,371 +119,302 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
     if (projectId) {
       setCurrentProjectId(parseInt(projectId));
     }
-  }, [moduleId, projectId]);
+  }, [moduleId, projectId, interApiForm]);
 
-  //路由用例详情打开
   useEffect(() => {
     if (interId) {
-      setCurrentMode(1);
-      fetchInterfaceDetails(interId).then();
-    } else {
-      setCurrentMode(2);
+      setCurrentMode(MODE.DETAIL);
+      fetchInterfaceDetails(interId);
+    } else if (!interfaceId) {
+      setCurrentMode(MODE.ADD);
     }
-  }, [interId]);
+  }, [interId, interfaceId, fetchInterfaceDetails]);
 
-  //用例详情Drawer打开
   useEffect(() => {
-    // 如果存在接口API信息，则设置当前模式、表单值、数据长度和当前接口API ID
     if (interfaceId) {
       setCurrentInterAPIId(interfaceId);
-      setCurrentMode(1); // 设置当前模式为查看模式
-      fetchInterfaceDetails(interfaceId).then(); //请求接口信息
+      setCurrentMode(MODE.DETAIL);
+      fetchInterfaceDetails(interfaceId);
     }
-  }, [interfaceId]);
+  }, [interfaceId, fetchInterfaceDetails]);
 
-  // 根据API 所属项目 查询 ENV Module
   useEffect(() => {
     if (currentProjectId) {
       queryEnvBy({ project_id: currentProjectId } as IEnv).then(
-        async ({ code, data }) => {
+        ({ code, data }) => {
           if (code === 0) {
-            setTryEnvs(
-              data.map((item: IEnv) => ({
-                value: item.id,
-                label: item.name,
-              })),
-            );
+            const envOptions = data.map((item: IEnv) => ({
+              value: item.id,
+              label: item.name,
+            }));
+            setTryEnvs(envOptions);
             setApiEnvs([
-              { label: '自定义', value: 99999 },
-              ...data.map((item: IEnv) => ({
-                value: item.id,
-                label: item.name,
-              })),
+              { label: '自定义', value: CUSTOM_ENV_VALUE },
+              ...envOptions,
             ]);
           }
         },
       );
-      // queryEnvByProjectIdFormApi(currentProjectId, setEnvs, true).then();
     }
   }, [currentProjectId]);
 
-  /**
-   * 对用例的新增与修改
-   * 区别 公共新增修改 与 从用例新增与修改
-   * addFromCase 从用例新增与修改
-   * addFromGroup 从API GROUP新增与修改
-   */
-  const SaveOrUpdate = async () => {
+  const SaveOrUpdate = useCallback(async () => {
     await interApiForm.validateFields();
     const values = interApiForm.getFieldsValue(true);
+
     if (interId !== undefined || values.id !== undefined) {
-      //修改
       const { code, msg } = await updateInterApiById(values);
       if (code === 0) {
         message.success(msg);
-        setCurrentMode(1);
+        setCurrentMode(MODE.DETAIL);
         callback?.();
-        return true;
       }
     } else {
       values.is_common = 1;
-      //新增
       const { code, data } = await insertInterApi(values);
       if (code === 0) {
         history.push(`/interface/interApi/detail/interId=${data.id}`);
       }
     }
-  };
+  }, [interId, interApiForm, callback]);
 
-  /**
-   * 查询接口喜信息
-   * @param id
-   */
-  const fetchInterfaceDetails = async (id: string | number) => {
-    const { code, data } = await detailInterApiById({ interface_id: id });
-    if (code === 0) {
-      interApiForm.setFieldsValue(data);
-      setCurrentProjectId(data.project_id);
-    }
-  };
-
-  // 滚动到底部的函数
-  const scrollToResponse = () => {
+  const scrollToResponse = useCallback(() => {
     if (responseRef.current) {
       responseRef.current.scrollIntoView({
-        behavior: 'smooth', // 平滑滚动
-        block: 'start', // 滚动到顶部对齐
+        behavior: 'smooth',
+        block: 'start',
       });
-    } else {
-      // 如果response还没有渲染，滚动到容器底部
-      if (containerRef.current) {
-        containerRef.current.scrollTo({
-          top: containerRef.current.scrollHeight,
-          behavior: 'smooth',
-        });
-      }
+    } else if (containerRef.current) {
+      containerRef.current.scrollTo({
+        top: containerRef.current.scrollHeight,
+        behavior: 'smooth',
+      });
     }
-  };
+  }, []);
 
-  /**
-   * 接口 try
-   * @constructor
-   */
-  const TryClick = async () => {
+  const TryClick = useCallback(async () => {
     if (!runningEnv) {
       message.error('请选择运行环境');
       return;
     }
-    setTryLoading(true);
-    // 请求完成后滚动到响应区域
-    setTimeout(() => {
-      scrollToResponse();
-    }, 100); // 延迟确保DOM已更新
+
     const interfaceId = interId || currentInterAPIId;
-    if (!interfaceId) {
-      setTryLoading(false);
-      return;
-    }
-    tryInterApi({
+    if (!interfaceId) return;
+
+    setTryLoading(true);
+    setTimeout(scrollToResponse, 100);
+
+    const { code, data } = await tryInterApi({
       interface_id: interfaceId,
       env_id: runningEnv,
-    }).then(({ code, data }) => {
-      if (code === 0) {
-        console.log('try interface response', data);
-        setResponseInfo(data);
-        setTryLoading(false);
-      }
     });
-  };
 
-  const TabItems: TabsProps['items'] = [
-    {
-      key: '1',
-      label: <Tooltip title="依次执行 设置变量、脚本、SQL">前置操作</Tooltip>,
-      icon: <SettingOutlined />,
-      children: <ApiBeforeItems interApiForm={interApiForm} />,
-    },
-    {
-      key: '2',
-      label: '接口基础',
-      icon: <ApiOutlined />,
-      children: (
-        <ApiDetailForm
-          interApiForm={interApiForm}
-          envs={apiEnvs}
-          interfaceApiInfo={interApiForm.getFieldsValue(true)}
-          currentMode={currentMode}
-        />
-      ),
-    },
-    {
-      key: '7',
-      label: '认证',
-      icon: <KeyOutlined />,
-      // disabled: true,
-      children: <InterAuth form={interApiForm} currentMode={currentMode} />,
-    },
-    {
-      key: '3',
-      label: '出参提取',
-      icon: <EditOutlined />,
-      children: <InterExtractList form={interApiForm} readonly={false} />,
-    },
-    {
-      key: '4',
-      label: '断言',
-      icon: <CheckCircleOutlined />,
-      children: <InterAssertList form={interApiForm} readonly={false} />,
-    },
-    // {
-    //   key: '5',
-    //   label: '后置动作',
-    //   icon: <FormOutlined />,
-    //   children: (
-    //     <ApiAfterItems interApiForm={interApiForm} currentMode={currentMode} />
-    //   ),
-    // },
-    {
-      key: '8',
-      label: '其他',
-      icon: <MoreOutlined />,
-      children: (
-        <InterOtherSetting currentMode={currentMode} form={interApiForm} />
-      ),
-    },
-    ...(interId
-      ? [
-          {
-            key: '6',
-            label: '压力测试',
-            disabled: true,
-            icon: <LineChartOutlined />,
-            children: <InterPerf interfaceId={interId} />,
-          },
-        ]
-      : []),
-  ];
+    if (code === 0) {
+      console.log('try interface response', data);
+      setResponseInfo(data);
+    }
+    setTryLoading(false);
+  }, [runningEnv, interId, currentInterAPIId, scrollToResponse]);
 
-  const DetailExtra: FC<{ currentMode: number }> = ({ currentMode }) => {
-    const getModeActions = () => {
+  const isInterfaceActionDisabled = currentMode !== MODE.DETAIL;
+
+  const TabItems: TabsProps['items'] = useMemo(
+    () => [
+      {
+        key: TAB_KEYS.BEFORE,
+        label: <Tooltip title="依次执行 设置变量、脚本、SQL">前置操作</Tooltip>,
+        icon: <SettingOutlined />,
+        children: <ApiBeforeItems interApiForm={interApiForm} />,
+      },
+      {
+        key: TAB_KEYS.BASE,
+        label: '接口基础',
+        icon: <ApiOutlined />,
+        children: (
+          <ApiDetailForm
+            interApiForm={interApiForm}
+            envs={apiEnvs}
+            interfaceApiInfo={interApiForm.getFieldsValue(true)}
+            currentMode={currentMode}
+          />
+        ),
+      },
+      {
+        key: TAB_KEYS.AUTH,
+        label: '认证',
+        icon: <KeyOutlined />,
+        children: <InterAuth form={interApiForm} currentMode={currentMode} />,
+      },
+      {
+        key: TAB_KEYS.EXTRACT,
+        label: '出参提取',
+        icon: <EditOutlined />,
+        children: (
+          <InterExtractList
+            form={interApiForm}
+            readonly={isInterfaceActionDisabled}
+          />
+        ),
+      },
+      {
+        key: TAB_KEYS.ASSERT,
+        label: '断言',
+        icon: <CheckCircleOutlined />,
+        children: (
+          <InterAssertList
+            form={interApiForm}
+            readonly={isInterfaceActionDisabled}
+          />
+        ),
+      },
+      {
+        key: TAB_KEYS.OTHER,
+        label: '其他',
+        icon: <MoreOutlined />,
+        children: (
+          <InterOtherSetting currentMode={currentMode} form={interApiForm} />
+        ),
+      },
+    ],
+    [interApiForm, apiEnvs, currentMode, isInterfaceActionDisabled],
+  );
+
+  const DetailExtra = useMemo(() => {
+    const buttonBaseStyle = { borderRadius: 8 };
+
+    const renderDetailActions = () => {
+      if (interId || interfaceId) {
+        return (
+          <Button
+            type="default"
+            variant="outlined"
+            onClick={() => setCurrentMode(MODE.EDIT)}
+            icon={<EditOutlined />}
+            style={buttonBaseStyle}
+          >
+            编辑
+          </Button>
+        );
+      }
+      return null;
+    };
+
+    const renderAddActions = () => (
+      <Button
+        type="primary"
+        icon={<SaveOutlined />}
+        onClick={SaveOrUpdate}
+        style={{
+          ...buttonBaseStyle,
+          boxShadow: '0 2px 8px rgba(24, 144, 255, 0.3)',
+        }}
+      >
+        保存用例
+      </Button>
+    );
+
+    const renderEditActions = () => (
+      <>
+        <Button
+          type="primary"
+          icon={<SaveOutlined />}
+          onClick={SaveOrUpdate}
+          style={buttonBaseStyle}
+        >
+          保存
+        </Button>
+        <Button
+          type="default"
+          onClick={() => setCurrentMode(MODE.DETAIL)}
+          style={{ ...buttonBaseStyle, borderColor: '#d9d9d9' }}
+        >
+          取消
+        </Button>
+      </>
+    );
+
+    return () => {
       switch (currentMode) {
-        case 1: // 用例详情 - 编辑按钮
-          return interId || interfaceId ? (
-            <Button
-              type="default"
-              variant={'outlined'}
-              onClick={() => setCurrentMode(3)}
-              icon={<EditOutlined />}
-              size={responsiveConfig.buttonSize}
-              style={{ borderRadius: 8 }}
-            >
-              编辑
-            </Button>
-          ) : null;
-        case 2: // 新增模式 - 保存按钮
-          return (
-            <Button
-              type="primary"
-              icon={<SaveOutlined />}
-              onClick={SaveOrUpdate}
-              size={responsiveConfig.buttonSize}
-              style={{
-                borderRadius: 8,
-                boxShadow: '0 2px 8px rgba(24, 144, 255, 0.3)',
-              }}
-            >
-              保存用例
-            </Button>
-          );
-        case 3: // 编辑模式 - 保存/取消
-          return (
-            <Space size={'middle'}>
-              <Button
-                size={responsiveConfig.buttonSize}
-                type="primary"
-                icon={<SaveOutlined />}
-                onClick={SaveOrUpdate}
-                style={{ borderRadius: 8 }}
-              >
-                保存
-              </Button>
-              <Button
-                size={responsiveConfig.buttonSize}
-                type="default"
-                onClick={() => setCurrentMode(1)}
-                style={{
-                  borderRadius: 8,
-                  borderColor: '#d9d9d9',
-                }}
-              >
-                取消
-              </Button>
-            </Space>
-          );
-
+        case MODE.DETAIL:
+          return renderDetailActions();
+        case MODE.ADD:
+          return renderAddActions();
+        case MODE.EDIT:
+          return renderEditActions();
         default:
           return null;
       }
     };
-
-    return <>{getModeActions()}</>;
-  };
+  }, [currentMode, interId, interfaceId, SaveOrUpdate]);
 
   const tabBarExtraContent = (
-    // 右侧：操作按钮区域
-    <Space size="middle">
-      {/* 模式特定操作 */}
-      <DetailExtra currentMode={currentMode} />
-      {/* 调试功能区 */}
-      <Space size="small">
-        {/* 环境选择器 */}
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <DetailExtra />
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <Select
-          size={responsiveConfig.buttonSize}
           allowClear
-          variant={'outlined'}
+          variant="outlined"
           placeholder="选择环境"
-          disabled={currentMode !== 1}
+          disabled={isInterfaceActionDisabled}
           suffixIcon={<DownOutlined />}
           options={tryEnvs}
-          onChange={(value) => {
-            setRunningEnv(value);
-          }}
-          style={{ minWidth: responsiveConfig.selectWidth }}
+          onChange={setRunningEnv}
+          style={{ minWidth: 120 }}
         />
-
-        {/* 发送按钮 */}
         <Button
           type="primary"
           icon={<SendOutlined />}
           loading={tryLoading}
-          disabled={currentMode !== 1}
+          disabled={isInterfaceActionDisabled}
           onClick={TryClick}
         >
           Try
         </Button>
-      </Space>
-    </Space>
+      </div>
+    </div>
   );
+
+  const handleOpenDrawer = (key: 'remark' | 'doc') => {
+    setDrawers((prev) => ({ ...prev, [key]: true }));
+  };
+
+  const handleCloseDrawer = (key: 'remark' | 'doc') => {
+    setDrawers((prev) => ({ ...prev, [key]: false }));
+  };
+
+  const handleTabChange = (key: string) => {
+    setActiveKey(key as TabKey);
+  };
+
   return (
     <>
       <MyDrawer
-        width={'25%'}
-        open={openRemarkDrawer}
-        setOpen={setOpenRemarkDrawer}
+        width="25%"
+        open={drawers.remark}
+        setOpen={() => handleCloseDrawer('remark')}
       >
         <ApiRemark inteface_id={interId || currentInterAPIId} />
       </MyDrawer>
       <MyDrawer
-        name={'API Doc'}
-        width={'60%'}
-        open={openDoc}
-        setOpen={setOpenDoc}
+        name="API Doc"
+        width="60%"
+        open={drawers.doc}
+        setOpen={() => handleCloseDrawer('doc')}
       >
         <InterDoc />
       </MyDrawer>
-      <ProCard
-        ref={containerRef}
-        bodyStyle={{
-          minHeight: '100vh',
-          padding: responsiveConfig.cardPadding,
-        }}
-        style={{
-          borderRadius: 16,
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
-          overflow: 'hidden',
-        }}
-      >
+      <ProCard ref={containerRef}>
         <ProForm form={interApiForm} submitter={false}>
           <ApiBaseForm />
-          <ProCard
-            bordered
-            style={{
-              marginTop: 24,
-              borderRadius: 16,
-              overflow: 'hidden',
-              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.04)',
-            }}
-            headStyle={{
-              backgroundColor: '#f6f8fa',
-              borderBottom: '1px solid #e8e8e8',
-              padding: '16px 24px',
-            }}
-          >
+          <div style={{ marginTop: 24 }}>
             <MyTabs
-              defaultActiveKey={'2'}
+              defaultActiveKey={TAB_KEYS.BASE}
               items={TabItems}
               tabBarExtraContent={tabBarExtraContent}
-              style={{
-                marginBottom: 0,
-                paddingLeft: responsiveConfig.tabBarPadding,
-                paddingRight: responsiveConfig.tabBarPadding,
-                borderBottom: '1px solid #e8e8e8',
-                flexWrap: 'nowrap',
-              }}
               activeKey={activeKey}
-              onChangeKey={setActiveKey}
+              onChangeKey={handleTabChange}
             />
-          </ProCard>
+          </div>
         </ProForm>
         <div ref={responseRef}>
           <Spin size="large" spinning={tryLoading}>
@@ -520,11 +450,11 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
               icon={<QuestionCircleOutlined style={{ fontSize: 20 }} />}
               type="primary"
               tooltip="方法文档"
-              onClick={() => setOpenDoc(true)}
+              onClick={() => handleOpenDrawer('doc')}
             />
             <FloatButton
               tooltip="查看记录"
-              onClick={() => setOpenRemarkDrawer(true)}
+              onClick={() => handleOpenDrawer('remark')}
               type="primary"
               icon={<CommentOutlined style={{ fontSize: 20 }} />}
             />
