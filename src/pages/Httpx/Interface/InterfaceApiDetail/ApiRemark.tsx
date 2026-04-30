@@ -1,8 +1,8 @@
 import { queryDynamicHistoryList } from '@/api/inter';
-import { ClockCircleOutlined, UserOutlined } from '@ant-design/icons';
-import { Card, Timeline, Tooltip, Typography } from 'antd';
+import { Empty, Tooltip, Typography } from 'antd';
 import { FC, useEffect, useMemo, useState } from 'react';
 import { IInterfaceRemark } from '../../types';
+import './ApiRemark.less';
 
 const { Text, Paragraph } = Typography;
 
@@ -30,10 +30,10 @@ const ApiRemark: FC<Props> = ({ inteface_id }) => {
   }, [data]);
 
   const displayData = useMemo(() => {
-    if (expanded || sortedData.length <= 5) {
+    if (expanded || sortedData.length <= 4) {
       return sortedData;
     }
-    return sortedData.slice(0, 5);
+    return sortedData.slice(0, 4);
   }, [sortedData, expanded]);
 
   const formatTime = (time: string) => {
@@ -42,70 +42,129 @@ const ApiRemark: FC<Props> = ({ inteface_id }) => {
     const day = String(date.getDate()).padStart(2, '0');
     const hours = String(date.getHours()).padStart(2, '0');
     const minutes = String(date.getMinutes()).padStart(2, '0');
-    const seconds = String(date.getSeconds()).padStart(2, '0');
-    return `${month}-${day} ${hours}:${minutes}:${seconds}`;
+    return `${month}-${day} ${hours}:${minutes}`;
   };
 
-  const timelineItems = displayData.map((item) => ({
-    key: item.id,
-    dot: <ClockCircleOutlined style={{ fontSize: 14 }} />,
-    children: (
-      <div style={{ paddingBottom: 8 }}>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            marginBottom: 4,
-          }}
-        >
-          <UserOutlined style={{ color: '#8c8c8c' }} />
-          <Text strong style={{ color: '#1890ff', fontSize: 13 }}>
-            {item.creatorName}
-          </Text>
-          <Text type="secondary" style={{ fontSize: 12 }}>
-            {formatTime(item.create_time)}
-          </Text>
-        </div>
-        <Tooltip title={item.description} placement="bottomLeft">
-          <Paragraph
-            style={{ margin: 0, fontSize: 13, color: '#595959' }}
-            ellipsis={{ rows: 3, expandable: false }}
-          >
-            {item.description}
-          </Paragraph>
-        </Tooltip>
-      </div>
-    ),
-  }));
+  const getRelativeTime = (time: string) => {
+    const now = new Date().getTime();
+    const createTime = new Date(time).getTime();
+    const diff = now - createTime;
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+
+    if (minutes < 1) return '刚刚';
+    if (minutes < 60) return `${minutes}分钟前`;
+    if (hours < 24) return `${hours}小时前`;
+    return `${days}天前`;
+  };
 
   return (
-    <Card
-      title={
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <ClockCircleOutlined style={{ color: '#1890ff' }} />
-          <span>变更历史</span>
-          <Text type="secondary" style={{ fontWeight: 'normal', fontSize: 12 }}>
-            ({sortedData.length})
-          </Text>
+    <div className="api-remark-container">
+      <div className="remark-header">
+        <div className="header-left">
+          <div className="header-icon">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+              <path
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                fill="none"
+              />
+            </svg>
+          </div>
+          <div className="header-text">
+            <h3 className="header-title">变更历史</h3>
+            <span className="header-count">{sortedData.length} 条记录</span>
+          </div>
         </div>
-      }
-      styles={{ body: { padding: '16px 24px' } }}
-      bordered={false}
-    >
-      <Timeline items={timelineItems} />
+      </div>
 
-      {sortedData.length > 5 && (
-        <div style={{ textAlign: 'center', marginTop: 8 }}>
-          <Text
-            style={{ color: '#1890ff', cursor: 'pointer' }}
+      <div className="remark-list">
+        {sortedData.length === 0 ? (
+          <Empty
+            description="暂无变更记录"
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+          />
+        ) : (
+          displayData.map((item, index) => (
+            <div
+              key={item.id}
+              className="remark-item"
+              style={{ animationDelay: `${index * 0.08}s` }}
+            >
+              <div className="timeline-marker">
+                <div className="marker-dot" />
+                {index < displayData.length - 1 && (
+                  <div className="marker-line" />
+                )}
+              </div>
+
+              <div className="remark-content">
+                <div className="content-header">
+                  <div className="user-info">
+                    <div className="user-avatar">
+                      {item.creatorName?.[0]?.toUpperCase() || 'U'}
+                    </div>
+                    <div className="user-details">
+                      <Text className="user-name">
+                        {item.creatorName || '未知用户'}
+                      </Text>
+                      <Text className="create-time">
+                        {formatTime(item.create_time)}
+                      </Text>
+                    </div>
+                  </div>
+                  <div className="time-badge">
+                    {getRelativeTime(item.create_time)}
+                  </div>
+                </div>
+
+                <div className="content-body">
+                  <Tooltip title={item.description}>
+                    <Paragraph
+                      className="description"
+                      ellipsis={{ rows: 3, expandable: false }}
+                    >
+                      {item.description || '无描述'}
+                    </Paragraph>
+                  </Tooltip>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {sortedData.length > 4 && (
+        <div className="remark-footer">
+          <button
+            className={`expand-btn ${expanded ? 'expanded' : ''}`}
             onClick={() => setExpanded(!expanded)}
           >
-            {expanded ? '收起' : `展开更多 (${sortedData.length - 5} 条)`}
-          </Text>
+            <span className="btn-text">
+              {expanded ? '收起记录' : `展开更多 (${sortedData.length - 4} 条)`}
+            </span>
+            <svg
+              className={`arrow-icon ${expanded ? 'rotate' : ''}`}
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path
+                d="M19 9l-7 7-7-7"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
         </div>
       )}
-    </Card>
+    </div>
   );
 };
 

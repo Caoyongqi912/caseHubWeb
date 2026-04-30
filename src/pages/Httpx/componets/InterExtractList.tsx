@@ -1,12 +1,7 @@
 import { ExtraOpt } from '@/pages/Httpx/componets/assertEnum';
 import { FormEditableOnValueChange } from '@/pages/Httpx/componets/FormEditableOnValueChange';
 import { IInterfaceAPI } from '@/pages/Httpx/types';
-import {
-  CopyTwoTone,
-  DeleteTwoTone,
-  EditTwoTone,
-  SaveTwoTone,
-} from '@ant-design/icons';
+import { DeleteTwoTone, EditTwoTone, SaveTwoTone } from '@ant-design/icons';
 import {
   ProCard,
   ProForm,
@@ -65,7 +60,7 @@ const InterExtractList: FC<ISelfProps> = ({ form, readonly = false }) => {
         onAfterRemove={async () => {
           await FormEditableOnValueChange(form, 'interface_extracts');
         }}
-        copyIconProps={{ tooltipText: '复制当前行', Icon: CopyTwoTone }}
+        copyIconProps={false}
         deleteIconProps={{
           Icon: DeleteTwoTone,
           tooltipText: '不需要这行了',
@@ -116,6 +111,7 @@ const InterExtractList: FC<ISelfProps> = ({ form, readonly = false }) => {
           return (
             <>
               <ProForm.Group>
+                <ProFormText name="id" hidden={true} initialValue={index} />
                 <ProFormText
                   name={'key'}
                   label={'变量名'}

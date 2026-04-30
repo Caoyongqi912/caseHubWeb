@@ -1,0 +1,312 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;700&display=swap');
+
+.api-remark-container {
+  padding: 24px;
+  min-height: 300px;
+  background: linear-gradient(160deg, #0d1117 0%, #161b22 50%, #0d1117 100%);
+  border-radius: 16px;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background: radial-gradient(
+        ellipse at 20% 0%,
+        rgba(88, 166, 255, 0.06) 0%,
+        transparent 50%
+      ),
+      radial-gradient(
+        ellipse at 80% 100%,
+        rgba(139, 92, 246, 0.05) 0%,
+        transparent 50%
+      );
+    pointer-events: none;
+  }
+}
+
+.remark-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+  position: relative;
+  z-index: 1;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.header-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(
+    135deg,
+    rgba(88, 166, 255, 0.15),
+    rgba(139, 92, 246, 0.15)
+  );
+  border: 1px solid rgba(88, 166, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #58a6ff;
+  box-shadow: 0 4px 16px rgba(88, 166, 255, 0.15);
+}
+
+.header-text {
+  .header-title {
+    font-family: 'Noto Sans SC', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: #e6edf3;
+    margin: 0 0 4px 0;
+    letter-spacing: 0.5px;
+  }
+
+  .header-count {
+    font-size: 12px;
+    color: rgba(139, 148, 158, 0.8);
+    font-weight: 500;
+  }
+}
+
+.remark-list {
+  position: relative;
+  z-index: 1;
+}
+
+.remark-item {
+  display: flex;
+  gap: 20px;
+  animation: fadeInRight 0.4s ease-out forwards;
+  opacity: 0;
+}
+
+@keyframes fadeInRight {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.timeline-marker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 8px;
+  flex-shrink: 0;
+
+  .marker-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #58a6ff, #8b5cf6);
+    border: 2px solid #0d1117;
+    box-shadow: 0 0 0 4px rgba(88, 166, 255, 0.15),
+      0 0 12px rgba(88, 166, 255, 0.3);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  .marker-line {
+    width: 2px;
+    flex: 1;
+    background: linear-gradient(
+      180deg,
+      rgba(88, 166, 255, 0.4),
+      rgba(139, 92, 246, 0.2)
+    );
+    margin-top: 8px;
+    min-height: 60px;
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 4px rgba(88, 166, 255, 0.15),
+      0 0 12px rgba(88, 166, 255, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(88, 166, 255, 0.1),
+      0 0 20px rgba(88, 166, 255, 0.4);
+  }
+}
+
+.remark-content {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(8px);
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(88, 166, 255, 0.2);
+    transform: translateX(4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2), 0 0 40px rgba(88, 166, 255, 0.05);
+  }
+}
+
+.content-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #58a6ff, #8b5cf6);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Noto Sans SC', sans-serif;
+  box-shadow: 0 4px 12px rgba(88, 166, 255, 0.25);
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  .user-name {
+    font-family: 'Noto Sans SC', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: #58a6ff;
+    margin: 0;
+  }
+
+  .create-time {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: rgba(139, 148, 158, 0.7);
+    margin: 0;
+  }
+}
+
+.time-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: rgba(139, 148, 158, 0.8);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.content-body {
+  .description {
+    font-family: 'Noto Sans SC', sans-serif;
+    font-size: 13px;
+    line-height: 1.7;
+    color: rgba(225, 228, 232, 0.85);
+    margin: 0 !important;
+    cursor: pointer;
+  }
+}
+
+.remark-footer {
+  display: flex;
+  justify-content: center;
+  padding-top: 16px;
+  position: relative;
+  z-index: 1;
+}
+
+.expand-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  background: linear-gradient(
+    135deg,
+    rgba(88, 166, 255, 0.1),
+    rgba(139, 92, 246, 0.1)
+  );
+  border: 1px solid rgba(88, 166, 255, 0.2);
+  border-radius: 8px;
+  color: #58a6ff;
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:hover {
+    background: linear-gradient(
+      135deg,
+      rgba(88, 166, 255, 0.2),
+      rgba(139, 92, 246, 0.2)
+    );
+    border-color: rgba(88, 166, 255, 0.4);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(88, 166, 255, 0.15);
+  }
+
+  .btn-text {
+    transition: all 0.3s ease;
+  }
+
+  .arrow-icon {
+    transition: transform 0.3s ease;
+
+    &.rotate {
+      transform: rotate(180deg);
+    }
+  }
+
+  &.expanded {
+    background: linear-gradient(
+      135deg,
+      rgba(139, 92, 246, 0.1),
+      rgba(88, 166, 255, 0.1)
+    );
+  }
+}
+
+@media (max-width: 768px) {
+  .api-remark-container {
+    padding: 16px;
+  }
+
+  .remark-item {
+    gap: 12px;
+  }
+
+  .timeline-marker .marker-line {
+    min-height: 40px;
+  }
+
+  .content-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}

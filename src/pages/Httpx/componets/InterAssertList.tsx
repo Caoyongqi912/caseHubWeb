@@ -4,7 +4,6 @@ import { FormEditableOnValueChange } from '@/pages/Httpx/componets/FormEditableO
 import JsonPathTool from '@/pages/Httpx/componets/JsonPathTool';
 import { IInterfaceAPI } from '@/pages/Httpx/types';
 import {
-  CopyTwoTone,
   DeleteTwoTone,
   DownOutlined,
   EditTwoTone,
@@ -92,9 +91,7 @@ const InterAssertList: FC<ISelfProps> = ({ form, readonly = false }) => {
         onAfterRemove={async () => {
           await FormEditableOnValueChange(form, 'interface_asserts');
         }}
-        copyIconProps={
-          !readonly && { tooltipText: '复制当前行', Icon: CopyTwoTone }
-        }
+        copyIconProps={false}
         deleteIconProps={
           !readonly && {
             Icon: DeleteTwoTone,
@@ -103,10 +100,12 @@ const InterAssertList: FC<ISelfProps> = ({ form, readonly = false }) => {
         }
         itemRender={({ listDom, action }, { record, index }) => (
           <ProCard
+            style={{ marginTop: 10 }}
             collapsible={true}
             collapsibleIconRender={({ collapsed }) => (
               <Space style={{ marginRight: 10 }}>
                 <ProFormSwitch
+                  tooltip="断言开关"
                   noStyle
                   disabled={editingIndex !== index} // 根据编辑状态禁用该项
                   name={'assert_switch'}
@@ -117,6 +116,7 @@ const InterAssertList: FC<ISelfProps> = ({ form, readonly = false }) => {
               </Space>
             )}
             bordered
+            hoverable
             headerBordered
             title={
               <Tag
@@ -146,11 +146,7 @@ const InterAssertList: FC<ISelfProps> = ({ form, readonly = false }) => {
                 <Space>
                   {editingIndex === index ? (
                     <Tooltip title="保存">
-                      <SaveTwoTone
-                        twoToneColor={'#c7920a'}
-                        disabled={false}
-                        onClick={save}
-                      />
+                      <SaveTwoTone disabled={false} onClick={save} />
                     </Tooltip>
                   ) : (
                     <Tooltip title="编辑">
@@ -181,6 +177,7 @@ const InterAssertList: FC<ISelfProps> = ({ form, readonly = false }) => {
           return (
             <>
               <ProForm.Group key={index}>
+                <ProFormText name="id" hidden={true} initialValue={index} />
                 <ProFormSelect
                   name={'assert_target'}
                   label={'断言内容'}

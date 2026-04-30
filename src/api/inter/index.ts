@@ -264,7 +264,7 @@ export const copyInterApiById = async (data: number, options?: IObjGet) => {
  * @param options
  */
 export const queryScripts = async (options?: IObjGet) => {
-  return request<IResponse<any>>('/api/interface/query/script_doc', {
+  return request<IResponse<any>>('/api/interface/query_script_doc', {
     method: 'GET',
     ...(options || {}),
   });

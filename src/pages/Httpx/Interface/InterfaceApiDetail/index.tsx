@@ -22,11 +22,11 @@ import { IInterfaceAPI, IResponseInfo } from '@/pages/Httpx/types';
 import {
   ApiOutlined,
   CheckCircleOutlined,
+  CommentOutlined,
   DownOutlined,
   EditOutlined,
   KeyOutlined,
   LineChartOutlined,
-  MessageTwoTone,
   MoreOutlined,
   QuestionCircleOutlined,
   SaveOutlined,
@@ -422,14 +422,6 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
         >
           Try
         </Button>
-        <Tooltip title="修改历史">
-          <Button
-            type="text"
-            icon={<MessageTwoTone />}
-            onClick={() => setOpenRemarkDrawer(true)}
-            style={{ color: '#6c757d' }}
-          />
-        </Tooltip>
       </Space>
     </Space>
   );
@@ -522,21 +514,23 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
             </div>
           </Spin>
         </div>
-        <FloatButton
-          icon={<QuestionCircleOutlined style={{ fontSize: 20 }} />}
-          type="primary"
-          tooltip="查看文档"
-          onClick={() => setOpenDoc(true)}
-          style={{
-            right: 32,
-            bottom: 32,
-            width: 52,
-            height: 52,
-            boxShadow: '0 4px 16px rgba(22, 119, 255, 0.4)',
-            borderRadius: '50%',
-          }}
-          shape="circle"
-        />
+        <>
+          <FloatButton.Group shape="circle" style={{ insetInlineEnd: 94 }}>
+            <FloatButton
+              icon={<QuestionCircleOutlined style={{ fontSize: 20 }} />}
+              type="primary"
+              tooltip="方法文档"
+              onClick={() => setOpenDoc(true)}
+            />
+            <FloatButton
+              tooltip="查看记录"
+              onClick={() => setOpenRemarkDrawer(true)}
+              type="primary"
+              icon={<CommentOutlined style={{ fontSize: 20 }} />}
+            />
+            <FloatButton.BackTop type="primary" visibilityHeight={0} />
+          </FloatButton.Group>
+        </>
       </ProCard>
     </>
   );
