@@ -220,7 +220,7 @@ export const copyTestCase = async (
  */
 export const reorderTestCaseStep = async (
   info: {
-    stepIds: number[];
+    step_ids: number[];
   },
   options?: IObjGet,
 ) => {
@@ -256,7 +256,7 @@ export const removeTestCaseStep = async (
  */
 export const copyTestCaseStep = async (
   info: {
-    stepId: any;
+    step_id: any;
   },
   options?: IObjGet,
 ) => {

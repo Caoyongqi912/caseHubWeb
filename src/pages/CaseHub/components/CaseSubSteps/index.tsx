@@ -112,7 +112,7 @@ const CaseSubSteps: FC<IProps> = ({
       const orderIds = newSteps
         .map((item) => item.id)
         .filter((id): id is number => typeof id === 'number');
-      await reorderTestCaseStep({ stepIds: orderIds });
+      await reorderTestCaseStep({ step_ids: orderIds });
     }
 
     setDraggedStep(null);
@@ -210,7 +210,7 @@ const CaseSubSteps: FC<IProps> = ({
   };
 
   const copyStep = async (stepId: number) => {
-    const { code } = await copyTestCaseStep({ stepId });
+    const { code } = await copyTestCaseStep({ step_id: stepId });
     if (code === 0) {
       setAddLine((prev) => prev + 1);
     }
