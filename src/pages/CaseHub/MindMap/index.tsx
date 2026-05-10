@@ -11,6 +11,7 @@ import { message } from 'antd';
 import MindElixir, { Options } from 'mind-elixir';
 import type { NodeObj } from 'mind-elixir/dist/types/types';
 import { Operation } from 'mind-elixir/dist/types/utils/pubsub';
+import 'mind-elixir/style.css';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 const Index = () => {
@@ -57,7 +58,7 @@ const Index = () => {
 
     mindInstance.bus.addListener('operation', operationHandle);
     mindInstance.bus.addListener('selectNodes', selectNodesHandle);
-    mindInstance.bus.addListener('selectNode', selectNodeHandle);
+    mindInstance.bus.addListener('selectNewNode', selectNodeHandle);
 
     mindRef.current = mindInstance;
 
@@ -65,7 +66,7 @@ const Index = () => {
       if (mindInstance) {
         mindInstance.bus?.removeListener('operation', operationHandle);
         mindInstance.bus?.removeListener('selectNodes', selectNodesHandle);
-        mindInstance.bus?.removeListener('selectNode', selectNodeHandle);
+        mindInstance.bus?.removeListener('selectNewNode', selectNodeHandle);
         mindInstance.destroy();
       }
     };

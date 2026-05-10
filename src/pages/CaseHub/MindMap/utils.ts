@@ -1,4 +1,6 @@
-import { MindNode } from '@/pages/CaseHub/MindMap2/MindElixirComponent';
+import type { NodeObj } from 'mind-elixir/dist/types/types';
+
+export type MindNode = NodeObj;
 
 export const exportAsJson = (
   data: MindNode,

@@ -209,7 +209,7 @@ const APIFormData: FC<SelfProps> = ({ form }) => {
               suffix: (
                 <ApiVariableFunc
                   value={record?.value}
-                  index={record?.id}
+                  index={record?.id as number}
                   setValue={(idx, newData) => {
                     editorFormRef.current?.setRowData?.(idx, newData);
                     const currentData =
