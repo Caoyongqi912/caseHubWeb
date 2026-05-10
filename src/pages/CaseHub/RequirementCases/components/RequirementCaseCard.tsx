@@ -28,8 +28,9 @@ import {
   MenuProps,
   message,
   Tag,
+  Tooltip,
 } from 'antd';
-import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { memo, useEffect, useState } from 'react';
 import CaseSubSteps from '../../components/CaseSubSteps';
 import DynamicInfo from '../../components/DynamicInfo';
 import { useCaseSelection, useCaseUpdate } from '../contexts';
@@ -57,6 +58,7 @@ const RequirementCaseCard: React.FC<Props> = memo(({ testcaseData }) => {
     updateCaseLevel,
     updateCaseType,
     refreshCases,
+    onCaseDataChange,
   } = useCaseUpdate();
 
   const caseId = testcaseData?.id;
@@ -69,166 +71,74 @@ const RequirementCaseCard: React.FC<Props> = memo(({ testcaseData }) => {
     }
   }, [testcaseData, form]);
 
-  const statusConfig = useMemo(
-    () =>
-      caseStatusColors[testcaseData?.case_status || 0] || caseStatusColors[0],
-    [testcaseData?.case_status],
-  );
+  const statusConfig =
+    caseStatusColors[testcaseData?.case_status || 0] || caseStatusColors[0];
+  const statusText =
+    testcaseData?.case_status === 1
+      ? '通过'
+      : testcaseData?.case_status === 2
+      ? '失败'
+      : '待开始';
+  const StatusIcon =
+    testcaseData?.case_status === 1 ? (
+      <CheckCircleFilled style={{ color: '#52c41a' }} />
+    ) : testcaseData?.case_status === 2 ? (
+      <CloseCircleFilled style={{ color: '#ff4d4f' }} />
+    ) : (
+      <ClockCircleFilled style={{ color: '#8c8c8c' }} />
+    );
 
-  const statusText = useMemo(() => {
-    const statusTextMap = ['', '通过', '失败', '待开始'];
-    return statusTextMap[testcaseData?.case_status || 0] || '待开始';
-  }, [testcaseData?.case_status]);
+  const menuItems: MenuProps['items'] = [
+    { label: '查看动态', key: '1', icon: <MessageOutlined /> },
+    { label: '复制用例', key: '2', icon: <CopyOutlined /> },
+    { type: 'divider' },
+    { label: '删除用例', key: '3', icon: <DeleteOutlined />, danger: true },
+  ];
 
-  const StatusIcon = useMemo(() => {
-    if (testcaseData?.case_status === 1) {
-      return <CheckCircleFilled style={{ color: '#52c41a' }} />;
-    }
-    if (testcaseData?.case_status === 2) {
-      return <CloseCircleFilled style={{ color: '#ff4d4f' }} />;
-    }
-    return <ClockCircleFilled style={{ color: '#8c8c8c' }} />;
-  }, [testcaseData?.case_status]);
-
-  const menuItems: MenuProps['items'] = useMemo(
-    () => [
-      { label: '查看动态', key: '1', icon: <MessageOutlined /> },
-      { label: '复制用例', key: '2', icon: <CopyOutlined /> },
-      { type: 'divider' },
-      { label: '删除用例', key: '3', icon: <DeleteOutlined />, danger: true },
-    ],
-    [],
-  );
-
-  const copyStepCase = useCallback(async () => {
-    if (!caseId) return;
-    const { code, msg } = await copyTestCase({
-      requirement_id: reqId ? parseInt(reqId) : undefined,
-      caseId,
-    });
-    if (code === 0) {
-      message.success(msg);
-      refreshCases();
-    }
-  }, [caseId, reqId, refreshCases]);
-
-  const deleteStepCase = useCallback(async () => {
-    if (!caseId) return;
-    const { code, msg } = await removeTestCase({
-      requirement_id: reqId ? parseInt(reqId) : undefined,
-      caseId,
-    });
-    if (code === 0) {
-      message.success(msg);
-      refreshCases();
-    }
-  }, [caseId, reqId, refreshCases]);
-
-  const handleMenuClick: MenuProps['onClick'] = useCallback(
-    async (e) => {
-      e.domEvent.stopPropagation();
-      switch (e.key) {
-        case '1':
-          setOpenDynamic(true);
-          break;
-        case '2':
-          await copyStepCase();
-          break;
-        case '3':
-          await deleteStepCase();
-          break;
-      }
-    },
-    [copyStepCase, deleteStepCase],
-  );
-
-  const handleFieldSave = useCallback(
-    async (field: string, value: string | number) => {
+  const handleMenuClick = async (e: any) => {
+    e.domEvent.stopPropagation();
+    if (e.key === '1') {
+      setOpenDynamic(true);
+    } else if (e.key === '2') {
       if (!caseId) return;
-      await updateCaseField(caseId, field as keyof ITestCase, value);
-    },
-    [caseId, updateCaseField],
-  );
+      const { code, msg } = await copyTestCase({
+        requirement_id: reqId ? parseInt(reqId) : undefined,
+        caseId,
+      });
+      if (code === 0) {
+        message.success(msg);
+        refreshCases();
+      }
+    } else if (e.key === '3') {
+      if (!caseId) return;
+      const { code, msg } = await removeTestCase({
+        requirement_id: reqId ? parseInt(reqId) : undefined,
+        caseId,
+      });
+      if (code === 0) {
+        message.success(msg);
+        refreshCases();
+      }
+    }
+  };
 
-  const handleTitleChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setTitleValue(e.target.value);
-    },
-    [],
-  );
-
-  const handleTitleSave = useCallback(async () => {
+  const handleTitleSave = async () => {
     const trimmedValue = titleValue.trim();
     if (trimmedValue && trimmedValue !== testcaseData?.case_name) {
       form.setFieldsValue({ case_name: trimmedValue });
-      await handleFieldSave('case_name', trimmedValue);
-    }
-  }, [titleValue, testcaseData?.case_name, form, handleFieldSave]);
-
-  const handleTitleKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        (e.target as HTMLTextAreaElement).blur();
-      }
-    },
-    [],
-  );
-
-  const handleTagChange = useCallback(
-    async (id: number, newTag: string) => {
-      await updateCaseField(id, 'case_tag', newTag);
-    },
-    [updateCaseField],
-  );
-
-  /** 切换用例类型 */
-  const handleCaseLevelToggle = useCallback(
-    async (id: number, newLevel: string) => {
-      if (!reqId) return;
-      await updateCaseLevel(id, newLevel);
-    },
-    [caseId, testcaseData?.case_level, updateCaseLevel],
-  );
-
-  /** 切换用例类型 */
-  const handleCaseTypeToggle = useCallback(
-    async (id: number, newType: number) => {
-      if (!reqId) return;
-      await updateCaseType(id, newType);
-    },
-    [caseId, testcaseData?.case_type, updateCaseType],
-  );
-
-  /** 切换审核状态 */
-  const handleReviewToggle = useCallback(async () => {
-    if (!caseId || testcaseData?.is_review === undefined) return;
-    await updateCaseReview(caseId, !testcaseData.is_review);
-  }, [caseId, testcaseData?.is_review, updateCaseReview]);
-
-  const handleMouseEnter = useCallback(() => setIsHovered(true), []);
-  const handleMouseLeave = useCallback(() => setIsHovered(false), []);
-  const handleFocus = useCallback(() => setIsFocused(true), []);
-  const handleBlur = useCallback(() => {
-    setIsFocused(false);
-    handleTitleSave();
-  }, [handleTitleSave]);
-
-  /** 切换选中状态 */
-  const handleCheckboxChange = useCallback(
-    (e: { target: { checked: boolean }; stopPropagation: () => void }) => {
-      e.stopPropagation();
       if (caseId) {
-        toggleCase(caseId);
+        await updateCaseField(caseId, 'case_name', trimmedValue);
       }
-    },
-    [caseId, toggleCase],
-  );
+    }
+  };
 
-  const handleExpandClick = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    setOpenCaseSteps(true);
-  }, []);
+  const handleTagChange = async (id: number, newTag: string) => {
+    await updateCaseField(id, 'case_tag', newTag);
+  };
+
+  const handleCaseStatusChange = (caseId: number, newStatus: number) => {
+    onCaseDataChange(caseId, 'case_status', newStatus);
+  };
 
   return (
     <>
@@ -253,14 +163,15 @@ const RequirementCaseCard: React.FC<Props> = memo(({ testcaseData }) => {
           case_status={testcaseData?.case_status}
           callback={refreshCases}
           requirement_id={reqId ? parseInt(reqId) : undefined}
+          onStatusChange={handleCaseStatusChange}
         />
       </MyDrawer>
 
       <ProForm<ITestCase> form={form} submitter={false}>
         <div
           style={styles.container(isHovered, selected)}
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
         >
           <div
             style={styles.leftAccent(
@@ -272,27 +183,45 @@ const RequirementCaseCard: React.FC<Props> = memo(({ testcaseData }) => {
 
           <div style={styles.inner()}>
             <div style={styles.checkbox(selected, isHovered)}>
-              <Checkbox checked={selected} onChange={handleCheckboxChange} />
+              <Checkbox
+                checked={selected}
+                onChange={(e) => {
+                  e.stopPropagation();
+                  if (caseId) toggleCase(caseId);
+                }}
+              />
             </div>
-            <Button
-              type="text"
-              size="middle"
-              icon={<ExpandOutlined style={{ fontSize: 14 }} />}
-              style={styles.detailBtn(isHovered)}
-              onClick={handleExpandClick}
-            />
-            <span style={styles.caseIdTag()}>{testcaseData?.uid}</span>
 
+            <Tooltip title="点击查看用例详情" placement="top">
+              <Button
+                type="primary"
+                ghost
+                size="small"
+                icon={<ExpandOutlined style={{ fontSize: 13 }} />}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOpenCaseSteps(true);
+                }}
+              />
+            </Tooltip>
             <div style={styles.titleInputContainer()}>
               <Input
                 value={titleValue}
                 placeholder="输入用例标题..."
                 variant={'borderless'}
                 style={styles.titleInput(isFocused)}
-                onFocus={handleFocus}
-                onBlur={handleBlur}
-                onChange={handleTitleChange}
-                onKeyDown={handleTitleKeyDown}
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => {
+                  setIsFocused(false);
+                  handleTitleSave();
+                }}
+                onChange={(e) => setTitleValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    (e.target as HTMLTextAreaElement).blur();
+                  }
+                }}
               />
               <div style={styles.focusIndicator(isFocused)} />
             </div>
@@ -300,7 +229,7 @@ const RequirementCaseCard: React.FC<Props> = memo(({ testcaseData }) => {
             <div style={styles.metaSection()}>
               <span
                 style={styles.statusTag(
-                  { bg: statusConfig.bg, text: statusConfig.text },
+                  statusConfig,
                   testcaseData?.case_status || 0,
                 )}
               >
@@ -323,16 +252,24 @@ const RequirementCaseCard: React.FC<Props> = memo(({ testcaseData }) => {
               />
               <CaseLevelSelect
                 testcaseData={testcaseData}
-                onLevelChange={handleCaseLevelToggle}
+                onLevelChange={async (id, newLevel) => {
+                  if (reqId) await updateCaseLevel(id, newLevel);
+                }}
               />
               <CaseTypeSelect
                 testcaseData={testcaseData}
-                onTypeChange={handleCaseTypeToggle}
+                onTypeChange={async (id, newType) => {
+                  if (reqId) await updateCaseType(id, newType);
+                }}
               />
 
               {testcaseData?.is_review !== undefined && (
                 <Tag
-                  onClick={handleReviewToggle}
+                  onClick={async () => {
+                    if (caseId && testcaseData?.is_review !== undefined) {
+                      await updateCaseReview(caseId, !testcaseData.is_review);
+                    }
+                  }}
                   style={{
                     ...styles.caseFlagTag(
                       testcaseData.is_review

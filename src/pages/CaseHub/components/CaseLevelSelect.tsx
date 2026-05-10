@@ -56,6 +56,7 @@ const CaseLevelSelect: FC<Props> = ({ testcaseData, onLevelChange }) => {
       {levelVisible ? (
         <ProFormSelect
           noStyle
+          allowClear={false}
           style={{
             borderRadius: 10,
             minWidth: 70,

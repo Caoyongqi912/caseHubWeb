@@ -20,11 +20,21 @@ import {
   PlusOutlined,
   SaveOutlined,
 } from '@ant-design/icons';
-import { Button, message, Popconfirm, Spin, Tooltip, Typography } from 'antd';
-import React, { FC, useEffect, useRef, useState } from 'react';
-import { useCaseSubStepsStyles } from './styles';
+import { ProCard } from '@ant-design/pro-components';
+import {
+  Button,
+  Input,
+  Popconfirm,
+  Space,
+  Spin,
+  Tag,
+  Tooltip,
+  Typography,
+} from 'antd';
+import { FC, useEffect, useRef, useState } from 'react';
 
-const { Text } = Typography;
+const { Text, Title } = Typography;
+const { TextArea } = Input;
 
 interface IProps {
   caseId?: number;
@@ -35,6 +45,7 @@ interface IProps {
   case_setup?: string;
   case_mark?: string;
   creatorName?: string;
+  onStatusChange?: (caseId: number, newStatus: number) => void;
 }
 
 const CaseSubSteps: FC<IProps> = ({
@@ -46,27 +57,24 @@ const CaseSubSteps: FC<IProps> = ({
   creatorName = '',
   case_setup = '',
   case_mark = '',
+  onStatusChange,
 }) => {
   const [steps, setSteps] = useState<CaseSubStep[]>([]);
   const [editStatus, setEditStatus] = useState(0);
   const [addLine, setAddLine] = useState(0);
   const [hoveredStep, setHoveredStep] = useState<string | null>(null);
-  const [focusedField, setFocusedField] = useState<{
-    uid: string;
-    field: string;
-  } | null>(null);
   const [draggedStep, setDraggedStep] = useState<string | null>(null);
   const [setupValue, setSetupValue] = useState(case_setup);
   const [markValue, setMarkValue] = useState(case_mark);
-  const [setupFocused, setSetupFocused] = useState(false);
-  const [markFocused, setMarkFocused] = useState(false);
+  const [localCaseStatus, setLocalCaseStatus] = useState(case_status);
 
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const stepsRef = useRef<CaseSubStep[]>(steps);
-  const styles = useCaseSubStepsStyles();
-  const { colors, spacing } = useCaseHubTheme();
+
+  const { colors, spacing, borderRadius } = useCaseHubTheme();
+
   const statusConfig =
-    caseStatusColors[case_status || 0] || caseStatusColors[0];
+    caseStatusColors[localCaseStatus || 0] || caseStatusColors[0];
 
   useEffect(() => {
     setSetupValue(case_setup);
@@ -74,25 +82,21 @@ const CaseSubSteps: FC<IProps> = ({
   }, [case_setup, case_mark]);
 
   useEffect(() => {
+    setLocalCaseStatus(case_status);
+  }, [case_status]);
+
+  useEffect(() => {
     stepsRef.current = steps;
   }, [steps]);
 
   useEffect(() => {
     if (!caseId) return;
-    queryTestCaseSupStep(caseId.toString()).then(async ({ code, data }) => {
+    queryTestCaseSupStep(caseId.toString()).then(({ code, data }) => {
       if (code === 0) {
         setSteps(data);
       }
     });
   }, [caseId, addLine]);
-
-  const handleDragStart = (uid: string) => {
-    setDraggedStep(uid);
-  };
-
-  const handleDragEnd = () => {
-    setDraggedStep(null);
-  };
 
   const handleDrop = async (targetUid: string) => {
     if (!draggedStep || draggedStep === targetUid) {
@@ -165,329 +169,343 @@ const CaseSubSteps: FC<IProps> = ({
         step.uid === uid ? { ...step, [field]: value } : step,
       ),
     );
+
+    if (value.trim()) {
+      const currentSteps = stepsRef.current;
+      const lastStep = currentSteps[currentSteps.length - 1];
+      const isLastStepEmpty =
+        lastStep &&
+        !lastStep.action?.trim() &&
+        !lastStep.expected_result?.trim();
+
+      if (!isLastStepEmpty && caseId) {
+        handleAddTestCaseStep({ caseId }).then(({ code }) => {
+          if (code === 0) setAddLine((prev) => prev + 1);
+        });
+      }
+    }
   };
 
   const handleFieldBlur = (uid: string) => {
     saveStep(uid);
-    setFocusedField(null);
   };
 
-  const handleFieldKeyDown = (e: React.KeyboardEvent, uid: string) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      (e.target as HTMLTextAreaElement).blur();
-    }
-  };
+  const handleStatusChange = async () => {
+    if (!caseId || !requirement_id) return;
 
-  const handleSetupBlur = () => {
-    setSetupFocused(false);
-    if (setupValue !== case_setup) {
-      saveCaseField('case_setup', setupValue);
-    }
-  };
+    // 状态只在通过(1)和失败(2)之间切换
+    const newStatus = localCaseStatus === 1 ? 2 : 1;
+    setLocalCaseStatus(newStatus);
 
-  const handleMarkBlur = () => {
-    setMarkFocused(false);
-    if (markValue !== case_mark) {
-      saveCaseField('case_mark', markValue);
-    }
-  };
+    const { code } = await updateRequirementCase({
+      requirement_id,
+      case_id: caseId,
+      case_status: newStatus,
+    } as any);
 
-  const addStep = async () => {
-    if (caseId) {
-      const { code } = await handleAddTestCaseStep({ caseId });
-      if (code === 0) {
-        setAddLine((prev) => prev + 1);
-      }
+    if (code === 0) {
+      onStatusChange?.(caseId, newStatus);
+    } else {
+      setLocalCaseStatus(localCaseStatus);
     }
   };
 
   const deleteStep = async (stepId: number) => {
     const { code } = await removeTestCaseStep({ stepId });
-    if (code === 0) {
-      setAddLine((prev) => prev + 1);
-    }
+    if (code === 0) setAddLine((prev) => prev + 1);
   };
 
   const copyStep = async (stepId: number) => {
     const { code } = await copyTestCaseStep({ step_id: stepId });
-    if (code === 0) {
-      setAddLine((prev) => prev + 1);
-    }
+    if (code === 0) setAddLine((prev) => prev + 1);
   };
 
-  const handleStatusChange = async (checked: boolean) => {
-    if (!caseId) return;
-    if (!requirement_id) return;
-    const { code } = await updateRequirementCase({
-      requirement_id,
-      case_id: caseId,
-      case_status: checked ? 1 : 2,
-    } as any);
-    if (code === 0) {
-      callback?.();
-    }
-  };
-
-  const SaveIndicator = () => {
-    const config = {
-      0: { text: '', icon: null },
-      1: { text: '保存中...', icon: <Spin size="small" /> },
-      2: { text: '已保存', icon: <SaveOutlined /> },
-    };
-    const current = config[editStatus as keyof typeof config];
-
-    if (!current.text) return null;
-
-    return (
-      <div style={styles.saveIndicator(editStatus)}>
-        {current.icon}
-        <span>{current.text}</span>
-      </div>
+  const statusText =
+    localCaseStatus === 1 ? '通过' : localCaseStatus === 2 ? '失败' : '待测试';
+  const StatusIcon =
+    localCaseStatus === 1 ? (
+      <CheckCircleFilled style={{ color: '#52c41a' }} />
+    ) : localCaseStatus === 2 ? (
+      <CloseCircleFilled style={{ color: '#ff4d4f' }} />
+    ) : (
+      <HolderOutlined style={{ color: colors.textSecondary }} />
     );
-  };
-
-  const CreatorBadge = () => {
-    if (!creatorName) return null;
-    return (
-      <div style={styles.headerRight()}>
-        <span>创建者：</span>
-        <span style={{ color: colors.primary, fontWeight: 500 }}>
-          {creatorName}
-        </span>
-      </div>
-    );
-  };
 
   return (
-    <div style={styles.container()}>
-      <div style={styles.header()}>
-        <div style={styles.headerLeft()}>
-          <div style={styles.stepCounter()}>
-            <HolderOutlined style={{ fontSize: 14 }} />
-            <span>{steps.length} 个步骤</span>
-          </div>
+    <ProCard
+      bordered={false}
+      style={{ minHeight: '100%', background: colors.bgContainer }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: `${spacing.lg}px ${spacing.xl}px`,
+          borderBottom: `1px solid ${colors.border}`,
+        }}
+      >
+        <Space size="large">
+          <Space>
+            <HolderOutlined style={{ color: colors.textSecondary }} />
+            <Text type="secondary">{steps.length} 个步骤</Text>
+          </Space>
 
           {!hiddenStatusBut && (
-            <div
-              style={styles.statusSwitch(statusConfig)}
-              onClick={() => handleStatusChange(case_status !== 1)}
+            <Tag
+              style={{
+                cursor: 'pointer',
+                borderRadius: borderRadius.lg,
+              }}
+              onClick={handleStatusChange}
             >
-              {case_status === 1 ? (
-                <CheckCircleFilled style={{ fontSize: 14, color: '#22c55e' }} />
-              ) : case_status === 2 ? (
-                <CloseCircleFilled style={{ fontSize: 14, color: '#ef4444' }} />
-              ) : (
-                <HolderOutlined
-                  style={{ fontSize: 14, color: colors.textSecondary }}
-                />
-              )}
-              <span style={styles.statusText(case_status || 0)}>
-                {case_status === 1
-                  ? '通过'
-                  : case_status === 2
-                  ? '失败'
-                  : '待测试'}
+              {StatusIcon}
+              <span style={{ marginLeft: 4, fontWeight: 600 }}>
+                {statusText}
               </span>
-            </div>
+            </Tag>
           )}
-        </div>
+        </Space>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: spacing.lg }}>
-          <CreatorBadge />
-          <SaveIndicator />
-        </div>
+        <Space size="large">
+          {creatorName && (
+            <Text type="secondary">
+              创建者：
+              <Text strong style={{ color: colors.primary }}>
+                {creatorName}
+              </Text>
+            </Text>
+          )}
+          {editStatus === 1 && (
+            <Tag icon={<Spin size="small" />} color="processing">
+              保存中...
+            </Tag>
+          )}
+          {editStatus === 2 && (
+            <Tag icon={<SaveOutlined />} color="success">
+              已保存
+            </Tag>
+          )}
+        </Space>
       </div>
 
-      <div style={styles.body()}>
-        <div style={styles.textareaWrapper()}>
-          <div style={styles.textareaLabel()}>
-            <span>前置条件</span>
+      <div style={{ padding: spacing.xl }}>
+        <div style={{ marginBottom: spacing.lg }}>
+          <Space style={{ marginBottom: spacing.sm }}>
+            <Text strong>前置条件</Text>
             <Text type="secondary" style={{ fontSize: 12 }}>
               （可选）
             </Text>
-          </div>
-          <textarea
+          </Space>
+          <TextArea
             value={setupValue}
             placeholder="输入用例执行的前置条件..."
-            style={styles.textarea(setupFocused)}
-            onFocus={() => setSetupFocused(true)}
-            onBlur={handleSetupBlur}
+            autoSize={{ minRows: 2, maxRows: 4 }}
+            onBlur={() =>
+              setupValue !== case_setup &&
+              saveCaseField('case_setup', setupValue)
+            }
             onChange={(e) => setSetupValue(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                (e.target as HTMLTextAreaElement).blur();
-              }
-            }}
-            rows={2}
           />
         </div>
 
-        <div style={styles.sectionTitle()}>测试步骤</div>
+        <Title level={5} style={{ marginBottom: spacing.md }}>
+          测试步骤
+        </Title>
 
-        <div style={styles.stepsContainer()}>
+        <Space
+          direction="vertical"
+          style={{ width: '100%', marginBottom: spacing.lg }}
+        >
           {steps.map((step, index) => (
-            <div
+            <ProCard
               key={step.uid}
-              style={styles.stepRow(hoveredStep === step.uid, index)}
-              onMouseEnter={() => setHoveredStep(step.uid)}
-              onMouseLeave={() => setHoveredStep(null)}
+              size="small"
+              hoverable
               draggable
-              onDragStart={() => handleDragStart(step.uid)}
-              onDragEnd={handleDragEnd}
+              onDragStart={() => setDraggedStep(step.uid)}
+              onDragEnd={() => setDraggedStep(null)}
               onDragOver={(e) => e.preventDefault()}
               onDrop={() => handleDrop(step.uid)}
+              style={{
+                background:
+                  hoveredStep === step.uid
+                    ? `${colors.primary}04`
+                    : colors.bgLayout,
+                border: `1px solid ${
+                  hoveredStep === step.uid
+                    ? `${colors.primary}20`
+                    : colors.borderSecondary
+                }`,
+                transition: 'all 150ms ease',
+              }}
+              onMouseEnter={() => setHoveredStep(step.uid)}
+              onMouseLeave={() => setHoveredStep(null)}
             >
               <div
                 style={{
-                  ...styles.dragHandle(draggedStep === step.uid),
-                  opacity: hoveredStep === step.uid ? 1 : 0.3,
+                  display: 'flex',
+                  gap: spacing.md,
+                  alignItems: 'start',
                 }}
               >
-                <HolderOutlined style={{ fontSize: 16 }} />
-              </div>
-
-              <div style={styles.stepNumber(index + 1)}>{index + 1}</div>
-
-              <textarea
-                value={step.action || ''}
-                placeholder="输入操作步骤..."
-                style={styles.stepInput(
-                  focusedField?.uid === step.uid &&
-                    focusedField?.field === 'action',
-                )}
-                onFocus={() =>
-                  setFocusedField({ uid: step.uid, field: 'action' })
-                }
-                onBlur={() => handleFieldBlur(step.uid)}
-                onChange={(e) =>
-                  handleFieldChange(step.uid, 'action', e.target.value)
-                }
-                onKeyDown={(e) => handleFieldKeyDown(e, step.uid)}
-                rows={2}
-              />
-
-              <textarea
-                value={step.expected_result || ''}
-                placeholder="输入预期结果..."
-                style={styles.stepInput(
-                  focusedField?.uid === step.uid &&
-                    focusedField?.field === 'expected_result',
-                )}
-                onFocus={() =>
-                  setFocusedField({ uid: step.uid, field: 'expected_result' })
-                }
-                onBlur={() => handleFieldBlur(step.uid)}
-                onChange={(e) =>
-                  handleFieldChange(step.uid, 'expected_result', e.target.value)
-                }
-                onKeyDown={(e) => handleFieldKeyDown(e, step.uid)}
-                rows={2}
-              />
-
-              <div style={styles.stepActions()}>
-                <Tooltip title="复制">
-                  <Button
-                    type="text"
-                    size="small"
-                    icon={<CopyOutlined style={{ fontSize: 14 }} />}
-                    onClick={() => {
-                      if (typeof step.id === 'number') {
-                        copyStep(step.id);
-                      }
-                    }}
-                    style={{ opacity: hoveredStep === step.uid ? 1 : 0 }}
-                  />
-                </Tooltip>
-                <Popconfirm
-                  title="确认删除此步骤？"
-                  description="删除后无法恢复"
-                  onConfirm={() => {
-                    if (typeof step.id === 'number') {
-                      deleteStep(step.id);
-                    }
+                <div
+                  style={{
+                    cursor: 'grab',
+                    color:
+                      draggedStep === step.uid
+                        ? colors.primary
+                        : colors.textSecondary,
+                    opacity: hoveredStep === step.uid ? 1 : 0.3,
+                    paddingTop: 8,
                   }}
-                  okText="删除"
-                  cancelText="取消"
-                  okButtonProps={{ danger: true }}
                 >
-                  <Button
-                    type="text"
-                    size="small"
-                    danger
-                    icon={<DeleteOutlined style={{ fontSize: 14 }} />}
-                    style={{ opacity: hoveredStep === step.uid ? 1 : 0 }}
-                  />
-                </Popconfirm>
+                  <HolderOutlined />
+                </div>
+
+                <Tag
+                  style={{
+                    background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryHover} 100%)`,
+                    color: '#fff',
+                    borderRadius: borderRadius.round,
+                    width: 24,
+                    height: 24,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    marginTop: 8,
+                  }}
+                >
+                  {index + 1}
+                </Tag>
+
+                <div style={{ display: 'flex', gap: spacing.md, flex: 1 }}>
+                  <div style={{ flex: 1 }}>
+                    <Text
+                      type="secondary"
+                      style={{
+                        fontSize: 12,
+                        display: 'block',
+                        marginBottom: 4,
+                      }}
+                    >
+                      操作步骤
+                    </Text>
+                    <TextArea
+                      value={step.action || ''}
+                      placeholder="输入操作步骤..."
+                      autoSize={{ minRows: 2, maxRows: 4 }}
+                      onBlur={() => handleFieldBlur(step.uid)}
+                      onChange={(e) =>
+                        handleFieldChange(step.uid, 'action', e.target.value)
+                      }
+                    />
+                  </div>
+
+                  <div style={{ flex: 1 }}>
+                    <Text
+                      type="secondary"
+                      style={{
+                        fontSize: 12,
+                        display: 'block',
+                        marginBottom: 4,
+                      }}
+                    >
+                      预期结果
+                    </Text>
+                    <TextArea
+                      value={step.expected_result || ''}
+                      placeholder="输入预期结果..."
+                      autoSize={{ minRows: 2, maxRows: 4 }}
+                      onBlur={() => handleFieldBlur(step.uid)}
+                      onChange={(e) =>
+                        handleFieldChange(
+                          step.uid,
+                          'expected_result',
+                          e.target.value,
+                        )
+                      }
+                    />
+                  </div>
+                </div>
+
+                <Space
+                  direction="vertical"
+                  size="small"
+                  style={{ marginTop: 20 }}
+                >
+                  <Tooltip title="复制">
+                    <Button
+                      type="text"
+                      size="small"
+                      icon={<CopyOutlined />}
+                      onClick={() =>
+                        typeof step.id === 'number' && copyStep(step.id)
+                      }
+                      style={{ opacity: hoveredStep === step.uid ? 1 : 0 }}
+                    />
+                  </Tooltip>
+                  <Popconfirm
+                    title="确认删除此步骤？"
+                    description="删除后无法恢复"
+                    onConfirm={() =>
+                      typeof step.id === 'number' && deleteStep(step.id)
+                    }
+                    okText="删除"
+                    cancelText="取消"
+                    okButtonProps={{ danger: true }}
+                  >
+                    <Button
+                      type="text"
+                      size="small"
+                      danger
+                      icon={<DeleteOutlined />}
+                      style={{ opacity: hoveredStep === step.uid ? 1 : 0 }}
+                    />
+                  </Popconfirm>
+                </Space>
               </div>
-            </div>
+            </ProCard>
           ))}
+        </Space>
 
-          <button
-            style={styles.addButton()}
-            onClick={addStep}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = '#1890ff';
-              e.currentTarget.style.color = '#1890ff';
-              e.currentTarget.style.background = '#e6f7ff';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = '';
-              e.currentTarget.style.color = '';
-              e.currentTarget.style.background = '';
-            }}
-          >
-            <PlusOutlined style={{ fontSize: 16 }} />
-            <span>添加步骤</span>
-          </button>
-        </div>
-
-        <div style={styles.textareaWrapper()}>
-          <div style={styles.textareaLabel()}>
-            <span>备注</span>
+        <div style={{ marginBottom: spacing.lg }}>
+          <Space style={{ marginBottom: spacing.sm }}>
+            <Text strong>备注</Text>
             <Text type="secondary" style={{ fontSize: 12 }}>
               （可选）
             </Text>
-          </div>
-          <textarea
+          </Space>
+          <TextArea
             value={markValue}
             placeholder="输入备注信息..."
-            style={styles.textarea(markFocused)}
-            onFocus={() => setMarkFocused(true)}
-            onBlur={handleMarkBlur}
+            autoSize={{ minRows: 2, maxRows: 4 }}
+            onBlur={() =>
+              markValue !== case_mark && saveCaseField('case_mark', markValue)
+            }
             onChange={(e) => setMarkValue(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                (e.target as HTMLTextAreaElement).blur();
-              }
-            }}
-            rows={2}
           />
         </div>
-        <div style={styles.footerAction()}>
-          <Button
-            hidden={hiddenStatusBut}
-            style={styles.quickCreateBtn()}
-            onClick={async () => {
-              if (!caseId || !requirement_id) return;
-              const { code, msg } = await copyTestCase({
-                requirement_id: requirement_id,
-                caseId: caseId,
-              });
-              if (code === 0) {
-                message.success(msg);
-                callback?.();
-              }
-            }}
-          >
-            <PlusOutlined />
-            快速创建下一个
-          </Button>
-        </div>
+
+        {!hiddenStatusBut && (
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <Button
+              type="primary"
+              ghost
+              icon={<PlusOutlined />}
+              onClick={async () => {
+                if (!caseId || !requirement_id) return;
+                const { code } = await copyTestCase({ requirement_id, caseId });
+                if (code === 0) callback?.();
+              }}
+            >
+              快速创建下一个
+            </Button>
+          </div>
+        )}
       </div>
-    </div>
+    </ProCard>
   );
 };
 

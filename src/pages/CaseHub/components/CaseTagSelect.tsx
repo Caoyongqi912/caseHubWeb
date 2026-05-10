@@ -11,7 +11,6 @@ interface Props {
     React.SetStateAction<{ label: string; value: string }[]>
   >;
   testcaseData?: ITestCase;
-  onSave?: (field: string, value: string) => void;
   onTagChange?: (caseId: number, newTag: string) => void;
 }
 
@@ -19,13 +18,12 @@ const CaseTagSelect: FC<Props> = ({
   tags,
   setTags,
   testcaseData,
-  onSave,
   onTagChange,
 }) => {
   const inputRef = useRef<InputRef>(null);
-  const [currentTag, setCurrentTag] = useState<string>();
-  const [tagVisible, setTagVisible] = useState<boolean>(false);
-  const [tagValue, setTagValue] = useState<string>();
+  const [currentTag, setCurrentTag] = useState('');
+  const [tagVisible, setTagVisible] = useState(false);
+  const [tagValue, setTagValue] = useState('');
   const { colors, spacing, borderRadius } = useCaseHubTheme();
 
   useEffect(() => {
@@ -35,26 +33,11 @@ const CaseTagSelect: FC<Props> = ({
     }
   }, [testcaseData]);
 
-  const handleInputKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      if (currentTag && currentTag.trim()) {
-        setTags((t) => [...t, { label: currentTag, value: currentTag }]);
-        setCurrentTag('');
-      }
-    }
-  };
-
-  const handleAddTag = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (currentTag && currentTag.trim()) {
-      setTags((t) => [...t, { label: currentTag, value: currentTag }]);
+  const handleAddTag = () => {
+    if (currentTag.trim()) {
+      setTags((prev) => [...prev, { label: currentTag, value: currentTag }]);
       setCurrentTag('');
-      setTimeout(() => {
-        inputRef.current?.focus();
-      }, 0);
+      setTimeout(() => inputRef.current?.focus(), 0);
     }
   };
 
@@ -63,46 +46,41 @@ const CaseTagSelect: FC<Props> = ({
     setTagVisible(true);
     if (testcaseData?.id) {
       onTagChange?.(testcaseData.id, value);
-    } else {
-      onSave?.('case_tag', value);
     }
-  };
-
-  const tagStyle = {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: 4,
-    padding: '3px 8px',
-    borderRadius: 10,
-    background: `${colors.info}12`,
-    color: colors.info,
-    fontSize: 11,
-    fontWeight: 600,
-    border: `1px solid ${colors.info}25`,
-    cursor: 'pointer',
-    transition: 'all 150ms ease',
-    maxWidth: 100,
-    textOverflow: 'ellipsis',
-    overflow: 'hidden',
-    whiteSpace: 'nowrap' as const,
   };
 
   return (
     <>
       {tagVisible ? (
-        <Tag onClick={() => setTagVisible(false)} style={tagStyle}>
-          {tagValue && tagValue.length > 10
-            ? `${tagValue.slice(0, 10)}...`
-            : tagValue}
+        <Tag
+          onClick={() => setTagVisible(false)}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 4,
+            padding: '3px 8px',
+            borderRadius: 10,
+            background: `${colors.info}12`,
+            color: colors.info,
+            fontSize: 11,
+            fontWeight: 600,
+            border: `1px solid ${colors.info}25`,
+            cursor: 'pointer',
+            transition: 'all 150ms ease',
+            maxWidth: 100,
+            textOverflow: 'ellipsis',
+            overflow: 'hidden',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {tagValue?.length > 10 ? `${tagValue.slice(0, 10)}...` : tagValue}
         </Tag>
       ) : (
         <ProFormSelect
           noStyle
-          required
-          rules={[{ required: true, message: '请选择标签' }]}
-          allowClear
-          width={'sm'}
-          name={'case_tag'}
+          allowClear={false}
+          width="sm"
+          name="case_tag"
           options={tags}
           fieldProps={{
             variant: 'filled',
@@ -115,11 +93,9 @@ const CaseTagSelect: FC<Props> = ({
                     placeholder="自定义标签"
                     ref={inputRef}
                     value={currentTag}
-                    onChange={(e) => {
-                      setCurrentTag(e.target.value);
-                    }}
+                    onChange={(e) => setCurrentTag(e.target.value)}
                     onClick={(e) => e.stopPropagation()}
-                    onKeyDown={handleInputKeyDown}
+                    onKeyDown={(e) => e.key === 'Enter' && handleAddTag()}
                     style={{ borderRadius: borderRadius.md }}
                   />
                   <Button

@@ -88,19 +88,6 @@ export const useTestCaseStyles = () => {
     transition: 'opacity 150ms',
   });
 
-  const caseIdTag = (): CSSProperties => ({
-    padding: '2px 8px',
-    borderRadius: 10,
-    background: `${colors.primary}10`,
-    color: colors.primary,
-    fontSize: 11,
-    fontWeight: 600,
-    fontFamily:
-      'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-    letterSpacing: '0.02em',
-    flexShrink: 0,
-  });
-
   const titleInputContainer = (): CSSProperties => ({
     flex: 1,
     minWidth: 0,
@@ -240,7 +227,6 @@ export const useTestCaseStyles = () => {
     leftAccent,
     inner,
     checkbox,
-    caseIdTag,
     titleInputContainer,
     titleInput,
     focusIndicator,

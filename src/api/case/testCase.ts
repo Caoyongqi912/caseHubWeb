@@ -102,7 +102,7 @@ export const updateRequirementCase = async (
   },
   options?: IObjGet,
 ) => {
-  return request<IResponse<null>>('/api/hub/updateRequirementCase', {
+  return request<IResponse<null>>('/api/hub/req/updateRequirementCase', {
     method: 'POST',
     data: caseInfo,
     ...(options || {}),
