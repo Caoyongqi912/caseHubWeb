@@ -20,3 +20,5 @@
 /.env.local
 .trae
 .idea
+.agents/
+skills-lock.json
