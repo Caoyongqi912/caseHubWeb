@@ -121,10 +121,12 @@ const EmptyProject = () => {
 
         <Empty
           image={Empty.PRESENTED_IMAGE_SIMPLE}
-          imageStyle={{
-            height: 80,
-            marginBottom: spacing.lg,
-            opacity: 0.6,
+          styles={{
+            image: {
+              height: 80,
+              marginBottom: spacing.lg,
+              opacity: 0.6,
+            },
           }}
           description={
             <div style={{ marginTop: spacing.md }}>

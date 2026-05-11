@@ -48,7 +48,7 @@ const UploadModal: FC<UploadModalProps> = ({
   return (
     <ModalForm
       form={form}
-      modalProps={{ destroyOnClose: true }}
+      modalProps={{ destroyOnHidden: true }}
       open={open}
       onOpenChange={onOpenChange}
       title="上传用例附件"

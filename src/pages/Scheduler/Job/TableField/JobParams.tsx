@@ -346,7 +346,7 @@ const JobParams: FC<Props> = ({ text, record, callback }) => {
             </Button>,
           ]}
           width={800}
-          destroyOnClose
+          destroyOnHidden
         >
           <div style={styles.modalContent}>
             <div style={styles.editorHeader}>
@@ -455,7 +455,7 @@ const JobParams: FC<Props> = ({ text, record, callback }) => {
               ]
         }
         width={800}
-        destroyOnClose
+        destroyOnHidden
       >
         <div style={styles.modalContent}>
           <div style={styles.editorHeader}>

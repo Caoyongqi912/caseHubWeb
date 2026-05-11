@@ -36,8 +36,8 @@ export interface ITestCase {
   case_mark?: string | undefined;
   is_common?: boolean;
   is_review?: boolean;
-  requirementId?: number | string;
-
+  requirement_id?: number | string;
+  case_sub_steps?: any[];
   creatorName: string;
   creatorId: number;
   project_id?: number;

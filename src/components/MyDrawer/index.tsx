@@ -73,7 +73,7 @@ const Index: FC<SelfProps> = (props) => {
       loading={loading}
       styles={mergedStyles}
       open={open}
-      destroyOnClose={true}
+      destroyOnHidden={true}
       height={height || 'auto'}
       width={width || '65%'}
       title={name || false}

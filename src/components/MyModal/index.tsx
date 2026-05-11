@@ -29,7 +29,7 @@ const Index: FC<Props> = (props) => {
       onOpenChange={setOpen}
       trigger={trigger}
       modalProps={{
-        destroyOnClose: true,
+        destroyOnHidden: true,
       }}
       title={title}
       form={form}

@@ -48,6 +48,19 @@ export const saveTestCase = async (caseInfo: ITestCase, options?: IObjGet) => {
 };
 
 /**
+ * getTestCaseInfo
+ * @param case_id
+ * @param options
+ */
+export const getTestCaseInfo = async (case_id: number, options?: IObjGet) => {
+  return request<IResponse<ITestCase>>('/api/hub/cases/info', {
+    method: 'GET',
+    params: { case_id: case_id },
+    ...(options || {}),
+  });
+};
+
+/**
  * addDefault
  * @param caseInfo
  * @param options

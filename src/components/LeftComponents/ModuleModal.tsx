@@ -97,7 +97,7 @@ const ModuleModal: FC<SelfProps> = ({ title, open, onFinish, setOpen }) => {
       }
       autoFocusFirstInput
       modalProps={{
-        destroyOnClose: true,
+        destroyOnHidden: true,
         onCancel: () => setOpen(false),
         centered: true,
         styles: {

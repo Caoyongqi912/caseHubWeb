@@ -37,6 +37,7 @@ import {
   Typography,
 } from 'antd';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import CaseForm from './CaseForm';
 
 const { Text, Link } = Typography;
 
@@ -60,7 +61,7 @@ const CaseDataTable: FC<Props> = (props) => {
   const projects = initialState?.projects || [];
   const [selectProjectId, setSelectProjectId] = useState<number>();
   const [moduleEnum, setModuleEnum] = useState<IModuleEnum[]>([]);
-
+  const [openNewCaseDrawer, setOpenNewCaseDrawer] = useState<boolean>(false);
   useEffect(() => {
     if (selectProjectId) {
       fetchModulesEnum(selectProjectId, ModuleEnum.CASE, setModuleEnum).then();
@@ -307,6 +308,22 @@ const CaseDataTable: FC<Props> = (props) => {
         <DynamicInfo caseId={currentCaseId} />
       </MyDrawer>
       <MyDrawer
+        name={'添加用例'}
+        open={openNewCaseDrawer}
+        setOpen={setOpenNewCaseDrawer}
+        width={'60%'}
+      >
+        <CaseForm
+          callback={() => {
+            setOpenNewCaseDrawer(false);
+            actionRef.current?.reload();
+          }}
+          project_id={currentProjectId!}
+          module_id={currentModuleId!}
+        />
+      </MyDrawer>
+
+      <MyDrawer
         name={'用例详情'}
         open={showCaseDetail}
         setOpen={setShowCaseDetail}
@@ -382,6 +399,14 @@ const CaseDataTable: FC<Props> = (props) => {
               name="file"
             />
           </ModalForm>,
+
+          <Button
+            key="add"
+            type="primary"
+            onClick={() => setOpenNewCaseDrawer(true)}
+          >
+            添加用例
+          </Button>,
         ]}
         actionRef={actionRef}
         persistenceKey={perKey}

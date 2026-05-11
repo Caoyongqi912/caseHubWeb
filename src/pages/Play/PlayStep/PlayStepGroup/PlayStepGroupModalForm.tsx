@@ -67,7 +67,7 @@ const PlayStepGroupModalForm: FC<SelfProps> = ({
       form={form}
       autoFocusFirstInput
       modalProps={{
-        destroyOnClose: true,
+        destroyOnHidden: true,
       }}
       onFinish={onFinish}
     >
