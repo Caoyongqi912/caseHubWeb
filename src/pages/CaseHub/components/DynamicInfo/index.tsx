@@ -36,7 +36,7 @@ const DynamicInfo: FC<IProps> = ({ caseId }) => {
         }
       });
     }
-  }, [caseId]);
+  }, []);
 
   useEffect(() => {
     if (originalData.length === 0) return;

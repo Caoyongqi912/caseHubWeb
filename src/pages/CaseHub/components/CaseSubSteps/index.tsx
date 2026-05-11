@@ -99,6 +99,8 @@ const CaseSubSteps: FC<CaseSubStepsProps> = ({
 
   // 同步外部 props 变化到内部状态
   useEffect(() => {
+    console.log('case_setup', case_setup);
+    console.log('case_mark', case_mark);
     setSetupValue(case_setup);
     setMarkValue(case_mark);
   }, [case_setup, case_mark]);
@@ -262,10 +264,10 @@ const CaseSubSteps: FC<CaseSubStepsProps> = ({
       if (code === 0) {
         setEditStatus(EditStatus.Saved);
         setTimeout(() => setEditStatus(EditStatus.Idle), 2000);
-        callback?.();
+        // callback?.();
       }
     },
-    [caseId, callback],
+    [caseId],
   );
 
   /**

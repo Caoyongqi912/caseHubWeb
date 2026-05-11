@@ -157,32 +157,96 @@ type CaseLevelColors = Record<
   string,
   { bg: string; border: string; text: string }
 >;
+
+/**
+ * 用例等级颜色配置
+ * 使用 rgba 格式，确保在暗黑模式下也能正常显示
+ */
 export const caseLevelColors: CaseLevelColors = {
-  P0: { bg: '#fff2f0', border: '#ffccc7', text: '#cf1322' },
-  P1: { bg: '#fff7e6', border: '#ffd591', text: '#d46b08' },
-  P2: { bg: '#e6f7ff', border: '#91d5ff', text: '#096dd9' },
-  P3: { bg: '#f9f0ff', border: '#d3adf7', text: '#722ed1' },
+  P0: {
+    bg: 'rgba(255, 77, 79, 0.1)',
+    border: 'rgba(255, 77, 79, 0.3)',
+    text: '#ff4d4f',
+  },
+  P1: {
+    bg: 'rgba(250, 173, 20, 0.1)',
+    border: 'rgba(250, 173, 20, 0.3)',
+    text: '#faad14',
+  },
+  P2: {
+    bg: 'rgba(24, 144, 255, 0.1)',
+    border: 'rgba(24, 144, 255, 0.3)',
+    text: '#1890ff',
+  },
+  P3: {
+    bg: 'rgba(114, 46, 209, 0.1)',
+    border: 'rgba(114, 46, 209, 0.3)',
+    text: '#722ed1',
+  },
 };
 
 type CaseStatusColors = Record<
   number,
   { bg: string; border: string; text: string }
 >;
+
+/**
+ * 用例状态颜色配置
+ * 使用 rgba 格式，确保在暗黑模式下也能正常显示
+ */
 export const caseStatusColors: CaseStatusColors = {
-  0: { bg: '#f4f4f5', border: '#d9d9d9', text: '#595959' },
-  1: { bg: '#f6ffed', border: '#b7eb8f', text: '#389e0d' },
-  2: { bg: '#fff2f0', border: '#ffccc7', text: '#cf1322' },
+  0: {
+    bg: 'rgba(140, 140, 140, 0.1)',
+    border: 'rgba(140, 140, 140, 0.3)',
+    text: '#8c8c8c',
+  },
+  1: {
+    bg: 'rgba(82, 196, 26, 0.1)',
+    border: 'rgba(82, 196, 26, 0.3)',
+    text: '#52c41a',
+  },
+  2: {
+    bg: 'rgba(255, 77, 79, 0.1)',
+    border: 'rgba(255, 77, 79, 0.3)',
+    text: '#ff4d4f',
+  },
 };
+
 type RequirementProcessColors = Record<
   number,
   { bg: string; border: string; text: string }
 >;
+
+/**
+ * 需求进度颜色配置
+ * 使用 rgba 格式，确保在暗黑模式下也能正常显示
+ */
 export const requirementProcessColors: RequirementProcessColors = {
-  1: { bg: '#fff0f0', border: '#ffb8b8', text: '#d4380d' },
-  2: { bg: '#fff7e6', border: '#ffd591', text: '#d46b08' },
-  3: { bg: '#e6f7ff', border: '#91d5ff', text: '#096ddd' },
-  4: { bg: '#f6ffed', border: '#b7eb8f', text: '#389e0d' },
-  5: { bg: '#f9f0ff', border: '#d3adf7', text: '#722ed1' },
+  1: {
+    bg: 'rgba(255, 77, 79, 0.1)',
+    border: 'rgba(255, 77, 79, 0.3)',
+    text: '#ff4d4f',
+  },
+  2: {
+    bg: 'rgba(250, 173, 20, 0.1)',
+    border: 'rgba(250, 173, 20, 0.3)',
+    text: '#faad14',
+  },
+  3: {
+    bg: 'rgba(24, 144, 255, 0.1)',
+    border: 'rgba(24, 144, 255, 0.3)',
+    text: '#1890ff',
+  },
+  4: {
+    bg: 'rgba(82, 196, 26, 0.1)',
+    border: 'rgba(82, 196, 26, 0.3)',
+    text: '#52c41a',
+  },
+  5: {
+    bg: 'rgba(114, 46, 209, 0.1)',
+    border: 'rgba(114, 46, 209, 0.3)',
+    text: '#722ed1',
+  },
 };
 
 export default useCaseHubStyles;

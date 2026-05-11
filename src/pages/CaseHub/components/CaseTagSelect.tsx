@@ -49,6 +49,12 @@ const CaseTagSelect: FC<Props> = ({
     }
   };
 
+  const handleBlur = () => {
+    if (tagValue) {
+      setTagVisible(true);
+    }
+  };
+
   return (
     <>
       {tagVisible ? (
@@ -84,6 +90,7 @@ const CaseTagSelect: FC<Props> = ({
           options={tags}
           fieldProps={{
             variant: 'filled',
+            onBlur: handleBlur,
             dropdownRender: (menu) => (
               <>
                 {menu}

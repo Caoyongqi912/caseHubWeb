@@ -12,13 +12,13 @@ interface Props {
 
 const CaseTypeSelect: FC<Props> = ({ testcaseData, onTypeChange }) => {
   const [typeVisible, setTypeVisible] = useState(true);
-  const [typeValue, setTypeValue] = useState<number>(2);
+  const [typeValue, setTypeValue] = useState(2);
   const { colors } = useCaseHubTheme();
   const { CASE_TYPE_OPTION, CASE_TYPE_ENUM } = CaseHubConfig;
 
   useEffect(() => {
     if (testcaseData?.case_type) {
-      setTypeValue(testcaseData?.case_type);
+      setTypeValue(testcaseData.case_type);
       setTypeVisible(false);
     }
   }, [testcaseData]);
@@ -49,18 +49,10 @@ const CaseTypeSelect: FC<Props> = ({ testcaseData, onTypeChange }) => {
     }
   };
 
-  const tagStyle = {
-    display: 'inline-flex',
-    alignItems: 'center',
-    padding: '3px 8px',
-    borderRadius: 10,
-    background: typeColor.bg,
-    color: typeColor.text,
-    border: `1px solid ${typeColor.border}`,
-    fontSize: 11,
-    fontWeight: 600,
-    cursor: 'pointer',
-    transition: 'all 150ms ease',
+  const handleBlur = () => {
+    if (typeValue) {
+      setTypeVisible(false);
+    }
   };
 
   return (
@@ -68,24 +60,34 @@ const CaseTypeSelect: FC<Props> = ({ testcaseData, onTypeChange }) => {
       {typeVisible ? (
         <ProFormSelect
           noStyle
-          style={{
-            borderRadius: 10,
-            minWidth: 70,
-          }}
+          style={{ borderRadius: 10, minWidth: 70 }}
           allowClear={false}
           onChange={handleTypeChange}
-          name={'case_type'}
+          name="case_type"
           initialValue={2}
           options={CASE_TYPE_OPTION}
           fieldProps={{
             variant: 'filled',
             style: { minWidth: 70, borderRadius: 10 },
+            onBlur: handleBlur,
           }}
         />
       ) : (
         <Tag
           onClick={() => setTypeVisible(true)}
-          style={tagStyle}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            padding: '3px 8px',
+            borderRadius: 10,
+            background: typeColor.bg,
+            color: typeColor.text,
+            border: `1px solid ${typeColor.border}`,
+            fontSize: 11,
+            fontWeight: 600,
+            cursor: 'pointer',
+            transition: 'all 150ms ease',
+          }}
           onMouseEnter={(e) => {
             (e.currentTarget as HTMLElement).style.transform = 'scale(1.02)';
           }}

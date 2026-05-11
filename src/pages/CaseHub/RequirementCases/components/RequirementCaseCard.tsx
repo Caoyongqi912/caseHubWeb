@@ -12,10 +12,10 @@ import {
   CloseCircleFilled,
   CopyOutlined,
   DeleteOutlined,
-  ExpandOutlined,
   FileProtectOutlined,
   MessageOutlined,
   MoreOutlined,
+  OrderedListOutlined,
   StarFilled,
 } from '@ant-design/icons';
 import { ProForm } from '@ant-design/pro-components';
@@ -164,6 +164,8 @@ const RequirementCaseCard: React.FC<Props> = memo(({ testcaseData }) => {
           callback={refreshCases}
           requirement_id={reqId ? parseInt(reqId) : undefined}
           onStatusChange={handleCaseStatusChange}
+          case_setup={testcaseData?.case_setup || ''}
+          case_mark={testcaseData?.case_mark || ''}
         />
       </MyDrawer>
 
@@ -196,8 +198,11 @@ const RequirementCaseCard: React.FC<Props> = memo(({ testcaseData }) => {
               <Button
                 type="primary"
                 ghost
+                style={{
+                  marginLeft: 16,
+                }}
                 size="small"
-                icon={<ExpandOutlined style={{ fontSize: 13 }} />}
+                icon={<OrderedListOutlined style={{ fontSize: 13 }} />}
                 onClick={(e) => {
                   e.stopPropagation();
                   setOpenCaseSteps(true);
