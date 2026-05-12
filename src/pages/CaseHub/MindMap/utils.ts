@@ -17,7 +17,3 @@ export const exportAsJson = (
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
 };
-
-export const generateId = (): string => {
-  return Math.random().toString(36).substr(2, 9);
-};

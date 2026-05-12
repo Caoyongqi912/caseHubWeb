@@ -1,7 +1,11 @@
 import { CSSProperties } from 'react';
-import { useCaseHubTheme } from '../../styles/useCaseHubTheme';
+import { useCaseHubTheme } from './useCaseHubTheme';
 
-export const useTestCaseStyles = () => {
+/**
+ * 用例卡片样式 Hook
+ * 提供用例列表中每个用例卡片的样式定义
+ */
+export const useRequirementCaseCardStyles = () => {
   const { colors, spacing } = useCaseHubTheme();
 
   const getStatusColors = (caseStatus: number) => {

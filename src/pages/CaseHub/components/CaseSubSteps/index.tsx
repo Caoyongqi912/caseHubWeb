@@ -99,8 +99,6 @@ const CaseSubSteps: FC<CaseSubStepsProps> = ({
 
   // 同步外部 props 变化到内部状态
   useEffect(() => {
-    console.log('case_setup', case_setup);
-    console.log('case_mark', case_mark);
     setSetupValue(case_setup);
     setMarkValue(case_mark);
   }, [case_setup, case_mark]);

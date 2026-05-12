@@ -1,8 +1,12 @@
 import { CSSProperties } from 'react';
 import { useCaseHubTheme } from '../../styles/useCaseHubTheme';
 
+/**
+ * 用例详情组件样式 Hook
+ * 提供统一的样式管理，确保组件外观一致性
+ */
 export const useTestCaseDetailStyles = () => {
-  const { colors, spacing, borderRadius, shadows } = useCaseHubTheme();
+  const { colors, spacing, borderRadius, shadows, token } = useCaseHubTheme();
 
   const container = (): CSSProperties => ({
     minHeight: '100%',
@@ -23,10 +27,29 @@ export const useTestCaseDetailStyles = () => {
   const header = (): CSSProperties => ({
     padding: `${spacing.lg}px ${spacing.xl}px`,
     background: `linear-gradient(135deg, ${colors.primaryBg} 0%, ${colors.bgContainer} 100%)`,
-    borderBottom: `1px solid ${colors.borderSecondary}`,
+    borderBottom: `1px solid ${colors.border}`,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: spacing.md,
+  });
+
+  /** 头部左侧区域 - 创建者信息 */
+  const headerLeft = (): CSSProperties => ({
+    display: 'flex',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: `${spacing.md}px ${spacing.lg}px`,
+    background: colors.bgContainer,
+    borderRadius: borderRadius.md,
+    border: `1px solid ${colors.border}`,
+  });
+
+  /** 头部右侧区域 - 保存状态 */
+  const headerRight = (): CSSProperties => ({
+    display: 'flex',
+    alignItems: 'center',
+    gap: spacing.sm,
   });
 
   const body = (): CSSProperties => ({
@@ -36,8 +59,11 @@ export const useTestCaseDetailStyles = () => {
   const sectionHeader = (): CSSProperties => ({
     display: 'flex',
     alignItems: 'center',
-    gap: spacing.sm,
+    justifyContent: 'flex-start',
+    gap: spacing.md,
     marginBottom: spacing.lg,
+    padding: `${spacing.md}px 0`,
+    borderBottom: `1px solid ${colors.border}`,
   });
 
   const sectionTitle = (): CSSProperties => ({
@@ -45,6 +71,7 @@ export const useTestCaseDetailStyles = () => {
     fontWeight: 600,
     color: colors.text,
     letterSpacing: 0.5,
+    whiteSpace: 'nowrap' as const,
   });
 
   const sectionDivider = (): CSSProperties => ({
@@ -58,9 +85,9 @@ export const useTestCaseDetailStyles = () => {
     alignItems: 'center',
     gap: spacing.md,
     padding: `${spacing.md}px ${spacing.lg}px`,
-    background: colors.bgLayout,
+    background: colors.bgContainer,
     borderRadius: borderRadius.md,
-    border: `1px solid ${colors.borderSecondary}`,
+    border: `1px solid ${colors.border}`,
   });
 
   const commonTag = (): CSSProperties => ({
@@ -79,21 +106,34 @@ export const useTestCaseDetailStyles = () => {
   });
 
   const formGrid = (): CSSProperties => ({
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
+    display: 'flex',
+    flexDirection: 'column' as const,
     gap: spacing.lg,
   });
 
-  const formSubGrid = (): CSSProperties => ({
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: spacing.md,
+  const formRow = (): CSSProperties => ({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.lg,
+  });
+
+  const emptySteps = (): CSSProperties => ({
+    textAlign: 'center' as const,
+    padding: `${token.paddingLG}px 0`,
+    color: token.colorTextSecondary,
+    background: token.colorBgContainer,
+    borderRadius: token.borderRadiusLG,
+    border: `1px dashed ${token.colorBorder}`,
+    marginBottom: token.marginMD,
   });
 
   return {
     container,
     mainCard,
     header,
+    headerLeft,
+    headerRight,
     body,
     sectionHeader,
     sectionTitle,
@@ -102,6 +142,7 @@ export const useTestCaseDetailStyles = () => {
     commonTag,
     reviewTag,
     formGrid,
-    formSubGrid,
+    formRow,
+    emptySteps,
   };
 };

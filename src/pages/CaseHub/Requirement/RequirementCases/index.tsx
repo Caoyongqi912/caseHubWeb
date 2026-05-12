@@ -1,17 +1,17 @@
 import { addDefaultTestCase } from '@/api/case/testCase';
-import CaseStatsBar from '@/pages/CaseHub/RequirementCases/components/CaseStatsBar';
-import CaseStepSearchForm from '@/pages/CaseHub/RequirementCases/components/CaseStepSearchForm';
-import ChoiceSettingArea from '@/pages/CaseHub/RequirementCases/components/ChoiceSettingArea';
-import RequirementCaseCard from '@/pages/CaseHub/RequirementCases/components/RequirementCaseCard';
+import CaseStatsBar from '@/pages/CaseHub/Requirement/RequirementCases/components/CaseStatsBar';
+import CaseStepSearchForm from '@/pages/CaseHub/Requirement/RequirementCases/components/CaseStepSearchForm';
+import ChoiceSettingArea from '@/pages/CaseHub/Requirement/RequirementCases/components/ChoiceSettingArea';
+import RequirementCaseCard from '@/pages/CaseHub/Requirement/RequirementCases/components/RequirementCaseCard';
 import {
   CaseSelectionProvider,
   useCaseSelection,
-} from '@/pages/CaseHub/RequirementCases/contexts';
-import { CaseUpdateProvider } from '@/pages/CaseHub/RequirementCases/contexts/CaseUpdateContext';
+} from '@/pages/CaseHub/Requirement/RequirementCases/contexts';
+import { CaseUpdateProvider } from '@/pages/CaseHub/Requirement/RequirementCases/contexts/CaseUpdateContext';
 import {
   useCaseGrouping,
   useCaseList,
-} from '@/pages/CaseHub/RequirementCases/hooks';
+} from '@/pages/CaseHub/Requirement/RequirementCases/hooks';
 import { useCaseHubTheme, useCaseInfoStyles } from '@/pages/CaseHub/styles';
 import { CaseSearchForm, ITestCase } from '@/pages/CaseHub/types';
 import { useParams } from '@@/exports';

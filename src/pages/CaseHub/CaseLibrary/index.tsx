@@ -4,7 +4,7 @@ import { ModuleEnum } from '@/utils/config';
 import { ProCard } from '@ant-design/pro-components';
 import { useState } from 'react';
 import { Group, Panel } from 'react-resizable-panels';
-import CaseDataTable from './components/CaseDataTable';
+import CaseDataTable from './CaseDataTable';
 
 const Index = () => {
   const styles = useGlassStyles();

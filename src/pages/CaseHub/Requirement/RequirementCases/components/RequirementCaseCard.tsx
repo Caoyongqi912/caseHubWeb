@@ -3,8 +3,10 @@ import MyDrawer from '@/components/MyDrawer';
 import CaseLevelSelect from '@/pages/CaseHub/components/CaseLevelSelect';
 import CaseTagSelect from '@/pages/CaseHub/components/CaseTagSelect';
 import CaseTypeSelect from '@/pages/CaseHub/components/CaseTypeSelect';
-import { useTestCaseStyles } from '@/pages/CaseHub/components/TestCaseCard/styles';
-import { caseStatusColors } from '@/pages/CaseHub/styles';
+import {
+  caseStatusColors,
+  useRequirementCaseCardStyles,
+} from '@/pages/CaseHub/styles';
 import { ITestCase } from '@/pages/CaseHub/types';
 import {
   CheckCircleFilled,
@@ -31,8 +33,8 @@ import {
   Tooltip,
 } from 'antd';
 import React, { memo, useEffect, useState } from 'react';
-import CaseSubSteps from '../../components/CaseSubSteps';
-import DynamicInfo from '../../components/DynamicInfo';
+import CaseSubSteps from '../../../components/CaseSubSteps';
+import DynamicInfo from '../../../components/DynamicInfo';
 import { useCaseSelection, useCaseUpdate } from '../contexts';
 
 interface Props {
@@ -47,7 +49,7 @@ const RequirementCaseCard: React.FC<Props> = memo(({ testcaseData }) => {
   const [isFocused, setIsFocused] = useState(false);
   const [titleValue, setTitleValue] = useState('');
 
-  const styles = useTestCaseStyles();
+  const styles = useRequirementCaseCardStyles();
   const { isSelected, toggleCase } = useCaseSelection();
   const {
     reqId,

@@ -32,11 +32,11 @@ export const CaseHubConfig: any = {
   CASE_TYPE_OPTION: [
     {
       label: '冒烟',
-      value: 1,
+      value: '1',
     },
     {
       label: '普通',
-      value: 2,
+      value: '2',
     },
   ],
   CASE_TYPE_ENUM: {

@@ -4,7 +4,13 @@ import { ICaseDynamic } from '@/pages/CaseHub/types';
 import { HistoryOutlined, SoundTwoTone } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
 import { Avatar, Space, Timeline, Typography } from 'antd';
-import { FC, useEffect, useState } from 'react';
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from 'react';
 import { useDynamicInfoStyles } from './styles';
 
 const { Text, Title } = Typography;
@@ -13,30 +19,47 @@ interface IProps {
   caseId?: number;
 }
 
-const DynamicInfo: FC<IProps> = ({ caseId }) => {
+export interface DynamicInfoRef {
+  refresh: () => void;
+}
+
+const DynamicInfo = forwardRef<DynamicInfoRef, IProps>(({ caseId }, ref) => {
   const [originalData, setOriginalData] = useState<ICaseDynamic[]>([]);
   const [displayData, setDisplayData] = useState<ICaseDynamic[]>([]);
   const [showMore, setShowMore] = useState(false);
   const [shouldShowToggle, setShouldShowToggle] = useState(false);
   const { colors, spacing } = useCaseHubTheme();
   const styles = useDynamicInfoStyles();
+  const fetchingRef = useRef(false);
+
+  const fetchData = () => {
+    if (!caseId) return;
+    fetchingRef.current = true;
+    setShowMore(false);
+    queryTestCaseDynamic(caseId).then(async ({ code, data }) => {
+      fetchingRef.current = false;
+      if (code === 0) {
+        setOriginalData(data);
+        setShouldShowToggle(data.length > 5);
+
+        if (data.length > 5) {
+          setDisplayData(data.slice(0, 5));
+        } else {
+          setDisplayData(data);
+        }
+      }
+    });
+  };
+
+  useImperativeHandle(ref, () => ({
+    refresh: fetchData,
+  }));
 
   useEffect(() => {
     if (caseId) {
-      queryTestCaseDynamic(caseId).then(async ({ code, data }) => {
-        if (code === 0) {
-          setOriginalData(data);
-          setShouldShowToggle(data.length > 5);
-
-          if (data.length > 5) {
-            setDisplayData(data.slice(-5));
-          } else {
-            setDisplayData(data);
-          }
-        }
-      });
+      fetchData();
     }
-  }, []);
+  }, [caseId]);
 
   useEffect(() => {
     if (originalData.length === 0) return;
@@ -45,7 +68,7 @@ const DynamicInfo: FC<IProps> = ({ caseId }) => {
       setDisplayData(originalData);
     } else {
       setDisplayData(
-        originalData.length > 5 ? originalData.slice(-5) : originalData,
+        originalData.length > 5 ? originalData.slice(0, 5) : originalData,
       );
     }
   }, [showMore, originalData]);
@@ -168,6 +191,6 @@ const DynamicInfo: FC<IProps> = ({ caseId }) => {
       `}</style>
     </div>
   );
-};
+});
 
 export default DynamicInfo;

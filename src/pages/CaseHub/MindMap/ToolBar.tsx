@@ -171,7 +171,6 @@ const ToolBar: FC<Props> = (props) => {
             size="large"
             icon={<Save theme="outline" size="18" />}
             onClick={async () => {
-              console.log(mind?.current.getData());
               await saveMap();
             }}
             style={buttonStyle}

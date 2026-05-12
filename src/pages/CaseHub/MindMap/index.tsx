@@ -73,11 +73,11 @@ const Index = () => {
   }, [mindData]);
 
   const operationHandle = (info: Operation) => {
-    console.log('operationHandle', info);
+    // operationHandle
   };
 
   const selectNodesHandle = (nodeObjs: NodeObj[]) => {
-    console.log('selectNodesHandle', nodeObjs);
+    // selectNodesHandle
   };
 
   const selectNodeHandle = (nodeObj: NodeObj, e?: MouseEvent) => {

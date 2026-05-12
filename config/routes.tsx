@@ -103,7 +103,7 @@ export default [
         path: '/cases/caseHub/requirementCases/reqId=:reqId&projectId=:projectId&moduleId=:moduleId',
         name: 'CaseHub',
         hideInMenu: true,
-        component: '@/pages/CaseHub/RequirementCases',
+        component: '@/pages/CaseHub/Requirement/RequirementCases',
       },
       {
         path: '/cases/caseHub/requirementMindMap/reqId=:reqId&projectId=:projectId&moduleId=:moduleId',
