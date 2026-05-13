@@ -301,10 +301,8 @@ const CaseDataTable: FC<Props> = (props) => {
     ];
 
     return (
-      <Dropdown menu={{ items }}>
-        <a onClick={(e) => e.preventDefault()}>
-          <SmallDashOutlined />
-        </a>
+      <Dropdown menu={{ items }} trigger={['click', 'hover']}>
+        <SmallDashOutlined />
       </Dropdown>
     );
   };
