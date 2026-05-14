@@ -33,6 +33,7 @@ interface ActionHandlers {
   onToggleGroup: () => void;
   onAddCase: () => void;
   onUploadFinish: () => void;
+  onCaseSelect: (caseIds: number[]) => void;
 }
 
 /**
@@ -61,6 +62,8 @@ interface Props {
   selectionHandlers: SelectionHandlers;
   /** 操作相关回调 */
   actionHandlers: ActionHandlers;
+  /** 项目ID */
+  projectId?: number;
 }
 
 /**
@@ -77,10 +80,11 @@ const CaseStepSearchForm: FC<Props> = ({
   searchHandlers,
   selectionHandlers,
   actionHandlers,
+  projectId,
 }) => {
   /** 上传弹窗状态 */
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
-  const { colors, spacing, borderRadius } = useCaseHubTheme();
+  const { colors, spacing } = useCaseHubTheme();
 
   /**
    * 处理搜索
@@ -99,19 +103,6 @@ const CaseStepSearchForm: FC<Props> = ({
     searchHandlers.onReset();
   }, [searchHandlers]);
 
-  /** 卡片样式 */
-  const cardStyle = {
-    borderRadius: borderRadius.xl,
-    border: `1px solid ${colors.border}`,
-    overflow: 'visible' as const,
-    position: 'sticky' as const,
-    top: 0,
-    zIndex: 100,
-    background: colors.bgContainer,
-    boxShadow: `0 4px 16px rgba(0, 0, 0, 0.08)`,
-    marginBottom: spacing.sm,
-  };
-
   return (
     <>
       {/* 上传弹窗 */}
@@ -124,43 +115,29 @@ const CaseStepSearchForm: FC<Props> = ({
 
       {/* 搜索表单卡片 */}
       <ProCard
-        style={cardStyle}
-        collapsible={false}
         headStyle={{
-          background: `linear-gradient(135deg, ${colors.primaryBg} 0%, ${colors.bgContainer} 100%)`,
           borderBottom: `1px solid ${colors.border}`,
-          padding: `${spacing.md}px ${spacing.lg}px`,
         }}
         bodyStyle={{
           padding: spacing.lg,
-          background: colors.bgContainer,
         }}
       >
         <div
           style={{ display: 'flex', flexDirection: 'column', gap: spacing.md }}
         >
           {/* 搜索字段区域 */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: spacing.md,
-            }}
-          >
-            <SearchFields
-              tags={tags}
-              onSearch={handleSearch}
-              onReset={handleReset}
-            />
-          </div>
+          <SearchFields
+            tags={tags}
+            onSearch={handleSearch}
+            onReset={handleReset}
+          />
 
           {/* 分隔线 */}
           <Divider style={{ margin: 0, borderColor: colors.border }} />
 
           {/* 工具栏区域 */}
           <Toolbar
+            projectId={projectId}
             isGrouped={isGrouped}
             isAllExpanded={isAllExpanded}
             selectedCount={selectedCount}
@@ -173,6 +150,7 @@ const CaseStepSearchForm: FC<Props> = ({
             onToggleGroup={actionHandlers.onToggleGroup}
             onAddCase={actionHandlers.onAddCase}
             onUploadClick={() => setUploadModalOpen(true)}
+            onCaseSelect={actionHandlers.onCaseSelect}
           />
         </div>
       </ProCard>

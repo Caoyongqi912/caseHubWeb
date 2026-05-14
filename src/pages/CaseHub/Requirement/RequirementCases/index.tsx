@@ -1,3 +1,4 @@
+import { linkCommonCases } from '@/api/case/requirement';
 import { addDefaultTestCase } from '@/api/case/testCase';
 import CaseStatsBar from '@/pages/CaseHub/Requirement/RequirementCases/components/CaseStatsBar';
 import CaseStepSearchForm from '@/pages/CaseHub/Requirement/RequirementCases/components/CaseStepSearchForm';
@@ -80,6 +81,19 @@ const RequirementCasesContent: React.FC = () => {
       setShouldScroll(true);
     }
   }, [reqId, refresh]);
+
+  /** 用例选择回调 */
+  const handleCaseSelect = async (caseIds: number[]) => {
+    if (!reqId) return;
+    console.log(caseIds);
+    const { code } = await linkCommonCases({
+      requirement_id: parseInt(reqId),
+      case_ids: caseIds,
+    });
+    if (code === 0) {
+      refresh();
+    }
+  };
 
   const caseStats = useMemo(() => {
     const total = testCases.length;
@@ -190,12 +204,9 @@ const RequirementCasesContent: React.FC = () => {
       refreshCases={refresh}
       onCaseDataChange={updateCaseData}
     >
-      <ProCard
-        split="horizontal"
-        bodyStyle={{ padding: 0 }}
-        style={styles.cardStyle()}
-      >
+      <ProCard split="horizontal">
         <CaseStepSearchForm
+          projectId={parseInt(projectId!)}
           tags={tags}
           isGrouped={isGrouped}
           isAllExpanded={isAllExpanded}
@@ -217,6 +228,7 @@ const RequirementCasesContent: React.FC = () => {
             onToggleGroup: toggleGrouped,
             onAddCase: handleAddCase,
             onUploadFinish: refresh,
+            onCaseSelect: handleCaseSelect,
           }}
         />
 

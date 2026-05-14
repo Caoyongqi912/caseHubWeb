@@ -80,3 +80,19 @@ export const removeRequirement = async (
     ...(options || {}),
   });
 };
+
+/**
+ * linkCommonCases
+ * @param requirementId
+ * @param options
+ */
+export const linkCommonCases = async (
+  data: { requirement_id: number; case_ids: number[] },
+  options?: IObjGet,
+) => {
+  return request<IResponse<number>>('/api/hub/req/linkCommonCases', {
+    method: 'POST',
+    data,
+    ...(options || {}),
+  });
+};

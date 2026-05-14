@@ -1,3 +1,4 @@
+import MyDrawer from '@/components/MyDrawer';
 import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import {
   AppstoreOutlined,
@@ -11,9 +12,12 @@ import {
   UpSquareOutlined,
 } from '@ant-design/icons';
 import { Button, Divider, Tooltip, Typography } from 'antd';
-import { FC, useMemo } from 'react';
+import { FC, useMemo, useState } from 'react';
+import ChoiceCaseTable from '../../components/choiceCaseTable';
 
 interface ToolbarProps {
+  /** 项目ID */
+  projectId?: number;
   /** 是否分组显示 */
   isGrouped: boolean;
   /** 是否全部展开 */
@@ -38,6 +42,8 @@ interface ToolbarProps {
   onAddCase: () => void;
   /** 上传点击回调 */
   onUploadClick: () => void;
+  /** 用例选择回调 */
+  onCaseSelect: (caseIds: number[]) => void;
 }
 
 const { Text } = Typography;
@@ -59,8 +65,11 @@ const Toolbar: FC<ToolbarProps> = ({
   onToggleGroup,
   onAddCase,
   onUploadClick,
+  projectId,
+  onCaseSelect,
 }) => {
   const { colors, spacing, borderRadius } = useCaseHubTheme();
+  const [openDrawer, setOpenDrawer] = useState(false);
 
   /** 工具栏按钮通用样式 */
   const toolbarBtnStyle = useMemo(
@@ -122,6 +131,12 @@ const Toolbar: FC<ToolbarProps> = ({
     }),
     [spacing, borderRadius, colors, selectedCount],
   );
+
+  /** 用例选择回调 */
+  const handleCaseSelect = async (caseIds: number[]) => {
+    onCaseSelect(caseIds);
+    setOpenDrawer(false);
+  };
 
   return (
     <div
@@ -248,7 +263,26 @@ const Toolbar: FC<ToolbarProps> = ({
         >
           添加用例
         </Button>
+
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={() => setOpenDrawer(true)}
+        >
+          关联用例
+        </Button>
       </div>
+      <MyDrawer
+        open={openDrawer}
+        setOpen={setOpenDrawer}
+        onClose={() => setOpenDrawer(false)}
+      >
+        <ChoiceCaseTable
+          hideAddButton={false}
+          onCaseSelect={handleCaseSelect}
+          projectId={projectId}
+        />
+      </MyDrawer>
     </div>
   );
 };

@@ -4,6 +4,7 @@ import MyProTable from '@/components/Table/MyProTable';
 import UserSelect from '@/components/Table/UserSelect';
 import { ModuleEnum } from '@/utils/config';
 import { fetchModulesEnum, pageData } from '@/utils/somefunc';
+import { useModel } from '@@/exports';
 import { ActionType, ProColumns } from '@ant-design/pro-components';
 import { TableRowSelection } from 'antd/es/table/interface';
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
@@ -13,22 +14,28 @@ import { ITestCase } from '../../types';
 import { queryProjectEnum } from '@/components/CommonFunc';
 import { borderRadius } from '@/components/LeftComponents/styles';
 import { caseLevelColors } from '@/pages/CaseHub/styles';
-import { Tag, Typography } from 'antd';
+import { Button, Tag, Typography } from 'antd';
 
 interface Props {
   onCaseSelect: (caseIds: number[]) => void;
   projectId?: number;
+  hideAddButton?: boolean;
 }
 
 const { Text } = Typography;
-const ChoiceCaseTable: FC<Props> = ({ onCaseSelect, projectId }) => {
+const ChoiceCaseTable: FC<Props> = ({
+  onCaseSelect,
+  projectId,
+  hideAddButton = true,
+}) => {
   const { CASE_LEVEL_ENUM } = CaseHubConfig;
   const actionRef = useRef<ActionType>();
 
   const [projectEnumMap, setProjectEnumMap] = useState<IObjGet>({});
   const [moduleEnum, setModuleEnum] = useState<IModuleEnum[]>([]);
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
-
+  const { initialState } = useModel('@@initialState');
+  const projects = initialState?.projects || [];
   useEffect(() => {
     if (!projectId) return;
     queryProjectEnum(setProjectEnumMap).then(async () => {
@@ -66,12 +73,8 @@ const ChoiceCaseTable: FC<Props> = ({ onCaseSelect, projectId }) => {
       title: '项目',
       dataIndex: 'project_id',
       hideInTable: true,
-      hideInSearch: true,
       valueType: 'select',
       valueEnum: projectEnumMap,
-      fieldProps: {
-        disabled: true,
-      },
     },
     {
       title: '所属模块',
@@ -154,6 +157,19 @@ const ChoiceCaseTable: FC<Props> = ({ onCaseSelect, projectId }) => {
   return (
     <>
       <MyProTable
+        tableAlertOptionRender={() => {
+          return (
+            <>
+              <Button
+                hidden={hideAddButton}
+                style={{ marginLeft: 5 }}
+                onClick={() => onCaseSelect(selectedRowKeys as number[])}
+              >
+                引用添加
+              </Button>
+            </>
+          );
+        }}
         rowSelection={rowSelection}
         actionRef={actionRef}
         request={fetchPageData}
