@@ -100,6 +100,11 @@ export default [
         component: '@/pages/CaseHub/CaseLibrary',
       },
       {
+        path: '/cases/casePlan',
+        name: '测试计划',
+        component: '@/pages/CaseHub/CasePlan',
+      },
+      {
         path: '/cases/caseHub/requirementCases/reqId=:reqId&projectId=:projectId&moduleId=:moduleId',
         name: 'CaseHub',
         hideInMenu: true,

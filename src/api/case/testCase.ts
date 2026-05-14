@@ -1,7 +1,6 @@
 import { IObjGet, IPage, IResponse } from '@/api';
 import { CaseSubStep, ICaseDynamic, ITestCase } from '@/pages/CaseHub/types';
 import { request } from '@@/plugin-request';
-import { int } from 'utrie/dist/types/Trie';
 
 /**
  * queryCasesByRequirement
@@ -67,7 +66,7 @@ export const getTestCaseInfo = async (case_id: number, options?: IObjGet) => {
  */
 export const addDefaultTestCase = async (
   caseInfo: {
-    requirement_id: int;
+    requirement_id: number;
   },
   options?: IObjGet,
 ) => {
@@ -382,8 +381,8 @@ export const pageTestCase = async (searchParams: any, options?: IObjGet) => {
 export const moveTestCase2Common = async (
   info: {
     case_ids: number[];
-    module_id: int;
-    project_id: int;
+    module_id: number;
+    project_id: number;
   },
   options?: IObjGet,
 ) => {
@@ -435,7 +434,7 @@ export const insertTestCaseMind = async (
 
 export const updateTestCaseMind = async (
   info: {
-    id: int;
+    id: number;
     mind_node?: any;
     module_id?: string;
     project_id?: string;

@@ -4,7 +4,6 @@ import MyProTable from '@/components/Table/MyProTable';
 import UserSelect from '@/components/Table/UserSelect';
 import { ModuleEnum } from '@/utils/config';
 import { fetchModulesEnum, pageData } from '@/utils/somefunc';
-import { useModel } from '@@/exports';
 import { ActionType, ProColumns } from '@ant-design/pro-components';
 import { TableRowSelection } from 'antd/es/table/interface';
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
@@ -34,8 +33,6 @@ const ChoiceCaseTable: FC<Props> = ({
   const [projectEnumMap, setProjectEnumMap] = useState<IObjGet>({});
   const [moduleEnum, setModuleEnum] = useState<IModuleEnum[]>([]);
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
-  const { initialState } = useModel('@@initialState');
-  const projects = initialState?.projects || [];
   useEffect(() => {
     if (!projectId) return;
     queryProjectEnum(setProjectEnumMap).then(async () => {

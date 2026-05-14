@@ -69,3 +69,20 @@ export interface CaseSearchForm {
   is_review?: boolean;
   is_common?: boolean;
 }
+
+export interface ICasePlan {
+  id: number;
+  uid: string;
+  project_id: number;
+  plan_name: string;
+  plan_description?: string;
+  plan_status?: string;
+  plan_phase?: string;
+  plan_completion_rate?: number;
+  plan_mark?: string;
+
+  charge_id?: number;
+  charge_name?: string;
+  plan_start_time?: string;
+  plan_end_time?: string;
+}
