@@ -7,59 +7,99 @@ import SearchFields from './SearchFields';
 import Toolbar from './Toolbar';
 import UploadModal from './UploadModal';
 
-interface Props {
-  setSearchForm: React.Dispatch<React.SetStateAction<CaseSearchForm>>;
-  tags: { label: string; value: string }[];
-  isGrouped: boolean;
-  isAllExpanded: boolean;
-  selectedCount: number;
-  totalCount: number;
+/**
+ * 搜索相关回调
+ */
+interface SearchHandlers {
+  onSearch: (values: CaseSearchForm) => void;
+  onReset: () => void;
+}
+
+/**
+ * 选择相关回调
+ */
+interface SelectionHandlers {
   onSelectAll: () => void;
   onExpandAll: () => void;
   onCollapseAll: () => void;
   onClearSelection: () => void;
+}
+
+/**
+ * 操作相关回调
+ */
+interface ActionHandlers {
   onRefresh: () => void;
   onToggleGroup: () => void;
   onAddCase: () => void;
   onUploadFinish: () => void;
+}
+
+/**
+ * CaseStepSearchForm 组件属性
+ */
+interface Props {
+  /** 标签选项列表 */
+  tags: { label: string; value: string }[];
+  /** 是否分组显示 */
+  isGrouped: boolean;
+  /** 是否全部展开 */
+  isAllExpanded: boolean;
+  /** 已选择用例数量 */
+  selectedCount: number;
+  /** 用例总数 */
+  totalCount: number;
+  /** 上传相关参数 */
   uploadProps?: {
     reqId?: string;
     moduleId?: string;
     projectId?: string;
   };
+  /** 搜索相关回调 */
+  searchHandlers: SearchHandlers;
+  /** 选择相关回调 */
+  selectionHandlers: SelectionHandlers;
+  /** 操作相关回调 */
+  actionHandlers: ActionHandlers;
 }
 
+/**
+ * 用例步骤搜索表单组件
+ * 包含搜索字段、工具栏和上传功能
+ */
 const CaseStepSearchForm: FC<Props> = ({
   tags,
-  setSearchForm,
   isGrouped,
   isAllExpanded,
   selectedCount,
   totalCount,
-  onSelectAll,
-  onExpandAll,
-  onCollapseAll,
-  onClearSelection,
-  onRefresh,
-  onToggleGroup,
-  onAddCase,
-  onUploadFinish,
   uploadProps,
+  searchHandlers,
+  selectionHandlers,
+  actionHandlers,
 }) => {
+  /** 上传弹窗状态 */
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const { colors, spacing, borderRadius } = useCaseHubTheme();
 
+  /**
+   * 处理搜索
+   */
   const handleSearch = useCallback(
     (values: CaseSearchForm) => {
-      setSearchForm(values);
+      searchHandlers.onSearch(values);
     },
-    [setSearchForm],
+    [searchHandlers],
   );
 
+  /**
+   * 处理重置
+   */
   const handleReset = useCallback(() => {
-    setSearchForm({});
-  }, [setSearchForm]);
+    searchHandlers.onReset();
+  }, [searchHandlers]);
 
+  /** 卡片样式 */
   const cardStyle = {
     borderRadius: borderRadius.xl,
     border: `1px solid ${colors.border}`,
@@ -74,13 +114,15 @@ const CaseStepSearchForm: FC<Props> = ({
 
   return (
     <>
+      {/* 上传弹窗 */}
       <UploadModal
         open={uploadModalOpen}
         onOpenChange={setUploadModalOpen}
         uploadProps={uploadProps}
-        onUploadFinish={onUploadFinish}
+        onUploadFinish={actionHandlers.onUploadFinish}
       />
 
+      {/* 搜索表单卡片 */}
       <ProCard
         style={cardStyle}
         collapsible={false}
@@ -97,6 +139,7 @@ const CaseStepSearchForm: FC<Props> = ({
         <div
           style={{ display: 'flex', flexDirection: 'column', gap: spacing.md }}
         >
+          {/* 搜索字段区域 */}
           <div
             style={{
               display: 'flex',
@@ -113,20 +156,22 @@ const CaseStepSearchForm: FC<Props> = ({
             />
           </div>
 
+          {/* 分隔线 */}
           <Divider style={{ margin: 0, borderColor: colors.border }} />
 
+          {/* 工具栏区域 */}
           <Toolbar
             isGrouped={isGrouped}
             isAllExpanded={isAllExpanded}
             selectedCount={selectedCount}
             totalCount={totalCount}
-            onSelectAll={onSelectAll}
-            onExpandAll={onExpandAll}
-            onCollapseAll={onCollapseAll}
-            onClearSelection={onClearSelection}
-            onRefresh={onRefresh}
-            onToggleGroup={onToggleGroup}
-            onAddCase={onAddCase}
+            onSelectAll={selectionHandlers.onSelectAll}
+            onExpandAll={selectionHandlers.onExpandAll}
+            onCollapseAll={selectionHandlers.onCollapseAll}
+            onClearSelection={selectionHandlers.onClearSelection}
+            onRefresh={actionHandlers.onRefresh}
+            onToggleGroup={actionHandlers.onToggleGroup}
+            onAddCase={actionHandlers.onAddCase}
             onUploadClick={() => setUploadModalOpen(true)}
           />
         </div>

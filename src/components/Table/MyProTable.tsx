@@ -7,6 +7,7 @@ import type { TableProps as RcTableProps } from 'rc-table/lib/Table';
 import { CSSProperties, FC, MutableRefObject, useMemo } from 'react';
 
 export interface MyProTableProps {
+  x?: number | string;
   columns: ProColumns[];
   request?: (params: any, sort: any) => Promise<any>;
   dataSource?: RcTableProps<any>['data'];
@@ -70,6 +71,7 @@ const MyProTable: FC<MyProTableProps> = (props) => {
     tableLayout,
     tableAlertOptionRender,
     cardStyle,
+    x = 'auto',
   } = props;
 
   const resolvedPagination = useMemo(() => {
@@ -100,7 +102,7 @@ const MyProTable: FC<MyProTableProps> = (props) => {
         dataSource={dataSource}
         columns={columns}
         actionRef={actionRef}
-        scroll={{ x: 'auto' }}
+        scroll={{ x: x }}
         //@ts-ignore
         tableLayout={tableLayout}
         request={request}

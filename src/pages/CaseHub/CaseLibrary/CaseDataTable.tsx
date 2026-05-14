@@ -13,7 +13,7 @@ import UserSelect from '@/components/Table/UserSelect';
 import TestCaseDetail from '@/pages/CaseHub/CaseLibrary/TestCaseDetail';
 import DynamicInfo from '@/pages/CaseHub/components/DynamicInfo';
 import { CaseHubConfig } from '@/pages/CaseHub/config/constants';
-import { useCaseHubTheme } from '@/pages/CaseHub/styles';
+import { caseLevelColors, useCaseHubTheme } from '@/pages/CaseHub/styles';
 import { ITestCase } from '@/pages/CaseHub/types';
 import { ModuleEnum } from '@/utils/config';
 import { fetchModulesEnum, pageData } from '@/utils/somefunc';
@@ -92,20 +92,6 @@ const CaseDataTable: FC<Props> = (props) => {
     }
   }, [currentModuleId, currentProjectId]);
 
-  const drawerStyles = useMemo(
-    () => ({
-      header: {
-        background: `linear-gradient(135deg, ${colors.primaryBg} 0%, ${colors.bgContainer} 100%)`,
-        borderBottom: `1px solid ${colors.border}`,
-      },
-      body: {
-        padding: spacing.lg,
-        background: colors.bgContainer,
-      },
-    }),
-    [colors, spacing],
-  );
-
   const download = async () => {
     try {
       const response = await downloadCaseExcel({ responseType: 'blob' });
@@ -124,13 +110,32 @@ const CaseDataTable: FC<Props> = (props) => {
     }
   };
 
+  /** 分页查询用例数据 */
+  const fetchPageData = useCallback(
+    async (params: any, sort: any) => {
+      console.log(params);
+      const values = {
+        ...params,
+        is_common: true,
+        module_id: currentModuleId,
+        module_type: ModuleEnum.CASE,
+        sort: sort,
+      };
+      console.log(values);
+
+      const { code, data } = await pageTestCase(values);
+      return pageData(code, data);
+    },
+    [currentModuleId],
+  );
   const column: ProColumns<ITestCase>[] = useMemo(
     () => [
       {
         title: 'ID',
         dataIndex: 'uid',
         fixed: 'left',
-        width: 100,
+        copyable: true,
+        width: '8%',
         render: (_, record) => (
           <Tag
             style={{
@@ -150,11 +155,17 @@ const CaseDataTable: FC<Props> = (props) => {
         dataIndex: 'case_name',
         copyable: true,
         ellipsis: true,
-        width: 250,
+        width: 280,
         render: (text) => (
-          <Text strong ellipsis={{ tooltip: text }}>
+          <Tag
+            style={{
+              borderColor: colors.border,
+              color: colors.text,
+              borderRadius: borderRadius.sm,
+            }}
+          >
             {text}
-          </Text>
+          </Tag>
         ),
       },
       {
@@ -170,30 +181,63 @@ const CaseDataTable: FC<Props> = (props) => {
       {
         title: '用例等级',
         dataIndex: 'case_level',
+        valueType: 'select',
         valueEnum: CASE_LEVEL_ENUM,
-        render: (text, record: ITestCase) => (
-          <Text strong ellipsis={{ tooltip: text }}>
-            {text}
-          </Text>
-        ),
+        width: 120,
+        render: (_, record: ITestCase) => {
+          if (!record.case_level) {
+            return <Text type="secondary">-</Text>;
+          }
+          const levelText =
+            CASE_LEVEL_ENUM[record.case_level]?.text || record.case_level;
+          const levelColors =
+            caseLevelColors[record.case_level] || caseLevelColors['P3'];
+          return (
+            <Tag
+              style={{
+                background: levelColors.bg,
+                borderColor: levelColors.border,
+                color: levelColors.text,
+                borderRadius: borderRadius.sm,
+                fontWeight: 600,
+              }}
+            >
+              {levelText}
+            </Tag>
+          );
+        },
       },
       {
         title: '用例类型',
         dataIndex: 'case_type',
+        valueType: 'select',
         valueEnum: CASE_TYPE_ENUM,
-        render: (text, record: ITestCase) => (
-          <Text strong ellipsis={{ tooltip: text }}>
-            {record.case_type ? <>{CASE_TYPE_ENUM[record.case_type]}</> : '-'}
+        width: 120,
+        render: (_, record: ITestCase) => (
+          <Text
+            type="secondary"
+            ellipsis={{
+              tooltip: record.case_type
+                ? CASE_TYPE_ENUM[record.case_type]
+                : '-',
+            }}
+            style={{ fontWeight: 500 }}
+          >
+            {record.case_type ? CASE_TYPE_ENUM[record.case_type] : '-'}
           </Text>
         ),
       },
       {
         title: '创建人',
-        dataIndex: 'creatorName',
+        dataIndex: 'creator',
+        valueType: 'select',
         renderFormItem: () => {
-          return <UserSelect />;
+          return <UserSelect multiple={true} />;
         },
-        render: (text) => <Text type="secondary">{text}</Text>,
+
+        render: (_, record: ITestCase) => (
+          <Text type="secondary">{record.creatorName}</Text>
+        ),
       },
       {
         title: '创建时间',
@@ -210,11 +254,6 @@ const CaseDataTable: FC<Props> = (props) => {
           return (
             <Space size="small">
               <Link
-                style={{
-                  color: colors.primary,
-                  cursor: 'pointer',
-                  transition: `color ${token.motionDurationFast}`,
-                }}
                 onClick={() => {
                   setCurrentCase(record);
                   setShowCaseDetail(true);
@@ -228,7 +267,7 @@ const CaseDataTable: FC<Props> = (props) => {
         },
       },
     ],
-    [CASE_LEVEL_ENUM, colors, borderRadius, token],
+    [CASE_LEVEL_ENUM, caseLevelColors, colors, borderRadius, token],
   );
 
   const TableOptions = (record: ITestCase) => {
@@ -306,21 +345,6 @@ const CaseDataTable: FC<Props> = (props) => {
       </Dropdown>
     );
   };
-
-  const fetchPageData = useCallback(
-    async (params: ITestCase, sort: any) => {
-      const values = {
-        ...params,
-        is_common: true,
-        module_id: currentModuleId,
-        module_type: ModuleEnum.CASE,
-        sort: sort,
-      };
-      const { code, data } = await pageTestCase(values);
-      return pageData(code, data);
-    },
-    [currentModuleId],
-  );
 
   /** 上传用例 */
   const uploadCase = async (values: any) => {
@@ -490,7 +514,6 @@ const CaseDataTable: FC<Props> = (props) => {
         width={'40%'}
         open={showDynamic}
         setOpen={setShowDynamic}
-        drawerStyles={drawerStyles}
       >
         <DynamicInfo caseId={currentCaseId} />
       </MyDrawer>
@@ -514,7 +537,6 @@ const CaseDataTable: FC<Props> = (props) => {
         name={'用例详情'}
         open={showCaseDetail}
         setOpen={setShowCaseDetail}
-        drawerStyles={drawerStyles}
       >
         <TestCaseDetail
           testcase={currentCase}
@@ -524,6 +546,7 @@ const CaseDataTable: FC<Props> = (props) => {
         />
       </MyDrawer>
       <MyProTable
+        x={1500}
         toolBarRender={() => toolBarRender}
         actionRef={actionRef}
         persistenceKey={perKey}

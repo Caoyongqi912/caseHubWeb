@@ -10,10 +10,7 @@ export const useTestCaseDetailStyles = () => {
 
   const container = (): CSSProperties => ({
     minHeight: '100%',
-    background: `
-      radial-gradient(ellipse at 0% 0%, ${colors.primaryBg}30 0%, transparent 50%),
-      linear-gradient(180deg, ${colors.bgContainer} 0%, ${colors.bgLayout} 100%)
-    `,
+    background: colors.bgContainer, // 改为与 CaseSubSteps 一致的亮色背景
     padding: spacing.lg,
   });
 
@@ -22,6 +19,7 @@ export const useTestCaseDetailStyles = () => {
     border: `1px solid ${colors.border}`,
     overflow: 'hidden' as const,
     boxShadow: shadows.lg,
+    background: colors.bgContainer, // 添加与 CaseSubSteps 一致的亮色背景
   });
 
   const header = (): CSSProperties => ({

@@ -14,22 +14,38 @@ import { Button, Divider, Tooltip, Typography } from 'antd';
 import { FC, useMemo } from 'react';
 
 interface ToolbarProps {
+  /** 是否分组显示 */
   isGrouped: boolean;
+  /** 是否全部展开 */
   isAllExpanded: boolean;
+  /** 已选择用例数量 */
   selectedCount: number;
+  /** 用例总数 */
   totalCount: number;
+  /** 全选回调 */
   onSelectAll: () => void;
+  /** 展开全部回调 */
   onExpandAll: () => void;
+  /** 收起全部回调 */
   onCollapseAll: () => void;
+  /** 清除选择回调 */
   onClearSelection: () => void;
+  /** 刷新回调 */
   onRefresh: () => void;
+  /** 切换分组回调 */
   onToggleGroup: () => void;
+  /** 添加用例回调 */
   onAddCase: () => void;
+  /** 上传点击回调 */
   onUploadClick: () => void;
 }
 
 const { Text } = Typography;
 
+/**
+ * 工具栏组件
+ * 提供用例选择、分组切换，添加等操作
+ */
 const Toolbar: FC<ToolbarProps> = ({
   isGrouped,
   isAllExpanded,
@@ -46,6 +62,7 @@ const Toolbar: FC<ToolbarProps> = ({
 }) => {
   const { colors, spacing, borderRadius } = useCaseHubTheme();
 
+  /** 工具栏按钮通用样式 */
   const toolbarBtnStyle = useMemo(
     () => ({
       display: 'flex',
@@ -57,6 +74,7 @@ const Toolbar: FC<ToolbarProps> = ({
     [borderRadius],
   );
 
+  /** 分组切换按钮样式 */
   const groupButtonStyle = useMemo(
     () => ({
       borderRadius: borderRadius.lg,
@@ -75,6 +93,7 @@ const Toolbar: FC<ToolbarProps> = ({
     [borderRadius, colors, isGrouped],
   );
 
+  /** 添加用例按钮样式 */
   const addCaseButtonStyle = useMemo(
     () => ({
       borderRadius: borderRadius.lg,
@@ -89,6 +108,7 @@ const Toolbar: FC<ToolbarProps> = ({
     [borderRadius, colors],
   );
 
+  /** 选择状态徽章样式 */
   const selectionBadgeStyle = useMemo(
     () => ({
       display: 'flex',
@@ -113,7 +133,9 @@ const Toolbar: FC<ToolbarProps> = ({
         gap: spacing.sm,
       }}
     >
+      {/* 左侧：选择状态和操作 */}
       <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm }}>
+        {/* 选择状态徽章 */}
         <div style={selectionBadgeStyle}>
           <CheckSquareOutlined
             style={{
@@ -131,6 +153,7 @@ const Toolbar: FC<ToolbarProps> = ({
           </Text>
         </div>
 
+        {/* 全选按钮 */}
         <Tooltip title="全选">
           <Button
             type="text"
@@ -143,6 +166,7 @@ const Toolbar: FC<ToolbarProps> = ({
           </Button>
         </Tooltip>
 
+        {/* 取消选择按钮 */}
         <Tooltip title="取消选择">
           <Button
             type="text"
@@ -157,7 +181,9 @@ const Toolbar: FC<ToolbarProps> = ({
         </Tooltip>
       </div>
 
+      {/* 右侧：工具操作按钮 */}
       <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm }}>
+        {/* 分组展开/收起按钮 */}
         {isGrouped && (
           <>
             <Tooltip title={isAllExpanded ? '全部收起' : '全部展开'}>
@@ -177,6 +203,7 @@ const Toolbar: FC<ToolbarProps> = ({
           </>
         )}
 
+        {/* 刷新按钮 */}
         <Tooltip title="刷新列表">
           <Button
             type="text"
@@ -189,6 +216,7 @@ const Toolbar: FC<ToolbarProps> = ({
           </Button>
         </Tooltip>
 
+        {/* 上传按钮 */}
         <Tooltip title="附件上传">
           <Button
             type="text"
@@ -201,6 +229,7 @@ const Toolbar: FC<ToolbarProps> = ({
           </Button>
         </Tooltip>
 
+        {/* 分组切换按钮 */}
         <Button
           type="primary"
           onClick={onToggleGroup}
@@ -210,6 +239,7 @@ const Toolbar: FC<ToolbarProps> = ({
           {isGrouped ? '平铺' : '分组'}
         </Button>
 
+        {/* 添加用例按钮 */}
         <Button
           type="primary"
           onClick={onAddCase}

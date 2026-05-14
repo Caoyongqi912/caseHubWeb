@@ -271,7 +271,6 @@ const TestCaseDetail: FC<Props> = ({ testcase, callback }) => {
           <ProForm
             form={form}
             submitter={false}
-            layout="horizontal"
             onValuesChange={handleFormValuesChange}
           >
             <div style={styles.formGrid()}>
@@ -332,11 +331,9 @@ const TestCaseDetail: FC<Props> = ({ testcase, callback }) => {
                 {steps.map((step, index) => (
                   <StepItem
                     key={step.uid}
-                    uid={step.uid}
                     index={index}
                     action={step.action || ''}
                     expectedResult={step.expected_result || ''}
-                    stepId={typeof step.id === 'number' ? step.id : undefined}
                     isDragging={draggingId === step.uid}
                     isDragOver={dragOverId === step.uid}
                     onDragStart={() => handleDragStart(step.uid)}
@@ -358,8 +355,6 @@ const TestCaseDetail: FC<Props> = ({ testcase, callback }) => {
                       typeof step.id === 'number' &&
                       deleteStep(step.id as number)
                     }
-                    colors={colors}
-                    borderRadius={borderRadius}
                   />
                 ))}
               </Space>

@@ -62,8 +62,10 @@ export interface ICaseDynamic {
 
 export interface CaseSearchForm {
   case_name?: string;
-  case_level?: 'P1' | 'P0' | 'P2' | 'P3';
+  case_level?: 'P0' | 'P1' | 'P2' | 'P3';
   case_type?: 1 | 2;
   case_tag?: string;
   case_status?: 0 | 1 | 2;
+  is_review?: boolean;
+  is_common?: boolean;
 }

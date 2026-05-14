@@ -3,27 +3,16 @@ import {
   DeleteOutlined,
   HolderOutlined,
 } from '@ant-design/icons';
-import {
-  Button,
-  Divider,
-  Input,
-  Popconfirm,
-  Space,
-  Tag,
-  theme,
-  Tooltip,
-} from 'antd';
+import { Button, Divider, Input, Popconfirm, Space, Tag, Tooltip } from 'antd';
 import { FC, memo } from 'react';
+import { useCaseHubTheme } from '../../styles';
 
 const { TextArea } = Input;
-const { useToken } = theme;
 
 export interface StepItemProps {
-  uid: string;
   index: number;
   action?: string;
   expectedResult?: string;
-  stepId?: number | string;
   isDragging: boolean;
   isDragOver: boolean;
   onDragStart: () => void;
@@ -36,23 +25,13 @@ export interface StepItemProps {
   onBlur: () => void;
   onCopy: () => void;
   onDelete: () => void;
-  colors: {
-    primary: string;
-    primaryHover: string;
-    textSecondary: string;
-  };
-  borderRadius: {
-    round: string | number;
-  };
 }
 
 const StepItem: FC<StepItemProps> = memo(
   ({
-    uid,
     index,
     action,
     expectedResult,
-    stepId,
     isDragging,
     isDragOver,
     onDragStart,
@@ -65,10 +44,8 @@ const StepItem: FC<StepItemProps> = memo(
     onBlur,
     onCopy,
     onDelete,
-    colors,
-    borderRadius,
   }) => {
-    const { token } = useToken();
+    const { token, colors } = useCaseHubTheme();
 
     return (
       <div
@@ -83,9 +60,7 @@ const StepItem: FC<StepItemProps> = memo(
         onDrop={onDrop}
         style={{
           marginBottom: 8,
-          background: isDragOver
-            ? `${colors.primary}08`
-            : token.colorBgContainer,
+          background: isDragOver ? `${colors.primary}08` : colors.bgContainer,
           borderRadius: token.borderRadiusLG,
           border: `1px solid ${
             isDragOver ? `${colors.primary}40` : token.colorBorderSecondary
@@ -117,7 +92,7 @@ const StepItem: FC<StepItemProps> = memo(
             style={{
               background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryHover} 100%)`,
               color: '#fff',
-              borderRadius: borderRadius.round,
+              borderRadius: '50%',
               width: 24,
               height: 24,
               display: 'flex',

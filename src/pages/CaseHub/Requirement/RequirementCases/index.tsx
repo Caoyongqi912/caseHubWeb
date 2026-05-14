@@ -197,20 +197,27 @@ const RequirementCasesContent: React.FC = () => {
       >
         <CaseStepSearchForm
           tags={tags}
-          setSearchForm={setSearchInfo}
           isGrouped={isGrouped}
           isAllExpanded={isAllExpanded}
           selectedCount={selectedCount}
           totalCount={testCases.length}
-          onSelectAll={handleSelectAll}
-          onExpandAll={expandAll}
-          onCollapseAll={collapseAll}
-          onClearSelection={clearSelection}
-          onRefresh={refresh}
-          onToggleGroup={toggleGrouped}
-          onAddCase={handleAddCase}
-          onUploadFinish={refresh}
           uploadProps={{ reqId, moduleId, projectId }}
+          searchHandlers={{
+            onSearch: setSearchInfo,
+            onReset: () => setSearchInfo({}),
+          }}
+          selectionHandlers={{
+            onSelectAll: handleSelectAll,
+            onExpandAll: expandAll,
+            onCollapseAll: collapseAll,
+            onClearSelection: clearSelection,
+          }}
+          actionHandlers={{
+            onRefresh: refresh,
+            onToggleGroup: toggleGrouped,
+            onAddCase: handleAddCase,
+            onUploadFinish: refresh,
+          }}
         />
 
         <div style={{ padding: `${spacing.sm}px ${spacing.lg}px` }}>

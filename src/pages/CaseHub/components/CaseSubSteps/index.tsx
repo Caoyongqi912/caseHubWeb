@@ -93,7 +93,7 @@ const CaseSubSteps: FC<CaseSubStepsProps> = ({
   const draggedIdRef = useRef<string | null>(null);
 
   // ==================== Theme ====================
-  const { colors, spacing, borderRadius } = useCaseHubTheme();
+  const { colors, spacing } = useCaseHubTheme();
 
   // ==================== Effects ====================
 
@@ -449,11 +449,9 @@ const CaseSubSteps: FC<CaseSubStepsProps> = ({
             {steps.map((step, index) => (
               <StepItem
                 key={step.uid}
-                uid={step.uid}
                 index={index}
                 action={step.action || ''}
                 expectedResult={step.expected_result || ''}
-                stepId={typeof step.id === 'number' ? step.id : undefined}
                 isDragging={draggingId === step.uid}
                 isDragOver={dragOverId === step.uid}
                 onDragStart={() => handleDragStart(step.uid)}
@@ -474,8 +472,6 @@ const CaseSubSteps: FC<CaseSubStepsProps> = ({
                 onDelete={() =>
                   typeof step.id === 'number' && deleteStep(step.id as number)
                 }
-                colors={colors}
-                borderRadius={borderRadius}
               />
             ))}
           </Space>
