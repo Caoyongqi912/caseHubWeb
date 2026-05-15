@@ -1,5 +1,5 @@
 import { IObjGet, IPage, IResponse } from '@/api';
-import { ICasePlan } from '@/pages/CaseHub/types';
+import { ICasePlan, ITestCase } from '@/pages/CaseHub/types';
 import { request } from '@@/plugin-request';
 
 /**
@@ -128,5 +128,29 @@ export const movePlanModule = async (data: {
   return request<IResponse<any>>('/api/hub/plan/module/move', {
     method: 'POST',
     data,
+  });
+};
+
+/**
+ * 查询测试计划下的用例列表
+ * @param plan_id - 测试计划 ID
+ * @param plan_module_id - 模块 ID，null 表示查询所有用例
+ * @param case_level - 用例等级
+ * @param is_review - 是否审核
+ * @param current - 当前页码
+ * @param pageSize - 每页数量
+ * @returns
+ */
+export const queryPlanCases = async (data: {
+  plan_id: number;
+  plan_module_id?: number;
+  case_level?: number;
+  is_review?: boolean;
+  current: number;
+  pageSize: number;
+}) => {
+  return request<IResponse<ITestCase[]>>(`/api/hub/plan/cases`, {
+    method: 'GET',
+    params: data,
   });
 };

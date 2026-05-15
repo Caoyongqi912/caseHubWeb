@@ -284,6 +284,7 @@ const PlanModule: FC<PlanModuleProps> = ({
     (node: TreeDataNode) => {
       const isRootNode = node.isRoot;
       const isHovered = hoveredKey === node.key;
+      const isSelected = selectedKeys.includes(node.key);
       const menuItems: MenuProps['items'] = [];
 
       menuItems.push({
@@ -319,7 +320,11 @@ const PlanModule: FC<PlanModuleProps> = ({
           disabled={isRootNode}
         >
           <div
-            style={containerStyles.titleWrapper}
+            style={{
+              ...containerStyles.titleWrapper,
+              background: isSelected ? token.colorPrimaryBg : 'transparent',
+              borderRadius: token.borderRadius,
+            }}
             onMouseEnter={() => setHoveredKey(node.key)}
             onMouseLeave={() => setHoveredKey(null)}
           >
@@ -344,6 +349,8 @@ const PlanModule: FC<PlanModuleProps> = ({
     [
       containerStyles,
       hoveredKey,
+      selectedKeys,
+      token,
       handleOpenAddModal,
       handleOpenEditModal,
       handleDeleteModule,
@@ -437,17 +444,11 @@ const PlanModule: FC<PlanModuleProps> = ({
       bodyStyle={{
         height: '100%',
         minHeight: '90vh',
-        background: 'transparent',
         padding: 4,
       }}
       title={<div>计划目录</div>}
-      headerBordered
     >
-      <Tree
-        {...treeProps}
-        style={{ height: '100%', background: 'transparent' }}
-        treeData={processedTreeData}
-      />
+      <Tree {...treeProps} treeData={processedTreeData} />
       <ModuleEditModal
         title={modalState.mode === 'add' ? '新增目录' : '编辑目录'}
         open={modalState.visible}
