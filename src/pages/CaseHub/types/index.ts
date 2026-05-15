@@ -86,3 +86,13 @@ export interface ICasePlan {
   plan_start_time?: string;
   plan_end_time?: string;
 }
+
+export interface IPlanModule {
+  id: number;
+  uid: string;
+  plan_id: number;
+  parent_id?: number;
+  title: string;
+  order: number;
+  children?: IPlanModule[];
+}
