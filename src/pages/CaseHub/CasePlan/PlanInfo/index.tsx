@@ -12,7 +12,7 @@ const Index = () => {
       children: <PlanCases planId={planId} />,
     },
     {
-      key: 'requiremnet',
+      key: 'requirement',
       label: '需求',
       value: 'requirementDetail',
     },

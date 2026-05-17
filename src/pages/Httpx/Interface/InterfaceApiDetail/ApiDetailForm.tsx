@@ -91,7 +91,6 @@ const ApiDetailForm: FC<IProps> = (props) => {
       />
     </>
   );
-  const addonAfter = <></>;
   const onModelFinish = async () => {
     if (script) {
       const { code, data } = await setCurl2InterApi({ script: script });
@@ -226,7 +225,9 @@ const ApiDetailForm: FC<IProps> = (props) => {
           }}
         />
       </ProForm.Group>
-      <ProCard bodyStyle={{ padding: 0, minHeight: 200 }}>
+      <ProCard
+        style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
+      >
         <MyTabs
           type={'line'}
           size={'small'}

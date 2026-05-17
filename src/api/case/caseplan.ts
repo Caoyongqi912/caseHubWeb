@@ -149,8 +149,23 @@ export const queryPlanCases = async (data: {
   current: number;
   pageSize: number;
 }) => {
-  return request<IResponse<ITestCase[]>>(`/api/hub/plan/cases`, {
+  return request<IResponse<IPage<ITestCase>>>(`/api/hub/plan/cases`, {
     method: 'GET',
     params: data,
+  });
+};
+
+/**
+ * 关联测试计划下的用例
+ * @param data - 包含 plan_id、case_ids、plan_module_id 的对象
+ */
+export const associatePlanCases = async (data: {
+  plan_id: number;
+  case_ids: number[];
+  plan_module_id?: number;
+}) => {
+  return request<IResponse<any>>('/api/hub/plan/case/associate', {
+    method: 'POST',
+    data,
   });
 };

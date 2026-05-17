@@ -13,7 +13,7 @@ import {
 } from '@ant-design/icons';
 import { Button, Divider, Tooltip, Typography } from 'antd';
 import { FC, useMemo, useState } from 'react';
-import ChoiceCaseTable from '../../components/choiceCaseTable';
+import ChoiceCaseTable from '../../components/ChoiceCaseTable';
 
 interface ToolbarProps {
   /** 项目ID */

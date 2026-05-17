@@ -4,9 +4,7 @@ import {
   movePlanModule,
   updatePlanModule,
 } from '@/api/case/caseplan';
-import { useGlassStyles } from '@/components/Glass';
 import {
-  borderRadius,
   spacing,
   styleHelpers,
   typography,
@@ -30,28 +28,21 @@ import ModuleEditModal from './ModuleEditModal';
 const { useToken } = theme;
 
 interface PlanModuleProps {
-  /** 模块列表（后端已包含根节点"全部用例"） */
   planModules: IPlanModule[];
-  /** 测试计划ID */
   planId?: string;
-  /** 模块变更回调 */
   onModulesChange?: () => void;
-  /** 节点选中回调 */
   onSelect?: (moduleId: number | null) => void;
 }
 
-/** Tree节点数据类型扩展 */
 interface TreeDataNode extends DataNode {
   key: number;
   title: React.ReactNode;
   data: IPlanModule;
-  /** 是否为根节点（全部用例） */
   isRoot?: boolean;
 }
 
 type ModalMode = 'add' | 'edit';
 
-/** Modal状态管理 */
 interface ModalState {
   visible: boolean;
   mode: ModalMode;
@@ -59,6 +50,14 @@ interface ModalState {
   moduleId?: number;
   initialTitle?: string;
 }
+
+const ROOT_ORDER = 0;
+
+const createModalState = (overrides: Partial<ModalState> = {}): ModalState => ({
+  visible: false,
+  mode: 'add',
+  ...overrides,
+});
 
 /**
  * 计划目录模块组件
@@ -72,90 +71,74 @@ const PlanModule: FC<PlanModuleProps> = ({
 }) => {
   const { token } = useToken();
   const [expandedKeys, setExpandedKeys] = useState<React.Key[]>([]);
-  const [selectedKeys, setSelectedKeys] = useState<React.Key[]>([]);
+  const [activeKey, setActiveKey] = useState<React.Key | null>(null);
   const [hoveredKey, setHoveredKey] = useState<number | null>(null);
-  const [modalState, setModalState] = useState<ModalState>({
-    visible: false,
-    mode: 'add',
-  });
+  const [modalState, setModalState] = useState<ModalState>(createModalState());
   const [treeData, setTreeData] = useState<TreeDataNode[]>([]);
-  const styles = useGlassStyles();
 
-  /** 将模块数据转换为Tree组件需要的树形结构 */
+  const isRootNode = (module: IPlanModule) =>
+    module.parent_id === null && module.order === ROOT_ORDER;
+
+  /** 将模块数据转换为 Tree 组件需要的树形结构 */
   const convertToTreeData = useCallback(
-    (modules: IPlanModule[]): TreeDataNode[] => {
-      return modules.map((module) => {
-        const isRootNode = module.parent_id === null && module.order === 0;
-        return {
-          key: module.id,
-          title: module.title,
-          data: module,
-          isRoot: isRootNode,
-          icon: (props: AntTreeNodeProps) =>
-            props.expanded ? <FolderOpenOutlined /> : <FolderOutlined />,
-          children: module.children
-            ? convertToTreeData(module.children)
-            : undefined,
-        };
-      });
-    },
-    [token.colorPrimary, token.colorSuccess],
+    (modules: IPlanModule[]): TreeDataNode[] =>
+      modules.map((module) => ({
+        key: module.id,
+        title: module.title,
+        data: module,
+        isRoot: isRootNode(module),
+        icon: (props: AntTreeNodeProps) =>
+          props.expanded ? <FolderOpenOutlined /> : <FolderOutlined />,
+        children: module.children
+          ? convertToTreeData(module.children)
+          : undefined,
+      })),
+    [],
   );
 
-  /** 初始化树形数据 */
+  /** 初始化树形数据并默认展开根节点 */
   useEffect(() => {
-    if (planModules && planModules.length > 0) {
-      const convertedData = convertToTreeData(planModules);
-      setTreeData(convertedData);
-      const rootId = planModules[0]?.id;
-      if (rootId) {
-        setExpandedKeys([rootId]);
-      }
-    } else {
+    if (!planModules?.length) {
       setTreeData([]);
+      return;
     }
+    const convertedData = convertToTreeData(planModules);
+    setTreeData(convertedData);
+    setExpandedKeys([planModules[0]?.id].filter(Boolean));
   }, [planModules, convertToTreeData]);
 
-  /** 打开新增目录Modal */
-  const handleOpenAddModal = useCallback((parentId: number) => {
-    setModalState({
-      visible: true,
-      mode: 'add',
-      parentId,
-    });
-  }, []);
+  const resetModal = useCallback(() => setModalState(createModalState()), []);
 
-  /** 打开编辑目录Modal */
-  const handleOpenEditModal = useCallback((moduleId: number, title: string) => {
-    setModalState({
-      visible: true,
-      mode: 'edit',
-      moduleId,
-      initialTitle: title,
-    });
-  }, []);
+  const handleOpenAddModal = useCallback(
+    (parentId: number) =>
+      setModalState(createModalState({ visible: true, mode: 'add', parentId })),
+    [],
+  );
 
-  /** 关闭Modal */
-  const handleCloseModal = useCallback(() => {
-    setModalState({
-      visible: false,
-      mode: 'add',
-      parentId: undefined,
-      moduleId: undefined,
-      initialTitle: undefined,
-    });
-  }, []);
+  const handleOpenEditModal = useCallback(
+    (moduleId: number, title: string) =>
+      setModalState(
+        createModalState({
+          visible: true,
+          mode: 'edit',
+          moduleId,
+          initialTitle: title,
+        }),
+      ),
+    [],
+  );
 
-  /** Modal表单提交处理 */
+  /** Modal 表单提交：根据模式分发新增/编辑逻辑 */
   const handleModalFinish = useCallback(
     async (values: { title: string }): Promise<boolean> => {
-      const { title } = values;
+      const title = values.title.trim();
+      if (!title) return false;
 
       try {
         if (modalState.mode === 'add') {
           await insertPlanModule({
             plan_id: Number(planId),
-            title: title.trim(),
+            title,
             order: treeData.length + 1,
             parent_id: modalState.parentId!,
           });
@@ -163,11 +146,11 @@ const PlanModule: FC<PlanModuleProps> = ({
         } else {
           await updatePlanModule({
             id: modalState.moduleId!,
-            title: title.trim(),
+            title,
           });
           message.success('修改成功');
         }
-        handleCloseModal();
+        resetModal();
         onModulesChange?.();
         return true;
       } catch {
@@ -175,10 +158,10 @@ const PlanModule: FC<PlanModuleProps> = ({
         return false;
       }
     },
-    [modalState, planId, treeData.length, onModulesChange, handleCloseModal],
+    [modalState, planId, treeData.length, resetModal, onModulesChange],
   );
 
-  /** 删除目录 */
+  /** 删除目录（带二次确认） */
   const handleDeleteModule = useCallback(
     async (moduleId: number) => {
       Modal.confirm({
@@ -200,28 +183,21 @@ const PlanModule: FC<PlanModuleProps> = ({
     [onModulesChange],
   );
 
-  /** 拖拽结束处理 */
+  /** 拖拽排序结束处理 */
   const handleDragEnd = useCallback(
     async (info: any) => {
       const dragNode = info.dragNode as TreeDataNode;
-      const node = info.node as TreeDataNode;
-      if (!dragNode || !node) return;
-
-      const dragKey = dragNode.key;
-      const dragIsRoot = dragNode.isRoot;
-
-      if (dragIsRoot) {
-        message.warning('"全部用例"不能移动');
+      const targetNode = info.node as TreeDataNode;
+      if (!dragNode || !targetNode || dragNode.isRoot) {
+        if (dragNode?.isRoot) message.warning('"全部用例"不能移动');
         return;
       }
 
-      const newOrder = info.dropPosition + 1;
-
       try {
         await movePlanModule({
-          module_id: dragKey as number,
-          new_parent_id: node.data?.parent_id,
-          order: newOrder,
+          module_id: dragNode.key as number,
+          new_parent_id: targetNode.data?.parent_id,
+          order: info.dropPosition + 1,
         });
         message.success('移动成功');
         onModulesChange?.();
@@ -232,8 +208,8 @@ const PlanModule: FC<PlanModuleProps> = ({
     [onModulesChange],
   );
 
-  /** 组件样式对象 */
-  const containerStyles = useMemo(
+  /** 节点样式配置 */
+  const nodeStyles = useMemo(
     () => ({
       titleWrapper: {
         display: 'flex',
@@ -264,38 +240,25 @@ const PlanModule: FC<PlanModuleProps> = ({
         marginRight: spacing.xs,
         ...styleHelpers.transition(['opacity']),
       },
-      addIconVisible: {
-        opacity: 1,
-      },
-      emptyState: {
-        display: 'flex',
-        flexDirection: 'column' as const,
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: '100%',
-        color: token.colorTextTertiary,
-      },
     }),
-    [token, spacing, borderRadius, typography, styleHelpers],
+    [token, spacing, styleHelpers, typography],
   );
 
-  /** 渲染节点标题 */
-  const renderNodeTitle = useCallback(
-    (node: TreeDataNode) => {
-      const isRootNode = node.isRoot;
-      const isHovered = hoveredKey === node.key;
-      const isSelected = selectedKeys.includes(node.key);
-      const menuItems: MenuProps['items'] = [];
+  /** 构建节点右键菜单项 */
+  const buildMenuItems = useCallback(
+    (node: TreeDataNode): MenuProps['items'] => {
+      const items: MenuProps['items'] = [
+        {
+          key: 'add',
+          icon: <PlusOutlined />,
+          label: '新增子目录',
+          onClick: () => handleOpenAddModal(node.key as number),
+        },
+      ];
 
-      menuItems.push({
-        key: 'add',
-        icon: <PlusOutlined />,
-        label: '新增子目录',
-        onClick: () => handleOpenAddModal(node.key as number),
-      });
-
-      if (!isRootNode) {
-        menuItems.push(
+      if (!node.isRoot) {
+        items.push(
+          { type: 'divider' as const },
           {
             key: 'rename',
             icon: <EditOutlined />,
@@ -313,29 +276,38 @@ const PlanModule: FC<PlanModuleProps> = ({
         );
       }
 
+      return items;
+    },
+    [handleOpenAddModal, handleOpenEditModal, handleDeleteModule],
+  );
+
+  /** 渲染自定义节点标题（含高亮、hover、右键菜单） */
+  const renderNodeTitle = useCallback(
+    (node: TreeDataNode) => {
+      const isActive = activeKey === node.key;
+      const isHovered = hoveredKey === node.key;
+
       return (
         <Dropdown
-          menu={{ items: menuItems }}
+          menu={{ items: buildMenuItems(node) }}
           trigger={['contextMenu']}
-          disabled={isRootNode}
+          disabled={node.isRoot}
         >
           <div
             style={{
-              ...containerStyles.titleWrapper,
-              background: isSelected ? token.colorPrimaryBg : 'transparent',
+              ...nodeStyles.titleWrapper,
+              background: isActive ? token.colorPrimaryBg : 'transparent',
               borderRadius: token.borderRadius,
             }}
             onMouseEnter={() => setHoveredKey(node.key)}
             onMouseLeave={() => setHoveredKey(null)}
           >
-            <HolderOutlined style={containerStyles.dragHandle} />
-            <span style={containerStyles.titleText}>
-              {node.title as string}
-            </span>
+            <HolderOutlined style={nodeStyles.dragHandle} />
+            <span style={nodeStyles.titleText}>{node.title as string}</span>
             <PlusOutlined
               style={{
-                ...containerStyles.addIcon,
-                ...(isHovered ? containerStyles.addIconVisible : {}),
+                ...nodeStyles.addIcon,
+                opacity: isHovered ? 1 : 0,
               }}
               onClick={(e) => {
                 e.stopPropagation();
@@ -347,96 +319,86 @@ const PlanModule: FC<PlanModuleProps> = ({
       );
     },
     [
-      containerStyles,
+      activeKey,
       hoveredKey,
-      selectedKeys,
+      nodeStyles,
       token,
+      buildMenuItems,
       handleOpenAddModal,
-      handleOpenEditModal,
-      handleDeleteModule,
     ],
   );
 
-  /** 递归处理树节点，为每个节点设置标题 */
+  /** 递归为每个节点注入自定义标题渲染 */
   const processTreeNodes = useCallback(
-    (nodes: TreeDataNode[]): TreeDataNode[] => {
-      return nodes.map((node) => {
-        const newNode: TreeDataNode = {
-          ...node,
-          title: renderNodeTitle(node),
-        };
-        if (newNode.children && newNode.children.length > 0) {
-          newNode.children = processTreeNodes(
-            newNode.children as TreeDataNode[],
-          );
-        }
-        return newNode;
-      });
-    },
+    (nodes: TreeDataNode[]): TreeDataNode[] =>
+      nodes.map((node) => ({
+        ...node,
+        title: renderNodeTitle(node),
+        children: node.children?.length
+          ? processTreeNodes(node.children as TreeDataNode[])
+          : undefined,
+      })),
     [renderNodeTitle],
   );
 
-  /** Tree组件配置 */
-  const handleTreeSelect = useCallback(
-    (selected: React.Key[]) => {
-      setSelectedKeys(selected);
-      if (selected.length > 0) {
-        const selectedKey = selected[0];
-        const selectedNode =
-          treeData.find((node) => node.key === selectedKey) ||
-          findNodeInTree(treeData, selectedKey as number);
-        if (selectedNode) {
-          onSelect?.(selectedKey as number);
-        } else {
-          onSelect?.(null);
-        }
-      } else {
-        onSelect?.(null);
-      }
-    },
-    [treeData, onSelect],
-  );
-
-  const treeProps: TreeProps = useMemo(
-    () => ({
-      expandedKeys,
-      onExpand: setExpandedKeys,
-      selectedKeys,
-      onSelect: handleTreeSelect,
-      draggable: {
-        icon: false,
-        nodeDraggable: (node) => {
-          const treeNode = node as TreeDataNode;
-          return !treeNode.isRoot;
-        },
-      },
-      onDragEnd: handleDragEnd as any,
-      blockNode: true,
-      showLine: false,
-      defaultExpandAll: true,
-    }),
-    [expandedKeys, handleTreeSelect, handleDragEnd],
-  );
-
-  /** 在树中查找节点 */
+  /** 在树中递归查找指定 key 的节点 */
   const findNodeInTree = useCallback(
     (nodes: TreeDataNode[], key: number): TreeDataNode | null => {
       for (const node of nodes) {
         if (node.key === key) return node;
-        if (node.children && node.children.length > 0) {
-          const found = findNodeInTree(node.children as TreeDataNode[], key);
-          if (found) return found;
-        }
+        const found = node.children?.length
+          ? findNodeInTree(node.children as TreeDataNode[], key)
+          : null;
+        if (found) return found;
       }
       return null;
     },
     [],
   );
 
-  /** 处理后的树数据 */
-  const processedTreeData = useMemo(() => {
-    return processTreeNodes(treeData);
-  }, [treeData, processTreeNodes]);
+  /** Tree 选中事件处理：单选模式，同步 activeKey 与父组件回调 */
+  const handleTreeSelect = useCallback(
+    (selected: React.Key[]) => {
+      const key = selected[0] ?? null;
+      setActiveKey(key);
+
+      if (key == null) {
+        onSelect?.(null);
+        return;
+      }
+
+      const found =
+        treeData.find((n) => n.key === key) ||
+        findNodeInTree(treeData, key as number);
+      onSelect?.(found ? (key as number) : null);
+    },
+    [treeData, onSelect, findNodeInTree],
+  );
+
+  /** Tree 组件 props 配置 */
+  const treeProps: TreeProps = useMemo(
+    () => ({
+      expandedKeys,
+      onExpand: setExpandedKeys,
+      selectedKeys: activeKey != null ? [activeKey] : [],
+      onSelect: handleTreeSelect,
+      multiple: false,
+      draggable: {
+        icon: false,
+        nodeDraggable: (node) => !(node as TreeDataNode).isRoot,
+      },
+      onDragEnd: handleDragEnd as any,
+      blockNode: true,
+      showLine: false,
+      defaultExpandAll: true,
+    }),
+    [expandedKeys, activeKey, handleTreeSelect, handleDragEnd],
+  );
+
+  const processedTreeData = useMemo(
+    () => processTreeNodes(treeData),
+    [treeData, processTreeNodes],
+  );
 
   return (
     <ProCard
@@ -453,7 +415,7 @@ const PlanModule: FC<PlanModuleProps> = ({
         title={modalState.mode === 'add' ? '新增目录' : '编辑目录'}
         open={modalState.visible}
         onFinish={handleModalFinish}
-        setOpen={handleCloseModal}
+        setOpen={resetModal}
         initialValues={{ title: modalState.initialTitle }}
       />
     </ProCard>

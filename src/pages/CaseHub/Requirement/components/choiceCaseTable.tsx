@@ -16,7 +16,7 @@ import { caseLevelColors } from '@/pages/CaseHub/styles';
 import { Button, Tag, Typography } from 'antd';
 
 interface Props {
-  onCaseSelect: (caseIds: number[]) => void;
+  onCaseSelect: (caseIds: number[]) => Promise<void>;
   projectId?: number;
   hideAddButton?: boolean;
 }
@@ -46,7 +46,7 @@ const ChoiceCaseTable: FC<Props> = ({
     preserveSelectedRowKeys: true,
     onChange: (newSelectedRowKeys: React.Key[]) => {
       setSelectedRowKeys(newSelectedRowKeys);
-      onCaseSelect(newSelectedRowKeys as number[]);
+      // onCaseSelect(newSelectedRowKeys as number[]);
     },
   };
 

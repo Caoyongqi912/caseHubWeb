@@ -108,7 +108,7 @@ const InterHeader: FC<SelfProps> = ({ form, readonly = false }) => {
               suffix: (
                 <ApiVariableFunc
                   value={record?.value}
-                  index={record?.id}
+                  index={record?.id as number}
                   setValue={(index, newData) => {
                     editorFormRef.current?.setRowData?.(index, newData);
                     form.setFieldsValue({

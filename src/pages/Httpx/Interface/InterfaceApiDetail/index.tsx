@@ -403,10 +403,17 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
       >
         <InterDoc />
       </MyDrawer>
-      <ProCard ref={containerRef}>
+      <ProCard ref={containerRef} style={{ minHeight: '90vh' }}>
         <ProForm form={interApiForm} submitter={false}>
           <ApiBaseForm />
-          <div style={{ marginTop: 24 }}>
+          <div
+            style={{
+              marginTop: 24,
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
             <MyTabs
               defaultActiveKey={TAB_KEYS.BASE}
               items={TabItems}

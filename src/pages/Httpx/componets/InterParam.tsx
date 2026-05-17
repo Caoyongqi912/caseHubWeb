@@ -70,7 +70,7 @@ const InterParam: FC<SelfProps> = ({ form, readonly = false }) => {
               suffix: (
                 <ApiVariableFunc
                   value={record?.value}
-                  index={record?.id}
+                  index={record?.id as number}
                   setValue={(index, newData) => {
                     editorFormRef.current?.setRowData?.(index, newData);
                     form.setFieldsValue({
@@ -129,6 +129,7 @@ const InterParam: FC<SelfProps> = ({ form, readonly = false }) => {
       />
       <ProForm.Item name={'interface_params'} trigger={'onValuesChange'}>
         <EditableProTable<IParams>
+          scroll={{ y: 'fill' }}
           editableFormRef={editorFormRef}
           rowKey={'id'}
           toolBarRender={false}

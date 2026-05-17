@@ -20,7 +20,7 @@ import {
 
 import { Button, message } from 'antd';
 import { FC, useEffect, useMemo, useRef, useState } from 'react';
-import ChoiceCaseTable from './choiceCaseTable';
+import ChoiceCaseTable from './ChoiceCaseTable';
 
 interface Props {
   currentProjectId?: number;
