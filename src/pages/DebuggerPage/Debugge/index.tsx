@@ -186,13 +186,14 @@ const DynamicSettings = () => {
     >
       <ProCard
         style={{
-          height: '100vh',
+          height: 'calc(100vh - 200px)',
           overflow: 'auto',
         }}
       >
         <ProTable
           {...config}
           formRef={ref}
+          scroll={{ x: 1200, y: 'fill' }}
           pagination={
             config.pagination?.show
               ? config.pagination

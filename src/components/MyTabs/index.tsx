@@ -34,7 +34,7 @@ const Index: FC<IProps> = ({
       onChange={(key: string) => {
         onChangeKey?.(key);
       }}
-      style={style}
+      style={{ ...style, overflow: 'hidden' }}
       activeKey={activeKey}
       tabPosition={tabPosition}
       defaultActiveKey={defaultActiveKey}

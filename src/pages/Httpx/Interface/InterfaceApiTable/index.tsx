@@ -1,19 +1,15 @@
-import { IModuleEnum } from '@/api';
 import {
-  copyApiTo,
   copyInterApiById,
   outPutInter2Yaml,
   pageInterApi,
   removeInterApiById,
-  updateInterApiById,
 } from '@/api/inter';
 import { useGlassStyles } from '@/components/Glass';
-import MyProTable from '@/components/Table/MyProTable';
 import UserSelect from '@/components/Table/UserSelect';
+import CopyOrMoveModal from '@/pages/Httpx/Interface/InterfaceApiTable/CopyOrMoveModal';
 import { IInterfaceAPI } from '@/pages/Httpx/types';
 import { CONFIG, ModuleEnum } from '@/utils/config';
-import { fetchModulesEnum, pageData } from '@/utils/somefunc';
-import { useModel } from '@@/exports';
+import { pageData } from '@/utils/somefunc';
 import {
   ApiOutlined,
   CopyOutlined,
@@ -26,19 +22,11 @@ import {
   NumberOutlined,
   PlusOutlined,
 } from '@ant-design/icons';
-import {
-  ActionType,
-  ProColumns,
-  ProForm,
-  ProFormSelect,
-  ProFormTreeSelect,
-} from '@ant-design/pro-components';
+import { ActionType, ProColumns, ProTable } from '@ant-design/pro-components';
 import {
   Button,
   Dropdown,
-  Form,
   message,
-  Modal,
   Popconfirm,
   Space,
   Tag,
@@ -61,21 +49,32 @@ const Index: FC<SelfProps> = ({
   perKey,
 }) => {
   const styles = useGlassStyles();
-  const [copyForm] = Form.useForm();
   const actionRef = useRef<ActionType>();
-  const [openModal, setOpenModal] = useState(false);
-  const { initialState } = useModel('@@initialState');
-  const projects = initialState?.projects || [];
-  const [copyProjectId, setCopyProjectId] = useState<number>();
-  const [moduleEnum, setModuleEnum] = useState<IModuleEnum[]>([]);
   const [currentApiId, setCurrentApiId] = useState<number>();
   const [copyOrMove, setCopyOrMove] = useState(1);
+  const [openModal, setOpenModal] = useState(false);
 
-  useEffect(() => {
-    if (copyProjectId) {
-      fetchModulesEnum(copyProjectId, ModuleEnum.API, setModuleEnum).then();
-    }
-  }, [copyProjectId]);
+  const tagBaseStyle = {
+    borderRadius: 6,
+    fontSize: 12,
+    padding: '4px 8px',
+  };
+
+  const uidTagStyle = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 6,
+    fontFamily: 'monospace',
+    fontSize: 12,
+    padding: '4px 8px',
+    borderRadius: 6,
+  };
+
+  const urlTextStyle = {
+    fontFamily: 'monospace',
+    color: styles.colors.primary,
+    fontSize: 12,
+  };
 
   useEffect(() => {
     actionRef.current?.reload();
@@ -96,51 +95,10 @@ const Index: FC<SelfProps> = ({
     [currentModuleId],
   );
 
-  const tagBaseStyle = {
-    borderRadius: 6,
-    fontSize: 12,
-    padding: '4px 12px',
-    fontWeight: 600,
-  };
-
   const addBtnStyle = {
     height: 36,
     borderRadius: 8,
-    fontWeight: 500,
-    background: styles.colors.gradientPrimary,
-    border: 'none',
-    boxShadow: `0 4px 16px ${styles.colors.primaryGlow}`,
   };
-
-  const ActionButton: FC<{
-    icon: React.ReactNode;
-    label: string;
-    type?: 'primary' | 'danger';
-    onClick?: () => void;
-  }> = ({ icon, label, type = 'primary', onClick }) => (
-    <a
-      onClick={onClick}
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 4,
-        padding: '4px 8px',
-        borderRadius: 6,
-        fontSize: 13,
-        fontWeight: 500,
-        color: type === 'primary' ? styles.colors.primary : styles.colors.error,
-        backgroundColor:
-          type === 'primary'
-            ? `${styles.colors.primary}15`
-            : `${styles.colors.error}15`,
-        transition: 'all 0.2s ease',
-        cursor: 'pointer',
-      }}
-    >
-      {icon}
-      {label}
-    </a>
-  );
 
   const columns: ProColumns<IInterfaceAPI>[] = [
     {
@@ -148,25 +106,17 @@ const Index: FC<SelfProps> = ({
       dataIndex: 'uid',
       key: 'uid',
       fixed: 'left',
-      width: 140,
+      width: '10%',
       copyable: true,
       render: (_, record) => (
         <Tag
           style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 4,
-            fontFamily: 'monospace',
-            fontSize: 12,
-            fontWeight: 700,
-            padding: '4px 10px',
-            borderRadius: 6,
+            ...uidTagStyle,
             background: `${styles.colors.primary}15`,
             color: styles.colors.primary,
-            border: `1px solid ${styles.colors.primary}30`,
           }}
         >
-          <NumberOutlined style={{ fontSize: 10, opacity: 0.7 }} />
+          <NumberOutlined />
           {record.uid}
         </Tag>
       ),
@@ -176,11 +126,11 @@ const Index: FC<SelfProps> = ({
       dataIndex: 'interface_name',
       key: 'interface_name',
       fixed: 'left',
-      width: 180,
       ellipsis: true,
+      width: '25%',
       render: (_, record) => (
-        <Tag style={{ borderRadius: 6, fontSize: 13, padding: '4px 12px' }}>
-          <ApiOutlined style={{ marginRight: 6, opacity: 0.6 }} />
+        <Tag style={tagBaseStyle}>
+          <ApiOutlined />
           {record.interface_name}
         </Tag>
       ),
@@ -190,17 +140,9 @@ const Index: FC<SelfProps> = ({
       dataIndex: 'interface_url',
       key: 'interface_url',
       ellipsis: true,
-      width: 300,
       render: (_, record) => (
-        <Text
-          ellipsis
-          style={{
-            fontFamily: 'monospace',
-            color: styles.colors.primary,
-            fontSize: 13,
-          }}
-        >
-          <LinkOutlined style={{ marginRight: 6, opacity: 0.6 }} />
+        <Text ellipsis style={urlTextStyle}>
+          <LinkOutlined />
           {record.interface_url}
         </Text>
       ),
@@ -214,11 +156,12 @@ const Index: FC<SelfProps> = ({
       filters: true,
       search: true,
       onFilter: true,
-      width: 100,
+      width: '10%',
+
       render: (_, record) => {
         const methodConfig = CONFIG.API_METHOD_ENUM[record.interface_method];
         return (
-          <Tag color={methodConfig?.color} style={{ ...tagBaseStyle }}>
+          <Tag color={methodConfig?.color} style={tagBaseStyle}>
             {record.interface_method}
           </Tag>
         );
@@ -233,7 +176,8 @@ const Index: FC<SelfProps> = ({
       search: false,
       filters: true,
       onFilter: true,
-      width: 100,
+      width: '10%',
+
       render: (_, record) => {
         const levelConfig = CONFIG.API_LEVEL_ENUM[record.interface_level];
         return (
@@ -254,8 +198,9 @@ const Index: FC<SelfProps> = ({
       search: false,
       filters: true,
       onFilter: true,
+      width: '10%',
+
       valueEnum: CONFIG.API_STATUS_ENUM,
-      width: 100,
       render: (_, record) =>
         CONFIG.API_STATUS_ENUM[record.interface_status].tag,
     },
@@ -263,11 +208,12 @@ const Index: FC<SelfProps> = ({
       title: '创建人',
       dataIndex: 'creator',
       key: 'creator',
+      width: '8%',
+
       valueType: 'select',
-      width: 120,
       renderFormItem: () => <UserSelect />,
       render: (_, record) => (
-        <Tag style={{ fontSize: 12, padding: '2px 10px', borderRadius: 12 }}>
+        <Tag style={{ ...tagBaseStyle, borderRadius: 12 }}>
           {record.creatorName}
         </Tag>
       ),
@@ -276,17 +222,22 @@ const Index: FC<SelfProps> = ({
       title: '操作',
       valueType: 'option',
       key: 'option',
-      width: '8%',
+      width: '10%',
       fixed: 'right',
       render: (_, record) => (
         <Space size={4}>
-          <ActionButton
+          <Button
+            size="small"
+            type="primary"
             icon={<EyeOutlined />}
-            label="详情"
             onClick={() => {
-              history.push(`/interface/interApi/detail/interId=${record.id}`);
+              history.push(
+                `/interface/interApi/detail?interId=${record.id}&projectId=${currentProjectId}&moduleId=${currentModuleId}`,
+              );
             }}
-          />
+          >
+            详情
+          </Button>
           <Dropdown
             menu={{
               items: [
@@ -344,125 +295,80 @@ const Index: FC<SelfProps> = ({
                         }
                       }}
                     >
-                      <a style={{ color: styles.colors.error }}>删除</a>
+                      <a>删除</a>
                     </Popconfirm>
                   ),
                 },
               ],
             }}
           >
-            <a onClick={(e) => e.preventDefault()}>
-              <Space>
-                <MoreOutlined />
-              </Space>
-            </a>
+            <Button size="small" type="text" icon={<MoreOutlined />} />
           </Dropdown>
         </Space>
       ),
     },
   ];
 
+  const ToolBarRender = [
+    <Button
+      key="add"
+      hidden={currentModuleId === undefined}
+      type="primary"
+      style={addBtnStyle}
+      icon={<PlusOutlined />}
+      onClick={() => {
+        history.push(
+          `/interface/interApi/detail?projectId=${currentProjectId}&moduleId=${currentModuleId}`,
+        );
+      }}
+    >
+      添加接口
+    </Button>,
+    <Button
+      key="export"
+      type="primary"
+      style={addBtnStyle}
+      icon={<DownOutlined />}
+      onClick={async () => {
+        if (currentModuleId) {
+          await outPutInter2Yaml(currentModuleId);
+        } else {
+          message.warning('请选择模块');
+        }
+      }}
+    >
+      接口导出
+    </Button>,
+  ];
   return (
     <>
-      <Modal
+      <CopyOrMoveModal
         open={openModal}
-        onOk={async () => {
-          try {
-            const values = await copyForm.validateFields();
-            if (!currentApiId) return;
-            const response =
-              copyOrMove === 1
-                ? await copyApiTo({
-                    interface_id: currentApiId,
-                    project_id: values.project_id,
-                    module_id: values.module_id,
-                  })
-                : await updateInterApiById({
-                    id: currentApiId,
-                    project_id: values.project_id,
-                    module_id: values.module_id,
-                  });
-            if (response?.code === 0) {
-              message.success(response.msg);
-              copyForm.resetFields();
-              setOpenModal(false);
-              actionRef.current?.reload();
-            }
-          } catch (error) {
-            console.error('操作失败:', error);
-          }
-        }}
-        onCancel={() => setOpenModal(false)}
-        title={
-          <span style={{ fontWeight: 600 }}>
-            {copyOrMove === 1 ? '复制接口' : '移动接口'}
-          </span>
-        }
-        width={600}
-      >
-        <ProForm submitter={false} form={copyForm} layout="vertical">
-          <ProFormSelect
-            width="md"
-            options={projects}
-            label="项目"
-            name="project_id"
-            required
-            onChange={(value) => setCopyProjectId(value as number)}
-            fieldProps={{ placeholder: '请选择目标项目' }}
-          />
-          <ProFormTreeSelect
-            required
-            name="module_id"
-            label="模块"
-            rules={[{ required: true, message: '所属模块必选' }]}
-            fieldProps={{
-              treeData: moduleEnum,
-              fieldNames: { label: 'title' },
-              filterTreeNode: true,
-              placeholder: '请选择目标模块',
-            }}
-            width="md"
-          />
-        </ProForm>
-      </Modal>
-      <MyProTable
-        persistenceKey={perKey}
-        columns={columns}
-        rowKey="id"
+        currentApiId={currentApiId}
+        copyOrMove={copyOrMove}
         actionRef={actionRef}
-        request={fetchInterface}
-        toolBarRender={() => [
-          <Button
-            key="add"
-            hidden={currentModuleId === undefined}
-            type="primary"
-            style={addBtnStyle}
-            icon={<PlusOutlined />}
-            onClick={() => {
-              window.open(
-                `/interface/interApi/detail/projectId=${currentProjectId}&moduleId=${currentModuleId}`,
-              );
-            }}
-          >
-            添加接口
-          </Button>,
-          <Button
-            key="export"
-            type="primary"
-            style={addBtnStyle}
-            icon={<DownOutlined />}
-            onClick={async () => {
-              if (currentModuleId) {
-                await outPutInter2Yaml(currentModuleId);
-              } else {
-                message.warning('请选择模块');
-              }
-            }}
-          >
-            接口导出
-          </Button>,
-        ]}
+        onCancel={() => setOpenModal(false)}
       />
+
+      <div style={{ height: 'calc(100vh - 240px)' }}>
+        <ProTable
+          persistenceKey={perKey}
+          columns={columns}
+          rowKey="id"
+          actionRef={actionRef}
+          scroll={{ x: 1200, y: 'fill' }}
+          //@ts-ignore
+          request={fetchInterface}
+          pagination={{
+            showQuickJumper: true,
+            defaultPageSize: 10,
+            showSizeChanger: true,
+            pageSizeOptions: ['10', '20', '50', '100'],
+          }}
+          search={{ defaultCollapsed: true, labelWidth: 'auto' }}
+          toolBarRender={() => ToolBarRender}
+        />
+      </div>
     </>
   );
 };

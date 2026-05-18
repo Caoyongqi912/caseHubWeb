@@ -4,6 +4,7 @@ import {
   queryEnvByProjectIdFormApi,
   queryProjects,
 } from '@/components/CommonFunc';
+import { useGlassStyles } from '@/components/Glass';
 import { ModuleEnum } from '@/utils/config';
 import { ApiPostIcon, PostManIcon, SwaggerIcon, YAPIIcon } from '@/utils/icons';
 import { fetchModulesEnum } from '@/utils/somefunc';
@@ -20,6 +21,7 @@ import { useEffect, useState } from 'react';
 const { Text } = Typography;
 
 const Index = () => {
+  const styles = useGlassStyles();
   const [form] = Form.useForm();
   const [currentValue, setCurrentValue] = useState<string>();
   const [projects, setProjects] = useState<{ label: string; value: number }[]>(
@@ -30,9 +32,11 @@ const Index = () => {
   const [envs, setEnvs] = useState<{ label: string; value: number | null }[]>(
     [],
   );
+
   useEffect(() => {
     queryProjects(setProjects).then();
   }, []);
+
   useEffect(() => {
     if (currentProjectId) {
       fetchModulesEnum(currentProjectId, ModuleEnum.API, setModuleEnum).then();
@@ -40,28 +44,35 @@ const Index = () => {
     }
   }, [currentProjectId]);
 
-  const arr = [
+  const typeOptions = [
     { title: 'Swagger', icon: <SwaggerIcon />, value: '1' },
     { title: 'PostMan', icon: <PostManIcon />, value: '2' },
     { title: 'ApiPost', icon: <ApiPostIcon />, value: '3' },
     { title: 'YApi', icon: <YAPIIcon />, value: '4' },
   ];
 
+  const cardStyle = {
+    borderRadius: 12,
+    backgroundColor: 'transparent',
+    boxShadow: 'none',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+  };
+
   const onClick = async (value: string) => {
     setCurrentValue(value);
-    console.log(value);
   };
+
   const onSubmit = async () => {
-    const values = form.getFieldsValue(); // 获取表单中所有字段的值
+    const values = form.getFieldsValue();
     const fileValue = values.api_file;
-    if (currentValue && fileValue.length > 0) {
+    if (currentValue && fileValue?.length > 0) {
       const formData = new FormData();
-      // 添加文件
-      formData.append('api_file', fileValue[0].originFileObj); // 选择了一个文件，放入 FormData
-      formData.append('valueType', currentValue); // 添加其他字段（例如选择的值）
-      formData.append('env_id', values.env_id); // 添加其他字段（例如选择的值）
-      formData.append('project_id', values.project_id); // 添加其他字段（例如选择的值）
-      formData.append('module_id', values.module_id); // 添加其他字段（例如选择的值）
+      formData.append('api_file', fileValue[0].originFileObj);
+      formData.append('valueType', currentValue);
+      formData.append('env_id', values.env_id);
+      formData.append('project_id', values.project_id);
+      formData.append('module_id', values.module_id);
       const { code, msg } = await uploadInterApi(formData);
       if (code === 0) {
         form.resetFields();
@@ -71,35 +82,25 @@ const Index = () => {
   };
 
   return (
-    <ProCard
-      direction="column"
-      gutter={[24, 24]}
-      wrap
-      style={{ marginBlockStart: 16, height: 'auto' }}
-    >
-      <Row gutter={[20, 20]}>
-        {arr.map((item, index) => {
+    <div style={{ padding: '16px 24px' }}>
+      <Row gutter={[16, 16]}>
+        {typeOptions.map((item, index) => {
+          const isSelected = currentValue === item.value;
           return (
-            <Col span={8} key={index}>
+            <Col span={12} key={index}>
               <ProCard
                 bordered={true}
-                onClick={async () => await onClick(item.value)}
+                onClick={() => onClick(item.value)}
                 hoverable
                 type="inner"
-                headerBordered={true}
                 style={{
-                  marginBlockStart: 16,
-                  borderRadius: 16,
-                  // 选中时添加背景色和阴影
-                  backgroundColor:
-                    currentValue === item.value ? '#f0f7ff' : 'transparent',
-                  boxShadow:
-                    currentValue === item.value
-                      ? '0 4px 12px rgba(24, 144, 255, 0.2)'
-                      : 'none',
+                  ...cardStyle,
+                  backgroundColor: isSelected
+                    ? `${styles.colors.primary}10`
+                    : 'transparent',
                 }}
               >
-                <Space>
+                <Space direction="vertical" align="center" size={8}>
                   {item.icon}
                   <Text strong>{item.title}</Text>
                 </Space>
@@ -108,23 +109,18 @@ const Index = () => {
           );
         })}
       </Row>
+
       {currentValue && (
-        <ProCard
-          extra={<Button onClick={onSubmit}>上传</Button>}
-          style={{ marginTop: 20 }}
-          bodyStyle={{ padding: 0 }}
-        >
+        <ProCard style={{ marginTop: 20 }}>
           <ProForm form={form} submitter={false}>
             <ProForm.Group>
               <ProFormSelect
-                width={'md'}
+                width="md"
                 options={projects}
-                label={'所属项目'}
-                name={'project_id'}
-                required={true}
-                onChange={(value) => {
-                  setCurrentProjectId(value as number);
-                }}
+                label="所属项目"
+                name="project_id"
+                required
+                onChange={(value) => setCurrentProjectId(value as number)}
               />
               <ProFormTreeSelect
                 required
@@ -134,19 +130,17 @@ const Index = () => {
                 rules={[{ required: true, message: '所属模块必选' }]}
                 fieldProps={{
                   treeData: moduleEnum,
-                  fieldNames: {
-                    label: 'title',
-                  },
+                  fieldNames: { label: 'title' },
                   filterTreeNode: true,
                 }}
-                width={'md'}
+                width="md"
               />
               <ProFormSelect
-                name={'env_id'}
+                name="env_id"
                 options={envs}
-                required={true}
-                placeholder={'环境选择'}
-                label={'Env'}
+                required
+                placeholder="环境选择"
+                label="Env"
               />
             </ProForm.Group>
             <ProFormUploadDragger
@@ -156,9 +150,14 @@ const Index = () => {
               name="api_file"
             />
           </ProForm>
+          <div style={{ marginTop: 16, textAlign: 'right' }}>
+            <Button type="primary" onClick={onSubmit}>
+              上传
+            </Button>
+          </div>
         </ProCard>
       )}
-    </ProCard>
+    </div>
   );
 };
 

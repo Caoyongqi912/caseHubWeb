@@ -108,6 +108,7 @@ export default [
         path: '/cases/casePlan/planInfo/:planId',
         name: '测试计划详情',
         component: '@/pages/CaseHub/CasePlan/PlanInfo',
+        hideInMenu: true,
       },
       {
         path: '/cases/caseHub/requirementCases/reqId=:reqId&projectId=:projectId&moduleId=:moduleId',
@@ -234,14 +235,8 @@ export default [
       },
 
       {
-        path: '/interface/interApi/detail/interId=:interId',
+        path: '/interface/interApi/detail',
         name: 'API用例详情',
-        hideInMenu: true,
-        component: '@/pages/Httpx/Interface/InterfaceApiDetail',
-      },
-      {
-        path: '/interface/interApi/detail/projectId=:projectId&moduleId=:moduleId',
-        name: 'API用例详情添加',
         hideInMenu: true,
         component: '@/pages/Httpx/Interface/InterfaceApiDetail',
       },

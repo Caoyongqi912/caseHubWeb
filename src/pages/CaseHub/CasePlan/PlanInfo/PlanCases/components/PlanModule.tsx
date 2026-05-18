@@ -22,7 +22,7 @@ import { ProCard } from '@ant-design/pro-components';
 import type { MenuProps } from 'antd';
 import { Dropdown, message, Modal, theme, Tree } from 'antd';
 import type { AntTreeNodeProps, DataNode, TreeProps } from 'antd/es/tree';
-import { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ModuleEditModal from './ModuleEditModal';
 
 const { useToken } = theme;
@@ -75,6 +75,25 @@ const PlanModule: FC<PlanModuleProps> = ({
   const [hoveredKey, setHoveredKey] = useState<number | null>(null);
   const [modalState, setModalState] = useState<ModalState>(createModalState());
   const [treeData, setTreeData] = useState<TreeDataNode[]>([]);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [treeHeight, setTreeHeight] = useState(400);
+
+  /** 监听容器尺寸变化，动态计算 Tree 高度 */
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const updateHeight = () => {
+      const rect = container.getBoundingClientRect();
+      setTreeHeight(rect.height > 100 ? rect.height : 300);
+    };
+
+    updateHeight();
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(container);
+
+    return () => observer.disconnect();
+  }, []);
 
   const isRootNode = (module: IPlanModule) =>
     module.parent_id === null && module.order === ROOT_ORDER;
@@ -96,16 +115,20 @@ const PlanModule: FC<PlanModuleProps> = ({
     [],
   );
 
-  /** 初始化树形数据并默认展开根节点 */
+  /** 初始化树形数据并默认展开、激活根节点 */
   useEffect(() => {
     if (!planModules?.length) {
       setTreeData([]);
+      setActiveKey(null);
       return;
     }
     const convertedData = convertToTreeData(planModules);
     setTreeData(convertedData);
-    setExpandedKeys([planModules[0]?.id].filter(Boolean));
-  }, [planModules, convertToTreeData]);
+    const rootId = planModules[0]?.id;
+    setExpandedKeys(rootId ? [rootId] : []);
+    setActiveKey(rootId ?? null);
+    onSelect?.(rootId ?? null);
+  }, [planModules, convertToTreeData, onSelect]);
 
   const resetModal = useCallback(() => setModalState(createModalState()), []);
 
@@ -401,24 +424,25 @@ const PlanModule: FC<PlanModuleProps> = ({
   );
 
   return (
-    <ProCard
-      bordered
-      bodyStyle={{
-        height: '100%',
-        minHeight: '90vh',
-        padding: 4,
-      }}
-      title={<div>计划目录</div>}
-    >
-      <Tree {...treeProps} treeData={processedTreeData} />
-      <ModuleEditModal
-        title={modalState.mode === 'add' ? '新增目录' : '编辑目录'}
-        open={modalState.visible}
-        onFinish={handleModalFinish}
-        setOpen={resetModal}
-        initialValues={{ title: modalState.initialTitle }}
-      />
-    </ProCard>
+    <div ref={containerRef} style={{ height: '100%', overflow: 'auto' }}>
+      <ProCard
+        bordered
+        style={{ height: '100%' }}
+        bodyStyle={{
+          padding: 4,
+        }}
+        title={<div>计划目录</div>}
+      >
+        <Tree {...treeProps} treeData={processedTreeData} height={500} />
+        <ModuleEditModal
+          title={modalState.mode === 'add' ? '新增目录' : '编辑目录'}
+          open={modalState.visible}
+          onFinish={handleModalFinish}
+          setOpen={resetModal}
+          initialValues={{ title: modalState.initialTitle }}
+        />
+      </ProCard>
+    </div>
   );
 };
 

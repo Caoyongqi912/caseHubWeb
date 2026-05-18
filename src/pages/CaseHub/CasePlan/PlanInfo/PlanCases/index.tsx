@@ -1,11 +1,9 @@
 import { getPlanInfo, getPlanModules } from '@/api/case/caseplan';
-import { useGlassStyles } from '@/components/Glass';
 import { ICasePlan, IPlanModule } from '@/pages/CaseHub/types';
-import { ProCard } from '@ant-design/pro-components';
 import { Splitter } from 'antd';
 import { FC, useCallback, useEffect, useState } from 'react';
-import PlanCaseList from './PlanCaseList';
-import PlanModule from './PlanModule';
+import PlanCaseList from './components/PlanCaseList';
+import PlanModule from './components/PlanModule';
 
 interface Props {
   /** 测试计划 ID */
@@ -17,7 +15,6 @@ interface Props {
  * 左侧展示目录树，右侧展示用例列表
  */
 const Index: FC<Props> = ({ planId }) => {
-  const styles = useGlassStyles();
   /** 计划详情数据 */
   const [planInfo, setPlanInfo] = useState<ICasePlan>();
   /** 计划模块列表 */
@@ -54,16 +51,8 @@ const Index: FC<Props> = ({ planId }) => {
   }, []);
 
   return (
-    <ProCard
-      bordered
-      bodyStyle={{
-        height: '100%',
-        minHeight: '90vh',
-        padding: 0,
-        overflow: 'hidden',
-      }}
-    >
-      <Splitter style={{ boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)' }}>
+    <div style={{ height: '100%', overflow: 'hidden' }}>
+      <Splitter style={{ flex: 1, minHeight: 0, height: '100%' }}>
         <Splitter.Panel
           defaultSize={'20%'}
           max={'20%'}
@@ -83,7 +72,7 @@ const Index: FC<Props> = ({ planId }) => {
           <PlanCaseList planId={planId} moduleId={selectedModuleId} />
         </Splitter.Panel>
       </Splitter>
-    </ProCard>
+    </div>
   );
 };
 

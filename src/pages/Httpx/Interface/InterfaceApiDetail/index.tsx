@@ -8,6 +8,7 @@ import {
 } from '@/api/inter';
 import MyDrawer from '@/components/MyDrawer';
 import MyTabs from '@/components/MyTabs';
+import PageContentWrapper from '@/components/PageContent/PageContentWrapper';
 import InterAssertList from '@/pages/Httpx/componets/InterAssertList';
 import InterAuth from '@/pages/Httpx/componets/InterAuth';
 import InterDoc from '@/pages/Httpx/componets/InterDoc';
@@ -43,7 +44,7 @@ import {
   Tooltip,
 } from 'antd';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { history, useParams } from 'umi';
+import { history, useSearchParams } from 'umi';
 import ApiRemark from './ApiRemark';
 
 interface SelfProps {
@@ -72,11 +73,10 @@ type TabKey = (typeof TAB_KEYS)[keyof typeof TAB_KEYS];
 type ModeType = (typeof MODE)[keyof typeof MODE];
 
 const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
-  const { interId, moduleId, projectId } = useParams<{
-    interId: string;
-    projectId: string;
-    moduleId: string;
-  }>();
+  const [searchParams] = useSearchParams();
+  const interId = searchParams.get('interId') || undefined;
+  const moduleId = searchParams.get('moduleId') || undefined;
+  const projectId = searchParams.get('projectId') || undefined;
   const responseRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [interApiForm] = Form.useForm<IInterfaceAPI>();
@@ -173,7 +173,9 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
       values.is_common = 1;
       const { code, data } = await insertInterApi(values);
       if (code === 0) {
-        history.push(`/interface/interApi/detail/interId=${data.id}`);
+        history.push(
+          `/interface/interApi/detail?interId=${data.id}&projectId=${data.project_id}&moduleId=${data.module_id}`,
+        );
       }
     }
   }, [interId, interApiForm, callback]);
@@ -387,7 +389,7 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
   };
 
   return (
-    <>
+    <PageContentWrapper>
       <MyDrawer
         width="25%"
         open={drawers.remark}
@@ -451,25 +453,23 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
             </div>
           </Spin>
         </div>
-        <>
-          <FloatButton.Group shape="circle" style={{ insetInlineEnd: 94 }}>
-            <FloatButton
-              icon={<QuestionCircleOutlined style={{ fontSize: 20 }} />}
-              type="primary"
-              tooltip="方法文档"
-              onClick={() => handleOpenDrawer('doc')}
-            />
-            <FloatButton
-              tooltip="查看记录"
-              onClick={() => handleOpenDrawer('remark')}
-              type="primary"
-              icon={<CommentOutlined style={{ fontSize: 20 }} />}
-            />
-            <FloatButton.BackTop type="primary" visibilityHeight={0} />
-          </FloatButton.Group>
-        </>
+        <FloatButton.Group shape="circle" style={{ insetInlineEnd: 94 }}>
+          <FloatButton
+            icon={<QuestionCircleOutlined style={{ fontSize: 20 }} />}
+            type="primary"
+            tooltip="方法文档"
+            onClick={() => handleOpenDrawer('doc')}
+          />
+          <FloatButton
+            tooltip="查看记录"
+            onClick={() => handleOpenDrawer('remark')}
+            type="primary"
+            icon={<CommentOutlined style={{ fontSize: 20 }} />}
+          />
+          <FloatButton.BackTop type="primary" visibilityHeight={0} />
+        </FloatButton.Group>
       </ProCard>
-    </>
+    </PageContentWrapper>
   );
 };
 

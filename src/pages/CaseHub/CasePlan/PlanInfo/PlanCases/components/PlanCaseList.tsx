@@ -4,21 +4,19 @@ import MyDrawer from '@/components/MyDrawer';
 import ChoiceCaseTable from '@/pages/CaseHub/Requirement/components/ChoiceCaseTable';
 import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import { ITestCase } from '@/pages/CaseHub/types';
-import { ProCard } from '@ant-design/pro-components';
-import { Button, Empty, message, Select, Space, Spin } from 'antd';
+import { Empty, message, Space, Spin } from 'antd';
 import type { SelectProps } from 'antd/es/select';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import CaseFilterBar, { CaseFilterValues } from './CaseFilterBar';
+import { usePlanCaseListStyles } from '../styles';
+import { CaseFilterValues } from './CaseFilterBar';
 import CaseItem from './CaseItem';
-import PlanCaseForm from './PlanCaseForm';
-import { usePlanCaseListStyles } from './styles';
 
 interface PlanCaseListProps {
   planId?: string;
   moduleId?: number | null;
 }
 
-const DEFAULT_PAGE_SIZE = 20;
+const DEFAULT_PAGE_SIZE = 10;
 
 const PAGE_SIZE_OPTIONS: SelectProps['options'] = [
   { value: 10, label: '10 条/页' },
@@ -32,7 +30,6 @@ const Index: FC<PlanCaseListProps> = ({ planId, moduleId }) => {
   const [caseList, setCaseList] = useState<ITestCase[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [openNewCaseDrawer, setOpenNewCaseDrawer] = useState(false);
   const [openChoiceCaseDrawer, setOpenChoiceCaseDrawer] = useState(false);
   const [filters, setFilters] = useState<CaseFilterValues>({});
   const [pagination, setPagination] = useState({
@@ -41,6 +38,11 @@ const Index: FC<PlanCaseListProps> = ({ planId, moduleId }) => {
     total: 0,
   });
   const listContainerRef = useRef<HTMLDivElement>(null);
+
+  const hasMoreData = useMemo(
+    () => caseList.length < pagination.total,
+    [caseList.length, pagination.total],
+  );
 
   /** 分页查询用例数据 */
   const fetchQueryPlanCases = useCallback(
@@ -75,8 +77,16 @@ const Index: FC<PlanCaseListProps> = ({ planId, moduleId }) => {
 
   /** 初始化加载 + planId/moduleId 变化时刷新 */
   useEffect(() => {
-    fetchQueryPlanCases(1, pagination.pageSize);
+    setCaseList([]);
+    setPagination((p) => ({ ...p, current: 1 }));
+    fetchQueryPlanCases(1, DEFAULT_PAGE_SIZE);
   }, [planId, moduleId]);
+
+  /** 监听分页变化，加载更多数据 */
+  useEffect(() => {
+    if (pagination.current === 1) return;
+    fetchQueryPlanCases(pagination.current, pagination.pageSize, true);
+  }, [pagination.current]);
 
   /** 刷新：重置到第1页重新请求 */
   const handleRefresh = useCallback(() => {
@@ -95,35 +105,38 @@ const Index: FC<PlanCaseListProps> = ({ planId, moduleId }) => {
   );
 
   /** 每页条数变化 */
-  const handlePageSizeChange = useCallback(
-    (value: number) => {
-      setPagination((p) => ({ ...p, pageSize: value, current: 1 }));
-      fetchQueryPlanCases(1, value);
-    },
-    [fetchQueryPlanCases],
-  );
+  const handlePageSizeChange = useCallback((value: number) => {
+    setCaseList([]);
+    setPagination((p) => ({ ...p, pageSize: value, current: 1 }));
+  }, []);
 
   /** 滚动到底部自动加载下一页 */
   const handleScroll = useCallback(() => {
+    if (loading || loadingMore || !hasMoreData) return;
     const el = listContainerRef.current;
-    if (!el || loading || loadingMore) return;
+    if (!el) return;
     const { scrollTop, scrollHeight, clientHeight } = el;
     if (
-      scrollTop + clientHeight >= scrollHeight - 60 &&
-      caseList.length < pagination.total
+      scrollHeight <= clientHeight + 10 ||
+      scrollTop + clientHeight >= scrollHeight - 100
     ) {
-      const next = pagination.current + 1;
-      setPagination((p) => ({ ...p, current: next }));
-      fetchQueryPlanCases(next, pagination.pageSize, true);
+      setPagination((p) => ({ ...p, current: p.current + 1 }));
     }
-  }, [loading, loadingMore, caseList.length, pagination, fetchQueryPlanCases]);
+  }, [loading, loadingMore, hasMoreData]);
 
   useEffect(() => {
     const el = listContainerRef.current;
     if (!el) return;
-    el.addEventListener('scroll', handleScroll);
+    el.addEventListener('scroll', handleScroll, { passive: true });
     return () => el.removeEventListener('scroll', handleScroll);
   }, [handleScroll]);
+
+  useEffect(() => {
+    const el = listContainerRef.current;
+    if (el) {
+      el.scrollTop = 0;
+    }
+  }, [planId, moduleId]);
 
   /** 客户端过滤（搜索、排序、状态筛选） */
   const filteredCaseList = useMemo(() => {
@@ -237,7 +250,7 @@ const Index: FC<PlanCaseListProps> = ({ planId, moduleId }) => {
     const { code } = await associatePlanCases({
       plan_id: Number(planId),
       case_ids: caseIds,
-      plan_module_id: Number(moduleId) ?? undefined,
+      plan_module_id: moduleId ?? undefined,
     });
     if (code === 0) {
       message.success('关联成功');
@@ -248,143 +261,81 @@ const Index: FC<PlanCaseListProps> = ({ planId, moduleId }) => {
     }
   };
 
-  const hasMoreData = caseList.length < pagination.total;
-
   return (
     <>
-      <div style={styles.container()}>
-        <ProCard
-          headerBordered
-          bodyStyle={{
-            padding: 0,
-            height: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-          style={{
-            height: '100%',
-            minHeight: '90vh',
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-          title={
-            <Space>
-              <Button type="primary" onClick={() => setOpenNewCaseDrawer(true)}>
-                新增用例
-              </Button>
-              <Button
-                type="primary"
-                onClick={() => setOpenChoiceCaseDrawer(true)}
-              >
-                规划用例
-              </Button>
-            </Space>
-          }
-          extra={
-            <Space size={spacing.sm}>
-              <Select
-                value={pagination.pageSize}
-                onChange={handlePageSizeChange}
-                options={PAGE_SIZE_OPTIONS}
-                style={{ width: 110 }}
-                size="small"
-              />
-              <CaseFilterBar
-                onFilterChange={handleFilterChange}
-                onRefresh={handleRefresh}
-                onBatchExport={handleBatchExport}
-                onBatchImport={handleBatchImport}
-              />
-            </Space>
-          }
-        >
+      <div ref={listContainerRef} style={{ height: '100%', overflow: 'auto' }}>
+        {loading ? (
           <div
-            ref={listContainerRef}
-            style={styles.listContainer()}
-            onScroll={handleScroll}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: spacing.xxxl,
+            }}
           >
-            {loading ? (
+            <Spin tip="加载中..." />
+          </div>
+        ) : filteredCaseList.length > 0 ? (
+          <>
+            {filteredCaseList.map((tc) => (
+              <CaseItem
+                key={tc.id ?? tc.uid}
+                testCase={tc}
+                onReviewToggle={handleReviewToggle}
+                onStatusChange={handleStatusChange}
+                onEdit={handleEditCase}
+                onRemove={handleRemoveCase}
+              />
+            ))}
+            {hasMoreData && (
               <div
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: spacing.xxxl,
+                  textAlign: 'center',
+                  padding: `${spacing.md}px 0`,
+                  color: colors.textTertiary,
+                  fontSize: 13,
                 }}
               >
-                <Spin tip="加载中..." />
-              </div>
-            ) : filteredCaseList.length > 0 ? (
-              <>
-                {filteredCaseList.map((tc) => (
-                  <CaseItem
-                    key={tc.id ?? tc.uid}
-                    testCase={tc}
-                    onReviewToggle={handleReviewToggle}
-                    onStatusChange={handleStatusChange}
-                    onEdit={handleEditCase}
-                    onRemove={handleRemoveCase}
-                  />
-                ))}
-                {hasMoreData && (
-                  <div
-                    style={{
-                      textAlign: 'center',
-                      padding: `${spacing.md}px 0`,
-                      color: colors.textTertiary,
-                      fontSize: 13,
-                    }}
-                  >
-                    {loadingMore ? (
-                      <Space>
-                        <Spin size="small" />
-                        <span>加载更多...</span>
-                      </Space>
-                    ) : (
-                      <span>向下滚动加载更多</span>
-                    )}
-                  </div>
+                {loadingMore ? (
+                  <Space>
+                    <Spin size="small" />
+                    <span>加载更多...</span>
+                  </Space>
+                ) : (
+                  <span>向下滚动加载更多</span>
                 )}
-                {!hasMoreData && caseList.length > 0 && (
-                  <div
-                    style={{
-                      textAlign: 'center',
-                      padding: `${spacing.md}px 0`,
-                      color: colors.textTertiary,
-                      fontSize: 12,
-                    }}
-                  >
-                    已加载全部 {caseList.length} 条数据
-                  </div>
-                )}
-              </>
-            ) : (
-              <div style={styles.emptyState()}>
-                <Empty
-                  description={
-                    <span style={{ color: colors.textTertiary }}>
-                      {filters.keyword ||
-                      filters.caseStatus !== undefined ||
-                      filters.isReview !== undefined
-                        ? '没有匹配的用例'
-                        : '暂无用例，请新增或规划用例'}
-                    </span>
-                  }
-                />
               </div>
             )}
+            {!hasMoreData && caseList.length > 0 && (
+              <div
+                style={{
+                  textAlign: 'center',
+                  padding: `${spacing.md}px 0`,
+                  color: colors.textTertiary,
+                  fontSize: 12,
+                }}
+              >
+                已加载全部 {caseList.length} 条数据
+              </div>
+            )}
+          </>
+        ) : (
+          <div style={styles.emptyState()}>
+            <Empty
+              description={
+                <span style={{ color: colors.textTertiary }}>
+                  {filters.keyword ||
+                  filters.caseStatus !== undefined ||
+                  filters.isReview !== undefined
+                    ? '没有匹配的用例'
+                    : '暂无用例，请新增或规划用例'}
+                </span>
+              }
+            />
           </div>
-        </ProCard>
+        )}
       </div>
 
-      <MyDrawer
-        name={'添加用例'}
-        open={openNewCaseDrawer}
-        setOpen={setOpenNewCaseDrawer}
-        width={'60%'}
-      >
-        <PlanCaseForm />
-      </MyDrawer>
       <MyDrawer
         name={'规划用例'}
         open={openChoiceCaseDrawer}

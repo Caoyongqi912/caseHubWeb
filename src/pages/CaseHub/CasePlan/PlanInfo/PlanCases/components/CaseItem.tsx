@@ -1,5 +1,4 @@
 import { queryTestCaseSupStep } from '@/api/case/testCase';
-import MyProTable from '@/components/Table/MyProTable';
 import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import { CaseSubStep, ITestCase } from '@/pages/CaseHub/types';
 import {
@@ -12,7 +11,7 @@ import {
   MoreOutlined,
   OrderedListOutlined,
 } from '@ant-design/icons';
-import { ProCard, ProColumns } from '@ant-design/pro-components';
+import { ProColumns, ProTable } from '@ant-design/pro-components';
 import type { MenuProps } from 'antd';
 import {
   Dropdown,
@@ -24,7 +23,7 @@ import {
   Typography,
 } from 'antd';
 import { FC, useCallback, useEffect, useMemo, useState } from 'react';
-import { usePlanCaseListStyles } from './styles';
+import { usePlanCaseListStyles } from '../styles';
 
 const { Text } = Typography;
 
@@ -325,7 +324,7 @@ const CaseItem: FC<CaseItemProps> = ({
 
       {/* 展开区域：步骤表格 */}
       <div style={styles.stepsContainer(isExpanded)}>
-        <ProCard bordered={false} style={{ padding: 0 }} hoverable>
+        <div style={{ padding: 0, borderRadius: borderRadius.round }}>
           {stepsLoading ? (
             <div
               style={{
@@ -341,13 +340,13 @@ const CaseItem: FC<CaseItemProps> = ({
               />
             </div>
           ) : sortedSteps.length > 0 ? (
-            <MyProTable
+            <ProTable
               dataSource={sortedSteps}
               rowKey="uid"
               pagination={false}
               search={false}
+              options={false}
               columns={stepColumns}
-              height="full"
             />
           ) : (
             <div
@@ -364,7 +363,7 @@ const CaseItem: FC<CaseItemProps> = ({
               />
             </div>
           )}
-        </ProCard>
+        </div>
       </div>
     </div>
   );

@@ -76,33 +76,20 @@ export const usePlanCaseListStyles = () => {
     useCaseHubTheme();
 
   const container = (): CSSProperties => ({
-    height: '100%',
-    minHeight: '90vh',
     display: 'flex',
     flexDirection: 'column',
+    height: '100%',
     background: colors.bgLayout,
   });
 
-  const headerBar = (): CSSProperties => ({
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: `${spacing.md}px ${spacing.lg}px`,
-    background: colors.bgContainer,
-    borderBottom: `1px solid ${colors.border}`,
-    flexShrink: 0,
-  });
-
-  const headerActions = (): CSSProperties => ({
-    display: 'flex',
-    alignItems: 'center',
-    gap: spacing.sm,
-  });
-
   const listContainer = (): CSSProperties => ({
-    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100%',
     overflowY: 'auto',
+    overflowX: 'hidden',
     padding: `${spacing.md}px ${spacing.lg}px`,
+    minHeight: 0,
   });
 
   const caseItemWrapper = (
@@ -286,12 +273,6 @@ export const usePlanCaseListStyles = () => {
     gap: spacing.md,
   });
 
-  const filterBar = (): CSSProperties => ({
-    display: 'flex',
-    alignItems: 'center',
-    gap: spacing.sm,
-  });
-
   const leftAccent = (
     isHovered: boolean,
     caseStatus?: number,
@@ -315,8 +296,6 @@ export const usePlanCaseListStyles = () => {
 
   return {
     container,
-    headerBar,
-    headerActions,
     listContainer,
     caseItemWrapper,
     caseItemInner,
@@ -332,7 +311,6 @@ export const usePlanCaseListStyles = () => {
     moreBtn,
     stepsContainer,
     emptyState,
-    filterBar,
     leftAccent,
   };
 };

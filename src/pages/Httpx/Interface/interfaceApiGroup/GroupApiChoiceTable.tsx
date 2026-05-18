@@ -214,27 +214,6 @@ const GroupApiChoiceTable: FC<SelfProps> = (props) => {
               icon={<PlusOutlined />}
               onClick={async () => {
                 onSelect?.(selectedRowKeys as number[]);
-                // if (condition_api_id) {
-                //   const { code, msg } = await selectCommonGroups2ConditionAPI({
-                //     condition_api_id: condition_api_id,
-                //     group_id_list: selectedRowKeys as number[],
-                //   });
-                //   if (code === 0) {
-                //     message.success(msg);
-                //     refresh?.();
-                //   }
-                //   return;
-                // }
-                // if (currentCaseId) {
-                //   const { code, msg } = await selectCommonGroups2Case({
-                //     interface_case_id: currentCaseId,
-                //     api_group_id_list: selectedRowKeys as number[],
-                //   });
-                //   if (code === 0) {
-                //     message.success(msg);
-                //     refresh?.();
-                //   }
-                // }
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-2px)';

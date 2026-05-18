@@ -126,6 +126,7 @@ const PageContentWrapper: React.FC<EnhancedPageContainerProps> = (props) => {
     <PageContainer
       breadcrumb={breadcrumb}
       ghost={true} // 使用幽灵模式，不显示卡片背景
+      title={false}
       fixedHeader={false} // 卡片模式固定头部
       header={{
         breadcrumb,
