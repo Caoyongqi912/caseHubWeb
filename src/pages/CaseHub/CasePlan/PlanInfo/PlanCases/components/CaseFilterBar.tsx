@@ -1,6 +1,5 @@
 import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import {
-  DownOutlined,
   EllipsisOutlined,
   FilterOutlined,
   ReloadOutlined,
@@ -102,9 +101,7 @@ const CaseFilterBar: FC<CaseFilterBarProps> = ({
 
   return (
     <Space size={spacing.sm}>
-      <Button icon={<ReloadOutlined />} onClick={onRefresh}>
-        刷新
-      </Button>
+      <Button icon={<ReloadOutlined />} onClick={onRefresh} />
       <Input
         placeholder="搜索用例名称"
         prefix={<SearchOutlined style={{ color: colors.textTertiary }} />}
@@ -199,9 +196,6 @@ const CaseFilterBar: FC<CaseFilterBarProps> = ({
           }}
         >
           排序
-          {activeSort !== 'default' && (
-            <DownOutlined style={{ fontSize: 10, marginLeft: 4 }} />
-          )}
         </Button>
       </Popover>
 

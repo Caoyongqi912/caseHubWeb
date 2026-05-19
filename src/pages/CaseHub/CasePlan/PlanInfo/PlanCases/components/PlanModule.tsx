@@ -22,7 +22,7 @@ import { ProCard } from '@ant-design/pro-components';
 import type { MenuProps } from 'antd';
 import { Dropdown, message, Modal, theme, Tree } from 'antd';
 import type { AntTreeNodeProps, DataNode, TreeProps } from 'antd/es/tree';
-import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import ModuleEditModal from './ModuleEditModal';
 
 const { useToken } = theme;
@@ -75,25 +75,6 @@ const PlanModule: FC<PlanModuleProps> = ({
   const [hoveredKey, setHoveredKey] = useState<number | null>(null);
   const [modalState, setModalState] = useState<ModalState>(createModalState());
   const [treeData, setTreeData] = useState<TreeDataNode[]>([]);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [treeHeight, setTreeHeight] = useState(400);
-
-  /** 监听容器尺寸变化，动态计算 Tree 高度 */
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const updateHeight = () => {
-      const rect = container.getBoundingClientRect();
-      setTreeHeight(rect.height > 100 ? rect.height : 300);
-    };
-
-    updateHeight();
-    const observer = new ResizeObserver(updateHeight);
-    observer.observe(container);
-
-    return () => observer.disconnect();
-  }, []);
 
   const isRootNode = (module: IPlanModule) =>
     module.parent_id === null && module.order === ROOT_ORDER;
@@ -424,16 +405,33 @@ const PlanModule: FC<PlanModuleProps> = ({
   );
 
   return (
-    <div ref={containerRef} style={{ height: '100%', overflow: 'auto' }}>
+    <div
+      style={{
+        height: '100%',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
       <ProCard
+        title="计划目录"
+        headerBordered
         bordered
-        style={{ height: '100%' }}
-        bodyStyle={{
-          padding: 4,
+        style={{
+          flex: 1,
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
         }}
-        title={<div>计划目录</div>}
+        // 👇 关键：只让 body 区域滚动，头部固定
+        bodyStyle={{
+          flex: 1,
+          overflow: 'auto', // 只有body滚动
+          padding: '12px', // 保持内边距舒服
+        }}
       >
-        <Tree {...treeProps} treeData={processedTreeData} height={500} />
+        {/* Tree 也要充满 */}
+        <Tree {...treeProps} treeData={processedTreeData} />
         <ModuleEditModal
           title={modalState.mode === 'add' ? '新增目录' : '编辑目录'}
           open={modalState.visible}

@@ -14,7 +14,18 @@ export const pageCasePlan = async (searchParams: any, options?: IObjGet) => {
     ...(options || {}),
   });
 };
-
+/**
+ * 查询测试用例
+ * @param searchParams - 查询参数
+ * @param options - 可选的请求配置
+ */
+export const queryCasePlan = async (plan_name: string, options?: IObjGet) => {
+  return request<IResponse<ICasePlan[]>>('/api/hub/plan/query', {
+    method: 'GET',
+    params: { plan_name },
+    ...(options || {}),
+  });
+};
 /**
  * 创建测试计划
  * @param data
@@ -146,10 +157,8 @@ export const queryPlanCases = async (data: {
   plan_module_id?: number;
   case_level?: number;
   is_review?: boolean;
-  current: number;
-  pageSize: number;
 }) => {
-  return request<IResponse<IPage<ITestCase>>>(`/api/hub/plan/cases`, {
+  return request<IResponse<ITestCase[]>>(`/api/hub/plan/cases`, {
     method: 'GET',
     params: data,
   });

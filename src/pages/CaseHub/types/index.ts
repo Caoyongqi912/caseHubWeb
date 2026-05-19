@@ -37,7 +37,7 @@ export interface ITestCase {
   is_common?: boolean;
   is_review?: boolean;
   requirement_id?: number | string;
-  case_sub_steps?: any[];
+  case_sub_steps?: CaseSubStep[];
   creatorName: string;
   creatorId: number;
   project_id?: number;
