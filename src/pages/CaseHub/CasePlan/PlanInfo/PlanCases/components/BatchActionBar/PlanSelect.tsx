@@ -68,7 +68,7 @@ const PlanSelect: FC<PlanSelectProps> = ({
   );
 
   const debounceSearch = useMemo(
-    () => debounce(handleSearch, 300),
+    () => debounce(handleSearch, 500),
     [handleSearch],
   );
 

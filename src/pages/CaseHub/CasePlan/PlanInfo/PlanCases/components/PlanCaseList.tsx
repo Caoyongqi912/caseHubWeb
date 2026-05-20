@@ -34,13 +34,13 @@ const Index: FC<PlanCaseListProps> = ({
     new Set(),
   );
   const fetchQueryPlanCases = useCallback(async () => {
-    if (!planId) return;
+    if (!planId || !moduleId) return;
     setLoading(true);
 
     try {
       const { code, data } = await queryPlanCases({
         plan_id: Number(planId),
-        plan_module_id: moduleId ?? undefined,
+        plan_module_id: moduleId,
         is_review: filters.isReview,
       });
       if (code === 0) {
@@ -176,6 +176,31 @@ const Index: FC<PlanCaseListProps> = ({
     onModulesRefresh?.();
   }, [handleRefresh, onModulesRefresh]);
 
+  // 单个用例评审状态切换
+  const handleReviewChange = useCallback(
+    (caseId: number, isReview: boolean) => {
+      console.log('[PlanCaseList] 用例评审状态变更:', { caseId, isReview });
+      setCaseList((prev) =>
+        prev.map((tc) =>
+          tc.id === caseId ? { ...tc, is_review: isReview } : tc,
+        ),
+      );
+      console.log('[PlanCaseList] 更新本地用例列表完成');
+    },
+    [],
+  );
+
+  // 单个用例状态切换
+  const handleStatusChange = useCallback((caseId: number, status: number) => {
+    console.log('[PlanCaseList] 用例状态变更:', { caseId, status });
+    setCaseList((prev) =>
+      prev.map((tc) =>
+        tc.id === caseId ? { ...tc, case_status: status } : tc,
+      ),
+    );
+    console.log('[PlanCaseList] 更新用例状态完成');
+  }, []);
+
   const handleExitSelection = useCallback(() => {
     setSelectedCaseIds(new Set());
   }, []);
@@ -270,8 +295,11 @@ const Index: FC<PlanCaseListProps> = ({
                   <CaseItem
                     key={tc.id ?? tc.uid}
                     testCase={tc}
+                    planId={planId}
                     selected={tc.id !== undefined && selectedCaseIds.has(tc.id)}
                     onSelectedChange={handleCaseSelectedChange}
+                    onReviewChange={handleReviewChange}
+                    onStatusChange={handleStatusChange}
                   />
                 ))}
               </>

@@ -194,6 +194,22 @@ export const removeAssociatePlanCases = async (data: {
 };
 
 /**
+ * 更新关联测试计划下的用例
+ * @param data - 包含 plan_id、case_ids 的对象
+ */
+export const updateAssociatePlanCases = async (data: {
+  plan_id: number;
+  case_id_list: number[];
+  is_review?: number;
+  case_status?: number;
+}) => {
+  return request<IResponse<number>>('/api/hub/plan/cases/update', {
+    method: 'POST',
+    data,
+  });
+};
+
+/**
  * 移动测试计划下的用例
  * @param data - 包含 plan_case_id、case_id_list、plan_case_module_id 的对象
  */
