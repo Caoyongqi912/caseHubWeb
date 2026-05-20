@@ -234,14 +234,37 @@ const PlanModule: FC<PlanModuleProps> = ({
         flex: 1,
         fontSize: typography.fontSize.base,
         color: token.colorText,
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+      },
+      rightArea: {
+        position: 'relative' as const,
+        marginLeft: 'auto',
+        paddingRight: spacing.xs,
+        width: 40,
+        height: 24,
+        lineHeight: '24px',
+      },
+      caseCount: {
+        position: 'absolute' as const,
+        right: spacing.xs,
+        top: 0,
+        height: '100%',
+        fontSize: typography.fontSize.sm,
+        color: token.colorTextTertiary,
+        lineHeight: 'inherit',
       },
       addIcon: {
+        position: 'absolute' as const,
+        right: spacing.xs,
+        top: 0,
+        height: '100%',
         fontSize: typography.fontSize.sm,
         color: token.colorPrimary,
         cursor: 'pointer',
         opacity: 0,
-        marginLeft: 'auto',
-        marginRight: spacing.xs,
+        lineHeight: 'inherit',
         ...styleHelpers.transition(['opacity']),
       },
     }),
@@ -285,11 +308,12 @@ const PlanModule: FC<PlanModuleProps> = ({
     [handleOpenAddModal, handleOpenEditModal, handleDeleteModule],
   );
 
-  /** 渲染自定义节点标题（含高亮、hover、右键菜单） */
+  /** 渲染自定义节点标题（含高亮、hover、右键菜单、用例数量） */
   const renderNodeTitle = useCallback(
     (node: TreeDataNode) => {
       const isActive = activeKey === node.key;
       const isHovered = hoveredKey === node.key;
+      const caseCount = node.data.case_nums || 0;
 
       return (
         <Dropdown
@@ -308,16 +332,29 @@ const PlanModule: FC<PlanModuleProps> = ({
           >
             <HolderOutlined style={nodeStyles.dragHandle} />
             <span style={nodeStyles.titleText}>{node.title as string}</span>
-            <PlusOutlined
-              style={{
-                ...nodeStyles.addIcon,
-                opacity: isHovered ? 1 : 0,
-              }}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleOpenAddModal(node.key as number);
-              }}
-            />
+            <span style={nodeStyles.rightArea}>
+              {caseCount > 0 && (
+                <span
+                  style={{
+                    ...nodeStyles.caseCount,
+                    opacity: isHovered ? 0 : 1,
+                    ...styleHelpers.transition(['opacity']),
+                  }}
+                >
+                  {caseCount}
+                </span>
+              )}
+              <PlusOutlined
+                style={{
+                  ...nodeStyles.addIcon,
+                  opacity: isHovered ? 1 : 0,
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleOpenAddModal(node.key as number);
+                }}
+              />
+            </span>
           </div>
         </Dropdown>
       );
@@ -329,6 +366,7 @@ const PlanModule: FC<PlanModuleProps> = ({
       token,
       buildMenuItems,
       handleOpenAddModal,
+      styleHelpers,
     ],
   );
 

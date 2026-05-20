@@ -56,7 +56,11 @@ const Index: FC<Props> = ({ planId }) => {
         <Splitter.Panel
           collapsible={{ start: true, end: true, showCollapsibleIcon: true }}
         >
-          <PlanCaseList planId={planId} moduleId={selectedModuleId} />
+          <PlanCaseList
+            planId={planId}
+            moduleId={selectedModuleId}
+            onModulesRefresh={fetchPlanModules}
+          />
         </Splitter.Panel>
       </Splitter>
     </ProCard>

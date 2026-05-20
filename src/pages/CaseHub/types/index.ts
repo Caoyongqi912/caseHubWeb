@@ -95,4 +95,5 @@ export interface IPlanModule {
   title: string;
   order: number;
   children?: IPlanModule[];
+  case_nums: number;
 }

@@ -16,9 +16,14 @@ import CaseItem from './CaseItem';
 interface PlanCaseListProps {
   planId?: string;
   moduleId?: number | null;
+  onModulesRefresh?: () => void;
 }
 
-const Index: FC<PlanCaseListProps> = ({ planId, moduleId }) => {
+const Index: FC<PlanCaseListProps> = ({
+  planId,
+  moduleId,
+  onModulesRefresh,
+}) => {
   const styles = usePlanCaseListStyles();
   const { colors, spacing } = useCaseHubTheme();
   const [caseList, setCaseList] = useState<ITestCase[]>([]);
@@ -164,22 +169,15 @@ const Index: FC<PlanCaseListProps> = ({ planId, moduleId }) => {
     [],
   );
 
+  // 批量移动成功
+  const handleBatchMoveSuccess = useCallback(() => {
+    setSelectedCaseIds(new Set());
+    handleRefresh();
+    onModulesRefresh?.();
+  }, [handleRefresh, onModulesRefresh]);
+
   const handleExitSelection = useCallback(() => {
     setSelectedCaseIds(new Set());
-  }, []);
-
-  // 批量移动
-  const handleBatchMove = useCallback(() => {
-    console.log(selectedCaseIds.values());
-    message.info('批量移动功能开发中');
-  }, []);
-
-  const handleBatchCopy = useCallback(() => {
-    message.info('批量复制功能开发中');
-  }, []);
-
-  const handleBatchDelete = useCallback(() => {
-    message.info('批量删除功能开发中');
   }, []);
 
   const CardTitle = () => (
@@ -205,16 +203,19 @@ const Index: FC<PlanCaseListProps> = ({ planId, moduleId }) => {
     </Space>
   );
 
-  const CardExtra = () => {
-    return (
-      <CaseFilterBar
-        onFilterChange={handleFilterChange}
-        onRefresh={handleRefresh}
-        onBatchExport={handleBatchExport}
-        onBatchImport={handleBatchImport}
-      />
-    );
-  };
+  const CardExtra = () => (
+    <CaseFilterBar
+      onFilterChange={handleFilterChange}
+      onRefresh={handleRefresh}
+      onBatchExport={handleBatchExport}
+      onBatchImport={handleBatchImport}
+    />
+  );
+
+  const selectedCaseIdsArray = useMemo(
+    () => Array.from(selectedCaseIds),
+    [selectedCaseIds],
+  );
 
   return (
     <>
@@ -227,7 +228,7 @@ const Index: FC<PlanCaseListProps> = ({ planId, moduleId }) => {
         }}
       >
         <ProCard
-          title={CardTitle()}
+          title={<CardTitle />}
           headerBordered
           bordered
           style={{
@@ -241,7 +242,7 @@ const Index: FC<PlanCaseListProps> = ({ planId, moduleId }) => {
             overflow: 'auto',
             padding: '12px',
           }}
-          extra={CardExtra()}
+          extra={<CardExtra />}
         >
           <div
             style={{
@@ -308,9 +309,9 @@ const Index: FC<PlanCaseListProps> = ({ planId, moduleId }) => {
       {selectedCaseIds.size > 0 && (
         <BatchActionBar
           selectedCount={selectedCaseIds.size}
-          onBatchMove={handleBatchMove}
-          onBatchCopy={handleBatchCopy}
-          onBatchDelete={handleBatchDelete}
+          selectedCaseIds={selectedCaseIdsArray}
+          planId={planId}
+          onBatchSuccess={handleBatchMoveSuccess}
           onExit={handleExitSelection}
         />
       )}

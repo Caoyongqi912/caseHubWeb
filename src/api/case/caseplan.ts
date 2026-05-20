@@ -1,5 +1,5 @@
 import { IObjGet, IPage, IResponse } from '@/api';
-import { ICasePlan, ITestCase } from '@/pages/CaseHub/types';
+import { ICasePlan, IPlanModule, ITestCase } from '@/pages/CaseHub/types';
 import { request } from '@@/plugin-request';
 
 /**
@@ -76,7 +76,7 @@ export const getPlanInfo = async (plan_id: number) => {
  * @returns
  */
 export const getPlanModules = async (plan_id: number) => {
-  return request<IResponse<[]>>(`/api/hub/plan/modules`, {
+  return request<IResponse<IPlanModule[]>>(`/api/hub/plan/modules`, {
     method: 'GET',
     params: { plan_id },
   });
@@ -174,6 +174,51 @@ export const associatePlanCases = async (data: {
   plan_module_id?: number;
 }) => {
   return request<IResponse<any>>('/api/hub/plan/case/associate', {
+    method: 'POST',
+    data,
+  });
+};
+
+/**
+ * 删除关联测试计划下的用例
+ * @param data - 包含 plan_id、case_ids 的对象
+ */
+export const removeAssociatePlanCases = async (data: {
+  plan_id: number;
+  case_ids: number[];
+}) => {
+  return request<IResponse<number>>('/api/hub/plan/case/remove', {
+    method: 'POST',
+    data,
+  });
+};
+
+/**
+ * 移动测试计划下的用例
+ * @param data - 包含 plan_case_id、case_id_list、plan_case_module_id 的对象
+ */
+export const movePlanCases = async (data: {
+  plan_id: number;
+  case_id_list: number[];
+  plan_case_module_id?: number;
+}) => {
+  return request<IResponse<number>>('/api/hub/plan/cases/move', {
+    method: 'POST',
+    data,
+  });
+};
+
+/**
+ * 复制测试计划下的用例
+ * @param data - 包含 plan_id、case_id_list、plan_case_module_id、case_status 的对象
+ */
+export const copyPlanCases = async (data: {
+  plan_id: number;
+  case_id_list: number[];
+  plan_case_module_id?: number;
+  is_review?: number;
+}) => {
+  return request<IResponse<number>>('/api/hub/plan/cases/copy', {
     method: 'POST',
     data,
   });
