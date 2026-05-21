@@ -1,0 +1,310 @@
+import { DownOutlined, MoreOutlined } from '@ant-design/icons';
+import { ProCard } from '@ant-design/pro-components';
+import {
+  Button,
+  Checkbox,
+  Dropdown,
+  message,
+  Space,
+  Tag,
+  Typography,
+} from 'antd';
+import { useCallback, useMemo, useState } from 'react';
+
+import {
+  copyOnePlanCase,
+  removeAssociatePlanCases,
+  updateAssociatePlanCases,
+} from '@/api/case/caseplan';
+import MyDrawer from '@/components/MyDrawer';
+import TestCaseDetail from '@/pages/CaseHub/CaseLibrary/TestCaseDetail';
+import { ITestCase } from '@/pages/CaseHub/types';
+import { createMoreMenuItems } from './moreMenu';
+import {
+  createStatusSelectItems,
+  STATUS_CONFIG_MAP,
+  STATUS_ICON_MAP,
+} from './statusConfig';
+import StepTable from './StepTable';
+const { Text } = Typography;
+
+interface CaseItemProps {
+  testCase: ITestCase;
+  selected?: boolean;
+  planId?: string;
+  moduleId?: number | null;
+  onSelectedChange?: (id: number | undefined, selected: boolean) => void;
+  onReviewChange?: (caseId: number, isReview: boolean) => void;
+  onStatusChange?: (caseId: number, status: number) => void;
+  onRefresh?: () => void;
+}
+
+/**
+ * 用例卡片组件
+ * 展示单个测试用例的完整信息，包括：
+ * - 用例基本信息（名称、评审状态）
+ * - 用例步骤列表（由 StepTable 子组件渲染）
+ * - 状态切换操作
+ * - 更多操作菜单
+ */
+const CaseItem: React.FC<CaseItemProps> = (props) => {
+  const {
+    testCase,
+    planId,
+    moduleId,
+    selected = false,
+    onSelectedChange,
+    onReviewChange,
+    onStatusChange,
+    onRefresh,
+  } = props;
+
+  const caseId = testCase.id;
+  const caseStatus = testCase.case_status ?? 0;
+  const isReview = testCase.is_review ?? false;
+
+  const [switchingReview, setSwitchingReview] = useState(false);
+  const [switchingStatus, setSwitchingStatus] = useState(false);
+  const [copyLoading, setCopyLoading] = useState(false);
+  const [removeLoading, setRemoveLoading] = useState(false);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [hasEdited, setHasEdited] = useState(false);
+  // 状态选择下拉菜单项
+  const statusSelectItems = useMemo(() => createStatusSelectItems(), []);
+
+  /**
+   * 复制当前用例
+   * 调用 copyOnePlanCase API，成功后刷新列表
+   */
+  const handleCopyCase = useCallback(async () => {
+    if (!planId || !caseId || !moduleId) {
+      message.warning('缺少必要的参数，无法复制用例');
+      return;
+    }
+    if (copyLoading) return;
+
+    setCopyLoading(true);
+    try {
+      const { code } = await copyOnePlanCase({
+        plan_id: Number(planId),
+        case_id: caseId,
+        plan_module_id: moduleId,
+      });
+      if (code === 0) {
+        message.success('复制用例成功');
+        onRefresh?.();
+      } else {
+        message.error('复制用例失败');
+      }
+    } catch {
+      message.error('复制用例失败，请重试');
+    } finally {
+      setCopyLoading(false);
+    }
+  }, [planId, caseId, moduleId, copyLoading, onRefresh]);
+
+  /**
+   * 移除当前用例
+   * 调用 removeAssociatePlanCases API，成功后刷新列表
+   */
+  const handleRemoveCase = useCallback(async () => {
+    if (!planId || !caseId) {
+      message.warning('缺少必要的参数，无法移除用例');
+      return;
+    }
+    if (removeLoading) return;
+
+    setRemoveLoading(true);
+    try {
+      const { code } = await removeAssociatePlanCases({
+        plan_id: Number(planId),
+        case_ids: [caseId],
+      });
+      if (code === 0) {
+        message.success('移除用例成功');
+        onRefresh?.();
+      } else {
+        message.error('移除用例失败');
+      }
+    } catch {
+      message.error('移除用例失败，请重试');
+    } finally {
+      setRemoveLoading(false);
+    }
+  }, [planId, caseId, removeLoading, onRefresh]);
+
+  // 更多操作下拉菜单项
+  const moreMenuItems = useMemo(
+    () =>
+      createMoreMenuItems({
+        onCopyCase: handleCopyCase,
+        onRemoveCase: handleRemoveCase,
+      }),
+    [handleCopyCase, handleRemoveCase],
+  );
+
+  // 排序后的用例步骤列表
+  const sortedSteps = useMemo(
+    () =>
+      [...(testCase.case_sub_steps || [])].sort(
+        (a, b) => (a.order ?? 0) - (b.order ?? 0),
+      ),
+    [testCase.case_sub_steps],
+  );
+
+  /**
+   * 统一的状态更新处理函数
+   * @param updates - 更新内容，支持 case_status 或 is_review
+   */
+  const handleStatusUpdate = useCallback(
+    async (updates: { case_status?: number; is_review?: number }) => {
+      if (!caseId || !planId) return;
+
+      // 设置对应的加载状态
+      if (updates.case_status !== undefined) {
+        setSwitchingStatus(true);
+      } else {
+        setSwitchingReview(true);
+      }
+
+      try {
+        const { code } = await updateAssociatePlanCases({
+          plan_id: Number(planId),
+          case_id_list: [caseId],
+          ...updates,
+        });
+
+        if (code === 0) {
+          // 处理评审状态更新
+          if (updates.is_review !== undefined) {
+            message.success(
+              updates.is_review ? '已标记为已评审' : '已取消评审',
+            );
+            onReviewChange?.(caseId, !!updates.is_review);
+          } else if (updates.case_status !== undefined) {
+            // 处理用例状态更新
+            message.success(
+              `已切换为${STATUS_CONFIG_MAP[updates.case_status].label}`,
+            );
+            onStatusChange?.(caseId, updates.case_status);
+          }
+        } else {
+          message.error('修改失败');
+        }
+      } catch {
+        message.error('修改失败');
+      } finally {
+        setSwitchingStatus(false);
+        setSwitchingReview(false);
+      }
+    },
+    [caseId, planId, onReviewChange, onStatusChange],
+  );
+
+  // 切换评审状态
+  const handleReviewToggle = useCallback(() => {
+    if (switchingReview) return;
+    handleStatusUpdate({ is_review: isReview ? 0 : 1 });
+  }, [switchingReview, isReview, handleStatusUpdate]);
+
+  // 选择用例状态
+  const handleStatusSelect = useCallback(
+    (newStatus: number) => {
+      if (switchingStatus) return;
+      handleStatusUpdate({ case_status: newStatus });
+    },
+    [switchingStatus, handleStatusUpdate],
+  );
+
+  const currentStatusConfig =
+    STATUS_CONFIG_MAP[caseStatus] || STATUS_CONFIG_MAP[0];
+
+  // 卡片右侧操作区域：状态选择 + 更多操作
+  const cardExtra = (
+    <Space size="small">
+      <Dropdown
+        trigger={['click', 'hover']}
+        menu={{
+          items: statusSelectItems,
+          onClick: ({ key }) => handleStatusSelect(Number(key)),
+        }}
+        disabled={switchingStatus}
+      >
+        <Tag
+          color={currentStatusConfig.color}
+          style={{
+            margin: 0,
+            cursor: switchingStatus ? 'wait' : 'pointer',
+            opacity: switchingStatus ? 0.5 : 1,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 4,
+          }}
+        >
+          {STATUS_ICON_MAP[caseStatus] || STATUS_ICON_MAP[0]}
+          {currentStatusConfig.label}
+          <DownOutlined style={{ fontSize: 10, opacity: 0.6 }} />
+        </Tag>
+      </Dropdown>
+      <Dropdown menu={{ items: moreMenuItems }} trigger={['click']}>
+        <Button type="text" size="small" icon={<MoreOutlined />} />
+      </Dropdown>
+    </Space>
+  );
+
+  // 卡片标题区域：复选框 + 评审状态 + 用例名称
+  const cardTitle = (
+    <Space onClick={(e) => e.stopPropagation()}>
+      <Checkbox
+        checked={selected}
+        onChange={(e) => onSelectedChange?.(caseId, e.target.checked)}
+      />
+      <Tag
+        color={isReview ? 'success' : 'default'}
+        style={{ cursor: switchingReview ? 'wait' : 'pointer' }}
+        onClick={handleReviewToggle}
+      >
+        {switchingReview ? '切换中...' : isReview ? '已评审' : '待评审'}
+      </Tag>
+      <Text strong onClick={() => setIsDetailOpen(true)}>
+        {testCase.case_name}
+      </Text>
+    </Space>
+  );
+
+  return (
+    <>
+      <ProCard
+        title={cardTitle}
+        bordered
+        hoverable
+        headerBordered
+        extra={cardExtra}
+        collapsible
+        bodyStyle={{ padding: 3 }}
+      >
+        <StepTable steps={sortedSteps} planId={planId} />
+      </ProCard>
+      <MyDrawer
+        width={'60%'}
+        open={isDetailOpen}
+        setOpen={setIsDetailOpen}
+        onClose={() => {
+          if (hasEdited) {
+            onRefresh?.();
+          }
+          setHasEdited(false);
+          setIsDetailOpen(false);
+        }}
+      >
+        <TestCaseDetail
+          testcase={testCase}
+          callback={() => setHasEdited(true)}
+        />
+      </MyDrawer>
+    </>
+  );
+};
+
+export default CaseItem;
+export type { CaseItemProps };

@@ -63,7 +63,7 @@ const createModalState = (overrides: Partial<ModalState> = {}): ModalState => ({
  * 计划目录模块组件
  * 展示树形目录结构，支持新增、编辑、删除、拖拽排序
  */
-const PlanModule: FC<PlanModuleProps> = ({
+const Index: FC<PlanModuleProps> = ({
   planModules,
   planId,
   onModulesChange,
@@ -474,7 +474,7 @@ const PlanModule: FC<PlanModuleProps> = ({
           title={modalState.mode === 'add' ? '新增目录' : '编辑目录'}
           open={modalState.visible}
           onFinish={handleModalFinish}
-          setOpen={resetModal}
+          onCancel={resetModal}
           initialValues={{ title: modalState.initialTitle }}
         />
       </ProCard>
@@ -482,4 +482,4 @@ const PlanModule: FC<PlanModuleProps> = ({
   );
 };
 
-export default PlanModule;
+export default Index;

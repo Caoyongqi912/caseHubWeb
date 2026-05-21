@@ -17,13 +17,12 @@ import {
   ProFormSelect,
   ProFormTextArea,
 } from '@ant-design/pro-components';
-import { Button, Form, Input, Space, Spin, Tag, theme, Typography } from 'antd';
+import { Button, Form, Space, Spin, Tag, theme, Typography } from 'antd';
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
 import StepItem from '../../components/CaseSubSteps/StepItem';
 import { useTestCaseDetailStyles } from './styles';
 
 const { Text } = Typography;
-const { TextArea } = Input;
 const { useToken } = theme;
 
 /**
@@ -46,7 +45,7 @@ interface Props {
 const TestCaseDetail: FC<Props> = ({ testcase, callback }) => {
   const [form] = Form.useForm();
   const { token } = useToken();
-  const { colors, spacing, borderRadius } = useCaseHubTheme();
+  const { colors, spacing } = useCaseHubTheme();
   const styles = useTestCaseDetailStyles();
 
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);

@@ -239,3 +239,46 @@ export const copyPlanCases = async (data: {
     data,
   });
 };
+
+/**
+ * 插入测试计划下的用例
+ * @param data - 包含 plan_id、case_id_list、plan_case_module_id、case_status 的对象
+ */
+export const insertPlanCases = async (data: ITestCase) => {
+  return request<IResponse<ITestCase>>('/api/hub/plan/cases/insert', {
+    method: 'POST',
+    data,
+  });
+};
+
+/**
+ * 复制测试计划下的单个用例
+ * @param data - 包含 plan_id、case_id、plan_case_module_id、case_status 的对象
+ */
+export const copyOnePlanCase = async (data: {
+  plan_id: number;
+  case_id: number;
+  plan_module_id: number;
+}) => {
+  return request<IResponse<number>>('/api/hub/plan/cases/copy_one', {
+    method: 'POST',
+    data,
+  });
+};
+
+/**
+ * 更新测试计划下的单个用例步骤结果
+ * @param data - 包含 plan_id、step_id、plan_case_module_id、case_status 的对象
+ */
+export const updateCaseStepResult = async (data: {
+  plan_id: number;
+  step_id: number;
+  status?: number;
+  actual_result?: string;
+  bug_url?: string;
+}) => {
+  return request<IResponse<null>>('/api/hub/plan/case/updateStepResult', {
+    method: 'POST',
+    data,
+  });
+};

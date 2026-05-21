@@ -1,5 +1,3 @@
-import React from 'react';
-
 export interface IRequirement {
   id: number;
   uid: string;
@@ -45,11 +43,14 @@ export interface ITestCase {
 }
 
 export interface CaseSubStep {
-  id?: React.Key;
+  id: number;
   uid: string;
   action: string | null;
   order?: number;
   expected_result: string | null;
+  actual_result?: string | null;
+  status?: number;
+  bug_url?: string | null;
 }
 
 export interface ICaseDynamic {

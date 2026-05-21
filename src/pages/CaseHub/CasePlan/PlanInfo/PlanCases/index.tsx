@@ -3,8 +3,8 @@ import { IPlanModule } from '@/pages/CaseHub/types';
 import { ProCard } from '@ant-design/pro-components';
 import { Splitter } from 'antd';
 import { FC, useCallback, useEffect, useState } from 'react';
-import PlanCaseList from './components/PlanCaseList';
-import PlanModule from './components/PlanModule';
+import PlanCaseList from './PlanCaseList';
+import PlanModule from './PlanModule';
 
 interface Props {
   planId?: string;

@@ -1,17 +1,23 @@
-import { associatePlanCases, queryPlanCases } from '@/api/case/caseplan';
+import {
+  associatePlanCases,
+  getPlanInfo,
+  insertPlanCases,
+  queryPlanCases,
+} from '@/api/case/caseplan';
 import MyDrawer from '@/components/MyDrawer';
 import ChoiceCaseTable from '@/pages/CaseHub/Requirement/components/ChoiceCaseTable';
 import { useCaseHubTheme } from '@/pages/CaseHub/styles';
-import { ITestCase } from '@/pages/CaseHub/types';
+import { ICasePlan, ITestCase } from '@/pages/CaseHub/types';
 import { LinkOutlined, PlusOutlined } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
 import { Button, Checkbox, Empty, message, Space, Spin } from 'antd';
 import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 import { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { usePlanCaseListStyles } from '../styles';
-import BatchActionBar from './BatchActionBar';
-import CaseFilterBar, { CaseFilterValues } from './CaseFilterBar';
-import CaseItem from './CaseItem';
+import BatchActionBar from './components/BatchActionBar';
+import CaseFilterBar, { CaseFilterValues } from './components/CaseFilterBar';
+import CaseItem from './components/CaseItem';
+import NewCaseForm from './components/NewCaseForm';
 
 interface PlanCaseListProps {
   planId?: string;
@@ -26,6 +32,7 @@ const Index: FC<PlanCaseListProps> = ({
 }) => {
   const styles = usePlanCaseListStyles();
   const { colors, spacing } = useCaseHubTheme();
+  const [planInfo, setPlanInfo] = useState<ICasePlan>();
   const [caseList, setCaseList] = useState<ITestCase[]>([]);
   const [loading, setLoading] = useState(false);
   const [openChoiceCaseDrawer, setOpenChoiceCaseDrawer] = useState(false);
@@ -33,6 +40,19 @@ const Index: FC<PlanCaseListProps> = ({
   const [selectedCaseIds, setSelectedCaseIds] = useState<Set<number>>(
     new Set(),
   );
+  const [drawerVisible, setDrawerVisible] = useState(false);
+
+  useEffect(() => {
+    if (planId) {
+      getPlanInfo(Number(planId)).then(({ code, data }) => {
+        if (code === 0) setPlanInfo(data);
+      });
+    }
+  }, [planId]);
+
+  /**
+   * 获取计划用例列表
+   */
   const fetchQueryPlanCases = useCallback(async () => {
     if (!planId || !moduleId) return;
     setLoading(true);
@@ -53,31 +73,47 @@ const Index: FC<PlanCaseListProps> = ({
     }
   }, [planId, moduleId, filters]);
 
+  /**
+   * 当 planId 或 moduleId 变化时，重新加载用例列表
+   */
   useEffect(() => {
     setCaseList([]);
     fetchQueryPlanCases();
   }, [planId, moduleId]);
 
+  /**
+   * 刷新列表
+   */
   const handleRefresh = useCallback(() => {
     fetchQueryPlanCases();
   }, [fetchQueryPlanCases]);
 
+  /**
+   * 筛选条件变化
+   */
   const handleFilterChange = useCallback((newFilters: CaseFilterValues) => {
     setFilters(newFilters);
   }, []);
 
+  /**
+   * 根据筛选条件过滤并排序用例列表
+   */
   const filteredCaseList = useMemo(() => {
     let result = Array.isArray(caseList) ? [...caseList] : [];
+
     if (filters.keyword) {
       const kw = filters.keyword.toLowerCase();
       result = result.filter((c) => c.case_name.toLowerCase().includes(kw));
     }
+
     if (filters.caseStatus !== undefined) {
       result = result.filter((c) => c.case_status === filters.caseStatus);
     }
+
     if (filters.isReview !== undefined) {
       result = result.filter((c) => c.is_review === filters.isReview);
     }
+
     if (filters.sortBy && filters.sortBy !== 'default') {
       result.sort((a, b) => {
         switch (filters.sortBy) {
@@ -90,6 +126,7 @@ const Index: FC<PlanCaseListProps> = ({
         }
       });
     }
+
     return result;
   }, [caseList, filters]);
 
@@ -97,11 +134,15 @@ const Index: FC<PlanCaseListProps> = ({
     () => message.info('批量导出功能开发中'),
     [],
   );
+
   const handleBatchImport = useCallback(
     () => message.info('批量导入功能开发中'),
     [],
   );
 
+  /**
+   * 关联用例到当前计划
+   */
   const handleAssociateCases = async (caseIds: number[]) => {
     const { code } = await associatePlanCases({
       plan_id: Number(planId),
@@ -117,6 +158,9 @@ const Index: FC<PlanCaseListProps> = ({
     }
   };
 
+  /**
+   * 计算是否全选（基于当前筛选后的列表）
+   */
   const isAllSelected = useMemo(() => {
     if (filteredCaseList.length === 0) return false;
     const selectableItems = filteredCaseList.filter(
@@ -127,6 +171,9 @@ const Index: FC<PlanCaseListProps> = ({
     return selectableItems.every((tc) => selectedCaseIds.has(tc.id as number));
   }, [filteredCaseList, selectedCaseIds]);
 
+  /**
+   * 计算是否半选
+   */
   const isIndeterminate = useMemo(() => {
     if (filteredCaseList.length === 0) return false;
     const selectableItems = filteredCaseList.filter(
@@ -139,6 +186,9 @@ const Index: FC<PlanCaseListProps> = ({
     return selectedCount > 0 && selectedCount < selectableItems.length;
   }, [filteredCaseList, selectedCaseIds]);
 
+  /**
+   * 全选 / 取消全选
+   */
   const handleSelectAll = useCallback(
     (e: CheckboxChangeEvent) => {
       if (e.target.checked) {
@@ -153,6 +203,9 @@ const Index: FC<PlanCaseListProps> = ({
     [filteredCaseList],
   );
 
+  /**
+   * 单个用例选中状态变化
+   */
   const handleCaseSelectedChange = useCallback(
     (id: number | undefined, selected: boolean) => {
       if (id === undefined) return;
@@ -169,38 +222,43 @@ const Index: FC<PlanCaseListProps> = ({
     [],
   );
 
-  // 批量移动成功
+  /**
+   * 批量移动成功后的回调
+   */
   const handleBatchMoveSuccess = useCallback(() => {
     setSelectedCaseIds(new Set());
     handleRefresh();
     onModulesRefresh?.();
   }, [handleRefresh, onModulesRefresh]);
 
-  // 单个用例评审状态切换
+  /**
+   * 单个用例评审状态切换（仅更新本地状态）
+   */
   const handleReviewChange = useCallback(
     (caseId: number, isReview: boolean) => {
-      console.log('[PlanCaseList] 用例评审状态变更:', { caseId, isReview });
       setCaseList((prev) =>
         prev.map((tc) =>
           tc.id === caseId ? { ...tc, is_review: isReview } : tc,
         ),
       );
-      console.log('[PlanCaseList] 更新本地用例列表完成');
     },
     [],
   );
 
-  // 单个用例状态切换
+  /**
+   * 单个用例状态切换（仅更新本地状态）
+   */
   const handleStatusChange = useCallback((caseId: number, status: number) => {
-    console.log('[PlanCaseList] 用例状态变更:', { caseId, status });
     setCaseList((prev) =>
       prev.map((tc) =>
         tc.id === caseId ? { ...tc, case_status: status } : tc,
       ),
     );
-    console.log('[PlanCaseList] 更新用例状态完成');
   }, []);
 
+  /**
+   * 退出批量选择模式
+   */
   const handleExitSelection = useCallback(() => {
     setSelectedCaseIds(new Set());
   }, []);
@@ -215,7 +273,7 @@ const Index: FC<PlanCaseListProps> = ({
       <Button
         type="primary"
         icon={<PlusOutlined />}
-        onClick={() => message.info('新增用例功能开发中')}
+        onClick={() => setDrawerVisible(true)}
       >
         新增用例
       </Button>
@@ -228,6 +286,23 @@ const Index: FC<PlanCaseListProps> = ({
     </Space>
   );
 
+  // 添加用例关联
+  const OnCaseSave = async (values: any) => {
+    const newValue = {
+      ...values,
+      plan_id: Number(planId),
+      plan_module_id: moduleId ?? undefined,
+      project_id: planInfo?.project_id ?? undefined,
+    };
+    const { code, msg } = await insertPlanCases(newValue as ITestCase);
+
+    if (code === 0) {
+      handleRefresh();
+      setDrawerVisible(false);
+    } else {
+      message.error(msg || '保存失败');
+    }
+  };
   const CardExtra = () => (
     <CaseFilterBar
       onFilterChange={handleFilterChange}
@@ -282,27 +357,30 @@ const Index: FC<PlanCaseListProps> = ({
               <div
                 style={{
                   display: 'flex',
+                  flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
                   padding: spacing.xxxl,
+                  gap: spacing.md,
                 }}
               >
-                <Spin tip="加载中..." />
+                <Spin />
+                <span style={{ color: '#999', fontSize: 14 }}>加载中...</span>
               </div>
             ) : filteredCaseList.length > 0 ? (
-              <>
-                {filteredCaseList.map((tc) => (
-                  <CaseItem
-                    key={tc.id ?? tc.uid}
-                    testCase={tc}
-                    planId={planId}
-                    selected={tc.id !== undefined && selectedCaseIds.has(tc.id)}
-                    onSelectedChange={handleCaseSelectedChange}
-                    onReviewChange={handleReviewChange}
-                    onStatusChange={handleStatusChange}
-                  />
-                ))}
-              </>
+              filteredCaseList.map((tc) => (
+                <CaseItem
+                  key={tc.id ?? tc.uid}
+                  testCase={tc}
+                  planId={planId}
+                  moduleId={moduleId}
+                  selected={tc.id !== undefined && selectedCaseIds.has(tc.id)}
+                  onSelectedChange={handleCaseSelectedChange}
+                  onReviewChange={handleReviewChange}
+                  onStatusChange={handleStatusChange}
+                  onRefresh={handleRefresh}
+                />
+              ))
             ) : (
               <div style={styles.emptyState()}>
                 <Empty
@@ -322,6 +400,14 @@ const Index: FC<PlanCaseListProps> = ({
         </ProCard>
       </div>
 
+      <MyDrawer
+        name={'添加用例'}
+        width={'60%'}
+        open={drawerVisible}
+        setOpen={setDrawerVisible}
+      >
+        <NewCaseForm onSubmit={OnCaseSave} />
+      </MyDrawer>
       <MyDrawer
         name={'规划用例'}
         open={openChoiceCaseDrawer}
