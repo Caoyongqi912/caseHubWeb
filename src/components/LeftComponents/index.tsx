@@ -43,10 +43,12 @@ const Index: FC<SelfProps> = (props) => {
         backdropFilter: 'blur(16px)',
         border: `1px solid ${styles.colors.glassBorder}`,
         overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
       }}
       bodyStyle={{
         padding: 12,
-        height: '100%',
+        flex: 1,
         overflow: 'auto',
       }}
     >

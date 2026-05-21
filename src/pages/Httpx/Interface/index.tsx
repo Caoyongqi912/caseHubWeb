@@ -1,13 +1,14 @@
 import { useGlassStyles } from '@/components/Glass';
 import LeftComponents from '@/components/LeftComponents';
 import PageContentWrapper from '@/components/PageContent/PageContentWrapper';
-import GroupApiTable from '@/pages/Httpx/Interface/interfaceApiGroup/GroupApiTable';
 import InterfaceApiTable from '@/pages/Httpx/Interface/InterfaceApiTable';
-import InterfaceApiUpload from '@/pages/Httpx/Interface/InterfaceApiUpload';
 import { ModuleEnum } from '@/utils/config';
-import { Tabs, TabsProps } from 'antd';
+import { ProCard } from '@ant-design/pro-components';
+import { TabsProps } from 'antd';
 import { useState } from 'react';
 import { Group, Panel } from 'react-resizable-panels';
+import GroupApiTable from './interfaceApiGroup/GroupApiTable';
+import InterfaceApiUpload from './InterfaceApiUpload';
 
 const Index = () => {
   const styles = useGlassStyles();
@@ -22,11 +23,19 @@ const Index = () => {
       key: 'api',
       label: '单接口用例',
       children: (
-        <InterfaceApiTable
-          currentProjectId={currentProjectId}
-          currentModuleId={currentModuleId}
-          perKey={PerKey}
-        />
+        <div
+          key={'api'}
+          style={{
+            height: '100%',
+            display: 'block',
+          }}
+        >
+          <InterfaceApiTable
+            currentProjectId={currentProjectId}
+            currentModuleId={currentModuleId}
+            perKey={PerKey}
+          />
+        </div>
       ),
     },
     {
@@ -56,48 +65,49 @@ const Index = () => {
   };
 
   return (
-    <PageContentWrapper title={false}>
-      <div
+    <PageContentWrapper
+      title={false}
+      style={{
+        height: '100%', // 🔥 改成 100%，不要用 100vh
+        maxHeight: '100%',
+        overflow: 'hidden',
+        display: 'flex',
+        padding: '12px',
+        gap: '12px',
+      }}
+    >
+      {/* 拖拽面板：全屏填满 */}
+      <Group
+        orientation="horizontal"
         style={{
-          height: 'calc(100vh - 80px)',
-          display: 'flex',
-          flexDirection: 'column',
+          width: '100%',
+          height: '100%',
+          overflow: 'hidden',
         }}
       >
-        <div
-          style={{
-            flex: 1,
-            marginBottom: 16,
-            borderRadius: '16px',
-            background: styles.colors.glass,
-            backdropFilter: 'blur(20px)',
-            border: `1px solid ${styles.colors.glassBorder}`,
-            boxShadow: `0 8px 32px ${styles.colors.primaryGlow}20`,
-            overflow: 'hidden',
-          }}
+        {/* 左侧面板 */}
+        <Panel
+          defaultSize={20}
+          minSize={10}
+          collapsible
+          style={{ height: '100%' }}
         >
-          <Group orientation="horizontal" style={{ height: '100%' }}>
-            <Panel
-              defaultSize={20}
-              minSize={10}
-              collapsible={true}
-              style={{ height: '100%' }}
-            >
-              <LeftComponents
-                moduleType={ModuleEnum.API}
-                currentProjectId={currentProjectId}
-                onProjectChange={onProjectChange}
-                onModuleChange={onModuleChange}
-              />
-            </Panel>
-            <Panel defaultSize={80} minSize={30} style={{ height: '100%' }}>
-              <div style={{ height: '100%' }}>
-                <Tabs type="card" items={tabItems} defaultActiveKey="api" />
-              </div>
-            </Panel>
-          </Group>
-        </div>
-      </div>
+          <LeftComponents
+            moduleType={ModuleEnum.API}
+            currentProjectId={currentProjectId}
+            onProjectChange={onProjectChange}
+            onModuleChange={onModuleChange}
+          />
+        </Panel>
+
+        {/* 右侧面板 */}
+        <Panel defaultSize={80} minSize={30} style={{ height: '100%' }}>
+          {/* Tabs 头部 */}
+          <ProCard
+            tabs={{ type: 'card', items: tabItems, defaultActiveKey: 'api' }}
+          />
+        </Panel>
+      </Group>
     </PageContentWrapper>
   );
 };

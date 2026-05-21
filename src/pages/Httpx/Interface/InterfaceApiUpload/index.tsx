@@ -82,36 +82,61 @@ const Index = () => {
   };
 
   return (
-    <div style={{ padding: '16px 24px' }}>
-      <Row gutter={[16, 16]}>
-        {typeOptions.map((item, index) => {
-          const isSelected = currentValue === item.value;
-          return (
-            <Col span={12} key={index}>
-              <ProCard
-                bordered={true}
-                onClick={() => onClick(item.value)}
-                hoverable
-                type="inner"
-                style={{
-                  ...cardStyle,
-                  backgroundColor: isSelected
-                    ? `${styles.colors.primary}10`
-                    : 'transparent',
-                }}
-              >
-                <Space direction="vertical" align="center" size={8}>
-                  {item.icon}
-                  <Text strong>{item.title}</Text>
-                </Space>
-              </ProCard>
-            </Col>
-          );
-        })}
-      </Row>
+    <ProCard
+      headerBordered
+      split="horizontal"
+      style={{
+        height: 'calc(100vh - 200px)', // 占满父容器
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden', // 禁止自身滚动
+      }}
+      bodyStyle={{
+        padding: '12px',
+        height: '100%',
+      }}
+    >
+      {/* 卡片选择区 - 固定高度 */}
+      <div>
+        <Row gutter={[16, 16]}>
+          {typeOptions.map((item, index) => {
+            const isSelected = currentValue === item.value;
+            return (
+              <Col span={12} key={index}>
+                <ProCard
+                  bordered
+                  onClick={() => onClick(item.value)}
+                  hoverable
+                  type="inner"
+                  style={{
+                    ...cardStyle,
+                    backgroundColor: isSelected
+                      ? `${styles.colors.primary}10`
+                      : 'transparent',
+                  }}
+                >
+                  <Space direction="vertical" align="center" size={8}>
+                    {item.icon}
+                    <Text strong>{item.title}</Text>
+                  </Space>
+                </ProCard>
+              </Col>
+            );
+          })}
+        </Row>
+      </div>
 
+      {/* 表单区域 - 自动占满剩余高度 */}
       {currentValue && (
-        <ProCard style={{ marginTop: 20 }}>
+        <ProCard
+          headerBordered
+          split="horizontal"
+          style={{
+            marginTop: 20,
+            flex: 1, // 占满剩余空间
+            overflow: 'hidden',
+          }}
+        >
           <ProForm form={form} submitter={false}>
             <ProForm.Group>
               <ProFormSelect
@@ -143,6 +168,7 @@ const Index = () => {
                 label="Env"
               />
             </ProForm.Group>
+
             <ProFormUploadDragger
               title={false}
               max={1}
@@ -150,6 +176,7 @@ const Index = () => {
               name="api_file"
             />
           </ProForm>
+
           <div style={{ marginTop: 16, textAlign: 'right' }}>
             <Button type="primary" onClick={onSubmit}>
               上传
@@ -157,7 +184,7 @@ const Index = () => {
           </div>
         </ProCard>
       )}
-    </div>
+    </ProCard>
   );
 };
 

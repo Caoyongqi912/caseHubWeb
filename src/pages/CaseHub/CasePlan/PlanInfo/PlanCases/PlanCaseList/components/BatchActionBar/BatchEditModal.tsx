@@ -42,42 +42,22 @@ const BatchEditModal: FC<BatchEditModalProps> = ({
   const [caseStatus, setCaseStatus] = useState<number | undefined>(undefined);
   const [submitting, setSubmitting] = useState(false);
 
-  // 修改用例状态
+  /** 修改用例状态 */
   const handleStatusChange = useCallback((value: number) => {
-    console.log('[BatchEdit] 用例状态变更:', {
-      value,
-      label: CASE_STATUS_OPTIONS.find((o) => o.value === value)?.label,
-    });
     setCaseStatus(value);
   }, []);
 
-  // 关闭弹窗并重置状态
+  /** 关闭弹窗并重置状态 */
   const handleModalClose = useCallback(() => {
-    console.log('[BatchEdit] 关闭弹窗，重置状态');
     setIsReview(undefined);
     setCaseStatus(undefined);
     onCancel();
   }, [onCancel]);
 
-  // 提交修改
+  /** 提交批量修改 */
   const handleSubmit = useCallback(async () => {
-    // 至少选择一个要修改的字段
-    if (isReview === undefined && caseStatus === undefined) {
-      console.warn('[BatchEdit] 未选择任何修改字段');
-      return;
-    }
-
-    if (!currentPlanId) {
-      console.error('[BatchEdit] 缺少 planId');
-      return;
-    }
-
-    console.log('[BatchEdit] 开始提交修改:', {
-      planId: currentPlanId,
-      caseIds: selectedCaseIds,
-      isReview,
-      caseStatus,
-    });
+    if (isReview === undefined && caseStatus === undefined) return;
+    if (!currentPlanId) return;
 
     setSubmitting(true);
     try {
@@ -88,19 +68,13 @@ const BatchEditModal: FC<BatchEditModalProps> = ({
         case_status: caseStatus,
       });
 
-      console.log('[BatchEdit] API 返回:', { code });
-
       if (code === 0) {
-        console.log('[BatchEdit] 修改成功，关闭弹窗并触发成功回调');
         handleModalClose();
         onSuccess?.();
-      } else {
-        console.error('[BatchEdit] 修改失败，code:', code);
       }
-    } catch (error) {
-      console.error('[BatchEdit] 请求异常:', error);
+    } catch {
+      // 请求异常已在拦截器处理
     } finally {
-      console.log('[BatchEdit] 结束提交，重置 submitting 状态');
       setSubmitting(false);
     }
   }, [
@@ -149,12 +123,7 @@ const BatchEditModal: FC<BatchEditModalProps> = ({
           </label>
           <Radio.Group
             value={isReview}
-            onChange={(e) => {
-              console.log('[BatchEdit] 评审状态变更:', {
-                value: e.target.value,
-              });
-              setIsReview(e.target.value);
-            }}
+            onChange={(e) => setIsReview(e.target.value)}
           >
             {REVIEW_OPTIONS.map((option) => (
               <Radio key={option.value} value={option.value}>

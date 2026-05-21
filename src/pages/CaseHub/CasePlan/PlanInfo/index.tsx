@@ -18,6 +18,7 @@ const Index = () => {
   const [planInfo, setPlanInfo] = useState<ICasePlan>();
   const [loading, setLoading] = useState(true);
 
+  /** 获取计划详情 */
   const fetchPlanInfo = useCallback(() => {
     if (!planId) return;
     setLoading(true);
@@ -32,6 +33,7 @@ const Index = () => {
     fetchPlanInfo();
   }, [fetchPlanInfo]);
 
+  /** 根据状态获取对应颜色 */
   const getStatusColor = (status?: string) => {
     const statusMap: Record<string, string> = {
       进行中: token.colorInfo,
@@ -42,6 +44,7 @@ const Index = () => {
     return statusMap[status || ''] || token.colorTextTertiary;
   };
 
+  /** 渲染计划概览信息 */
   const renderPlanOverview = () => (
     <Descriptions bordered column={2} size="small">
       <Descriptions.Item label="计划名称" span={2}>
@@ -94,6 +97,7 @@ const Index = () => {
     </Descriptions>
   );
 
+  /** 需求模块占位 */
   const renderRequirementPlaceholder = () => (
     <div
       style={{
@@ -149,7 +153,6 @@ const Index = () => {
         items={PlanTiems}
         defaultActiveKey={'cases'}
         style={{ height: '100%' }}
-        // tabBarStyle={{ height: 'auto' }}
       />
     </PageContainer>
   );

@@ -26,8 +26,6 @@ interface CaseFilterBarProps {
 
 const FILTER_LABEL_STYLE: React.CSSProperties = {
   fontSize: 12,
-  color: undefined,
-  marginBottom: undefined,
   fontWeight: 500,
 };
 

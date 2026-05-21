@@ -43,96 +43,56 @@ const BatchActionBar: FC<BatchActionBarProps> = ({
 
   const { deleteCases, loading: deleteLoading } = useBatchDelete({
     onSuccess: () => {
-      console.log('[BatchActionBar] 删除成功回调触发');
       setDeleteModalVisible(false);
-      console.log('[BatchActionBar] 调用 onBatchSuccess');
       onBatchSuccess?.();
-      console.log('[BatchActionBar] onBatchSuccess 执行完成');
     },
   });
 
-  // ==================== 移动操作 ====================
-  const handleMove = useCallback(() => {
-    console.log('[BatchActionBar] 点击移动按钮');
-    setMoveModalVisible(true);
-  }, []);
-
-  const handleMoveCancel = useCallback(() => {
-    console.log('[BatchActionBar] 移动弹窗取消');
-    setMoveModalVisible(false);
-  }, []);
-
+  /** 打开移动弹窗 */
+  const handleMove = useCallback(() => setMoveModalVisible(true), []);
+  /** 关闭移动弹窗 */
+  const handleMoveCancel = useCallback(() => setMoveModalVisible(false), []);
+  /** 移动成功回调 */
   const handleMoveSuccess = useCallback(() => {
-    console.log('[BatchActionBar] 移动成功回调触发');
     setMoveModalVisible(false);
-    console.log('[BatchActionBar] 调用 onBatchSuccess');
     onBatchSuccess?.();
-    console.log('[BatchActionBar] onBatchSuccess 执行完成');
   }, [onBatchSuccess]);
 
-  // ==================== 复制操作 ====================
-  const handleCopy = useCallback(() => {
-    console.log('[BatchActionBar] 点击复制按钮');
-    setCopyModalVisible(true);
-  }, []);
-
-  const handleCopyCancel = useCallback(() => {
-    console.log('[BatchActionBar] 复制弹窗取消');
-    setCopyModalVisible(false);
-  }, []);
-
+  /** 打开复制弹窗 */
+  const handleCopy = useCallback(() => setCopyModalVisible(true), []);
+  /** 关闭复制弹窗 */
+  const handleCopyCancel = useCallback(() => setCopyModalVisible(false), []);
+  /** 复制成功回调 */
   const handleCopySuccess = useCallback(() => {
-    console.log('[BatchActionBar] 复制成功回调触发');
     setCopyModalVisible(false);
-    console.log('[BatchActionBar] 调用 onBatchSuccess');
     onBatchSuccess?.();
-    console.log('[BatchActionBar] onBatchSuccess 执行完成');
   }, [onBatchSuccess]);
 
-  // ==================== 修改操作 ====================
-  const handleEdit = useCallback(() => {
-    console.log('[BatchActionBar] 点击修改按钮');
-    setEditModalVisible(true);
-  }, []);
-
-  const handleEditCancel = useCallback(() => {
-    console.log('[BatchActionBar] 修改弹窗取消');
-    setEditModalVisible(false);
-  }, []);
-
+  /** 打开修改弹窗 */
+  const handleEdit = useCallback(() => setEditModalVisible(true), []);
+  /** 关闭修改弹窗 */
+  const handleEditCancel = useCallback(() => setEditModalVisible(false), []);
+  /** 修改成功回调 */
   const handleEditSuccess = useCallback(() => {
-    console.log('[BatchActionBar] 修改成功回调触发');
     setEditModalVisible(false);
-    console.log('[BatchActionBar] 调用 onBatchSuccess');
     onBatchSuccess?.();
-    console.log('[BatchActionBar] onBatchSuccess 执行完成');
   }, [onBatchSuccess]);
 
-  // ==================== 删除操作 ====================
-  const handleDeleteClick = useCallback(() => {
-    console.log('[BatchActionBar] 点击删除按钮', { selectedCaseIds });
-    setDeleteModalVisible(true);
-  }, [selectedCaseIds]);
-
-  const handleDeleteCancel = useCallback(() => {
-    console.log('[BatchActionBar] 删除确认弹窗取消');
-    setDeleteModalVisible(false);
-  }, []);
-
+  /** 打开删除确认弹窗 */
+  const handleDeleteClick = useCallback(() => setDeleteModalVisible(true), []);
+  /** 关闭删除确认弹窗 */
+  const handleDeleteCancel = useCallback(
+    () => setDeleteModalVisible(false),
+    [],
+  );
+  /** 确认删除 */
   const handleDeleteConfirm = useCallback(() => {
-    console.log('[BatchActionBar] 点击删除确认', { planId, selectedCaseIds });
-    if (!planId) {
-      console.error('[BatchActionBar] 缺少 planId，无法删除');
-      return;
-    }
-    console.log('[BatchActionBar] 调用 deleteCases');
+    if (!planId) return;
     deleteCases(Number(planId), selectedCaseIds);
-    console.log('[BatchActionBar] deleteCases 调用完成');
   }, [planId, selectedCaseIds, deleteCases]);
 
-  // ==================== 退出选择 ====================
+  /** 退出批量选择模式 */
   const handleExit = useCallback(() => {
-    console.log('[BatchActionBar] 点击退出按钮');
     onExit?.();
   }, [onExit]);
 

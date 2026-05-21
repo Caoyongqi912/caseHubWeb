@@ -64,6 +64,10 @@ const STATUS_CONFIG = {
   },
 } as const;
 
+/**
+ * 用例步骤表格组件
+ * 支持编辑实际结果、状态、缺陷链接，数据变更自动同步后端（防抖 1s）
+ */
 const StepTable: React.FC<StepTableProps> = ({ steps, planId }) => {
   const editorFormRef = useRef<EditableFormInstance<CaseSubStep>>();
   const [dataSource, setDataSource] = useState<CaseSubStep[]>(steps);
@@ -302,9 +306,7 @@ const StepTable: React.FC<StepTableProps> = ({ steps, planId }) => {
         key: 'status',
         dataIndex: 'status',
         width: '12%',
-        // 关键：在 renderFormItem 里保留 Select 组件，同时自定义选中项的显示模板
         renderFormItem: () => {
-          // 这里我们直接接管 Select 渲染，而不是返回纯文本
           const statusOptions = [
             { label: '未填写', value: 0 },
             { label: '通过', value: 1 },
@@ -335,7 +337,6 @@ const StepTable: React.FC<StepTableProps> = ({ steps, planId }) => {
                   </span>
                 );
               }}
-              // 自定义选中值的显示模板（带图标+文字）
               labelRender={(option) => {
                 if (!option) return null;
                 const cfg =
@@ -419,6 +420,7 @@ const StepTable: React.FC<StepTableProps> = ({ steps, planId }) => {
     [handleCopyExpectedToActual, popoverOpenId, dataSource],
   );
 
+  /** 当前所有可编辑行的 key 集合 */
   const editableKeys = useMemo(
     () => dataSource.map((item) => item.id),
     [dataSource],
@@ -428,7 +430,7 @@ const StepTable: React.FC<StepTableProps> = ({ steps, planId }) => {
     <EditableProTable
       editableFormRef={editorFormRef}
       value={dataSource}
-      size={'small'}
+      size="small"
       onChange={(value) => setDataSource([...value])}
       rowKey="id"
       pagination={false}

@@ -19,6 +19,10 @@ interface Props {
   onSubmit: (values: Record<string, unknown>) => void;
 }
 
+/**
+ * 新增用例表单组件
+ * 支持填写用例基本信息、步骤、前置条件等
+ */
 const NewCaseForm: FC<Props> = ({ onSubmit }) => {
   const { token } = useToken();
   const [form] = Form.useForm();
@@ -29,7 +33,9 @@ const NewCaseForm: FC<Props> = ({ onSubmit }) => {
 
   /**
    * 构建提交数据
-   * 合并表单值、步骤数据和项目/模块信息
+   * 合并表单值与步骤数据
+   * @param values - 表单字段值
+   * @returns 包含 case_sub_steps 的完整提交数据
    */
   const buildSubmitData = useCallback(
     (values: Record<string, unknown>) => {
@@ -45,8 +51,11 @@ const NewCaseForm: FC<Props> = ({ onSubmit }) => {
     [steps],
   );
 
+  /**
+   * 保存用例
+   * 先校验表单，再构建数据并提交
+   */
   const handleSave = useCallback(async () => {
-    // TODO: 实现保存逻辑
     const values = await form.validateFields();
     const submitData = buildSubmitData(values);
     onSubmit(submitData);

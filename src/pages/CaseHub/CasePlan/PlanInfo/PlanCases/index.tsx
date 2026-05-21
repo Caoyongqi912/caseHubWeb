@@ -54,6 +54,7 @@ const Index: FC<Props> = ({ planId }) => {
           />
         </Splitter.Panel>
         <Splitter.Panel
+          style={{ height: '100%' }}
           collapsible={{ start: true, end: true, showCollapsibleIcon: true }}
         >
           <PlanCaseList

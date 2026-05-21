@@ -22,7 +22,12 @@ import {
   NumberOutlined,
   PlusOutlined,
 } from '@ant-design/icons';
-import { ActionType, ProColumns, ProTable } from '@ant-design/pro-components';
+import {
+  ActionType,
+  ProCard,
+  ProColumns,
+  ProTable,
+} from '@ant-design/pro-components';
 import {
   Button,
   Dropdown,
@@ -341,7 +346,14 @@ const Index: FC<SelfProps> = ({
     </Button>,
   ];
   return (
-    <>
+    <div
+      style={{
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+      }}
+    >
       <CopyOrMoveModal
         open={openModal}
         currentApiId={currentApiId}
@@ -350,13 +362,33 @@ const Index: FC<SelfProps> = ({
         onCancel={() => setOpenModal(false)}
       />
 
-      <div style={{ height: 'calc(100vh - 240px)' }}>
+      {/* 关键：ProCard 填满父容器 */}
+      <ProCard
+        headerBordered
+        bordered
+        style={{
+          flex: 1,
+          height: 0,
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+        bodyStyle={{
+          padding: '12px',
+          height: '100%',
+        }}
+      >
+        {/* 表格高度 100% 填满，内部滚动 */}
         <ProTable
           persistenceKey={perKey}
           columns={columns}
           rowKey="id"
           actionRef={actionRef}
-          scroll={{ x: 1200, y: 'fill' }}
+          // 🔥 核心：高度填充满父容器，表格内部滚动
+          style={{ height: '100%' }}
+          scroll={{
+            x: 1200,
+            y: 'calc(100vh - 450px)', // 🔥 自适应屏幕高度，表格内部滚动
+          }}
           //@ts-ignore
           request={fetchInterface}
           pagination={{
@@ -368,8 +400,8 @@ const Index: FC<SelfProps> = ({
           search={{ defaultCollapsed: true, labelWidth: 'auto' }}
           toolBarRender={() => ToolBarRender}
         />
-      </div>
-    </>
+      </ProCard>
+    </div>
   );
 };
 
