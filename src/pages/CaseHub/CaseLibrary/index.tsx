@@ -1,7 +1,7 @@
 import { useGlassStyles } from '@/components/Glass';
 import LeftComponents from '@/components/LeftComponents';
 import { ModuleEnum } from '@/utils/config';
-import { ProCard } from '@ant-design/pro-components';
+import { PageContainer } from '@ant-design/pro-components';
 import { useState } from 'react';
 import { Group, Panel } from 'react-resizable-panels';
 import CaseDataTable from './CaseDataTable';
@@ -23,42 +23,39 @@ const Index = () => {
   };
 
   return (
-    <>
-      <ProCard
-        style={{
-          marginBottom: 24,
-          borderRadius: '16px',
-          background: styles.colors.glass,
-          backdropFilter: 'blur(20px)',
-          border: `1px solid ${styles.colors.glassBorder}`,
-          boxShadow: `0 8px 32px ${styles.colors.primaryGlow}20`,
-        }}
-        bodyStyle={{
-          height: '100%',
-          minHeight: '90vh',
-          padding: 0,
-          overflow: 'hidden',
-        }}
-      >
-        <Group orientation="horizontal">
-          <Panel defaultSize={20} minSize={10} collapsible={true}>
-            <LeftComponents
-              moduleType={ModuleEnum.CASE}
-              currentProjectId={currentProjectId}
-              onModuleChange={onModuleChange}
-              onProjectChange={onProjectChange}
-            />
-          </Panel>
-          <Panel defaultSize={80} minSize={30}>
-            <CaseDataTable
-              perKey={PerKey}
-              currentProjectId={currentProjectId}
-              currentModuleId={currentModuleId}
-            />
-          </Panel>
-        </Group>
-      </ProCard>
-    </>
+    <PageContainer
+      title={false}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: 'calc(100vh - 8px)',
+        overflow: 'hidden',
+        padding: 0,
+        marginBottom: 24,
+        borderRadius: '16px',
+        background: styles.colors.glass,
+        backdropFilter: 'blur(20px)',
+        border: `1px solid ${styles.colors.glassBorder}`,
+      }}
+    >
+      <Group orientation="horizontal">
+        <Panel defaultSize={20} minSize={10} collapsible={true}>
+          <LeftComponents
+            moduleType={ModuleEnum.CASE}
+            currentProjectId={currentProjectId}
+            onModuleChange={onModuleChange}
+            onProjectChange={onProjectChange}
+          />
+        </Panel>
+        <Panel defaultSize={80} minSize={30} style={{ height: '100' }}>
+          <CaseDataTable
+            perKey={PerKey}
+            currentProjectId={currentProjectId}
+            currentModuleId={currentModuleId}
+          />
+        </Panel>
+      </Group>
+    </PageContainer>
   );
 };
 

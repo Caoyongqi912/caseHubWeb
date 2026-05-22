@@ -5,6 +5,7 @@
 import { IObjGet } from '@/api';
 import { deleteCasePlan, pageCasePlan } from '@/api/case/caseplan';
 import { queryProjectEnum } from '@/components/CommonFunc';
+import { useGlassStyles } from '@/components/Glass';
 import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import { ICasePlan } from '@/pages/CaseHub/types';
 import { pageData } from '@/utils/somefunc';
@@ -26,6 +27,7 @@ const Index = () => {
   const navigate = useNavigate();
   const [form] = Form.useForm<ICasePlan>();
   const [projectEnumMap, setProjectEnumMap] = useState<IObjGet>({});
+  const styles = useGlassStyles();
 
   const { token } = useCaseHubTheme();
 
@@ -190,12 +192,10 @@ const Index = () => {
     {
       title: '执行阶段',
       dataIndex: 'plan_phase',
-      width: '9%',
       render: (_, r) => <Tag>{r.plan_phase || '-'}</Tag>,
     },
     {
       title: '计划时间',
-      width: '14%',
       render: (_, r) => (
         <Space direction="vertical" size={0}>
           <span>{r.plan_start_time || '-'}</span>
@@ -219,7 +219,7 @@ const Index = () => {
       fixed: 'right',
       width: '10%',
       render: (_, r) => (
-        <Space size={8}>
+        <Space>
           <Button
             type="text"
             size="small"
@@ -248,9 +248,9 @@ const Index = () => {
       style={{
         display: 'flex',
         flexDirection: 'column',
-        height: '100%', // 🔥 改成 100%，不要用 vh
-        maxHeight: '100%',
-        overflow: 'hidden', // 禁止外层滚动
+        height: 'calc(100vh - 20px)',
+        overflow: 'hidden',
+        background: styles.colors.glass,
       }}
     >
       <CasePlanForm
@@ -265,35 +265,27 @@ const Index = () => {
       />
 
       {/* 占满剩余高度，内部滚动 */}
-      <div
-        style={{
-          flex: 1,
-          overflow: 'hidden',
+
+      <ProTable
+        actionRef={actionRef}
+        columns={columns}
+        rowKey="uid"
+        scroll={{
+          y: 400,
         }}
-      >
-        <ProTable
-          actionRef={actionRef}
-          columns={columns}
-          rowKey="uid"
-          style={{ height: '100%' }}
-          scroll={{
-            x: 1200,
-            y: 500,
-          }}
-          request={queryRecord}
-          pagination={{ defaultPageSize: 10 }}
-          toolBarRender={() => [
-            <Button
-              key="add"
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={() => openFormModal()}
-            >
-              新增计划
-            </Button>,
-          ]}
-        />
-      </div>
+        request={queryRecord}
+        pagination={{ defaultPageSize: 10 }}
+        toolBarRender={() => [
+          <Button
+            key="add"
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => openFormModal()}
+          >
+            新增计划
+          </Button>,
+        ]}
+      />
     </PageContainer>
   );
 };

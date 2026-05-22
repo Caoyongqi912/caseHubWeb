@@ -44,12 +44,6 @@ export const useChoiceSettingAreaStyles = () => {
     color: colors.textSecondary,
   });
 
-  const actionGroup = (): CSSProperties => ({
-    display: 'flex',
-    alignItems: 'center',
-    gap: spacing.xs,
-  });
-
   const actionBtn = (
     variant: 'default' | 'success' | 'error' | 'warning',
   ): CSSProperties => {
@@ -57,7 +51,7 @@ export const useChoiceSettingAreaStyles = () => {
       default: { color: colors.primary, bg: `${colors.primary}08` },
       success: { color: colors.success, bg: `${colors.success}10` },
       error: { color: colors.error, bg: `${colors.error}10` },
-      warning: { color: colors.success, bg: `${colors.success}10` },
+      warning: { color: colors.warning, bg: `${colors.warning}10` },
     };
     const vc = variantColors[variant];
     return {
@@ -97,7 +91,6 @@ export const useChoiceSettingAreaStyles = () => {
     countBadge,
     countValue,
     countLabel,
-    actionGroup,
     actionBtn,
     divider,
     linkText,

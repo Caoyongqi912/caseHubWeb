@@ -520,7 +520,7 @@ const Index: React.FC = () => {
       style={{
         display: 'flex',
         flexDirection: 'column',
-        height: 'calc(100vh - 50px)',
+        height: 'calc(100vh - 60px)',
         overflow: 'hidden',
       }}
     >

@@ -1,6 +1,6 @@
 import LeftComponents from '@/components/LeftComponents';
 import { ModuleEnum } from '@/utils/config';
-import { ProCard } from '@ant-design/pro-components';
+import { PageContainer, ProCard } from '@ant-design/pro-components';
 import { useState } from 'react';
 import { Group, Panel } from 'react-resizable-panels';
 import RequirementTable from './components/RequirementTable';
@@ -19,7 +19,7 @@ const Index = () => {
   };
 
   return (
-    <>
+    <PageContainer title={false}>
       <ProCard ghost={true}>
         <Group orientation="horizontal">
           <Panel defaultSize={20} minSize={10} collapsible={true}>
@@ -39,7 +39,7 @@ const Index = () => {
           </Panel>
         </Group>
       </ProCard>
-    </>
+    </PageContainer>
   );
 };
 

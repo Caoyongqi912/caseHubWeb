@@ -4,11 +4,8 @@ import {
   downloadCaseExcel,
   pageTestCase,
   removeTestCase,
-  updateTestCase,
-  uploadTestCase,
 } from '@/api/case/testCase';
 import MyDrawer from '@/components/MyDrawer';
-import MyProTable from '@/components/Table/MyProTable';
 import UserSelect from '@/components/Table/UserSelect';
 import TestCaseDetail from '@/pages/CaseHub/CaseLibrary/TestCaseDetail';
 import DynamicInfo from '@/pages/CaseHub/components/DynamicInfo';
@@ -24,25 +21,14 @@ import {
   DownloadOutlined,
   SmallDashOutlined,
   SoundOutlined,
-  UploadOutlined,
 } from '@ant-design/icons';
-import {
-  ActionType,
-  ModalForm,
-  ProColumns,
-  ProForm,
-  ProFormSelect,
-  ProFormTreeSelect,
-  ProFormUploadDragger,
-} from '@ant-design/pro-components';
+import { ActionType, ProColumns, ProTable } from '@ant-design/pro-components';
 import { useModel } from '@umijs/max';
 import type { MenuProps } from 'antd';
 import {
   Button,
   Dropdown,
-  Form,
   message,
-  Modal,
   Popconfirm,
   Space,
   Tag,
@@ -50,6 +36,8 @@ import {
 } from 'antd';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import CaseForm from './components/CaseForm';
+import MoveCaseModal from './components/MoveCaseModal';
+import UploadCaseModal from './components/UploadCaseModal';
 
 const { Text, Link } = Typography;
 
@@ -61,11 +49,9 @@ interface Props {
 
 const CaseDataTable: FC<Props> = (props) => {
   const { perKey, currentProjectId, currentModuleId } = props;
-  const [moveForm] = Form.useForm();
   const { CASE_LEVEL_ENUM, CASE_TYPE_ENUM } = CaseHubConfig;
-  const { token, colors, spacing, borderRadius } = useCaseHubTheme();
+  const { token, colors, borderRadius } = useCaseHubTheme();
   const actionRef = useRef<ActionType>();
-  const [uploadForm] = Form.useForm();
   const [currentCaseId, setCurrentCaseId] = useState<number>();
   const [currentCase, setCurrentCase] = useState<ITestCase>();
   const [showDynamic, setShowDynamic] = useState<boolean>(false);
@@ -75,20 +61,18 @@ const CaseDataTable: FC<Props> = (props) => {
   const [selectProjectId, setSelectProjectId] = useState<number>();
   const [moduleEnum, setModuleEnum] = useState<IModuleEnum[]>([]);
   const [openNewCaseDrawer, setOpenNewCaseDrawer] = useState<boolean>(false);
+  const [openModal, setOpenModal] = useState(false);
+
   useEffect(() => {
     if (selectProjectId) {
       fetchModulesEnum(selectProjectId, ModuleEnum.CASE, setModuleEnum).then();
     }
   }, [selectProjectId]);
-  const [openModal, setOpenModal] = useState(false);
 
   useEffect(() => {
     actionRef.current?.reload();
     if (currentProjectId) {
       setSelectProjectId(currentProjectId);
-      uploadForm.setFieldsValue({
-        project_id: currentProjectId,
-      });
     }
   }, [currentModuleId, currentProjectId]);
 
@@ -346,22 +330,6 @@ const CaseDataTable: FC<Props> = (props) => {
     );
   };
 
-  /** 上传用例 */
-  const uploadCase = async (values: any) => {
-    const formData = new FormData();
-    const fileValue = values.file;
-    formData.append('file', fileValue[0].originFileObj);
-    formData.append('project_id', values.project_id);
-    formData.append('module_id', values.module_id);
-    formData.append('is_common', true.toString());
-    const { code } = await uploadTestCase(formData);
-    if (code === 0) {
-      message.success('上传成功');
-    }
-    uploadForm.resetFields();
-    return true;
-  };
-
   /** 复制用例 */
   const copyCase = async (caseId?: number) => {
     if (!caseId) {
@@ -400,115 +368,38 @@ const CaseDataTable: FC<Props> = (props) => {
       用例模版
     </Button>,
 
-    <ModalForm
-      form={uploadForm}
-      trigger={
-        <Button key="upload" type="primary">
-          <UploadOutlined />
-          上传
-        </Button>
-      }
-      title={'上传用例'}
-      onFinish={uploadCase}
-    >
-      <ProForm.Group>
-        <ProFormSelect
-          label={'所属项目'}
-          options={projects}
-          name={'project_id'}
-          width={'md'}
-          required={true}
-          rules={[{ required: true, message: '请选择项目' }]}
-          fieldProps={{
-            variant: 'filled',
-            onChange: (value) => {
-              setSelectProjectId(value as number);
-            },
-          }}
-        />
-        <ProFormTreeSelect
-          required
-          name="module_id"
-          label="所属模块"
-          width={'md'}
-          rules={[{ required: true, message: '所属模块必选' }]}
-          fieldProps={{
-            variant: 'filled',
-            treeData: moduleEnum,
-            fieldNames: {
-              label: 'title',
-              value: 'value',
-            },
-            filterTreeNode: true,
-          }}
-        />
-      </ProForm.Group>
-      <ProFormUploadDragger
-        title={false}
-        max={1}
-        description="上传文件"
-        width={'md'}
-        accept=".xlsx,.xls"
-        name="file"
-      />
-    </ModalForm>,
+    <UploadCaseModal
+      projects={projects}
+      moduleEnum={moduleEnum}
+      onProjectChange={setSelectProjectId}
+      currentProjectId={currentProjectId}
+      onSuccess={() => actionRef.current?.reload()}
+    />,
 
     <Button key="add" type="primary" onClick={() => setOpenNewCaseDrawer(true)}>
       添加用例
     </Button>,
   ];
   return (
-    <>
-      <Modal
+    <div
+      style={{
+        display: 'flex',
+        height: '100%',
+        overflow: 'hidden',
+      }}
+    >
+      <MoveCaseModal
         open={openModal}
-        onOk={async () => {
-          try {
-            const values = await moveForm.validateFields();
-            if (!currentCaseId) return;
-            const response = await updateTestCase({
-              id: currentCaseId,
-              project_id: values.project_id,
-              module_id: values.module_id,
-            } as ITestCase);
-            if (response?.code === 0) {
-              message.success(response.msg);
-              moveForm.resetFields();
-              setOpenModal(false);
-              actionRef.current?.reload();
-            }
-          } catch (error) {
-            console.error('操作失败:', error);
-          }
-        }}
         onCancel={() => setOpenModal(false)}
-        title={<span style={{ fontWeight: 600 }}>{'移动用例'}</span>}
-        width={600}
-      >
-        <ProForm submitter={false} form={moveForm} layout="vertical">
-          <ProFormSelect
-            width="md"
-            options={projects}
-            label="项目"
-            name="project_id"
-            required
-            onChange={(value) => setSelectProjectId(value as number)}
-            fieldProps={{ placeholder: '请选择目标项目' }}
-          />
-          <ProFormTreeSelect
-            required
-            name="module_id"
-            label="模块"
-            rules={[{ required: true, message: '所属模块必选' }]}
-            fieldProps={{
-              treeData: moduleEnum,
-              fieldNames: { label: 'title' },
-              filterTreeNode: true,
-              placeholder: '请选择目标模块',
-            }}
-            width="md"
-          />
-        </ProForm>
-      </Modal>
+        onSuccess={() => {
+          setOpenModal(false);
+          actionRef.current?.reload();
+        }}
+        currentCaseId={currentCaseId}
+        projects={projects}
+        moduleEnum={moduleEnum}
+        onProjectChange={setSelectProjectId}
+      />
       <MyDrawer
         name={'动态'}
         width={'40%'}
@@ -545,16 +436,19 @@ const CaseDataTable: FC<Props> = (props) => {
           }}
         />
       </MyDrawer>
-      <MyProTable
-        x={1500}
+      <ProTable
+        columnsState={{
+          persistenceKey: perKey ?? 'pro-table',
+          persistenceType: 'localStorage',
+        }}
+        scroll={{ y: 400 }}
         toolBarRender={() => toolBarRender}
         actionRef={actionRef}
-        persistenceKey={perKey}
         request={fetchPageData}
         columns={column}
         rowKey={'uid'}
       />
-    </>
+    </div>
   );
 };
 

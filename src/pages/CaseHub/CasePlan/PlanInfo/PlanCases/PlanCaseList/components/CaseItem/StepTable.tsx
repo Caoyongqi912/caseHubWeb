@@ -13,13 +13,22 @@ import {
   EditableProTable,
   ProColumns,
 } from '@ant-design/pro-components';
-import { Button, Input, message, Popover, Select, Tooltip } from 'antd';
+import {
+  Button,
+  Input,
+  message,
+  Popover,
+  Select,
+  Tooltip,
+  Typography,
+} from 'antd';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { updateCaseStepResult } from '@/api/case/caseplan';
 import { CaseSubStep } from '@/pages/CaseHub/types';
 import debounce from 'lodash/debounce';
 
+const { Text } = Typography;
 interface StepData {
   step_id: number;
   plan_id: number;
@@ -233,6 +242,9 @@ const StepTable: React.FC<StepTableProps> = ({ steps, planId }) => {
         dataIndex: 'action',
         ellipsis: true,
         editable: false,
+        render: (_, record) => {
+          return <Text type="secondary">{record.action}</Text>;
+        },
       },
       {
         title: '预期',
@@ -258,7 +270,7 @@ const StepTable: React.FC<StepTableProps> = ({ steps, planId }) => {
                   whiteSpace: 'nowrap',
                 }}
               >
-                {record.expected_result || '-'}
+                <Text type="secondary">{record.expected_result || '-'}</Text>
               </span>
             </Tooltip>
             <Tooltip title="复制到实际结果">

@@ -154,22 +154,6 @@ export const useRequirementCaseCardStyles = () => {
     };
   };
 
-  const detailBtn = (isHovered: boolean): CSSProperties => ({
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    background: isHovered ? `${colors.primary}08` : 'transparent',
-    color: colors.primary,
-    border: 'none',
-    cursor: 'pointer',
-    transition: 'all 150ms',
-    opacity: isHovered ? 1 : 0.4,
-    flexShrink: 0,
-  });
-
   const moreBtn = (isHovered: boolean): CSSProperties => ({
     display: 'inline-flex',
     alignItems: 'center',
@@ -236,7 +220,6 @@ export const useRequirementCaseCardStyles = () => {
     focusIndicator,
     metaSection,
     statusTag,
-    detailBtn,
     moreBtn,
     caseFlagTag,
   };
