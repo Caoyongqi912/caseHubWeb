@@ -1,4 +1,4 @@
-import React, { CSSProperties } from 'react';
+import React from 'react';
 import { useGlassStyles } from './useGlassStyles';
 
 interface GlassBackgroundProps {
@@ -11,7 +11,6 @@ interface GlassBackgroundProps {
     left: string;
     animationDuration: string;
   }>;
-  contentStyle?: CSSProperties;
   extraAnimations?: string;
 }
 
@@ -41,7 +40,6 @@ const GlassBackground: React.FC<GlassBackgroundProps> = ({
       animationDuration: '12s',
     },
   ],
-  contentStyle,
   extraAnimations,
 }) => {
   const styles = useGlassStyles();

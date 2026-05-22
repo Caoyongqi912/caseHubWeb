@@ -1,3 +1,7 @@
+/**
+ * 用例搜索字段组件
+ * 支持按名称、标签、等级、类型、评审状态、公共属性筛选
+ */
 import { CaseHubConfig } from '@/pages/CaseHub/config/constants';
 import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import { CaseSearchForm } from '@/pages/CaseHub/types';
@@ -10,6 +14,9 @@ import {
 import { Button, Form, Space } from 'antd';
 import { FC, useCallback } from 'react';
 
+/**
+ * SearchFields 组件属性
+ */
 interface SearchFieldsProps {
   /** 标签选项列表 */
   tags: { label: string; value: string }[];
@@ -22,23 +29,18 @@ interface SearchFieldsProps {
 /**
  * 用例搜索字段组件
  * 支持按名称、标签、等级、类型、评审状态、公共属性筛选
+ * @param props - 组件属性
  */
 const SearchFields: FC<SearchFieldsProps> = ({ tags, onSearch, onReset }) => {
   const [form] = Form.useForm();
   const { CASE_LEVEL_OPTION, CASE_TYPE_OPTION } = CaseHubConfig;
   const { colors, borderRadius } = useCaseHubTheme();
 
-  /**
-   * 执行搜索
-   */
   const handleSearch = useCallback(() => {
     const values = form.getFieldsValue();
     onSearch(values || {});
   }, [form, onSearch]);
 
-  /**
-   * 重置表单
-   */
   const handleReset = useCallback(() => {
     form.resetFields();
     onReset();
@@ -54,7 +56,6 @@ const SearchFields: FC<SearchFieldsProps> = ({ tags, onSearch, onReset }) => {
           flexWrap: 'wrap' as const,
         }}
       >
-        {/* 用例名称搜索 */}
         <ProFormText
           width="sm"
           name="case_name"
@@ -66,7 +67,6 @@ const SearchFields: FC<SearchFieldsProps> = ({ tags, onSearch, onReset }) => {
             style: { borderRadius: borderRadius.md },
           }}
         />
-        {/* 标签筛选 */}
         <ProFormSelect
           width="sm"
           name="case_tag"
@@ -79,7 +79,6 @@ const SearchFields: FC<SearchFieldsProps> = ({ tags, onSearch, onReset }) => {
             style: { borderRadius: borderRadius.md },
           }}
         />
-        {/* 用例等级筛选 */}
         <ProFormSelect
           width="sm"
           name="case_level"
@@ -92,7 +91,6 @@ const SearchFields: FC<SearchFieldsProps> = ({ tags, onSearch, onReset }) => {
             style: { borderRadius: borderRadius.md },
           }}
         />
-        {/* 评审状态筛选 */}
         <ProFormSelect
           width="sm"
           name="is_review"
@@ -108,7 +106,6 @@ const SearchFields: FC<SearchFieldsProps> = ({ tags, onSearch, onReset }) => {
             style: { borderRadius: borderRadius.md },
           }}
         />
-        {/* 公共属性筛选 */}
         <ProFormSelect
           width="sm"
           name="is_common"
@@ -124,7 +121,6 @@ const SearchFields: FC<SearchFieldsProps> = ({ tags, onSearch, onReset }) => {
             style: { borderRadius: borderRadius.md },
           }}
         />
-        {/* 用例类型筛选 */}
         <ProFormSelect
           width="sm"
           name="case_type"
@@ -148,7 +144,6 @@ const SearchFields: FC<SearchFieldsProps> = ({ tags, onSearch, onReset }) => {
             style: { borderRadius: borderRadius.md },
           }}
         />
-        {/* 操作按钮 */}
         <Space>
           <Button
             type="primary"

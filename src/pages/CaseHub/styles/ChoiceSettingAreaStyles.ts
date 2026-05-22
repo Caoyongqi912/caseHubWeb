@@ -2,18 +2,19 @@ import { CSSProperties } from 'react';
 import { useCaseHubTheme } from './useCaseHubTheme';
 
 export const useChoiceSettingAreaStyles = () => {
-  const { colors, spacing, borderRadius } = useCaseHubTheme();
+  const { colors, spacing, borderRadius, shadows } = useCaseHubTheme();
 
   const container = (): CSSProperties => ({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: `${spacing.md}px ${spacing.lg}px`,
-    background: `linear-gradient(135deg, ${colors.primaryBg}50 0%, ${colors.bgContainer} 100%)`,
-    borderRadius: borderRadius.lg,
-    border: `1px solid ${colors.border}`,
-    gap: spacing.md,
+    padding: `${spacing.sm}px ${spacing.lg}px`,
+    backgroundColor: colors.bgElevated,
+    borderRadius: borderRadius.xl,
+    border: `1px solid ${colors.borderSecondary}`,
+    gap: spacing.lg,
     flexWrap: 'wrap',
+    boxShadow: shadows.lg,
   });
 
   const selectionInfo = (): CSSProperties => ({

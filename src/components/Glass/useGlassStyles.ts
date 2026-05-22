@@ -85,8 +85,6 @@ export const useGlassStyles = (): {
   };
 
   const container = (): CSSProperties => ({
-    minHeight: '100vh',
-    background: colors.gradientBg,
     position: 'relative',
     overflow: 'hidden',
   });

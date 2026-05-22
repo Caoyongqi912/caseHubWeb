@@ -1,3 +1,7 @@
+/**
+ * 批量设置区域组件
+ * 提供批量设置用例状态、评审状态、移动用例库等功能
+ */
 import { IModuleEnum } from '@/api';
 import { queryProject } from '@/api/base';
 import {
@@ -27,15 +31,29 @@ import React, { FC, useEffect, useState } from 'react';
 
 const { Text } = Typography;
 
+/**
+ * ChoiceSettingArea 组件属性
+ */
 interface Props {
+  /** 需求ID */
   requirementId: number;
+  /** 是否显示批量设置区域 */
   showCheckButton: boolean;
+  /** 刷新回调 */
   callback: () => void;
+  /** 已选择的用例ID列表 */
   selectedCase: number[];
+  /** 设置选中用例回调 */
   setSelectedCase: React.Dispatch<React.SetStateAction<number[]>>;
+  /** 所有用例列表 */
   allTestCase: ITestCase[];
 }
 
+/**
+ * 批量设置区域组件
+ * 提供批量设置用例状态、评审状态、移动用例库等功能
+ * @param props - 组件属性
+ */
 const ChoiceSettingArea: FC<Props> = ({
   showCheckButton,
   allTestCase,

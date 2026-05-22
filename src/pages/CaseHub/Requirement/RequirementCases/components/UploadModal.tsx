@@ -1,3 +1,6 @@
+/**
+ * 用例附件上传弹窗组件
+ */
 import { uploadTestCase } from '@/api/case/testCase';
 import {
   ModalForm,
@@ -7,17 +10,28 @@ import {
 import { Form } from 'antd';
 import { FC, useCallback } from 'react';
 
+/**
+ * UploadModal 组件属性
+ */
 interface UploadModalProps {
+  /** 是否打开弹窗 */
   open: boolean;
+  /** 弹窗状态变更回调 */
   onOpenChange: (open: boolean) => void;
+  /** 上传相关参数 */
   uploadProps?: {
     reqId?: string;
     moduleId?: string;
     projectId?: string;
   };
+  /** 上传完成回调 */
   onUploadFinish: () => void;
 }
 
+/**
+ * 用例附件上传弹窗组件
+ * @param props - 组件属性
+ */
 const UploadModal: FC<UploadModalProps> = ({
   open,
   onOpenChange,

@@ -1,5 +1,10 @@
+/**
+ * 工具栏组件
+ * 提供用例选择、分组切换、添加等操作功能
+ */
 import MyDrawer from '@/components/MyDrawer';
 import { useCaseHubTheme } from '@/pages/CaseHub/styles';
+import { ITestCase } from '@/pages/CaseHub/types';
 import {
   AppstoreOutlined,
   CheckSquareOutlined,
@@ -11,13 +16,19 @@ import {
   UploadOutlined,
   UpSquareOutlined,
 } from '@ant-design/icons';
-import { Button, Divider, Tooltip, Typography } from 'antd';
+import { Button, Divider, Space, Tooltip, Typography } from 'antd';
 import { FC, useMemo, useState } from 'react';
 import ChoiceCaseTable from '../../components/ChoiceCaseTable';
+import ChoiceSettingArea from './ChoiceSettingArea';
 
+/**
+ * Toolbar 组件属性
+ */
 interface ToolbarProps {
   /** 项目ID */
   projectId?: number;
+  /** 需求ID */
+  requirementId: number;
   /** 是否分组显示 */
   isGrouped: boolean;
   /** 是否全部展开 */
@@ -44,6 +55,16 @@ interface ToolbarProps {
   onUploadClick: () => void;
   /** 用例选择回调 */
   onCaseSelect: (caseIds: number[]) => void;
+  /** 刷新回调 */
+  onRefreshCallback: () => void;
+  /** 所有用例列表 */
+  allTestCase: ITestCase[];
+  /** 已选择的用例ID列表 */
+  selectedCase: number[];
+  /** 设置选中用例回调 */
+  onSelectedCaseChange: (
+    ids: number[] | ((prev: number[]) => number[]),
+  ) => void;
 }
 
 const { Text } = Typography;
@@ -51,6 +72,7 @@ const { Text } = Typography;
 /**
  * 工具栏组件
  * 提供用例选择、分组切换，添加等操作
+ * @param props - 组件属性
  */
 const Toolbar: FC<ToolbarProps> = ({
   isGrouped,
@@ -67,11 +89,15 @@ const Toolbar: FC<ToolbarProps> = ({
   onUploadClick,
   projectId,
   onCaseSelect,
+  requirementId,
+  onRefreshCallback,
+  allTestCase,
+  selectedCase,
+  onSelectedCaseChange,
 }) => {
-  const { colors, spacing, borderRadius } = useCaseHubTheme();
+  const { colors, spacing, borderRadius, shadows } = useCaseHubTheme();
   const [openDrawer, setOpenDrawer] = useState(false);
 
-  /** 工具栏按钮通用样式 */
   const toolbarBtnStyle = useMemo(
     () => ({
       display: 'flex',
@@ -83,7 +109,6 @@ const Toolbar: FC<ToolbarProps> = ({
     [borderRadius],
   );
 
-  /** 分组切换按钮样式 */
   const groupButtonStyle = useMemo(
     () => ({
       borderRadius: borderRadius.lg,
@@ -102,7 +127,6 @@ const Toolbar: FC<ToolbarProps> = ({
     [borderRadius, colors, isGrouped],
   );
 
-  /** 添加用例按钮样式 */
   const addCaseButtonStyle = useMemo(
     () => ({
       borderRadius: borderRadius.lg,
@@ -117,7 +141,6 @@ const Toolbar: FC<ToolbarProps> = ({
     [borderRadius, colors],
   );
 
-  /** 选择状态徽章样式 */
   const selectionBadgeStyle = useMemo(
     () => ({
       display: 'flex',
@@ -132,7 +155,6 @@ const Toolbar: FC<ToolbarProps> = ({
     [spacing, borderRadius, colors, selectedCount],
   );
 
-  /** 用例选择回调 */
   const handleCaseSelect = async (caseIds: number[]) => {
     onCaseSelect(caseIds);
     setOpenDrawer(false);
@@ -145,12 +167,9 @@ const Toolbar: FC<ToolbarProps> = ({
         alignItems: 'center',
         justifyContent: 'space-between',
         flexWrap: 'wrap',
-        gap: spacing.sm,
       }}
     >
-      {/* 左侧：选择状态和操作 */}
       <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm }}>
-        {/* 选择状态徽章 */}
         <div style={selectionBadgeStyle}>
           <CheckSquareOutlined
             style={{
@@ -167,8 +186,6 @@ const Toolbar: FC<ToolbarProps> = ({
             已选 {selectedCount}/{totalCount}
           </Text>
         </div>
-
-        {/* 全选按钮 */}
         <Tooltip title="全选">
           <Button
             type="text"
@@ -180,8 +197,6 @@ const Toolbar: FC<ToolbarProps> = ({
             全选
           </Button>
         </Tooltip>
-
-        {/* 取消选择按钮 */}
         <Tooltip title="取消选择">
           <Button
             type="text"
@@ -196,9 +211,7 @@ const Toolbar: FC<ToolbarProps> = ({
         </Tooltip>
       </div>
 
-      {/* 右侧：工具操作按钮 */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm }}>
-        {/* 分组展开/收起按钮 */}
+      <Space>
         {isGrouped && (
           <>
             <Tooltip title={isAllExpanded ? '全部收起' : '全部展开'}>
@@ -218,7 +231,6 @@ const Toolbar: FC<ToolbarProps> = ({
           </>
         )}
 
-        {/* 刷新按钮 */}
         <Tooltip title="刷新列表">
           <Button
             type="text"
@@ -231,7 +243,6 @@ const Toolbar: FC<ToolbarProps> = ({
           </Button>
         </Tooltip>
 
-        {/* 上传按钮 */}
         <Tooltip title="附件上传">
           <Button
             type="text"
@@ -244,7 +255,6 @@ const Toolbar: FC<ToolbarProps> = ({
           </Button>
         </Tooltip>
 
-        {/* 分组切换按钮 */}
         <Button
           type="primary"
           onClick={onToggleGroup}
@@ -254,7 +264,6 @@ const Toolbar: FC<ToolbarProps> = ({
           {isGrouped ? '平铺' : '分组'}
         </Button>
 
-        {/* 添加用例按钮 */}
         <Button
           type="primary"
           onClick={onAddCase}
@@ -271,7 +280,28 @@ const Toolbar: FC<ToolbarProps> = ({
         >
           关联用例
         </Button>
-      </div>
+      </Space>
+      {/* 批量操作悬浮栏 */}
+      {selectedCount > 0 && (
+        <div
+          style={{
+            position: 'fixed',
+            bottom: 80,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 100,
+          }}
+        >
+          <ChoiceSettingArea
+            requirementId={requirementId}
+            callback={onRefreshCallback}
+            allTestCase={allTestCase}
+            showCheckButton={selectedCount > 0}
+            selectedCase={selectedCase}
+            setSelectedCase={onSelectedCaseChange}
+          />
+        </div>
+      )}
       <MyDrawer
         open={openDrawer}
         setOpen={setOpenDrawer}
