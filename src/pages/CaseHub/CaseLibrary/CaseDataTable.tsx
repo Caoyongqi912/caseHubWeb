@@ -22,7 +22,12 @@ import {
   SmallDashOutlined,
   SoundOutlined,
 } from '@ant-design/icons';
-import { ActionType, ProColumns, ProTable } from '@ant-design/pro-components';
+import {
+  ActionType,
+  ProCard,
+  ProColumns,
+  ProTable,
+} from '@ant-design/pro-components';
 import { useModel } from '@umijs/max';
 import type { MenuProps } from 'antd';
 import {
@@ -383,8 +388,9 @@ const CaseDataTable: FC<Props> = (props) => {
   return (
     <div
       style={{
-        display: 'flex',
         height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
         overflow: 'hidden',
       }}
     >
@@ -436,18 +442,43 @@ const CaseDataTable: FC<Props> = (props) => {
           }}
         />
       </MyDrawer>
-      <ProTable
-        columnsState={{
-          persistenceKey: perKey ?? 'pro-table',
-          persistenceType: 'localStorage',
+      <ProCard
+        headerBordered
+        bordered
+        style={{
+          flex: 1,
+          height: 0,
+          display: 'flex',
+          flexDirection: 'column',
         }}
-        scroll={{ y: 400 }}
-        toolBarRender={() => toolBarRender}
-        actionRef={actionRef}
-        request={fetchPageData}
-        columns={column}
-        rowKey={'uid'}
-      />
+        bodyStyle={{
+          padding: '12px',
+          height: '100%',
+        }}
+      >
+        <ProTable
+          columnsState={{
+            persistenceKey: perKey ?? 'pro-table',
+            persistenceType: 'localStorage',
+          }}
+          style={{ height: '100%' }}
+          scroll={{
+            x: 1200,
+            y: 'calc(100vh - 450px)', // 🔥 自适应屏幕高度，表格内部滚动
+          }}
+          pagination={{
+            showQuickJumper: true,
+            defaultPageSize: 10,
+            showSizeChanger: true,
+            pageSizeOptions: ['10', '20', '50', '100'],
+          }}
+          toolBarRender={() => toolBarRender}
+          actionRef={actionRef}
+          request={fetchPageData}
+          columns={column}
+          rowKey={'uid'}
+        />
+      </ProCard>
     </div>
   );
 };

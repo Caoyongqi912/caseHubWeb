@@ -12,6 +12,7 @@ import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
 import {
   ActionType,
   PageContainer,
+  ProCard,
   ProColumns,
   ProTable,
 } from '@ant-design/pro-components';
@@ -242,7 +243,12 @@ const Index = () => {
 
   return (
     <PageContainer
-      title={false}
+      header={{
+        title: false,
+        breadcrumb: {
+          items: [],
+        },
+      }}
       style={{
         display: 'flex',
         flexDirection: 'column',
@@ -260,29 +266,62 @@ const Index = () => {
           actionRef.current?.reload();
         }}
       />
-
-      {/* 占满剩余高度，内部滚动 */}
-
-      <ProTable
-        actionRef={actionRef}
-        columns={columns}
-        rowKey="uid"
-        scroll={{
-          y: 400,
+      <div
+        style={{
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
         }}
-        request={queryRecord}
-        pagination={{ defaultPageSize: 10 }}
-        toolBarRender={() => [
-          <Button
-            key="add"
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => openFormModal()}
-          >
-            新增计划
-          </Button>,
-        ]}
-      />
+      >
+        {/* 占满剩余高度，内部滚动 */}
+        <ProCard
+          headerBordered
+          bordered
+          style={{
+            flex: 1,
+            height: 0,
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+          bodyStyle={{
+            padding: '12px',
+            height: '100%',
+          }}
+        >
+          <ProTable
+            columnsState={{
+              persistenceKey: 'case_plan',
+              persistenceType: 'localStorage',
+            }}
+            actionRef={actionRef}
+            columns={columns}
+            rowKey="uid"
+            style={{ height: '100%' }}
+            scroll={{
+              x: 1200,
+              y: 'calc(100vh - 350px)', // 🔥 自适应屏幕高度，表格内部滚动
+            }}
+            request={queryRecord}
+            pagination={{
+              showQuickJumper: true,
+              defaultPageSize: 10,
+              showSizeChanger: true,
+              pageSizeOptions: ['10', '20', '50', '100'],
+            }}
+            toolBarRender={() => [
+              <Button
+                key="add"
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() => openFormModal()}
+              >
+                新增计划
+              </Button>,
+            ]}
+          />
+        </ProCard>
+      </div>
     </PageContainer>
   );
 };

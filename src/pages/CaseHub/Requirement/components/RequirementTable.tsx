@@ -4,7 +4,6 @@ import {
   updateRequirement,
 } from '@/api/case/requirement';
 import MyDrawer from '@/components/MyDrawer';
-import MyProTable from '@/components/Table/MyProTable';
 import {
   RequirementProcessEnum,
   RequirementProcessOption,
@@ -18,7 +17,7 @@ import { IRequirement } from '@/pages/CaseHub/types';
 import { CONFIG, ModuleEnum } from '@/utils/config';
 import { pageData } from '@/utils/somefunc';
 import { EditOutlined } from '@ant-design/icons';
-import { ActionType, ProCard } from '@ant-design/pro-components';
+import { ActionType, ProCard, ProTable } from '@ant-design/pro-components';
 import { ProColumns } from '@ant-design/pro-table/lib/typing';
 import { Popconfirm, Select, Space, Tag, Typography } from 'antd';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -67,7 +66,7 @@ const RequirementTable: FC<SelfProps> = ({
         dataIndex: 'uid',
         fixed: 'left',
         copyable: true,
-        width: 100,
+        width: '10%',
         editable: false,
         render: (text) => (
           <Tag
@@ -90,7 +89,7 @@ const RequirementTable: FC<SelfProps> = ({
         dataIndex: 'requirement_name',
         copyable: true,
         editable: false,
-        width: 200,
+        width: '20%',
         render: (text) => (
           <Text strong ellipsis={{ tooltip: text }}>
             {text}
@@ -102,7 +101,6 @@ const RequirementTable: FC<SelfProps> = ({
         key: 'requirement_level',
         dataIndex: 'requirement_level',
         editable: false,
-        width: 100,
         render: (_, record) => {
           const levelColor =
             caseLevelColors[record.requirement_level] || caseLevelColors.P2;
@@ -128,7 +126,6 @@ const RequirementTable: FC<SelfProps> = ({
         key: 'process',
         dataIndex: 'process',
         valueType: 'select',
-        width: 120,
         valueEnum: RequirementProcessEnum,
         render: (_, record) => {
           const processColor =
@@ -170,7 +167,6 @@ const RequirementTable: FC<SelfProps> = ({
         dataIndex: 'case_number',
         hideInSearch: true,
         editable: false,
-        width: 80,
         render: (num) => (
           <Tag
             style={{
@@ -192,13 +188,12 @@ const RequirementTable: FC<SelfProps> = ({
         dataIndex: 'creatorName',
         hideInSearch: true,
         editable: false,
-        width: 100,
         render: (text) => <Text type="secondary">{text}</Text>,
       },
       {
         valueType: 'option',
         fixed: 'right',
-        width: 180,
+        width: '18%',
         render: (_, record: IRequirement) => {
           return (
             <Space size="small">
@@ -286,7 +281,14 @@ const RequirementTable: FC<SelfProps> = ({
   };
 
   return (
-    <ProCard bodyStyle={{ padding: 0 }}>
+    <div
+      style={{
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+      }}
+    >
       <MyDrawer
         width={'40%'}
         name={'需求详情'}
@@ -302,23 +304,53 @@ const RequirementTable: FC<SelfProps> = ({
           }}
         />
       </MyDrawer>
-      <MyProTable
-        onSave={onSave}
-        persistenceKey={perKey}
-        rowKey={'id'}
-        actionRef={actionRef}
-        columns={columns}
-        request={fetchPageData}
-        toolBarRender={() => [
-          <RequirementForm
-            key="add"
-            callback={() => actionRef.current?.reload()}
-            currentModuleId={currentModuleId}
-            currentProjectId={currentProjectId}
-          />,
-        ]}
-      />
-    </ProCard>
+      <ProCard
+        headerBordered
+        bordered
+        style={{
+          flex: 1,
+          height: 0,
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+        bodyStyle={{
+          padding: '12px',
+          height: '100%',
+        }}
+      >
+        <ProTable
+          onSave={onSave}
+          // columnsState={{
+          //   persistenceKey: perKey ?? 'pro-table',
+          //   persistenceType: 'localStorage',
+          // }}
+          rowKey={'id'}
+          // 🔥 核心：高度填充满父容器，表格内部滚动
+          style={{ height: '100%' }}
+          scroll={{
+            x: 1200,
+            y: 'calc(100vh - 450px)', // 🔥 自适应屏幕高度，表格内部滚动
+          }}
+          actionRef={actionRef}
+          columns={columns}
+          request={fetchPageData}
+          pagination={{
+            showQuickJumper: true,
+            defaultPageSize: 10,
+            showSizeChanger: true,
+            pageSizeOptions: ['10', '20', '50', '100'],
+          }}
+          toolBarRender={() => [
+            <RequirementForm
+              key="add"
+              callback={() => actionRef.current?.reload()}
+              currentModuleId={currentModuleId}
+              currentProjectId={currentProjectId}
+            />,
+          ]}
+        />
+      </ProCard>
+    </div>
   );
 };
 
