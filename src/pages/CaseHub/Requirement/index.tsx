@@ -19,7 +19,24 @@ const Index = () => {
   };
 
   return (
-    <PageContainer title={false}>
+    <PageContainer
+      header={{
+        title: false,
+        breadcrumb: {
+          items: [],
+        },
+      }}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: 'calc(100vh - 8px)',
+        overflow: 'hidden',
+        padding: 0,
+        marginBottom: 24,
+        borderRadius: '16px',
+        backdropFilter: 'blur(20px)',
+      }}
+    >
       <ProCard ghost={true}>
         <Group orientation="horizontal">
           <Panel defaultSize={20} minSize={10} collapsible={true}>

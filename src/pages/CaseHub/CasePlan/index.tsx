@@ -5,7 +5,6 @@
 import { IObjGet } from '@/api';
 import { deleteCasePlan, pageCasePlan } from '@/api/case/caseplan';
 import { queryProjectEnum } from '@/components/CommonFunc';
-import { useGlassStyles } from '@/components/Glass';
 import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import { ICasePlan } from '@/pages/CaseHub/types';
 import { pageData } from '@/utils/somefunc';
@@ -27,7 +26,6 @@ const Index = () => {
   const navigate = useNavigate();
   const [form] = Form.useForm<ICasePlan>();
   const [projectEnumMap, setProjectEnumMap] = useState<IObjGet>({});
-  const styles = useGlassStyles();
 
   const { token } = useCaseHubTheme();
 
@@ -250,7 +248,6 @@ const Index = () => {
         flexDirection: 'column',
         height: 'calc(100vh - 20px)',
         overflow: 'hidden',
-        background: styles.colors.glass,
       }}
     >
       <CasePlanForm

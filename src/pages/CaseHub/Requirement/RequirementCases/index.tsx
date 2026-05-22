@@ -520,12 +520,11 @@ const Index: React.FC = () => {
       style={{
         display: 'flex',
         flexDirection: 'column',
-        height: 'calc(100vh - 60px)',
+        height: 'calc(100vh - 80px)',
         overflow: 'hidden',
       }}
     >
       {/* 搜索和工具栏区域 - 固定在顶部 */}
-
       <CaseStepSearchForm
         projectId={parseInt(projectId!)}
         tags={tags}

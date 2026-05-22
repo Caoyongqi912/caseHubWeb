@@ -1,4 +1,3 @@
-import { useGlassStyles } from '@/components/Glass';
 import LeftComponents from '@/components/LeftComponents';
 import { ModuleEnum } from '@/utils/config';
 import { PageContainer } from '@ant-design/pro-components';
@@ -7,7 +6,6 @@ import { Group, Panel } from 'react-resizable-panels';
 import CaseDataTable from './CaseDataTable';
 
 const Index = () => {
-  const styles = useGlassStyles();
   const [currentModuleId, setCurrentModuleId] = useState<number | undefined>();
   const [currentProjectId, setCurrentProjectId] = useState<
     number | undefined
@@ -24,7 +22,10 @@ const Index = () => {
 
   return (
     <PageContainer
-      title={false}
+      header={{
+        title: false,
+        breadcrumb: { items: [] },
+      }}
       style={{
         display: 'flex',
         flexDirection: 'column',
@@ -33,9 +34,7 @@ const Index = () => {
         padding: 0,
         marginBottom: 24,
         borderRadius: '16px',
-        background: styles.colors.glass,
         backdropFilter: 'blur(20px)',
-        border: `1px solid ${styles.colors.glassBorder}`,
       }}
     >
       <Group orientation="horizontal">
