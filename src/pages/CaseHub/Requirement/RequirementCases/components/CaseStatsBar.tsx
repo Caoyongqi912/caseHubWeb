@@ -31,7 +31,10 @@ const CaseStatsBar: FC<Props> = ({ total, passed, failed, unchecked }) => {
   if (total === 0) return null;
 
   return (
-    <ProCard bodyStyle={{ padding: 0 }} style={{ marginTop: 8, width: '100%' }}>
+    <ProCard
+      styles={{ body: { padding: 0 } }}
+      style={{ marginTop: 8, width: '100%' }}
+    >
       <div
         style={{
           width: '100%',

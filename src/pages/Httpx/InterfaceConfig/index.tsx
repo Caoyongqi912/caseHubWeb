@@ -15,7 +15,7 @@ const Index = () => {
       children: <InterApiMockConfig />,
     },
   ];
-  return <MyTabs tabPosition={'top'} defaultActiveKey={'1'} items={items} />;
+  return <MyTabs tabPlacement={'top'} defaultActiveKey={'1'} items={items} />;
 };
 
 export default Index;

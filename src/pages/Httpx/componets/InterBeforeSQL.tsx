@@ -13,10 +13,10 @@ import {
   EditableFormInstance,
   EditableProTable,
   ProCard,
+  ProColumns,
   ProForm,
   ProFormSelect,
 } from '@ant-design/pro-components';
-import { ProColumns } from '@ant-design/pro-table/lib/typing';
 import {
   Button,
   FormInstance,

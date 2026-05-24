@@ -31,12 +31,14 @@ const Index: FC<Props> = ({ planId }) => {
 
   return (
     <ProCard
-      bordered
-      bodyStyle={{
-        height: 'calc(100vh - 150px)',
-        display: 'flex',
-        overflow: 'hidden',
-        flexDirection: 'column',
+      variant="outlined"
+      styles={{
+        body: {
+          height: 'calc(100vh - 150px)',
+          display: 'flex',
+          overflow: 'hidden',
+          flexDirection: 'column',
+        },
       }}
     >
       <Splitter style={{ flex: 1, minHeight: 0, height: '100%' }}>

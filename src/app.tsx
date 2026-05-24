@@ -1,23 +1,28 @@
 import { IUser } from '@/api';
 import { currentUser, queryProject } from '@/api/base';
-import LeftSetting from '@/components/LeftSetting';
+import { GlassBackground } from '@/components/Glass';
 import { errorConfig } from '@/requestErrorConfig';
 import '@/warningFilter';
 import { RequestConfig } from '@@/plugin-request/request';
-import { PageLoading } from '@ant-design/pro-components';
-import { Settings as LayoutSettings } from '@ant-design/pro-layout';
-import { theme } from 'antd';
+import {
+  LogoutOutlined,
+  MoonOutlined,
+  SunOutlined,
+  UserOutlined,
+} from '@ant-design/icons';
+import {
+  PageLoading,
+  Settings as LayoutSettings,
+} from '@ant-design/pro-components';
+import { Avatar, Dropdown, MenuProps, Segmented } from 'antd';
 import { useState } from 'react';
-import { history, RunTimeLayoutConfig, useAntdConfigSetter } from 'umi';
+import { history, RunTimeLayoutConfig } from 'umi';
 import defaultSetting from '../config/defaultSetting';
-import { GlassBackground } from './components/Glass';
 
-// 常量定义
 const loginPath = '/userLogin';
 const THEME_KEY = 'app-theme';
 type ThemeType = 'realDark' | 'light';
 
-// 类型定义
 interface InitialState {
   settings?: Partial<LayoutSettings>;
   currentUser?: IUser;
@@ -29,23 +34,17 @@ interface InitialState {
   setTheme?: (theme: ThemeType) => void;
 }
 
-// 主题相关工具函数
-const themeUtils = {
-  getTheme: (): ThemeType => {
-    return (localStorage.getItem(THEME_KEY) as ThemeType) || 'light';
-  },
-  setTheme: (theme: ThemeType): void => {
-    localStorage.setItem(THEME_KEY, theme);
-  },
-};
+const getStoredTheme = (): ThemeType =>
+  (localStorage.getItem(THEME_KEY) as ThemeType) || 'light';
 
-// 数据获取函数
+const setStoredTheme = (theme: ThemeType) =>
+  localStorage.setItem(THEME_KEY, theme);
+
 const fetchUserInfo = async (): Promise<IUser | undefined> => {
   try {
     const res = await currentUser();
     return res.data;
-  } catch (error) {
-    console.error('获取用户信息失败:', error);
+  } catch {
     history.push(loginPath);
     return undefined;
   }
@@ -54,18 +53,11 @@ const fetchUserInfo = async (): Promise<IUser | undefined> => {
 const fetchProjects = async (): Promise<{ label: string; value: number }[]> => {
   try {
     const { code, data } = await queryProject();
-    if (code === 0) {
-      return data.map((item) => ({
-        label: item.title,
-        value: item.id,
-      }));
-    }
-    if (code === 4000) {
-      history.push(loginPath);
-    }
+    if (code === 0)
+      return data.map((item) => ({ label: item.title, value: item.id }));
+    if (code === 4000) history.push(loginPath);
     return [];
-  } catch (error) {
-    console.error('获取项目列表失败:', error);
+  } catch {
     return [];
   }
 };
@@ -74,22 +66,17 @@ export async function getInitialState(): Promise<InitialState> {
   const baseState = {
     fetchUserInfo,
     refreshProjects: fetchProjects,
-    theme: themeUtils.getTheme(),
-    setTheme: themeUtils.setTheme,
+    theme: getStoredTheme(),
+    setTheme: setStoredTheme,
     settings: defaultSetting,
   };
 
   if (history.location.pathname !== loginPath) {
-    const [currentUser, projects] = await Promise.all([
+    const [user, projects] = await Promise.all([
       fetchUserInfo(),
       fetchProjects(),
     ]);
-
-    return {
-      ...baseState,
-      currentUser,
-      projects,
-    };
+    return { ...baseState, currentUser: user, projects };
   }
 
   return baseState;
@@ -99,58 +86,98 @@ export const layout: RunTimeLayoutConfig = ({
   initialState,
   setInitialState,
 }) => {
-  const [collapsed, setCollapsed] = useState(true);
   const currentTheme = initialState?.theme || 'light';
-  const setAntdConfig = useAntdConfigSetter();
+  const [collapsed, setCollapsed] = useState(true);
 
-  const handleToggleTheme = () => {
-    const newTheme = currentTheme === 'light' ? 'realDark' : 'light';
+  const changeTheme = (value: string | number) => {
+    const next = value === 'realDark' ? 'realDark' : 'light';
+    setStoredTheme(next as ThemeType);
+    setInitialState((prev) => ({ ...prev, theme: next as ThemeType }));
+  };
 
-    setAntdConfig({
-      theme: {
-        algorithm:
-          newTheme === 'realDark'
-            ? theme.darkAlgorithm
-            : theme.defaultAlgorithm,
+  const userMenuItems: MenuProps['items'] = [
+    {
+      key: 'center',
+      icon: <UserOutlined />,
+      label: '个人中心',
+      onClick: () => history.push('/user/center'),
+    },
+    { type: 'divider' },
+    {
+      key: 'logout',
+      icon: <LogoutOutlined />,
+      label: '登出',
+      onClick: () => {
+        setInitialState((s) => ({ ...s, currentUser: undefined }));
+        history.push(loginPath);
       },
-    });
-
-    themeUtils.setTheme(newTheme);
-    setInitialState((prev) => ({
-      ...prev,
-      theme: newTheme,
-    }));
-  };
-
-  const handlePageChange = () => {
-    if (!initialState?.currentUser && history.location.pathname !== loginPath) {
-      history.push(loginPath);
-    }
-  };
+    },
+  ];
 
   return {
+    // 👇 👇 核心修复：这里控制 ProLayout（侧边栏/头部/菜单）的主题
     navTheme: currentTheme,
-    disableContentMargin: false,
-    defaultCollapsed: collapsed,
+    theme: currentTheme === 'realDark' ? 'dark' : 'light',
+    breakPoint: false,
+    collapsed: true, // 用全局默认
     onCollapse: setCollapsed,
-    breakpoint: false,
-    waterMarkProps: {
-      content: initialState?.currentUser?.username,
+    waterMarkProps: initialState?.currentUser?.username
+      ? { content: String(initialState.currentUser.username) }
+      : undefined,
+    onPageChange: () => {
+      if (
+        !initialState?.currentUser &&
+        history.location.pathname !== loginPath
+      ) {
+        history.push(loginPath);
+      }
     },
-    onPageChange: handlePageChange,
     unAccessible: <div>无访问权限</div>,
-    childrenRender: (children) => (
+    childrenRender: (children: React.ReactNode) => (
       <GlassBackground>
         {initialState?.loading ? <PageLoading /> : <>{children}</>}
       </GlassBackground>
     ),
-    rightContentRender: () => (
-      <LeftSetting
-        collapsed={collapsed}
-        currentTheme={currentTheme}
-        toggleTheme={handleToggleTheme}
-      />
-    ),
+    actionsRender: ({ isMobile }) => [
+      !isMobile && (
+        <Segmented
+          key="theme"
+          value={currentTheme}
+          onChange={changeTheme}
+          vertical
+          options={[
+            { value: 'light', icon: <SunOutlined /> },
+            { value: 'realDark', icon: <MoonOutlined /> },
+          ]}
+        />
+      ),
+    ],
+    footerRender: false,
+    menuFooterRender: false,
+    avatarProps: initialState?.currentUser
+      ? {
+          title: initialState.currentUser.username,
+          render: (_props: any, _dom: React.ReactNode) => {
+            const user = initialState?.currentUser;
+            if (!user) return null;
+            return (
+              <Dropdown menu={{ items: userMenuItems }}>
+                <a>
+                  <Avatar
+                    src={user.avatar || undefined}
+                    icon={!user.avatar ? <UserOutlined /> : undefined}
+                    style={
+                      !user.avatar ? { backgroundColor: '#1677ff' } : undefined
+                    }
+                  >
+                    {!user.avatar && user.username?.[0]?.toUpperCase()}
+                  </Avatar>
+                </a>
+              </Dropdown>
+            );
+          },
+        }
+      : false,
     ...initialState?.settings,
   };
 };

@@ -182,7 +182,7 @@ const ProjectSelect: FC<IProps> = ({
       <ProCard
         size="small"
         style={styles.projectCard}
-        bodyStyle={{ padding: spacing.lg }}
+        styles={{ body: { padding: spacing.lg } }}
         hoverable={false}
       >
         <div
@@ -286,7 +286,7 @@ const ProjectSelect: FC<IProps> = ({
     <ProCard
       size="small"
       style={styles.selectCard}
-      bodyStyle={{ padding: `${spacing.xl}px ${spacing.lg}px` }}
+      styles={{ body: { padding: `${spacing.xl}px ${spacing.lg}px` } }}
     >
       <Space direction="vertical" style={{ width: '100%' }} size={spacing.lg}>
         <Space align="center" size={spacing.md}>

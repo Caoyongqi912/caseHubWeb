@@ -160,8 +160,10 @@ const PlayStepGroupDetail = () => {
       </MyDrawer>
       <ProCard
         bordered
-        bodyStyle={{
-          minHeight: '100vh',
+        styles={{
+          body: {
+            minHeight: '100vh',
+          },
         }}
         extra={CardExtra}
       >

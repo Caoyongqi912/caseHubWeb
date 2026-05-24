@@ -444,19 +444,22 @@ const CaseDataTable: FC<Props> = (props) => {
       </MyDrawer>
       <ProCard
         headerBordered
-        bordered
+        variant="outlined"
         style={{
           flex: 1,
           height: 0,
           display: 'flex',
           flexDirection: 'column',
         }}
-        bodyStyle={{
-          padding: '12px',
-          height: '100%',
+        styles={{
+          body: {
+            padding: '12px',
+            height: '100%',
+          },
         }}
       >
         <ProTable
+          cardBordered
           columnsState={{
             persistenceKey: perKey ?? 'pro-table',
             persistenceType: 'localStorage',
@@ -464,7 +467,7 @@ const CaseDataTable: FC<Props> = (props) => {
           style={{ height: '100%' }}
           scroll={{
             x: 1200,
-            y: 'calc(100vh - 450px)', // 🔥 自适应屏幕高度，表格内部滚动
+            y: 'calc(100vh - 350px)', // 🔥 自适应屏幕高度，表格内部滚动
           }}
           pagination={{
             showQuickJumper: true,

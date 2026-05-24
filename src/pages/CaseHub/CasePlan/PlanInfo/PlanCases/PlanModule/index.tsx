@@ -462,10 +462,12 @@ const Index: FC<PlanModuleProps> = ({
           flexDirection: 'column',
         }}
         // 👇 关键：只让 body 区域滚动，头部固定
-        bodyStyle={{
-          flex: 1,
-          overflow: 'auto', // 只有body滚动
-          padding: '12px', // 保持内边距舒服
+        styles={{
+          body: {
+            flex: 1,
+            overflow: 'auto',
+            padding: '12px',
+          },
         }}
       >
         {/* Tree 也要充满 */}

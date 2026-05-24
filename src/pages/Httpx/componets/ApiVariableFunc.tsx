@@ -309,7 +309,7 @@ const ApiVariableFunc: FC<ISelfProps> = ({ value, index, setValue }) => {
   const renderContentPanel = (data: any, type: 'func' | 'var' | 'my') => {
     return (
       <ProCard
-        bodyStyle={commonStyles.cardBodyCompact}
+        styles={{ body: commonStyles.cardBodyCompact }}
         style={commonStyles.detailPanel}
       >
         {data ? (
@@ -323,7 +323,7 @@ const ApiVariableFunc: FC<ISelfProps> = ({ value, index, setValue }) => {
               </Text>
             </div>
             <div style={commonStyles.sectionDivider} />
-            {/* <div style={commonStyles.infoItem}>
+            {/* <div style={commonStyles.infoItem}}>
               <Text style={commonStyles.label}>变量值</Text>
               <Text
                 code
@@ -384,7 +384,7 @@ const ApiVariableFunc: FC<ISelfProps> = ({ value, index, setValue }) => {
    */
   const renderDetailPanel = (data: any, type: 'func' | 'var' | 'my') => (
     <ProCard
-      bodyStyle={commonStyles.cardBodyCompact}
+      styles={{ body: commonStyles.cardBodyCompact }}
       style={commonStyles.detailPanel}
     >
       {data ? (
@@ -477,7 +477,7 @@ const ApiVariableFunc: FC<ISelfProps> = ({ value, index, setValue }) => {
     type: 'func' | 'var' | 'my',
   ) => (
     <ProCard split={'vertical'} style={{ minWidth: '400px' }}>
-      <ProCard bodyStyle={commonStyles.cardBodyMinimal}>{menu}</ProCard>
+      <ProCard styles={{ body: commonStyles.cardBodyMinimal }}>{menu}</ProCard>
       {renderDetailPanel(
         type === 'func'
           ? currentValue
@@ -494,7 +494,7 @@ const ApiVariableFunc: FC<ISelfProps> = ({ value, index, setValue }) => {
       label: '引用变量',
       children: (
         <ProCard split={'horizontal'}>
-          <ProCard bodyStyle={commonStyles.cardBodyCompact}>
+          <ProCard styles={{ body: commonStyles.cardBodyCompact }}>
             <Select
               {...createSelectConfig(funcData, setCurrentValue)}
               dropdownRender={(menu) => dropdownRender(menu, 'func')}
@@ -508,8 +508,8 @@ const ApiVariableFunc: FC<ISelfProps> = ({ value, index, setValue }) => {
       key: '2',
       label: '固定值',
       children: (
-        <ProCard split={'horizontal'} bodyStyle={{ minHeight: 100 }}>
-          <ProCard bodyStyle={commonStyles.cardBodyCompact}>
+        <ProCard split={'horizontal'} styles={{ body: { minHeight: 100 } }}>
+          <ProCard styles={{ body: commonStyles.cardBodyCompact }}>
             <Select
               {...createSelectConfig(varData, setCurrentData)}
               dropdownRender={(menu) => dropdownRender(menu, 'var')}
@@ -523,8 +523,8 @@ const ApiVariableFunc: FC<ISelfProps> = ({ value, index, setValue }) => {
       key: '3',
       label: '我的',
       children: (
-        <ProCard split={'horizontal'} bodyStyle={{ minHeight: 100 }}>
-          <ProCard bodyStyle={commonStyles.cardBodyCompact}>
+        <ProCard split={'horizontal'} styles={{ body: { minHeight: 100 } }}>
+          <ProCard styles={{ body: commonStyles.cardBodyCompact }}>
             <Select
               {...createSelectConfig(myData, setCurrentMyData)}
               dropdownRender={(menu) => dropdownRender(menu, 'my')}

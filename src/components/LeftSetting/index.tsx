@@ -147,20 +147,21 @@ const Index: FC<SelfProps> = ({ collapsed, currentTheme, toggleTheme }) => {
   // 折叠状态：上下垂直布局，整体居中
   return (
     <Space
-      direction="vertical"
+      orientation="horizontal"
       align="center"
       style={{
         width: '100%',
         height: '100%',
         minHeight: '120px',
         padding: '8px 0',
+        marginRight: 12,
       }}
     >
       {/* 主题切换器 - 放在上面 */}
-      <div style={{ marginBottom: 4 }}>
+      <div style={{ marginRight: 4 }}>
         <Segmented
           value={currentTheme}
-          vertical={true}
+          orientation="horizontal"
           onChange={handleThemeChange}
           size="small"
           shape="round"
@@ -178,7 +179,7 @@ const Index: FC<SelfProps> = ({ collapsed, currentTheme, toggleTheme }) => {
       </div>
 
       {/* 用户头像 */}
-      <Dropdown menu={{ items }} overlayStyle={{ minWidth: '120px' }}>
+      <Dropdown menu={{ items }}>
         <div
           style={{
             cursor: 'pointer',
@@ -200,20 +201,6 @@ const Index: FC<SelfProps> = ({ collapsed, currentTheme, toggleTheme }) => {
           >
             {currentUser.username[0]}
           </Avatar>
-          <span
-            style={{
-              fontSize: '11px',
-              color: 'rgba(0, 0, 0, 0.65)',
-              textAlign: 'center',
-              maxWidth: '60px',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              lineHeight: 1.2,
-            }}
-          >
-            {currentUser.username}
-          </span>
         </div>
       </Dropdown>
     </Space>

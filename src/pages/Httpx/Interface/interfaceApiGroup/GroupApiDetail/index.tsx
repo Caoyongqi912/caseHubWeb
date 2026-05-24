@@ -170,7 +170,7 @@ const Index: FC<SelfProps> = ({ groupId, projectId }) => {
         </Spin>
       </MyDrawer>
       <ProCard
-        bodyStyle={{ padding: 20 }}
+        styles={{ body: { padding: 20 } }}
         extra={
           <Space>
             <Dropdown.Button

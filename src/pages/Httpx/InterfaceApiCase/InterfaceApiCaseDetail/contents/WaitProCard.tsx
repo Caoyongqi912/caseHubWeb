@@ -192,7 +192,7 @@ const WaitProCard: FC<Props> = (props) => {
       hoverable
       collapsible={false}
       defaultCollapsed
-      bodyStyle={{ padding: 0 }}
+      styles={{ body: { padding: 0 } }}
       style={{
         borderRadius: '16px',
         boxShadow: isHovered

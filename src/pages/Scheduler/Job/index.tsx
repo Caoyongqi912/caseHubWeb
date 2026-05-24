@@ -31,11 +31,13 @@ const Index = () => {
           border: `1px solid ${styles.colors.glassBorder}`,
           boxShadow: `0 8px 32px ${styles.colors.primaryGlow}20`,
         }}
-        bodyStyle={{
-          height: '100%',
-          minHeight: '90vh',
-          padding: 0,
-          overflow: 'hidden',
+        styles={{
+          body: {
+            height: '100%',
+            minHeight: '90vh',
+            padding: 0,
+            overflow: 'hidden',
+          },
         }}
       >
         <Group orientation="horizontal">

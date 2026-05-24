@@ -101,7 +101,7 @@ const GroupProCard: FC<Props> = (props) => {
       collapsible
       hoverable
       defaultCollapsed
-      bodyStyle={{ padding: 0 }}
+      styles={{ body: { padding: 0 } }}
       style={{
         borderRadius: '16px',
         boxShadow: showOption

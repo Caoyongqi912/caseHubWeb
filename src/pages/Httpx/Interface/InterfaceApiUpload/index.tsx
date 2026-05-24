@@ -13,8 +13,8 @@ import {
   ProForm,
   ProFormSelect,
   ProFormTreeSelect,
+  ProFormUploadDragger,
 } from '@ant-design/pro-components';
-import { ProFormUploadDragger } from '@ant-design/pro-form';
 import { Button, Col, Form, message, Row, Space, Typography } from 'antd';
 import { useEffect, useState } from 'react';
 
@@ -91,9 +91,11 @@ const Index = () => {
         flexDirection: 'column',
         overflow: 'hidden', // 禁止自身滚动
       }}
-      bodyStyle={{
-        padding: '12px',
-        height: '100%',
+      styles={{
+        body: {
+          padding: '12px',
+          height: '100%',
+        },
       }}
     >
       {/* 卡片选择区 - 固定高度 */}

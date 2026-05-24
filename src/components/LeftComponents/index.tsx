@@ -46,10 +46,12 @@ const Index: FC<SelfProps> = (props) => {
         display: 'flex',
         flexDirection: 'column',
       }}
-      bodyStyle={{
-        padding: 12,
-        flex: 1,
-        overflow: 'auto',
+      styles={{
+        body: {
+          padding: 12,
+          flex: 1,
+          overflow: 'auto',
+        },
       }}
     >
       {projects.length > 0 ? (

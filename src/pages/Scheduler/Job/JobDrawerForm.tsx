@@ -19,6 +19,7 @@ import {
 } from '@ant-design/icons';
 import {
   ProForm,
+  ProFormDateTimePicker,
   ProFormDependency,
   ProFormDigit,
   ProFormList,
@@ -26,7 +27,6 @@ import {
   ProFormSwitch,
   ProFormText,
 } from '@ant-design/pro-components';
-import { ProFormDateTimePicker } from '@ant-design/pro-form';
 import { Button, Form, message, theme, Typography } from 'antd';
 import moment from 'moment';
 import React, { FC, useEffect, useMemo, useState } from 'react';

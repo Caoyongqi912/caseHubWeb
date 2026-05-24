@@ -170,9 +170,11 @@ const ProjectList: React.FC = () => {
           display: 'flex',
           flexDirection: 'column' as const,
         }}
-        bodyStyle={{
-          padding: '24px',
-          background: 'transparent',
+        styles={{
+          body: {
+            padding: '24px',
+            background: 'transparent',
+          },
         }}
       >
         {projects.length > 0 ? (
@@ -209,8 +211,10 @@ const ProjectList: React.FC = () => {
                       background: 'transparent',
                       borderBottom: `1px solid ${styles.colors.borderLight}`,
                     }}
-                    bodyStyle={{
-                      background: 'transparent',
+                    styles={{
+                      body: {
+                        background: 'transparent',
+                      },
                     }}
                     actions={
                       isAdmin

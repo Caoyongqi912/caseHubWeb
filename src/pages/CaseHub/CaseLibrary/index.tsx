@@ -1,6 +1,5 @@
 import LeftComponents from '@/components/LeftComponents';
 import { ModuleEnum } from '@/utils/config';
-import { PageContainer } from '@ant-design/pro-components';
 import { useState } from 'react';
 import { Group, Panel } from 'react-resizable-panels';
 import CaseDataTable from './CaseDataTable';
@@ -21,13 +20,7 @@ const Index = () => {
   };
 
   return (
-    <PageContainer
-      header={{
-        title: false,
-        breadcrumb: {
-          items: [],
-        },
-      }}
+    <div
       style={{
         height: '100%', // 🔥 改成 100%，不要用 100vh
         maxHeight: '100%',
@@ -61,7 +54,7 @@ const Index = () => {
           />
         </Panel>
       </Group>
-    </PageContainer>
+    </div>
   );
 };
 

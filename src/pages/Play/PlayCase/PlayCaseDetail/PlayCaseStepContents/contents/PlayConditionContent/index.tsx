@@ -79,7 +79,7 @@ const Index: FC<Props> = ({ id, step, caseId, stepContent, callback }) => {
         bordered
         collapsible
         hoverable
-        bodyStyle={{ padding: 0 }}
+        styles={{ body: { padding: 0 } }}
         defaultCollapsed
         style={{
           borderRadius: token.borderRadiusLG,

@@ -365,7 +365,7 @@ const Index: FC<SelfProps> = ({
       {/* 关键：ProCard 填满父容器 */}
       <ProCard
         headerBordered
-        bordered
+        variant={'outlined'}
         style={{
           flex: 1,
           height: 0,

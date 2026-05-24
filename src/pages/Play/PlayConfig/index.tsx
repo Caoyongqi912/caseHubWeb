@@ -22,7 +22,7 @@ const Index = () => {
   return (
     <ProCard style={{ height: 'auto' }}>
       <Tabs
-        tabPosition={'top'}
+        tabPlacement={'top'}
         type={'card'}
         defaultValue={tag}
         size={'large'}

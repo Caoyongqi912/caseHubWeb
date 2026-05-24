@@ -75,7 +75,7 @@ const DynamicInfo = forwardRef<DynamicInfoRef, IProps>(({ caseId }, ref) => {
 
   return (
     <div style={styles.container()}>
-      <ProCard style={styles.card()} bodyStyle={{ padding: 0 }}>
+      <ProCard style={styles.card()} styles={{ body: { padding: 0 } }}>
         <div style={styles.header()}>
           <div style={styles.headerIcon()}>
             <HistoryOutlined style={{ fontSize: 20, color: '#fff' }} />

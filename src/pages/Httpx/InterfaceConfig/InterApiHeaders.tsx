@@ -22,10 +22,10 @@ import {
   ModalForm,
   ProCard,
   ProColumns,
+  ProFormSelect,
   ProFormText,
   ProFormTextArea,
 } from '@ant-design/pro-components';
-import { ProFormSelect } from '@ant-design/pro-form';
 import { Button, Form, message, Space, theme, Typography } from 'antd';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 

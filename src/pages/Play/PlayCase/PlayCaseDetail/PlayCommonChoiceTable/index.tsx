@@ -5,7 +5,7 @@ import MyProTable from '@/components/Table/MyProTable';
 import { IUICaseSteps } from '@/pages/Play/componets/uiTypes';
 import { ModuleEnum } from '@/utils/config';
 import { fetchModulesEnum, pageData } from '@/utils/somefunc';
-import { ProColumns } from '@ant-design/pro-table/lib/typing';
+import { ProColumns } from '@ant-design/pro-components';
 import { Button, Tag } from 'antd';
 import { TableRowSelection } from 'antd/es/table/interface';
 import React, { FC, useEffect, useState } from 'react';

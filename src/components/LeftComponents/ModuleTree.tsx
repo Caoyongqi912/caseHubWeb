@@ -312,7 +312,7 @@ const ModuleTree: FC<IProps> = ({
               border: `1px solid ${colors.border}`,
               background: `linear-gradient(135deg, ${colors.bgContainer} 0%, ${colors.primary}08 100%)`,
             }}
-            bodyStyle={{ padding: 16 }}
+            styles={{ body: { padding: 16 } }}
           >
             <div
               style={{
@@ -386,10 +386,12 @@ const ModuleTree: FC<IProps> = ({
 
           <ProCard
             size="small"
-            bodyStyle={{
-              padding: 8,
-              maxHeight: 'calc(100vh - 400px)',
-              overflowY: 'auto',
+            styles={{
+              body: {
+                padding: 8,
+                maxHeight: 'calc(100vh - 400px)',
+                overflowY: 'auto',
+              },
             }}
             style={{ borderRadius: 12, border: `1px solid ${colors.border}` }}
           >

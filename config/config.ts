@@ -6,19 +6,18 @@ import routes from './routes';
 const { APP_ENV = 'dev' } = process.env;
 export default defineConfig({
   esbuildMinifyIIFE: true,
-  theme: {
-    'root-entry-name': 'variable',
-  },
   fastRefresh: true,
   proxy: proxy[APP_ENV],
   layout: {
     ...Settings,
+    defaultCollapsed: true,
+    breakpoint: false,
   },
   routes,
   model: {},
   antd: {
+    // compact:true,
     configProvider: {},
-    theme: {},
   },
   request: {
     dataField: '',

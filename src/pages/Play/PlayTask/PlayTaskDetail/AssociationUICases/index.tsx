@@ -9,8 +9,12 @@ import ChoiceUICaseTable from '@/pages/Play/PlayTask/PlayTaskDetail/ChoiceUICase
 import { CONFIG } from '@/utils/config';
 import { queryData } from '@/utils/somefunc';
 import { history } from '@@/core/history';
-import { ActionType, DragSortTable, ProCard } from '@ant-design/pro-components';
-import { ProColumns } from '@ant-design/pro-table/lib/typing';
+import {
+  ActionType,
+  DragSortTable,
+  ProCard,
+  ProColumns,
+} from '@ant-design/pro-components';
 import { Button, message, Tag } from 'antd';
 import { FC, useCallback, useRef, useState } from 'react';
 

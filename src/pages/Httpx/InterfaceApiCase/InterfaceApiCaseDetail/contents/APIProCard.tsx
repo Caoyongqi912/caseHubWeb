@@ -178,7 +178,7 @@ const ApiProCard: FC<Props> = (props) => {
             : `1px solid ${token.colorBorderSecondary}`,
           overflow: 'hidden',
         }}
-        bodyStyle={{ padding: 0 }}
+        styles={{ body: { padding: 0 } }}
         onMouseEnter={() => setShowOption(true)}
         onMouseLeave={() => setShowOption(false)}
         title={cardTitle}

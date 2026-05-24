@@ -186,7 +186,7 @@ const InterfaceApiTaskResultDetail: FC = () => {
         bordered
         hoverable
         style={{ overflow: 'hidden' }}
-        bodyStyle={{ padding: 10 }}
+        styles={{ body: { padding: 10 } }}
       >
         <MyTabs defaultActiveKey={'1'} items={TabsItem} />
       </ProCard>

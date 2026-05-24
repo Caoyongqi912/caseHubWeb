@@ -80,7 +80,7 @@ const Index: FC<Props> = (props) => {
             ? token.colorPrimaryBorder
             : token.colorBorder,
         }}
-        bodyStyle={{ padding: 0 }}
+        styles={{ body: { padding: 0 } }}
         onMouseEnter={() => {
           setShowOption(true);
         }}

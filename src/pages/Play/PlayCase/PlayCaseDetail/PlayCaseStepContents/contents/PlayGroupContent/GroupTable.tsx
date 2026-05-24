@@ -6,8 +6,7 @@ import UserSelect from '@/components/Table/UserSelect';
 import { IPlayStepDetail } from '@/pages/Play/componets/uiTypes';
 import PlayStepDetail from '@/pages/Play/PlayStep/PlayStepDetail';
 import { queryData } from '@/utils/somefunc';
-import { ActionType, ProCard } from '@ant-design/pro-components';
-import { ProColumns } from '@ant-design/pro-table/lib/typing';
+import { ActionType, ProCard, ProColumns } from '@ant-design/pro-components';
 import { Tag, Tooltip } from 'antd';
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
 

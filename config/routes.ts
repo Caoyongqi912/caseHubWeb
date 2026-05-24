@@ -19,7 +19,7 @@ export default [
   {
     path: '/user',
     name: '用户管理',
-    icon: 'user',
+    icon: 'UserOutlined',
     hideInBreadcrumb: false,
     routes: [
       {
@@ -38,12 +38,6 @@ export default [
         name: '我的',
         component: '@/pages/User/My',
       },
-      // {
-      //   path: '/user/department',
-      //   name: '部门列表',
-      //   access: 'isAdmin',
-      //   component: '@/pages/User/Admin/DepartmentTable',
-      // },
       {
         path: '/user/center',
         name: 'current',
@@ -62,7 +56,7 @@ export default [
   {
     path: '/project',
     name: '项目',
-    icon: 'project',
+    icon: 'ProjectOutlined',
     access: 'isAdmin',
     routes: [
       {
@@ -87,7 +81,7 @@ export default [
   {
     path: '/cases',
     name: '测试用例',
-    icon: 'BuildFilled',
+    icon: 'BuildOutlined',
     routes: [
       {
         path: '/cases/requirement',
@@ -145,7 +139,7 @@ export default [
         path: '/ui/cases',
         name: '自动化用例',
         component: '@/pages/Play/PlayCase',
-        icon: 'DatabaseOutlined',
+        icon: 'database',
       },
       {
         path: '/ui/task',
@@ -208,13 +202,6 @@ export default [
         hideInMenu: true,
         component: '@/pages/Play/PlayTask/PlayTaskDetail',
       },
-      // {
-      //   path: '/ui/case/stepGroup/detail/groupId=:groupId',
-      //   name: '用例组详情',
-      //   hideInMenu: true,
-      //   component:
-      //     '@/pages/UIPlaywright/Config/CommonStepsGroup/StepGroupDetail',
-      // },
     ],
   },
   {
@@ -226,7 +213,7 @@ export default [
   {
     path: '/interface',
     name: 'API自动化',
-    icon: 'ApiFilled',
+    icon: 'ApiOutlined',
     routes: [
       {
         path: '/interface/interApi/api',
@@ -297,27 +284,11 @@ export default [
         hideInMenu: true,
       },
 
-      // {
-      //   path: '/interface/interApi/record',
-      //   name: '接口录制',
-      //   component: '@/pages/Httpx/InterfaceApiRecord',
-      // },
       {
         path: '/interface/interApi/config',
         name: '全局配置',
         component: '@/pages/Httpx/InterfaceConfig',
       },
-      // {
-      //   path: '/interface/interApi/perf',
-      //   name: '压力测试',
-      //   component: '@/pages/Httpx/InterfacePerf',
-      // },
-      // {
-      //   path: '/interface/interApi/perf/detail/perfId=:perfId',
-      //   name: '压力测试看板',
-      //   hideInMenu: true,
-      //   component: '@/pages/Httpx/InterfacePerf/PerfDetail',
-      // },
       { component: '@/pages/404' },
     ],
   },

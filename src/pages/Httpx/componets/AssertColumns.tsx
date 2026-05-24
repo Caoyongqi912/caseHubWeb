@@ -1,7 +1,7 @@
 import AceCodeEditor from '@/components/CodeEditor/AceCodeEditor';
 import { AssertEnum } from '@/pages/Httpx/componets/assertEnum';
 import { IAsserts } from '@/pages/Httpx/types';
-import { ProColumns } from '@ant-design/pro-table/lib/typing';
+import { ProColumns } from '@ant-design/pro-components';
 import { Tag } from 'antd';
 
 const typeContent = (T: any) => {

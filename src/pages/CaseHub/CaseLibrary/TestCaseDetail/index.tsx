@@ -238,7 +238,7 @@ const TestCaseDetail: FC<Props> = ({ testcase, callback }) => {
 
   return (
     <div>
-      <ProCard style={styles.mainCard()} bodyStyle={{ padding: 0 }}>
+      <ProCard style={styles.mainCard()} styles={{ body: { padding: 0 } }}>
         {/* ==================== 头部区域 ==================== */}
         <div style={styles.header()}>
           {/* 左侧：创建者信息 */}

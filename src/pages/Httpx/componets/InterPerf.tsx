@@ -6,8 +6,8 @@ import {
   ProFormDigitRange,
   ProFormSwitch,
   ProFormText,
+  ProFormUploadDragger,
 } from '@ant-design/pro-components';
-import { ProFormUploadDragger } from '@ant-design/pro-form';
 import { Button, Form } from 'antd';
 import { FC } from 'react';
 

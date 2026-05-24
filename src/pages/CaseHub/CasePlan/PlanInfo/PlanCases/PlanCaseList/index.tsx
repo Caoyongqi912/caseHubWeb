@@ -337,10 +337,12 @@ const Index: FC<PlanCaseListProps> = ({
             display: 'flex',
             flexDirection: 'column',
           }}
-          bodyStyle={{
-            flex: 1,
-            overflow: 'auto',
-            padding: '12px',
+          styles={{
+            body: {
+              flex: 1,
+              overflow: 'auto',
+              padding: '12px',
+            },
           }}
           extra={<CardExtra />}
         >

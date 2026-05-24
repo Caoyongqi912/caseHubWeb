@@ -97,12 +97,14 @@ const ProjectStats: FC<ProjectStatsProps> = ({ projectId }) => {
                 transition: 'all 0.3s ease',
                 minWidth: '0',
               }}
-              bodyStyle={{
-                padding: '8px 8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                minWidth: '0',
+              styles={{
+                body: {
+                  padding: '8px 8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  minWidth: '0',
+                },
               }}
               hoverable
             >

@@ -39,8 +39,8 @@ const ApiBeforeItems: FC<ISelfProps> = (props) => {
     },
   ];
   return (
-    <ProCard style={{ marginTop: 10 }} bodyStyle={{ padding: 0 }}>
-      <MyTabs defaultActiveKey={'1'} tabPosition={'left'} items={TabItems} />
+    <ProCard style={{ marginTop: 10 }} styles={{ body: { padding: 0 } }}>
+      <MyTabs defaultActiveKey={'1'} tabPlacement={'left'} items={TabItems} />
     </ProCard>
   );
 };

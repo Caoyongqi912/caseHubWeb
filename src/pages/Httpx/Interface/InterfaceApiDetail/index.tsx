@@ -8,7 +8,6 @@ import {
 } from '@/api/inter';
 import MyDrawer from '@/components/MyDrawer';
 import MyTabs from '@/components/MyTabs';
-import PageContentWrapper from '@/components/PageContent/PageContentWrapper';
 import InterAssertList from '@/pages/Httpx/componets/InterAssertList';
 import InterAuth from '@/pages/Httpx/componets/InterAuth';
 import InterDoc from '@/pages/Httpx/componets/InterDoc';
@@ -389,7 +388,7 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
   };
 
   return (
-    <PageContentWrapper>
+    <>
       <MyDrawer
         width="25%"
         open={drawers.remark}
@@ -469,7 +468,7 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
           <FloatButton.BackTop type="primary" visibilityHeight={0} />
         </FloatButton.Group>
       </ProCard>
-    </PageContentWrapper>
+    </>
   );
 };
 

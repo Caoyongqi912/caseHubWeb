@@ -17,8 +17,12 @@ import { IRequirement } from '@/pages/CaseHub/types';
 import { CONFIG, ModuleEnum } from '@/utils/config';
 import { pageData } from '@/utils/somefunc';
 import { EditOutlined } from '@ant-design/icons';
-import { ActionType, ProCard, ProTable } from '@ant-design/pro-components';
-import { ProColumns } from '@ant-design/pro-table/lib/typing';
+import {
+  ActionType,
+  ProCard,
+  ProColumns,
+  ProTable,
+} from '@ant-design/pro-components';
 import { Popconfirm, Select, Space, Tag, Typography } from 'antd';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import RequirementDetail from './RequirementDetail';
@@ -153,7 +157,7 @@ const RequirementTable: FC<SelfProps> = ({
             </Space>
           );
         },
-        renderFormItem: (text) => (
+        renderFormItem: (text: number) => (
           <Select
             options={RequirementProcessOption}
             value={text}
@@ -306,24 +310,26 @@ const RequirementTable: FC<SelfProps> = ({
       </MyDrawer>
       <ProCard
         headerBordered
-        bordered
+        variant={'outlined'}
         style={{
           flex: 1,
           height: 0,
           display: 'flex',
           flexDirection: 'column',
         }}
-        bodyStyle={{
-          padding: '12px',
-          height: '100%',
+        styles={{
+          body: {
+            padding: '12px',
+            height: '100%',
+          },
         }}
       >
         <ProTable
           onSave={onSave}
-          // columnsState={{
-          //   persistenceKey: perKey ?? 'pro-table',
-          //   persistenceType: 'localStorage',
-          // }}
+          columnsState={{
+            persistenceKey: perKey ?? 'pro-table',
+            persistenceType: 'localStorage',
+          }}
           rowKey={'id'}
           // 🔥 核心：高度填充满父容器，表格内部滚动
           style={{ height: '100%' }}

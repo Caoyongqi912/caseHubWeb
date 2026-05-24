@@ -146,20 +146,30 @@ const Index = () => {
         submitter={false}
         onOpenChange={setAddOpenModal}
       >
-        <Tabs>
-          <Tabs.TabPane key={'1'} tab={'API'}>
-            <AddToApi
-              currentRecordId={currentRecordId}
-              setCloseModal={setAddOpenModal}
-            />
-          </Tabs.TabPane>
-          <Tabs.TabPane key={'2'} tab={'API用例'}>
-            <AddToCase
-              currentRecordId={currentRecordId}
-              setCloseModal={setAddOpenModal}
-            />
-          </Tabs.TabPane>
-        </Tabs>
+        <Tabs
+          items={[
+            {
+              key: '1',
+              label: 'API',
+              children: (
+                <AddToApi
+                  currentRecordId={currentRecordId}
+                  setCloseModal={setAddOpenModal}
+                />
+              ),
+            },
+            {
+              key: '2',
+              label: 'API用例',
+              children: (
+                <AddToCase
+                  currentRecordId={currentRecordId}
+                  setCloseModal={setAddOpenModal}
+                />
+              ),
+            },
+          ]}
+        />
       </ModalForm>
       <ModalForm
         open={openModal}

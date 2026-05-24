@@ -8,10 +8,10 @@ import { IInterfaceAPI, IParams } from '@/pages/Httpx/types';
 import {
   EditableFormInstance,
   EditableProTable,
+  ProColumns,
   ProForm,
   ProFormText,
 } from '@ant-design/pro-components';
-import { ProColumns } from '@ant-design/pro-table/lib/typing';
 import { FormInstance, Tag } from 'antd';
 import React, { FC, useRef, useState } from 'react';
 

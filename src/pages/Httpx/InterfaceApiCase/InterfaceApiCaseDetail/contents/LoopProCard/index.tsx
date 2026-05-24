@@ -195,7 +195,7 @@ const Index: FC<Props> = (props) => {
       bordered
       collapsible
       hoverable
-      bodyStyle={{ padding: 0 }}
+      styles={{ body: { padding: 0 } }}
       defaultCollapsed
       onCollapse={handleCollapse}
       style={{

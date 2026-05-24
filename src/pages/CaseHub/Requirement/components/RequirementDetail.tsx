@@ -138,7 +138,7 @@ const RequirementDetail: FC<Props> = ({ callback, requirementId }) => {
   );
 
   return (
-    <ProCard style={cardStyle} bodyStyle={{ padding: spacing.lg }}>
+    <ProCard style={cardStyle} styles={{ body: { padding: spacing.lg } }}>
       <ProForm
         form={reqForm}
         layout="horizontal"

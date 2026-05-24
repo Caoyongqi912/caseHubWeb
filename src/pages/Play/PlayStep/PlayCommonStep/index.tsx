@@ -21,8 +21,7 @@ import {
   NumberOutlined,
   PlusOutlined,
 } from '@ant-design/icons';
-import { ActionType } from '@ant-design/pro-components';
-import { ProColumns } from '@ant-design/pro-table/lib/typing';
+import { ActionType, ProColumns } from '@ant-design/pro-components';
 import {
   Badge,
   Button,

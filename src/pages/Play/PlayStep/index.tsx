@@ -81,7 +81,7 @@ const Index = () => {
         <Panel defaultSize={80} minSize={30}>
           <ProCard
             style={{ width: '100%', height: '100%' }}
-            bodyStyle={{ padding: 0 }}
+            styles={{ body: { padding: 0 } }}
             tabs={{
               type: 'card',
               items: tabItems,

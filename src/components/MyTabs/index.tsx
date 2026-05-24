@@ -6,7 +6,7 @@ interface IProps {
   activeKey?: string;
   tabBarExtraContent?: React.ReactNode;
   items: any[];
-  tabPosition?: 'top' | 'left';
+  tabPlacement?: 'top' | 'left';
   title?: string;
   onChangeKey?: (key: string) => void;
   type?: 'line' | 'card' | 'editable-card';
@@ -16,7 +16,7 @@ interface IProps {
 
 const Index: FC<IProps> = ({
   defaultActiveKey,
-  tabPosition = 'top',
+  tabPlacement = 'top',
   size = 'large',
   items,
   activeKey,
@@ -36,7 +36,7 @@ const Index: FC<IProps> = ({
       }}
       style={{ ...style, overflow: 'hidden' }}
       activeKey={activeKey}
-      tabPosition={tabPosition}
+      tabPlacement={tabPlacement}
       defaultActiveKey={defaultActiveKey}
       items={items}
       tabBarExtraContent={tabBarExtraContent}

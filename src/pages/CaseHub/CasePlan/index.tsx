@@ -284,9 +284,11 @@ const Index = () => {
             display: 'flex',
             flexDirection: 'column',
           }}
-          bodyStyle={{
-            padding: '12px',
-            height: '100%',
+          styles={{
+            body: {
+              padding: '12px',
+              height: '100%',
+            },
           }}
         >
           <ProTable

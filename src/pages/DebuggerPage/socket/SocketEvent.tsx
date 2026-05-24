@@ -1,8 +1,8 @@
 import {
   EditableFormInstance,
   EditableProTable,
+  ProColumns,
 } from '@ant-design/pro-components';
-import { ProColumns } from '@ant-design/pro-table/lib/typing';
 import React, { FC, useRef, useState } from 'react';
 import { Socket } from 'socket.io-client';
 

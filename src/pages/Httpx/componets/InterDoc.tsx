@@ -5,12 +5,20 @@ import { Tabs } from 'antd';
 
 const InterDoc = () => {
   return (
-    <ProCard bodyStyle={{ padding: 0 }}>
-      <Tabs defaultActiveKey="1" size={'small'} tabPosition={'left'}>
-        <Tabs.TabPane key="1" tab="内置Func" icon={<FunctionOutlined />}>
-          <FuncScriptDesc />
-        </Tabs.TabPane>
-      </Tabs>
+    <ProCard styles={{ body: { padding: 0 } }}>
+      <Tabs
+        defaultActiveKey="1"
+        size={'small'}
+        tabPlacement={'left'}
+        items={[
+          {
+            key: '1',
+            label: '内置Func',
+            icon: <FunctionOutlined />,
+            children: <FuncScriptDesc />,
+          },
+        ]}
+      />
     </ProCard>
   );
 };

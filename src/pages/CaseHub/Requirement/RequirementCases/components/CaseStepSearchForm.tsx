@@ -98,10 +98,12 @@ const CaseStepSearchForm: FC<Props> = ({
       />
 
       <ProCard
-        bodyStyle={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 8,
+        styles={{
+          body: {
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 8,
+          },
         }}
       >
         {/* 查询用例步骤搜索 */}

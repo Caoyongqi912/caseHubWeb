@@ -46,7 +46,7 @@ const InterfaceApiCaseResultBaseInfo: FC<SelfProps> = ({ caseResultInfo }) => {
           borderRadius: token.borderRadiusLG,
           boxShadow: token.boxShadowSecondary,
         }}
-        bodyStyle={{ padding: '20px 24px' }}
+        styles={{ body: { padding: '20px 24px' } }}
       >
         <Row gutter={[16, 16]} align="middle">
           <Col flex="auto">
@@ -116,7 +116,7 @@ const InterfaceApiCaseResultBaseInfo: FC<SelfProps> = ({ caseResultInfo }) => {
           borderRadius: token.borderRadiusLG,
           boxShadow: token.boxShadowSecondary,
         }}
-        bodyStyle={{ padding: '16px 24px' }}
+        styles={{ body: { padding: '16px 24px' } }}
       >
         <Row gutter={[16, 16]}>
           {/* 执行人 */}

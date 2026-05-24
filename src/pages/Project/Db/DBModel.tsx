@@ -5,8 +5,12 @@ import {
   updateDBConfigById,
 } from '@/api/base/dbConfig';
 import { IDBConfig } from '@/pages/Project/types';
-import { ModalForm, ProCard, ProFormText } from '@ant-design/pro-components';
-import { ProFormSelect } from '@ant-design/pro-form';
+import {
+  ModalForm,
+  ProCard,
+  ProFormSelect,
+  ProFormText,
+} from '@ant-design/pro-components';
 import { Button, Form, message } from 'antd';
 import { FC, useEffect, useState } from 'react';
 

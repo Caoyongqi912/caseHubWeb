@@ -30,25 +30,39 @@ const RecordDetail: FC<IRecordDetailProps> = ({ interfaceAPIRecordInfo }) => {
   }, [interfaceAPIRecordInfo]);
   return (
     <ProCard>
-      <Tabs defaultActiveKey={'1'} type="card">
-        <Tabs.TabPane key={'2'} tab={'Headers'}>
-          <InterHeader form={interApiForm} />
-        </Tabs.TabPane>
-        <Tabs.TabPane key={'1'} tab={'Params'}>
-          <InterParam form={interApiForm} />
-        </Tabs.TabPane>
-        <Tabs.TabPane key={'3'} tab={'Body'}>
-          <InterBody form={interApiForm} mode={1} />
-        </Tabs.TabPane>
-        <Tabs.TabPane key={'5'} tab={'Response'}>
-          <AceCodeEditor
-            value={interfaceAPIRecordInfo.response}
-            height={'50vh'}
-            readonly={true}
-            _mode={'json'}
-          />
-        </Tabs.TabPane>
-      </Tabs>
+      <Tabs
+        defaultActiveKey={'1'}
+        type="card"
+        items={[
+          {
+            key: '2',
+            label: 'Headers',
+            children: <InterHeader form={interApiForm} />,
+          },
+          {
+            key: '1',
+            label: 'Params',
+            children: <InterParam form={interApiForm} />,
+          },
+          {
+            key: '3',
+            label: 'Body',
+            children: <InterBody form={interApiForm} mode={1} />,
+          },
+          {
+            key: '5',
+            label: 'Response',
+            children: (
+              <AceCodeEditor
+                value={interfaceAPIRecordInfo.response}
+                height={'50vh'}
+                readonly={true}
+                _mode={'json'}
+              />
+            ),
+          },
+        ]}
+      />
     </ProCard>
   );
 };

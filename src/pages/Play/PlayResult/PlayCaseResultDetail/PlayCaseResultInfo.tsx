@@ -9,7 +9,7 @@ import {
   UserOutlined,
   WarningOutlined,
 } from '@ant-design/icons';
-import { ProCard, ProDescriptions } from '@ant-design/pro-components';
+import { ProCard } from '@ant-design/pro-components';
 import {
   Badge,
   Col,
@@ -25,7 +25,6 @@ import { FC } from 'react';
 
 const { useToken } = theme;
 const { Title, Text, Paragraph } = Typography;
-const ProDescriptionsItem = ProDescriptions.Item;
 
 interface ISelfProps {
   resultDetail?: IUIResult;
@@ -44,7 +43,7 @@ const PlayCaseResultInfo: FC<ISelfProps> = ({ resultDetail }) => {
           borderRadius: token.borderRadiusLG,
           boxShadow: token.boxShadowSecondary,
         }}
-        bodyStyle={{ padding: '20px 24px' }}
+        styles={{ body: { padding: '20px 24px' } }}
       >
         <Row gutter={[16, 16]} align="middle">
           <Col flex="auto">
@@ -93,7 +92,7 @@ const PlayCaseResultInfo: FC<ISelfProps> = ({ resultDetail }) => {
           borderRadius: token.borderRadiusLG,
           boxShadow: token.boxShadowSecondary,
         }}
-        bodyStyle={{ padding: '16px 24px' }}
+        styles={{ body: { padding: '16px 24px' } }}
       >
         <Row gutter={[16, 16]}>
           <Col xs={24} sm={12} md={8}>
@@ -235,7 +234,7 @@ const PlayCaseResultInfo: FC<ISelfProps> = ({ resultDetail }) => {
             boxShadow: token.boxShadowSecondary,
             borderColor: token.colorErrorBorder,
           }}
-          bodyStyle={{ padding: '16px 24px' }}
+          styles={{ body: { padding: '16px 24px' } }}
         >
           <Space direction="vertical" size={16} style={{ width: '100%' }}>
             {/* 错误步骤信息 */}

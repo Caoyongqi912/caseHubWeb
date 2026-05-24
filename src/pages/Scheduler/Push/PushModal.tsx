@@ -3,10 +3,10 @@ import { IPushConfig } from '@/pages/Project/types';
 import {
   ModalForm,
   ProCard,
+  ProFormSelect,
   ProFormText,
   ProFormTextArea,
 } from '@ant-design/pro-components';
-import { ProFormSelect } from '@ant-design/pro-form';
 import { Button, Form, message } from 'antd';
 import { FC, useEffect, useState } from 'react';
 

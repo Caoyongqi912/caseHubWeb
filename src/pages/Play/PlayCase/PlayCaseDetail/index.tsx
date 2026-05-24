@@ -417,7 +417,7 @@ const Index: FC = () => {
       >
         <ProCard
           style={{ height: '100%' }}
-          bodyStyle={{ height: '100%', padding: 16, overflow: 'hidden' }}
+          styles={{ body: { height: '100%', padding: 16, overflow: 'hidden' } }}
         >
           <MyTabs
             defaultActiveKey={activeKey}

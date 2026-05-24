@@ -251,7 +251,7 @@ const Index: FC<Props> = (props) => {
 
   return (
     <ProCard
-      bodyStyle={{ padding: 0 }}
+      styles={{ body: { padding: 0 } }}
       split={'horizontal'}
       bordered
       collapsible

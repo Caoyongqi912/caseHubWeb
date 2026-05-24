@@ -19,8 +19,8 @@ import {
   EditableFormInstance,
   EditableProTable,
   ProCard,
+  ProColumns,
 } from '@ant-design/pro-components';
-import { ProColumns } from '@ant-design/pro-table/lib/typing';
 import {
   Alert,
   Button,
@@ -340,8 +340,10 @@ const DBContentCard: FC<Props> = (props) => {
   return (
     <>
       <ProCard
-        bodyStyle={{
-          padding: 10,
+        styles={{
+          body: {
+            padding: 10,
+          },
         }}
         split={'horizontal'}
         bordered

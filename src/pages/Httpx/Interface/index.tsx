@@ -1,6 +1,5 @@
 import { useGlassStyles } from '@/components/Glass';
 import LeftComponents from '@/components/LeftComponents';
-import PageContentWrapper from '@/components/PageContent/PageContentWrapper';
 import InterfaceApiTable from '@/pages/Httpx/Interface/InterfaceApiTable';
 import { ModuleEnum } from '@/utils/config';
 import { ProCard } from '@ant-design/pro-components';
@@ -65,8 +64,7 @@ const Index = () => {
   };
 
   return (
-    <PageContentWrapper
-      title={false}
+    <div
       style={{
         height: '100%', // 🔥 改成 100%，不要用 100vh
         maxHeight: '100%',
@@ -108,7 +106,7 @@ const Index = () => {
           />
         </Panel>
       </Group>
-    </PageContentWrapper>
+    </div>
   );
 };
 

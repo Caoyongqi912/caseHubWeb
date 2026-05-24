@@ -49,7 +49,7 @@ const JsonBody: FC<SelfProps> = ({ form, readonly = false }) => {
   };
   return (
     <ProCard
-      bodyStyle={{ padding: 0 }}
+      styles={{ body: { padding: 0 } }}
       style={{ marginTop: 8 }}
       extra={
         <a

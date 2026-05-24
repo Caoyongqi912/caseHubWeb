@@ -7,15 +7,13 @@ const Settings: LayoutSettings & {
   apiUrl?: string;
 } = {
   logo: '/icons/logo.png',
-  colorPrimary: '#1677ff',
   // 设置标题的 title
   title: 'Case Hub',
   layout: 'side',
   menu: {
     type: 'sub',
   },
-
-  contentWidth: 'Fluid',
+  contentWidth: 'Fixed',
   fixedHeader: true,
   fixSiderbar: true,
   splitMenus: false,

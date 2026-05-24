@@ -65,7 +65,7 @@ const RunConfig: FC<Props> = ({
           borderRadius: token.borderRadiusLG,
           boxShadow: token.boxShadowSecondary,
         }}
-        bodyStyle={{ padding: '16px' }}
+        styles={{ body: { padding: '16px' } }}
       >
         <Space>
           <ThunderboltOutlined
@@ -94,7 +94,7 @@ const RunConfig: FC<Props> = ({
           borderRadius: token.borderRadiusLG,
           boxShadow: token.boxShadowSecondary,
         }}
-        bodyStyle={{ padding: '12px' }}
+        styles={{ body: { padding: '12px' } }}
       >
         <Radio.Group
           defaultValue={1}
@@ -174,7 +174,7 @@ const RunConfig: FC<Props> = ({
           borderRadius: token.borderRadiusLG,
           boxShadow: token.boxShadowSecondary,
         }}
-        bodyStyle={{ padding: '12px' }}
+        styles={{ body: { padding: '12px' } }}
       >
         <Select
           placeholder="请选择运行环境"
@@ -214,7 +214,7 @@ const RunConfig: FC<Props> = ({
           borderRadius: token.borderRadiusLG,
           boxShadow: token.boxShadowSecondary,
         }}
-        bodyStyle={{ padding: '12px' }}
+        styles={{ body: { padding: '12px' } }}
       >
         <div
           style={{

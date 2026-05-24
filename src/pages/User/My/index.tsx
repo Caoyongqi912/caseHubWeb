@@ -12,7 +12,7 @@ const Index = () => {
   ];
   return (
     <ProCard>
-      <MyTabs items={items} defaultActiveKey={'1'} tabPosition={'top'} />
+      <MyTabs items={items} defaultActiveKey={'1'} tabPlacement={'top'} />
     </ProCard>
   );
 };

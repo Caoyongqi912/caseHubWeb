@@ -1,6 +1,9 @@
 import { useGlassStyles } from '@/components/Glass/useGlassStyles';
-import { ProTable } from '@ant-design/pro-components';
-import type { ActionType, ProColumns } from '@ant-design/pro-table/lib/typing';
+import {
+  ProTable,
+  type ActionType,
+  type ProColumns,
+} from '@ant-design/pro-components';
 import { TablePaginationConfig, TableProps } from 'antd';
 import type { ExpandableConfig } from 'rc-table/lib/interface';
 import type { TableProps as RcTableProps } from 'rc-table/lib/Table';

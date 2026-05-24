@@ -1,7 +1,7 @@
 import AceCodeEditor from '@/components/CodeEditor/AceCodeEditor';
 import { IExtracts } from '@/pages/Httpx/types';
 import { CONFIG } from '@/utils/config';
-import { ProColumns } from '@ant-design/pro-table/lib/typing';
+import { ProColumns } from '@ant-design/pro-components';
 import { Tag } from 'antd';
 const ResponseExtractColumns: ProColumns<IExtracts>[] = [
   {

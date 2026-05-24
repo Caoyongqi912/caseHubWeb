@@ -56,7 +56,7 @@ const Index = () => {
   );
   return (
     <>
-      <ProCard bodyStyle={{ minHeight: '100vh', padding: '10px' }}>
+      <ProCard styles={{ body: { minHeight: '100vh', padding: '10px' } }}>
         <MyTabs
           defaultActiveKey={'1'}
           items={TabItem}

@@ -3,10 +3,10 @@ import { queryProjects } from '@/components/CommonFunc';
 import { IInterfaceGlobalVariable } from '@/pages/Httpx/types';
 import {
   ModalForm,
+  ProFormSelect,
   ProFormText,
   ProFormTextArea,
 } from '@ant-design/pro-components';
-import { ProFormSelect } from '@ant-design/pro-form';
 import { Form, message } from 'antd';
 import React, { FC, useEffect, useState } from 'react';
 

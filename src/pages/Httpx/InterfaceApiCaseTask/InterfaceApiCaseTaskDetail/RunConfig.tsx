@@ -59,13 +59,15 @@ const RunConfig: FC<SelfProps> = ({
       style={{
         height: '100%',
       }}
-      bodyStyle={{
-        padding: 20,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '20px',
-        borderRadius: '12px',
-        overflow: 'hidden',
+      styles={{
+        body: {
+          padding: 20,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '20px',
+          borderRadius: '12px',
+          overflow: 'hidden',
+        },
       }}
     >
       {/* 运行环境卡片 */}

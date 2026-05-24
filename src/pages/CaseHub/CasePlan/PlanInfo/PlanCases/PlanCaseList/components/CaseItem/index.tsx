@@ -281,7 +281,7 @@ const CaseItem: React.FC<CaseItemProps> = (props) => {
         headerBordered
         extra={cardExtra}
         collapsible
-        bodyStyle={{ padding: 3 }}
+        styles={{ body: { padding: 3 } }}
       >
         <StepTable steps={sortedSteps} planId={planId} />
       </ProCard>

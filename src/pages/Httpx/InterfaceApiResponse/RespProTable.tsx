@@ -1,5 +1,4 @@
-import { ProTable } from '@ant-design/pro-components';
-import { ProColumns } from '@ant-design/pro-table/lib/typing';
+import { ProColumns, ProTable } from '@ant-design/pro-components';
 import { FC } from 'react';
 
 interface SelfProps {
