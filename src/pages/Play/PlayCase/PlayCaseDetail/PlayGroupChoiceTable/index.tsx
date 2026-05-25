@@ -93,7 +93,7 @@ const Index: FC<ISelfProps> = (props) => {
       title: 'desc',
       dataIndex: 'description',
       valueType: 'textarea',
-      hideInSearch: true,
+      search: true,
     },
     {
       title: 'create time',

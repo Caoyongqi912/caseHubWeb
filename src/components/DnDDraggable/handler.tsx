@@ -30,7 +30,9 @@ const Handler: FC<{ id: number; step: number }> = ({ id, step }) => {
       {...listeners}
     >
       <HolderOutlined style={{ color: '#c3cad4', marginRight: 20 }} />
-      <Tag color={'green-inverse'}>STEP_{step}</Tag>
+      <Tag color="green" variant="solid">
+        STEP_{step}
+      </Tag>
     </div>
   );
 };

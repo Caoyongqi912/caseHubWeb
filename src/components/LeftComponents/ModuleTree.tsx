@@ -304,7 +304,7 @@ const ModuleTree: FC<IProps> = ({
       />
 
       {modules.length > 0 ? (
-        <Space direction="vertical" size={12} style={{ width: '100%' }}>
+        <Space orientation="vertical" size={12} style={{ width: '100%' }}>
           <ProCard
             size="small"
             style={{
@@ -363,7 +363,6 @@ const ModuleTree: FC<IProps> = ({
                 <SearchOutlined style={{ color: colors.textSecondary }} />
               }
               allowClear
-              variant="filled"
               onChange={(e) => {
                 const value = e.target.value;
                 if (!value) {
@@ -425,7 +424,7 @@ const ModuleTree: FC<IProps> = ({
               borderRadius: '0 0 8px 8px',
             }}
           >
-            <Space split={<span>•</span>} size={8}>
+            <Space separator={<span>•</span>} size={8}>
               <span>共 {modules.length} 个模块</span>
               <span>
                 {modules.filter((m) => m.children?.length).length} 个文件夹

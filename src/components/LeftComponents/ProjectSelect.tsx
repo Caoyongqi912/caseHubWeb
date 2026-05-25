@@ -288,7 +288,7 @@ const ProjectSelect: FC<IProps> = ({
       style={styles.selectCard}
       styles={{ body: { padding: `${spacing.xl}px ${spacing.lg}px` } }}
     >
-      <Space direction="vertical" style={{ width: '100%' }} size={spacing.lg}>
+      <Space orientation="vertical" style={{ width: '100%' }} size={spacing.lg}>
         <Space align="center" size={spacing.md}>
           <div
             style={{
@@ -353,13 +353,17 @@ const ProjectSelect: FC<IProps> = ({
           }}
           onSearch={setSearchValue}
           filterOption={false}
-          dropdownStyle={{
-            borderRadius: borderRadius.lg,
-            padding: `${spacing.sm}px 0`,
-            boxShadow: shadows.dropdown,
-            border: `1px solid ${token.colorBorderSecondary}`,
+          styles={{
+            popup: {
+              root: {
+                borderRadius: borderRadius.lg,
+                padding: `${spacing.sm}px 0`,
+                boxShadow: shadows.dropdown,
+                border: `1px solid ${token.colorBorderSecondary}`,
+              },
+            },
           }}
-          dropdownRender={(menu) => (
+          popupRender={(menu) => (
             <div>
               {searchValue && (
                 <div

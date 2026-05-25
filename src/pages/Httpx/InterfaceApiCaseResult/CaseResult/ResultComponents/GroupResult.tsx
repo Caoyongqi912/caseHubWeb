@@ -45,9 +45,11 @@ const GroupResult: FC<Props> = ({ result }) => {
             gap: 8,
           }}
         >
-          <Tag color={'green-inverse'}>STEP_{result.content_step}</Tag>
+          <Tag color="green" variant="solid">
+            STEP_{result.content_step}
+          </Tag>
           <Tooltip title={'接口组'}>
-            <Tag color={'blue-inverse'} icon={<GroupOutlined />} />
+            <Tag color="blue" variant="solid" icon={<GroupOutlined />} />
           </Tooltip>
           {result.result ? (
             <CheckCircleTwoTone twoToneColor="#52c41a" />

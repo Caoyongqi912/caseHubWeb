@@ -253,7 +253,7 @@ const Index: FC<Props> = (props) => {
     <ProCard
       styles={{ body: { padding: 0 } }}
       split={'horizontal'}
-      bordered
+      variant="outlined"
       collapsible
       hoverable
       defaultCollapsed

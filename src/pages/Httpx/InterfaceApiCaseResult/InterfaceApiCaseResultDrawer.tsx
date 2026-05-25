@@ -145,7 +145,7 @@ const InterfaceApiCaseResultDrawer: FC<SelfProps> = ({
       key: '2',
       icon: <MessageOutlined />,
       children: (
-        <ProCard bordered>
+        <ProCard variant="outlined">
           <AceCodeEditor
             value={logMessage.join('\n')}
             height="100vh"

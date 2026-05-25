@@ -249,7 +249,7 @@ const InterfaceApiCaseResultTable: FC<SelfProps> = (props) => {
       dataIndex: 'starter_id',
       key: 'starter_id',
       valueType: 'select',
-      renderFormItem: () => {
+      formItemRender: () => {
         return <UserSelect />;
       },
       render: (_, record) => (

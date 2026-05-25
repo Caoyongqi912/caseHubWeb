@@ -125,7 +125,7 @@ const JsonPathTool = () => {
     <ProCard
       title="JSONPath 提取工具"
       split="horizontal"
-      bordered
+      variant="outlined"
       headerBordered
       extra={
         <Space>
@@ -142,7 +142,7 @@ const JsonPathTool = () => {
       }
     >
       <ProCard>
-        <Space direction="vertical" style={{ width: '100%' }}>
+        <Space orientation="vertical" style={{ width: '100%' }}>
           <div>
             <Input
               placeholder="输入JSONPath表达式，如: $.data[0]"

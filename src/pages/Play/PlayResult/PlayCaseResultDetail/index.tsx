@@ -144,7 +144,6 @@ const Index: FC<SelfProps> = (props) => {
 
   return (
     <ProCard
-      bordered={false}
       tabs={{
         items: items,
         type: 'card',

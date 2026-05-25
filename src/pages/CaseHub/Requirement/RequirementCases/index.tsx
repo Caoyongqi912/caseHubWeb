@@ -502,9 +502,8 @@ const Index: React.FC = () => {
             )}
           </div>
         )}
-        expandIconPosition="start"
+        expandIconPlacement="start"
         style={{ background: 'transparent', border: 'none' }}
-        bordered={false}
       />
     );
   }, [groupedTestCases, activeGroupKeys, renderTestCase]);

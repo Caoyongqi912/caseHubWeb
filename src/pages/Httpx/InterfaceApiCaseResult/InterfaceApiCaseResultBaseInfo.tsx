@@ -50,7 +50,7 @@ const InterfaceApiCaseResultBaseInfo: FC<SelfProps> = ({ caseResultInfo }) => {
       >
         <Row gutter={[16, 16]} align="middle">
           <Col flex="auto">
-            <Space direction="vertical" size={4} style={{ width: '100%' }}>
+            <Space orientation="vertical" size={4} style={{ width: '100%' }}>
               <Title level={4} style={{ margin: 0 }}>
                 {caseResultInfo.interface_case_name || '未命名测试'}
               </Title>
@@ -129,7 +129,7 @@ const InterfaceApiCaseResultBaseInfo: FC<SelfProps> = ({ caseResultInfo }) => {
                 border: `1px solid ${token.colorBorderSecondary}`,
               }}
             >
-              <Space direction="vertical" size={2}>
+              <Space orientation="vertical" size={2}>
                 <Text type="secondary" style={{ fontSize: '12px' }}>
                   <UserOutlined /> 执行人
                 </Text>
@@ -148,7 +148,7 @@ const InterfaceApiCaseResultBaseInfo: FC<SelfProps> = ({ caseResultInfo }) => {
                 border: `1px solid ${token.colorBorderSecondary}`,
               }}
             >
-              <Space direction="vertical" size={2}>
+              <Space orientation="vertical" size={2}>
                 <Text type="secondary" style={{ fontSize: '12px' }}>
                   <EnvironmentOutlined /> 运行环境
                 </Text>
@@ -169,7 +169,7 @@ const InterfaceApiCaseResultBaseInfo: FC<SelfProps> = ({ caseResultInfo }) => {
                 border: `1px solid ${token.colorBorderSecondary}`,
               }}
             >
-              <Space direction="vertical" size={2}>
+              <Space orientation="vertical" size={2}>
                 <Text type="secondary" style={{ fontSize: '12px' }}>
                   <ClockCircleOutlined /> 开始时间
                 </Text>
@@ -188,7 +188,7 @@ const InterfaceApiCaseResultBaseInfo: FC<SelfProps> = ({ caseResultInfo }) => {
                 border: `1px solid ${token.colorBorderSecondary}`,
               }}
             >
-              <Space direction="vertical" size={2}>
+              <Space orientation="vertical" size={2}>
                 <Text type="secondary" style={{ fontSize: '12px' }}>
                   <FieldTimeOutlined /> 总用时
                 </Text>
@@ -211,7 +211,7 @@ const InterfaceApiCaseResultBaseInfo: FC<SelfProps> = ({ caseResultInfo }) => {
                 border: `1px solid ${token.colorBorderSecondary}`,
               }}
             >
-              <Space direction="vertical" size={2}>
+              <Space orientation="vertical" size={2}>
                 <Text type="secondary" style={{ fontSize: '12px' }}>
                   <StepForwardOutlined /> 总步长
                 </Text>
@@ -234,7 +234,7 @@ const InterfaceApiCaseResultBaseInfo: FC<SelfProps> = ({ caseResultInfo }) => {
                 }`,
               }}
             >
-              <Space direction="vertical" size={2}>
+              <Space orientation="vertical" size={2}>
                 <Text type="secondary" style={{ fontSize: '12px' }}>
                   测试结果
                 </Text>

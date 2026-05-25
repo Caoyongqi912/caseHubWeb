@@ -47,7 +47,7 @@ const PlayCaseResultInfo: FC<ISelfProps> = ({ resultDetail }) => {
       >
         <Row gutter={[16, 16]} align="middle">
           <Col flex="auto">
-            <Space direction="vertical" size={4} style={{ width: '100%' }}>
+            <Space orientation="vertical" size={4} style={{ width: '100%' }}>
               <Title level={4} style={{ margin: 0 }}>
                 {resultDetail?.ui_case_name || '未命名测试'}
               </Title>
@@ -104,7 +104,7 @@ const PlayCaseResultInfo: FC<ISelfProps> = ({ resultDetail }) => {
                 border: `1px solid ${token.colorBorderSecondary}`,
               }}
             >
-              <Space direction="vertical" size={2}>
+              <Space orientation="vertical" size={2}>
                 <Text type="secondary" style={{ fontSize: '12px' }}>
                   <ClockCircleOutlined /> 开始时间
                 </Text>
@@ -121,7 +121,7 @@ const PlayCaseResultInfo: FC<ISelfProps> = ({ resultDetail }) => {
                 border: `1px solid ${token.colorBorderSecondary}`,
               }}
             >
-              <Space direction="vertical" size={2}>
+              <Space orientation="vertical" size={2}>
                 <Text type="secondary" style={{ fontSize: '12px' }}>
                   <ClockCircleOutlined /> 用时
                 </Text>
@@ -140,7 +140,7 @@ const PlayCaseResultInfo: FC<ISelfProps> = ({ resultDetail }) => {
                 border: `1px solid ${token.colorBorderSecondary}`,
               }}
             >
-              <Space direction="vertical" size={2}>
+              <Space orientation="vertical" size={2}>
                 <Text type="secondary" style={{ fontSize: '12px' }}>
                   <ClockCircleOutlined /> 结束时间
                 </Text>
@@ -157,7 +157,7 @@ const PlayCaseResultInfo: FC<ISelfProps> = ({ resultDetail }) => {
                 border: `1px solid ${token.colorBorderSecondary}`,
               }}
             >
-              <Space direction="vertical" size={2}>
+              <Space orientation="vertical" size={2}>
                 <Text type="secondary" style={{ fontSize: '12px' }}>
                   <UserOutlined /> 执行人
                 </Text>
@@ -174,7 +174,7 @@ const PlayCaseResultInfo: FC<ISelfProps> = ({ resultDetail }) => {
                 border: `1px solid ${token.colorBorderSecondary}`,
               }}
             >
-              <Space direction="vertical" size={2}>
+              <Space orientation="vertical" size={2}>
                 <Text type="secondary" style={{ fontSize: '12px' }}>
                   <FileTextOutlined /> 用例步长
                 </Text>
@@ -195,7 +195,7 @@ const PlayCaseResultInfo: FC<ISelfProps> = ({ resultDetail }) => {
                 }`,
               }}
             >
-              <Space direction="vertical" size={2}>
+              <Space orientation="vertical" size={2}>
                 <Text type="secondary" style={{ fontSize: '12px' }}>
                   测试结果
                 </Text>
@@ -236,7 +236,7 @@ const PlayCaseResultInfo: FC<ISelfProps> = ({ resultDetail }) => {
           }}
           styles={{ body: { padding: '16px 24px' } }}
         >
-          <Space direction="vertical" size={16} style={{ width: '100%' }}>
+          <Space orientation="vertical" size={16} style={{ width: '100%' }}>
             {/* 错误步骤信息 */}
             <Row gutter={[16, 16]}>
               <Col xs={24} sm={12}>
@@ -248,7 +248,7 @@ const PlayCaseResultInfo: FC<ISelfProps> = ({ resultDetail }) => {
                     border: `1px solid ${token.colorErrorBorder}`,
                   }}
                 >
-                  <Space direction="vertical" size={2}>
+                  <Space orientation="vertical" size={2}>
                     <Text type="secondary" style={{ fontSize: '12px' }}>
                       错误步骤
                     </Text>
@@ -267,7 +267,7 @@ const PlayCaseResultInfo: FC<ISelfProps> = ({ resultDetail }) => {
                     border: `1px solid ${token.colorErrorBorder}`,
                   }}
                 >
-                  <Space direction="vertical" size={2}>
+                  <Space orientation="vertical" size={2}>
                     <Text type="secondary" style={{ fontSize: '12px' }}>
                       错误步骤标题
                     </Text>

@@ -67,7 +67,7 @@ const CaseStatsBar: FC<Props> = ({ total, passed, failed, unchecked }) => {
                 from: token.colorPrimary,
                 to: token.colorPrimaryHover || token.colorPrimary,
               }}
-              trailColor={`${token.colorBorder}40`}
+              railColor={`${token.colorBorder}40`}
               style={{ flex: 1, margin: 0 }}
             />
           </Tooltip>
@@ -87,7 +87,7 @@ const CaseStatsBar: FC<Props> = ({ total, passed, failed, unchecked }) => {
           </span>
         </div>
 
-        <Divider type="vertical" style={{ height: 24, margin: 0 }} />
+        <Divider orientation="vertical" style={{ height: 24, margin: 0 }} />
 
         <Tooltip title={`通过率: ${stats.passRate}%`}>
           <Space size="small" align="center">
@@ -98,10 +98,12 @@ const CaseStatsBar: FC<Props> = ({ total, passed, failed, unchecked }) => {
               value={passed}
               suffix={`(${stats.passRate}%)`}
               precision={0}
-              valueStyle={{
-                fontSize: 14,
-                fontWeight: 700,
-                color: token.colorText,
+              styles={{
+                content: {
+                  fontSize: 14,
+                  fontWeight: 700,
+                  color: token.colorText,
+                },
               }}
               style={{ marginBottom: 0 }}
             />
@@ -120,10 +122,12 @@ const CaseStatsBar: FC<Props> = ({ total, passed, failed, unchecked }) => {
               value={failed}
               suffix={`(${stats.failRate}%)`}
               precision={0}
-              valueStyle={{
-                fontSize: 14,
-                fontWeight: 700,
-                color: token.colorText,
+              styles={{
+                content: {
+                  fontSize: 14,
+                  fontWeight: 700,
+                  color: token.colorText,
+                },
               }}
               style={{ marginBottom: 0 }}
             />
@@ -142,10 +146,12 @@ const CaseStatsBar: FC<Props> = ({ total, passed, failed, unchecked }) => {
               value={unchecked}
               suffix={`(${stats.uncheckedRate}%)`}
               precision={0}
-              valueStyle={{
-                fontSize: 14,
-                fontWeight: 700,
-                color: token.colorText,
+              styles={{
+                content: {
+                  fontSize: 14,
+                  fontWeight: 700,
+                  color: token.colorText,
+                },
               }}
               style={{ marginBottom: 0 }}
             />
@@ -155,17 +161,19 @@ const CaseStatsBar: FC<Props> = ({ total, passed, failed, unchecked }) => {
           </Space>
         </Tooltip>
 
-        <Divider type="vertical" style={{ height: 24, margin: 0 }} />
+        <Divider orientation="vertical" style={{ height: 24, margin: 0 }} />
 
         <Tooltip title="总用例数">
           <Space size="small" align="center">
             <Statistic
               value={total}
               precision={0}
-              valueStyle={{
-                fontSize: 14,
-                fontWeight: 700,
-                color: token.colorText,
+              styles={{
+                content: {
+                  fontSize: 14,
+                  fontWeight: 700,
+                  color: token.colorText,
+                },
               }}
               style={{ marginBottom: 0 }}
             />

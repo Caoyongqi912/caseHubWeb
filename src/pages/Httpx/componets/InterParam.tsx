@@ -61,7 +61,7 @@ const InterParam: FC<SelfProps> = ({ form, readonly = false }) => {
           return <Tag color={'blue'}>{text}</Tag>;
         }
       },
-      renderFormItem: (_, { record }) => {
+      formItemRender: (_, { record }) => {
         return (
           <ProFormText
             noStyle

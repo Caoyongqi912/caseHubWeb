@@ -210,7 +210,7 @@ const Index: FC<SelfProps> = ({
       title: '业务用例数',
       dataIndex: 'interface_task_total_cases_num',
       key: 'interface_task_total_cases_num',
-      hideInSearch: true,
+      search: true,
       width: 120,
       render: (_, record) => (
         <Tag style={{ borderRadius: 6, fontWeight: 500, padding: '4px 12px' }}>
@@ -222,7 +222,7 @@ const Index: FC<SelfProps> = ({
       title: 'API数',
       dataIndex: 'interface_task_total_apis_num',
       key: 'interface_task_total_apis_num',
-      hideInSearch: true,
+      search: true,
       width: 100,
       render: (_, record) => (
         <Tag style={tagBaseStyle}>
@@ -260,7 +260,7 @@ const Index: FC<SelfProps> = ({
       dataIndex: 'creator',
       valueType: 'select',
       width: 120,
-      renderFormItem: () => <UserSelect />,
+      formItemRender: () => <UserSelect />,
       render: (_, record) => (
         <Tag style={{ fontSize: 12, padding: '2px 10px', borderRadius: 12 }}>
           <UserOutlined style={{ marginRight: 4, opacity: 0.7 }} />

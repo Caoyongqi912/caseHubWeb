@@ -115,12 +115,13 @@ const InterAssertList: FC<ISelfProps> = ({ form, readonly = false }) => {
                 {collapsed ? <RightOutlined /> : <DownOutlined />}
               </Space>
             )}
-            bordered
+            variant="outlined"
             hoverable
             headerBordered
             title={
               <Tag
-                color={'orange-inverse'}
+                color="orange"
+                variant="solid"
                 hidden={editingIndex === index} // 编辑时隐藏
               >
                 {record?.assert_name || `断言_${index + 1}`}

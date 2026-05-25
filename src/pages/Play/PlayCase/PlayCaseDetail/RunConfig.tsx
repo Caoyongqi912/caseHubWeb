@@ -65,7 +65,7 @@ const RunConfig: FC<{
           onChange={onMenuClick}
           style={{ width: '100%' }}
         >
-          <Space direction="vertical" style={{ width: '100%' }} size={8}>
+          <Space orientation="vertical" style={{ width: '100%' }} size={8}>
             <Radio.Button
               value={1}
               style={{

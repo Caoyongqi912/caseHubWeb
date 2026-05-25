@@ -192,7 +192,7 @@ const Index: FC<Props> = (props) => {
 
   return (
     <ProCard
-      bordered
+      variant="outlined"
       collapsible
       hoverable
       styles={{ body: { padding: 0 } }}

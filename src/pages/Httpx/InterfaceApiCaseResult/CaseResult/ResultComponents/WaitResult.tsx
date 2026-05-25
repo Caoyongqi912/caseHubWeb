@@ -24,9 +24,11 @@ const WaitResult: FC<Props> = ({ result }) => {
       defaultCollapsed
       title={
         <Space>
-          <Tag color={'green-inverse'}>STEP_{result.content_step}</Tag>
+          <Tag color="green" variant="solid">
+            STEP_{result.content_step}
+          </Tag>
           <Tooltip title={'等待'}>
-            <Tag color={'orange-inverse'} icon={<FieldTimeOutlined />} />
+            <Tag color="orange" variant="solid" icon={<FieldTimeOutlined />} />
           </Tooltip>
           <CheckCircleTwoTone twoToneColor="#52c41a" />
           <Text type={'secondary'} style={{ marginLeft: 20 }}>

@@ -244,7 +244,7 @@ const InterfaceApiTaskResultTable: FC<SelfProps> = ({ apiCaseTaskId, job }) => {
     {
       title: '进度',
       key: 'progress',
-      hideInSearch: true,
+      search: true,
       hideInTable: showSearch,
       dataIndex: 'progress',
       width: 150,
@@ -267,7 +267,7 @@ const InterfaceApiTaskResultTable: FC<SelfProps> = ({ apiCaseTaskId, job }) => {
       dataIndex: 'total_use_time',
       key: 'total_use_time',
       valueType: 'time',
-      hideInSearch: true,
+      search: true,
       width: 100,
       render: (_, record) => (
         <Tag

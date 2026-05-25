@@ -396,7 +396,7 @@ const InterBeforeSql: FC<SelfProps> = (props) => {
                 Try
                 <Popover
                   content={'SQL 不支持变量的调试'}
-                  overlayStyle={commonStyles.popover}
+                  styles={{ root: commonStyles.popover }}
                 >
                   <QuestionCircleOutlined />
                 </Popover>
@@ -420,7 +420,10 @@ const InterBeforeSql: FC<SelfProps> = (props) => {
                 </Button>
               </Space>
             )}
-            <Popover content={contentSQL} overlayStyle={commonStyles.popover}>
+            <Popover
+              content={contentSQL}
+              styles={{ root: commonStyles.popover }}
+            >
               <Button type="primary" style={commonStyles.buttonPrimary}>
                 在SQL语法中设置与使用变量
                 <QuestionCircleOutlined />
@@ -440,7 +443,7 @@ const InterBeforeSql: FC<SelfProps> = (props) => {
       <ProCard
         title="变量提取配置"
         extra={
-          <Popover content={contentJP} overlayStyle={commonStyles.popover}>
+          <Popover content={contentJP} styles={{ root: commonStyles.popover }}>
             <Button type="primary" style={commonStyles.buttonPrimary}>
               提取结果到变量
               <QuestionCircleOutlined />

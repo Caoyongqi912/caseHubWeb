@@ -41,13 +41,13 @@ const PlayCaseResultTable: FC<PlayDebugResultProps> = ({ caseId }) => {
       title: '开始时间',
       dataIndex: 'start_time',
       valueType: 'dateTime',
-      hideInSearch: true,
+      search: true,
     },
     {
       title: '用时',
       dataIndex: 'use_time',
       valueType: 'text',
-      hideInSearch: true,
+      search: true,
     },
     {
       title: '执行状态',
@@ -71,7 +71,7 @@ const PlayCaseResultTable: FC<PlayDebugResultProps> = ({ caseId }) => {
       title: '执行人',
       dataIndex: 'starter_name',
       valueType: 'text',
-      hideInSearch: true,
+      search: true,
     },
     {
       title: '操作',

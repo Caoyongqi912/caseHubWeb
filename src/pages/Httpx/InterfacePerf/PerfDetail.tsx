@@ -141,7 +141,7 @@ const PerfDetail = () => {
   }, []);
 
   return (
-    <ProCard ghost bordered={false} split={'horizontal'} gutter={16}>
+    <ProCard ghost split={'horizontal'} gutter={16}>
       <ProCard
         title={'Status'}
         extra={
@@ -166,11 +166,11 @@ const PerfDetail = () => {
           {status}
         </Title>
       </ProCard>
-      <ProCard split={'vertical'} bordered={false}>
-        <ProCard split={'vertical'} bordered={false}>
-          <ProCard split={'horizontal'} bordered={false}>
-            <ProCard layout={'center'} bordered={false} hoverable>
-              <Space direction={'vertical'}>
+      <ProCard split={'vertical'}>
+        <ProCard split={'vertical'}>
+          <ProCard split={'horizontal'}>
+            <ProCard layout={'center'} hoverable>
+              <Space orientation={'vertical'}>
                 <Title level={5}>Request Num</Title>
                 <Title
                   level={2}
@@ -185,8 +185,8 @@ const PerfDetail = () => {
                 </Title>
               </Space>
             </ProCard>
-            <ProCard layout={'center'} bordered={false} hoverable>
-              <Space direction={'vertical'}>
+            <ProCard layout={'center'} hoverable>
+              <Space orientation={'vertical'}>
                 <Title level={5}>Request Fail Num</Title>
                 <Title
                   level={2}
@@ -201,8 +201,8 @@ const PerfDetail = () => {
                 </Title>
               </Space>
             </ProCard>
-            <ProCard layout={'center'} bordered={false} hoverable>
-              <Space direction={'vertical'}>
+            <ProCard layout={'center'} hoverable>
+              <Space orientation={'vertical'}>
                 <Title level={5}>Max Response Time (ms)</Title>
                 <Title
                   level={2}
@@ -217,9 +217,9 @@ const PerfDetail = () => {
               </Space>
             </ProCard>
           </ProCard>
-          <ProCard split={'horizontal'} bordered={false}>
-            <ProCard layout={'center'} bordered={false} hoverable>
-              <Space direction={'vertical'}>
+          <ProCard split={'horizontal'}>
+            <ProCard layout={'center'} hoverable>
+              <Space orientation={'vertical'}>
                 <Title level={5}>User Count</Title>
                 <Title
                   level={2}
@@ -233,8 +233,8 @@ const PerfDetail = () => {
                 </Title>
               </Space>
             </ProCard>
-            <ProCard layout={'center'} bordered={false} hoverable>
-              <Space direction={'vertical'}>
+            <ProCard layout={'center'} hoverable>
+              <Space orientation={'vertical'}>
                 <Title level={5}>RPS</Title>
                 <Title
                   level={2}
@@ -248,8 +248,8 @@ const PerfDetail = () => {
                 </Title>
               </Space>
             </ProCard>
-            <ProCard layout={'center'} bordered={false} hoverable>
-              <Space direction={'vertical'}>
+            <ProCard layout={'center'} hoverable>
+              <Space orientation={'vertical'}>
                 <Title level={5}>Avg Response Time (ms)</Title>
                 <Title
                   level={2}
@@ -269,7 +269,11 @@ const PerfDetail = () => {
           <Line {...rpsConfig} />
         </ProCard>
       </ProCard>
-      <ProCard bordered style={{ marginTop: 20 }} title={'Response Time'}>
+      <ProCard
+        variant="outlined"
+        style={{ marginTop: 20 }}
+        title={'Response Time'}
+      >
         <Line {...responseConfig} />
       </ProCard>
     </ProCard>

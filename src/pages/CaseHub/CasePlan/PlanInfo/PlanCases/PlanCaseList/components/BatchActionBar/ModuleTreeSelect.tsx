@@ -84,7 +84,7 @@ const ModuleTreeSelect: FC<ModuleTreeSelectProps> = ({
           padding: 24,
         }}
       >
-        <Spin size="small" tip="加载目录..." />
+        <Spin size="small" description="加载目录..." />
       </div>
     );
   }

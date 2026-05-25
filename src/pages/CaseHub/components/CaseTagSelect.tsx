@@ -91,7 +91,7 @@ const CaseTagSelect: FC<Props> = ({
           fieldProps={{
             variant: 'filled',
             onBlur: handleBlur,
-            dropdownRender: (menu) => (
+            popupRender: (menu) => (
               <>
                 {menu}
                 <Divider style={{ margin: `${spacing.sm}px 0` }} />

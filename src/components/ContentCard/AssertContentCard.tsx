@@ -195,7 +195,7 @@ const AssertContentCard: FC<Props> = (props) => {
 
   return (
     <ProCard
-      bordered
+      variant="outlined"
       collapsible
       hoverable
       defaultCollapsed
@@ -225,7 +225,6 @@ const AssertContentCard: FC<Props> = (props) => {
       collapsibleIconRender={() => cardTitle}
     >
       <ProCard
-        bordered={false}
         style={{
           background: `linear-gradient(180deg, ${token.colorBgContainer} 0%, ${token.colorBgLayout} 100%)`,
           padding: '20px 24px',

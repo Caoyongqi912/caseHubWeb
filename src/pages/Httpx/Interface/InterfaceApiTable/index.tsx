@@ -216,7 +216,7 @@ const Index: FC<SelfProps> = ({
       width: '8%',
 
       valueType: 'select',
-      renderFormItem: () => <UserSelect />,
+      formItemRender: () => <UserSelect />,
       render: (_, record) => (
         <Tag style={{ ...tagBaseStyle, borderRadius: 12 }}>
           {record.creatorName}
@@ -372,9 +372,11 @@ const Index: FC<SelfProps> = ({
           display: 'flex',
           flexDirection: 'column',
         }}
-        bodyStyle={{
-          padding: '12px',
-          height: '100%',
+        styles={{
+          body: {
+            padding: '12px',
+            height: '100%',
+          },
         }}
       >
         {/* 表格高度 100% 填满，内部滚动 */}

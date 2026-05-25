@@ -119,7 +119,7 @@ export const useColumns = (
         key: 'creator',
         valueType: 'select',
         width: 110,
-        renderFormItem: () => <UserSelect />,
+        formItemRender: () => <UserSelect />,
         render: (_, record) => (
           <Tag style={{ ...tagBaseStyle, borderRadius: 12 }}>
             <UserOutlined />

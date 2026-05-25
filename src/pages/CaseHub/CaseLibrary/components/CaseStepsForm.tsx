@@ -115,7 +115,10 @@ function SortableStepItem({
             padding: `${token.paddingXS}px ${token.paddingSM}px`,
           }}
         />
-        <Divider type="vertical" style={{ height: 24, margin: '0 8px' }} />
+        <Divider
+          orientation="vertical"
+          style={{ height: 24, margin: '0 8px' }}
+        />
         <TextArea
           placeholder="请输入预期结果"
           value={record.expected_result}
@@ -127,7 +130,10 @@ function SortableStepItem({
             padding: `${token.paddingXS}px ${token.paddingSM}px`,
           }}
         />
-        <Divider type="vertical" style={{ height: 24, margin: '0 8px' }} />
+        <Divider
+          orientation="vertical"
+          style={{ height: 24, margin: '0 8px' }}
+        />
         <Space size={4} style={{ paddingRight: token.paddingSM }}>
           <Button
             type="text"

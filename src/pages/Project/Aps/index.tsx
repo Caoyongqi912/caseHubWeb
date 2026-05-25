@@ -36,7 +36,11 @@ const Index = () => {
       fixed: 'left',
       width: '10%',
       render: (text, record) => {
-        return <Tag color={'geekblue-inverse'}>{record.tag}</Tag>;
+        return (
+          <Tag color="geekblue" variant="solid">
+            {record.tag}
+          </Tag>
+        );
       },
     },
     {
@@ -69,7 +73,11 @@ const Index = () => {
       dataIndex: 'title',
       key: 'title',
       render: (text, record) => {
-        return <Tag color={'geekblue-inverse'}>{record.title}</Tag>;
+        return (
+          <Tag color="geekblue" variant="solid">
+            {record.title}
+          </Tag>
+        );
       },
     },
     {
@@ -86,7 +94,7 @@ const Index = () => {
     },
     {
       title: '开启中',
-      hideInSearch: true,
+      search: true,
       dataIndex: 'switch',
       render: (_, record) => {
         return (
@@ -105,7 +113,7 @@ const Index = () => {
       title: 'next',
       dataIndex: 'next',
 
-      hideInSearch: true,
+      search: true,
     },
   ];
 

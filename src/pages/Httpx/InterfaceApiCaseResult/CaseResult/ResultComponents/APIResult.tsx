@@ -132,7 +132,7 @@ const ApiResult: FC<Props> = ({ result, prefix }) => {
 
   const stepTag = (index: number) => {
     return (
-      <Tag color={'green-inverse'}>
+      <Tag color="green" variant="solid">
         {prefix}_{prefix === 'STEP' ? result.content_step : index + 1}
       </Tag>
     );
@@ -158,7 +158,7 @@ const ApiResult: FC<Props> = ({ result, prefix }) => {
                 >
                   {stepTag(index)}
                   <Tooltip title={'接口'}>
-                    <Tag color={'gold-inverse'} icon={<ApiOutlined />} />
+                    <Tag color="gold" variant="solid" icon={<ApiOutlined />} />
                   </Tooltip>
                   {item.result ? (
                     <CheckCircleTwoTone twoToneColor={token.colorSuccess} />

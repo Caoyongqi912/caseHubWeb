@@ -96,7 +96,7 @@ const Index: FC<IProps> = ({ projectId }) => {
               >
                 编辑
               </a>
-              <Divider type="vertical" />
+              <Divider orientation="vertical" />
               <a
                 onClick={async () => {
                   const { code } = await removeDBConfigById({

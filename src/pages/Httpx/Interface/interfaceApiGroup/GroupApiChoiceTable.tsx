@@ -184,7 +184,7 @@ const GroupApiChoiceTable: FC<SelfProps> = (props) => {
       key: 'creator',
       valueType: 'select',
       width: 120,
-      renderFormItem: () => {
+      formItemRender: () => {
         return <UserSelect />;
       },
       render: (_, record) => (

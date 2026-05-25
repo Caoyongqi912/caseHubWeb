@@ -123,7 +123,11 @@ const InterScript: FC<SelfProps> = ({ form, tag }) => {
   };
 
   useEffect(() => {
-    const script = form.getFieldValue(tag);
+    const script = form.getFieldValue(
+      tag === 'before_script'
+        ? 'interface_before_script'
+        : 'interface_after_script',
+    );
     if (script) {
       setScriptData(script);
     }

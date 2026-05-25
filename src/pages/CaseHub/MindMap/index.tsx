@@ -141,13 +141,15 @@ const Index = () => {
 
   return (
     <ProCard
-      bordered
+      variant={'outlined'}
       title={<ToolBar mind={mindRef} saveMap={saveMap} />}
-      styles={{ body: containerStyle }}
-      headStyle={{
-        background: `linear-gradient(135deg, ${colors.primaryBg} 0%, ${colors.bgContainer} 100%)`,
-        borderBottom: `1px solid ${colors.border}`,
-        padding: `${spacing.md}px ${spacing.lg}px`,
+      styles={{
+        body: containerStyle,
+        header: {
+          background: `linear-gradient(135deg, ${colors.primaryBg} 0%, ${colors.bgContainer} 100%)`,
+          borderBottom: `1px solid ${colors.border}`,
+          padding: `${spacing.md}px ${spacing.lg}px`,
+        },
       }}
       style={{
         borderRadius: borderRadius.xl,

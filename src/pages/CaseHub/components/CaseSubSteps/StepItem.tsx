@@ -117,7 +117,10 @@ const StepItem: FC<StepItemProps> = memo(
             }}
           />
 
-          <Divider type="vertical" style={{ height: 24, margin: '0 8px' }} />
+          <Divider
+            orientation="vertical"
+            style={{ height: 24, margin: '0 8px' }}
+          />
 
           <TextArea
             placeholder="请输入预期结果"
@@ -132,7 +135,10 @@ const StepItem: FC<StepItemProps> = memo(
             }}
           />
 
-          <Divider type="vertical" style={{ height: 24, margin: '0 8px' }} />
+          <Divider
+            orientation="vertical"
+            style={{ height: 24, margin: '0 8px' }}
+          />
 
           <Space size={4} style={{ paddingRight: token.paddingSM }}>
             <Tooltip title="复制">

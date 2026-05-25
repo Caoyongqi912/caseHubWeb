@@ -115,7 +115,7 @@ const InterfaceCaseChoiceApiTable: FC<SelfProps> = ({
       title: '项目',
       dataIndex: 'project_id',
       hideInTable: true,
-      hideInSearch: true,
+      search: true,
       valueType: 'select',
       valueEnum: projectEnumMap,
       fieldProps: {
@@ -193,7 +193,7 @@ const InterfaceCaseChoiceApiTable: FC<SelfProps> = ({
       dataIndex: 'creator',
       valueType: 'select',
       width: 120,
-      renderFormItem: () => {
+      formItemRender: () => {
         return <UserSelect />;
       },
       render: (_, record) => (

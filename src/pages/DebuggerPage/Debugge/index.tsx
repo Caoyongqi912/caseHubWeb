@@ -254,7 +254,7 @@ const DynamicSettings = () => {
                       title="表格配置"
                       size={0}
                       collapsible
-                      direction="horizontal"
+                      orientation="horizontal"
                       labelLayout="twoLine"
                     >
                       <ProFormSwitch
@@ -332,7 +332,7 @@ const DynamicSettings = () => {
                     <ProForm.Group
                       size={0}
                       collapsible
-                      direction="horizontal"
+                      orientation="horizontal"
                       labelLayout="twoLine"
                       tooltip="toolBarRender={false}"
                       title="工具栏"
@@ -416,7 +416,7 @@ const DynamicSettings = () => {
                     size={0}
                     collapsible
                     tooltip="search={false}"
-                    direction="horizontal"
+                    orientation="horizontal"
                     labelLayout="twoLine"
                     extra={
                       <ProFormSwitch
@@ -536,7 +536,7 @@ const DynamicSettings = () => {
                     size={0}
                     collapsible
                     tooltip="pagination={}"
-                    direction="horizontal"
+                    orientation="horizontal"
                     labelLayout="twoLine"
                     extra={
                       <ProFormSwitch

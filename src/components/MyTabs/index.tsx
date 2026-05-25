@@ -1,4 +1,5 @@
 import { Tabs } from 'antd';
+import { TabPlacement } from 'antd/es/tabs';
 import React, { FC } from 'react';
 
 interface IProps {
@@ -6,7 +7,7 @@ interface IProps {
   activeKey?: string;
   tabBarExtraContent?: React.ReactNode;
   items: any[];
-  tabPlacement?: 'top' | 'left';
+  tabPlacement?: TabPlacement;
   title?: string;
   onChangeKey?: (key: string) => void;
   type?: 'line' | 'card' | 'editable-card';

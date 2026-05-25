@@ -59,7 +59,7 @@ const GlobalVariables: FC<IProps> = ({ projectId }) => {
       title: 'Value',
       dataIndex: 'value',
       copyable: true,
-      hideInSearch: true,
+      search: true,
       tooltip: true,
       ellipsis: true,
     },
@@ -67,7 +67,7 @@ const GlobalVariables: FC<IProps> = ({ projectId }) => {
       title: '描述',
       dataIndex: 'description',
       valueType: 'textarea',
-      hideInSearch: true,
+      search: true,
       ellipsis: true,
       width: 300,
       render: (text) => {

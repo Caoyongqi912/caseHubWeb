@@ -20,7 +20,7 @@ const Index = () => {
   ];
   return (
     <>
-      <ProCard bordered style={{ height: '100vh' }}>
+      <ProCard variant="outlined" style={{ height: '100vh' }}>
         <MyTabs
           title={'用户中心'}
           tabPlacement={'left'}

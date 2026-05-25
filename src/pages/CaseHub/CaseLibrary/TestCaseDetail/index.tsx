@@ -324,7 +324,7 @@ const TestCaseDetail: FC<Props> = ({ testcase, callback }) => {
             {/* 步骤列表 */}
             <div style={{ marginBottom: token.marginLG }}>
               <Space
-                direction="vertical"
+                orientation="vertical"
                 style={{ width: '100%', marginBottom: spacing.lg }}
               >
                 {steps.map((step, index) => (

@@ -90,7 +90,7 @@ const InterBeforeParams: FC<SelfProps> = ({ form }) => {
           </Tag>
         );
       },
-      renderFormItem: (_, { record }) => {
+      formItemRender: (_, { record }) => {
         return (
           <ProFormText
             noStyle

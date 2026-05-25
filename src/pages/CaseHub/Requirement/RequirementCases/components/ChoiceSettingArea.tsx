@@ -221,7 +221,7 @@ const ChoiceSettingArea: FC<Props> = ({
           </Text>
         </div>
 
-        <Space size="small" split={<span style={styles.divider()} />}>
+        <Space size="small" separator={<span style={styles.divider()} />}>
           <Button
             type="text"
             size="small"

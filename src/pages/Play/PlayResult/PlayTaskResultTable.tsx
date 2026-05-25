@@ -319,7 +319,7 @@ const PlayTaskResultTable: FC<SelfProps> = ({ taskId, job }) => {
     {
       title: '用时',
       dataIndex: 'total_usetime',
-      hideInSearch: true,
+      search: true,
       width: 120,
       render: (_, record) => (
         <Tag style={styles.timeTag}>
@@ -331,7 +331,7 @@ const PlayTaskResultTable: FC<SelfProps> = ({ taskId, job }) => {
     {
       title: '执行时间',
       dataIndex: 'start_time',
-      hideInSearch: true,
+      search: true,
       width: 180,
       render: (_, record) => (
         <Text

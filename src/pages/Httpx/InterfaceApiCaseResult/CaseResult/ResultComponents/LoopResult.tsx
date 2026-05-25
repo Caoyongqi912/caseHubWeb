@@ -190,9 +190,13 @@ const LoopResult: FC<Props> = ({ result }) => {
           gap: 8,
         }}
       >
-        <Tag color={'green-inverse'}>STEP_{result.content_step}</Tag>
+        <Tag color="green" variant="solid">
+          STEP_{result.content_step}
+        </Tag>
         <Tooltip title={'循环步骤'}>
-          <Tag color={'purple-inverse'}>LOOP</Tag>
+          <Tag color="purple" variant="solid">
+            LOOP
+          </Tag>
         </Tooltip>
         {result.result ? (
           <CheckCircleTwoTone twoToneColor={token.colorSuccess} />

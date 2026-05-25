@@ -18,8 +18,6 @@ import { Col, Descriptions, Row, Tag } from 'antd';
 import { FC, useEffect, useState } from 'react';
 import { useParams } from 'umi';
 
-const DescriptionsItem = Descriptions.Item;
-
 const InterfaceApiTaskResultDetail: FC = () => {
   const { resultId } = useParams<{ resultId: string }>();
   const [interfaceTaskResultInfo, setInterfaceTaskResultInfo] =
@@ -83,12 +81,12 @@ const InterfaceApiTaskResultDetail: FC = () => {
   ];
   return (
     <ProCard split={'horizontal'}>
-      <ProCard title={'测试报告'} bordered hoverable>
+      <ProCard title={'测试报告'} variant={'outlined'} hoverable>
         <Row gutter={[8, 8]}>
           <Col span={17}>
             <Row gutter={8}>
               <Col span={6}>
-                <ProCard hoverable bordered={false}>
+                <ProCard hoverable variant={'borderless'}>
                   <StatisticCard
                     statistic={{
                       title: '用例总数',
@@ -99,7 +97,7 @@ const InterfaceApiTaskResultDetail: FC = () => {
                 </ProCard>
               </Col>
               <Col span={6}>
-                <ProCard hoverable bordered={false}>
+                <ProCard hoverable variant={'borderless'}>
                   <StatisticCard
                     statistic={{
                       title: '成功数量',
@@ -112,7 +110,7 @@ const InterfaceApiTaskResultDetail: FC = () => {
                 </ProCard>
               </Col>
               <Col span={6}>
-                <ProCard hoverable bordered={false} className={'statisticCard'}>
+                <ProCard hoverable variant={'borderless'}>
                   <StatisticCard
                     statistic={{
                       title: '失败数量',
@@ -125,7 +123,7 @@ const InterfaceApiTaskResultDetail: FC = () => {
                 </ProCard>
               </Col>
               <Col span={6}>
-                <ProCard hoverable bordered={false} className={'statisticCard'}>
+                <ProCard hoverable variant={'borderless'}>
                   <StatisticCard
                     statistic={{
                       title: '测试通过率',
@@ -139,7 +137,7 @@ const InterfaceApiTaskResultDetail: FC = () => {
               </Col>
             </Row>
             <Descriptions style={{ marginTop: 10 }}>
-              <DescriptionsItem label="执行状态">
+              <Descriptions.Item label="执行状态">
                 <Tag
                   color={
                     interfaceTaskResultInfo?.status === 'RUNNING'
@@ -149,32 +147,32 @@ const InterfaceApiTaskResultDetail: FC = () => {
                 >
                   {interfaceTaskResultInfo?.status}
                 </Tag>
-              </DescriptionsItem>
-              <DescriptionsItem label="运行环境">
+              </Descriptions.Item>
+              <Descriptions.Item label="运行环境">
                 <Tag color={'orange'}>
                   {interfaceTaskResultInfo?.running_env_name}
                 </Tag>
-              </DescriptionsItem>
-              <DescriptionsItem label="执行人">
+              </Descriptions.Item>
+              <Descriptions.Item label="执行人">
                 <Tag color={'orange'}>
                   {interfaceTaskResultInfo?.starter_name}
                 </Tag>
-              </DescriptionsItem>
-              <DescriptionsItem label="开始时间">
+              </Descriptions.Item>
+              <Descriptions.Item label="开始时间">
                 <Tag color={'processing'}>
                   {interfaceTaskResultInfo?.create_time}
                 </Tag>
-              </DescriptionsItem>
-              <DescriptionsItem label="结束时间">
+              </Descriptions.Item>
+              <Descriptions.Item label="结束时间">
                 <Tag color={'processing'}>
                   {interfaceTaskResultInfo?.end_time}
                 </Tag>
-              </DescriptionsItem>
-              <DescriptionsItem label="耗时">
+              </Descriptions.Item>
+              <Descriptions.Item label="耗时">
                 <Tag color={'processing'}>
                   {interfaceTaskResultInfo?.total_use_time}
                 </Tag>
-              </DescriptionsItem>
+              </Descriptions.Item>
             </Descriptions>
           </Col>
           <Col span={7}>
@@ -183,7 +181,7 @@ const InterfaceApiTaskResultDetail: FC = () => {
         </Row>
       </ProCard>
       <ProCard
-        bordered
+        variant={'outlined'}
         hoverable
         style={{ overflow: 'hidden' }}
         styles={{ body: { padding: 10 } }}

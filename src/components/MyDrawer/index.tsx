@@ -74,8 +74,7 @@ const Index: FC<SelfProps> = (props) => {
       styles={mergedStyles}
       open={open}
       destroyOnHidden={true}
-      height={height || 'auto'}
-      width={width || '65%'}
+      size={width || '65%'}
       title={name || false}
       extra={props.extra}
       onClose={onClose || (() => setOpen(false))}

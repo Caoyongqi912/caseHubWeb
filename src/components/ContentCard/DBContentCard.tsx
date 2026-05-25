@@ -346,7 +346,7 @@ const DBContentCard: FC<Props> = (props) => {
           },
         }}
         split={'horizontal'}
-        bordered
+        variant="outlined"
         collapsible
         hoverable
         defaultCollapsed
@@ -413,11 +413,11 @@ const DBContentCard: FC<Props> = (props) => {
             <Space size="middle">
               <Select
                 placeholder={'请选择数据库'}
-                disabled={false}
                 value={currentDBId}
+                allowClear
                 options={dbOptions}
                 style={{ minWidth: '200px' }}
-                onChange={(value: number) => {
+                onChange={(value: number | undefined) => {
                   setCurrentDBId(value);
                   form.setFieldsValue({
                     db_id: value,

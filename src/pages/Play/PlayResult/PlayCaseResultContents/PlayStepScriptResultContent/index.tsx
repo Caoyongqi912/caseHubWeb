@@ -39,9 +39,11 @@ const Index: FC<SelfProps> = ({ content }) => {
       defaultCollapsed
       title={
         <Space>
-          <Tag color={'green-inverse'}>STEP_{content.content_step}</Tag>
+          <Tag color="green" variant="solid">
+            STEP_{content.content_step}
+          </Tag>
           <Tooltip title={'脚本'}>
-            <Tag color={'geekblue-inverse'} icon={<PythonOutlined />} />
+            <Tag color="geekblue" variant="solid" icon={<PythonOutlined />} />
           </Tooltip>
           {content.content_result ? (
             <CheckCircleTwoTone twoToneColor={'#52c41a'} />

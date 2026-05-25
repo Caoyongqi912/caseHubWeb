@@ -28,11 +28,13 @@ const Index: FC<SelfProps> = ({ content }) => {
         defaultCollapsed
         title={
           <Space>
-            <Tag color={'green-inverse'}>
+            <Tag color="green" variant="solid">
               STEP_{content.result.content_step}
             </Tag>
             <Tooltip title={'条件组'}>
-              <Tag color={'purple-inverse'}>IF</Tag>
+              <Tag color="purple" variant="solid">
+                IF
+              </Tag>
             </Tooltip>
             <CheckCircleTwoTone twoToneColor="#52c41a" />
 

@@ -90,7 +90,7 @@ const Index: FC<ISelfProps> = ({ projectId, onSelect }) => {
       title: 'desc',
       dataIndex: 'description',
       valueType: 'textarea',
-      hideInSearch: true,
+      search: true,
     },
     {
       title: 'create time',

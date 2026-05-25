@@ -220,7 +220,7 @@ const CaseDataTable: FC<Props> = (props) => {
         title: '创建人',
         dataIndex: 'creator',
         valueType: 'select',
-        renderFormItem: () => {
+        formItemRender: () => {
           return <UserSelect multiple={true} />;
         },
 
@@ -232,7 +232,7 @@ const CaseDataTable: FC<Props> = (props) => {
         title: '创建时间',
         dataIndex: 'create_time',
         valueType: 'dateTime',
-        hideInSearch: true,
+        search: true,
       },
 
       {

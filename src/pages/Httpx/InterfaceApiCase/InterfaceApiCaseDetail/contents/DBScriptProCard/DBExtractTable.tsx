@@ -34,96 +34,90 @@ const DBExtractTable: FC<DBExtractTableProps> = ({
   const { token } = useToken();
   const editorFormRef = useRef<EditableFormInstance<IBeforeSQLExtract>>();
 
-  /**
-   * 表格列定义
-   * @description 配置变量提取表格的列，包括变量名和JsonPath表达式
-   */
-  const columns: ProColumns<IBeforeSQLExtract>[] = useMemo(
-    () => [
-      {
-        title: '变量名',
-        dataIndex: 'key',
-        width: '40%',
-        formItemProps: {
-          required: true,
-          rules: [{ required: true, message: '变量名必填' }],
+  const columns = useMemo(
+    () =>
+      [
+        {
+          title: '变量名',
+          dataIndex: 'key',
+          width: '40%',
+          formItemProps: {
+            required: true,
+            rules: [{ required: true, message: '变量名必填' }],
+          },
         },
-      },
-      {
-        title: 'JsonPath 表达式',
-        dataIndex: 'jp',
-        width: '40%',
-      },
-      {
-        title: '操作',
-        valueType: 'option',
-        width: '20%',
-        fixed: 'right',
-        render: (_, record, __, action) => [
-          <a
-            key="edit"
-            onClick={() => {
-              action?.startEditable?.(record.id);
-            }}
-            style={{ color: '#9333ea' }}
-          >
-            编辑
-          </a>,
-        ],
-      },
-    ],
+        {
+          title: 'JsonPath 表达式',
+          dataIndex: 'jp',
+          width: '40%',
+        },
+        {
+          title: '操作',
+          valueType: 'option',
+          width: '20%',
+          fixed: 'right' as const,
+          render: (_: any, record: IBeforeSQLExtract, __: any, action: any) => [
+            <a
+              key="edit"
+              onClick={() => {
+                action?.startEditable?.(record.id);
+              }}
+              style={{ color: '#9333ea' }}
+            >
+              编辑
+            </a>,
+          ],
+        },
+      ] as ProColumns<IBeforeSQLExtract>[],
     [],
   );
 
-  /**
-   * 变量提取表格配置
-   * @description 配置可编辑表格的新增、编辑、删除和保存行为
-   */
   const editableTableConfig = useMemo(
-    () => ({
-      type: 'multiple' as const,
-      editableKeys,
-      onChange: onEditableKeysChange,
-      onValuesChange: (
-        _: IBeforeSQLExtract,
-        recordList: IBeforeSQLExtract[],
-      ) => {
-        onDataChange(recordList);
-      },
-      onSave: async () => {
-        if (dataSource) {
-          await updateCaseContentDBScript({
-            id: caseContentId,
-            sql_extracts: dataSource,
-          });
-        }
-      },
-      onDelete: async (
-        _key: unknown,
-        row: IBeforeSQLExtract & { index?: number },
-      ) => {
-        const newData = dataSource.filter(
-          (item: IBeforeSQLExtract) => item.id !== row.id,
-        );
-        onDataChange(newData);
-        if (newData.length > 0) {
-          await updateCaseContentDBScript({
-            id: caseContentId,
-            sql_extracts: newData,
-          });
-        }
-      },
-      actionRender: (_: unknown, __: unknown, dom: unknown) => {
-        const domObj = dom as {
-          save?: unknown;
-          delete?: unknown;
-          cancel?: unknown;
-        };
-        return domObj.save && domObj.delete && domObj.cancel
-          ? [domObj.save, domObj.delete, domObj.cancel]
-          : [dom];
-      },
-    }),
+    () =>
+      ({
+        type: 'multiple' as const,
+        editableKeys,
+        onChange: onEditableKeysChange,
+        onValuesChange: (
+          _: IBeforeSQLExtract,
+          recordList: IBeforeSQLExtract[],
+        ) => {
+          onDataChange(recordList);
+        },
+        onSave: async () => {
+          if (dataSource) {
+            await updateCaseContentDBScript({
+              id: caseContentId,
+              sql_extracts: dataSource,
+            });
+          }
+        },
+        onDelete: async (
+          _key: unknown,
+          row: IBeforeSQLExtract & { index?: number },
+        ) => {
+          const newData = dataSource.filter(
+            (item: IBeforeSQLExtract) => item.id !== row.id,
+          );
+          onDataChange(newData);
+          if (newData.length > 0) {
+            await updateCaseContentDBScript({
+              id: caseContentId,
+              sql_extracts: newData,
+            });
+          }
+        },
+        actionRender: (_row: any, _config: any, dom: any) => {
+          const domObj = dom as {
+            save?: unknown;
+            delete?: unknown;
+            cancel?: unknown;
+          };
+          return domObj.save && domObj.delete && domObj.cancel
+            ? [domObj.save, domObj.delete, domObj.cancel]
+            : [dom];
+        },
+      } as any),
     [
       editableKeys,
       dataSource,

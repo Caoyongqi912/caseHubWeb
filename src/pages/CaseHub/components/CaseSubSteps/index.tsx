@@ -332,10 +332,7 @@ const CaseSubSteps: FC<CaseSubStepsProps> = ({
   ] as const;
 
   return (
-    <ProCard
-      bordered={false}
-      style={{ minHeight: '100%', background: colors.bgContainer }}
-    >
+    <ProCard style={{ minHeight: '100%', background: colors.bgContainer }}>
       {/* ==================== 头部区域 ==================== */}
       <div
         style={{
@@ -443,7 +440,7 @@ const CaseSubSteps: FC<CaseSubStepsProps> = ({
 
           {/* 步骤列表 */}
           <Space
-            direction="vertical"
+            orientation="vertical"
             style={{ width: '100%', marginBottom: spacing.lg }}
           >
             {steps.map((step, index) => (

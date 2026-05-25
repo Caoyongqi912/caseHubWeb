@@ -60,9 +60,11 @@ const Index: FC<SelfProps> = ({ content }) => {
         }
         title={
           <Space>
-            <Tag color={'green-inverse'}>STEP_{content.content_step}</Tag>
+            <Tag color="green" variant="solid">
+              STEP_{content.content_step}
+            </Tag>
             <Tooltip title={'断言'}>
-              <Tag color={'red-inverse'} icon={<QuestionOutlined />} />
+              <Tag color="red" variant="solid" icon={<QuestionOutlined />} />
             </Tooltip>
             {content.content_result ? (
               <CheckCircleTwoTone twoToneColor={'#52c41a'} />
@@ -101,7 +103,11 @@ const Index: FC<SelfProps> = ({ content }) => {
                   marginTop: 5,
                 }}
               >
-                <Space direction="vertical" size={12} style={{ width: '100%' }}>
+                <Space
+                  orientation="vertical"
+                  size={12}
+                  style={{ width: '100%' }}
+                >
                   {/* 标题行 */}
                   <Row justify="space-between" align="middle">
                     <Col>
@@ -218,7 +224,7 @@ const Index: FC<SelfProps> = ({ content }) => {
                   {/* 状态说明 */}
                   {!item.assert_result && (
                     <Alert
-                      message={
+                      title={
                         <Space>
                           <WarningOutlined />
                           <span>预期值与实际值不匹配</span>

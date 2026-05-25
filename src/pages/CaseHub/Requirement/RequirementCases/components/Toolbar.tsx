@@ -227,7 +227,7 @@ const Toolbar: FC<ToolbarProps> = ({
                 {isAllExpanded ? '收起' : '展开'}
               </Button>
             </Tooltip>
-            <Divider type="vertical" style={{ height: 20, margin: 0 }} />
+            <Divider orientation="vertical" style={{ height: 20, margin: 0 }} />
           </>
         )}
 

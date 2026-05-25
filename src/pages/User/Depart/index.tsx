@@ -60,7 +60,7 @@ const Index = () => {
       title: '描述',
       dataIndex: 'description',
       valueType: 'textarea',
-      hideInSearch: true,
+      search: true,
       fieldProps: {
         rows: 1,
       },
@@ -77,7 +77,7 @@ const Index = () => {
       fieldProps: {
         showSearch: true,
       },
-      renderFormItem: (item, { type, defaultRender, ...rest }, form) => {
+      formItemRender: (item, { type, defaultRender, ...rest }, form) => {
         if (type === 'form') {
           return (
             <ProFormSelect
@@ -105,7 +105,7 @@ const Index = () => {
       dataIndex: 'admin_name',
       valueType: 'select',
       hideInTable: true, // 在表格中隐藏，只在编辑时使用
-      hideInSearch: true,
+      search: true,
       editable: false, // 不可直接编辑，通过 admin_id 变化自动更新
     },
     {

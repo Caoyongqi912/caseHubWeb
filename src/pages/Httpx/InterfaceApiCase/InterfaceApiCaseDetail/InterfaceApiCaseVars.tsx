@@ -59,7 +59,7 @@ const InterfaceApiCaseVars: FC<ISelfProps> = ({ currentCaseId }) => {
           return <Tag color={'blue'}>{text}</Tag>;
         }
       },
-      renderFormItem: (_, { record }) => {
+      formItemRender: (_, { record }) => {
         return (
           <ProFormText
             noStyle

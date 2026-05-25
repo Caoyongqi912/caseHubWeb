@@ -68,11 +68,12 @@ const InterExtractList: FC<ISelfProps> = ({ form, readonly = false }) => {
         itemRender={({ listDom, action }, { record, index }) => (
           <ProCard
             collapsible={true}
-            bordered
+            variant="outlined"
             headerBordered
             title={
               <Tag
-                color={'orange-inverse'}
+                color="orange"
+                variant="solid"
                 // hidden={editingIndex === index} // 编辑时隐藏
               >
                 {record?.key || '变量'}

@@ -68,7 +68,7 @@ const PlayCaseStepAss: FC<SelfProps> = ({ stepId }) => {
     {
       title: 'order',
       dataIndex: 'step_order',
-      hideInSearch: true,
+      search: true,
       key: 'step_num',
       render: (text) => {
         return <Tag color={'blue'}>{text}</Tag>;

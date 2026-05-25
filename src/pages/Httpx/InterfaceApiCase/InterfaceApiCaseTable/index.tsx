@@ -238,7 +238,7 @@ const Index: FC<SelfProps> = ({
       dataIndex: 'creator',
       valueType: 'select',
       width: 120,
-      renderFormItem: () => <UserSelect />,
+      formItemRender: () => <UserSelect />,
       render: (_, record) => (
         <Tag style={{ fontSize: 12, padding: '2px 10px', borderRadius: 12 }}>
           {record.creatorName}

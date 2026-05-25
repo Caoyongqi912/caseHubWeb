@@ -314,7 +314,7 @@ const Index: FC<SelfProps> = ({
       valueType: 'text',
       editable: false,
       width: 120,
-      renderFormItem: () => {
+      formItemRender: () => {
         return <UserSelect />;
       },
       render: (_, record) => (

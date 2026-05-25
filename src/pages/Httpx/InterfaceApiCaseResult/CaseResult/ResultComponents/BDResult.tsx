@@ -65,9 +65,15 @@ const BdResult: FC<Props> = ({ result }) => {
       collapsibleIconRender={({}) => {
         return (
           <Space>
-            <Tag color={'green-inverse'}>STEP_{result.content_step}</Tag>
+            <Tag color="green" variant="solid">
+              STEP_{result.content_step}
+            </Tag>
             <Tooltip title={'SQL'}>
-              <Tag color={'geekblue-inverse'} icon={<ConsoleSqlOutlined />} />
+              <Tag
+                color="geekblue"
+                variant="solid"
+                icon={<ConsoleSqlOutlined />}
+              />
             </Tooltip>
             <CheckCircleTwoTone twoToneColor="#52c41a" />
             <Text type={'secondary'} style={{ marginLeft: 20 }}>

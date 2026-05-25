@@ -5,11 +5,8 @@ import MyProTable from '@/components/Table/MyProTable';
 import AddUser from '@/components/UserOpt/AddUser';
 import { IDepart, IDepartTag } from '@/pages/User/Depart/depart';
 import { pageData } from '@/utils/somefunc';
-import {
-  ActionType,
-  ProColumns,
-  ProFormSelect,
-} from '@ant-design/pro-components';
+import { ActionType, ProFormSelect } from '@ant-design/pro-components';
+
 import { Avatar, message, Space, Tag } from 'antd';
 import React, { useEffect, useRef, useState } from 'react';
 
@@ -105,7 +102,7 @@ const Index: React.FC<Props> = ({ projectId }) => {
     }
   };
 
-  const columns: ProColumns<IUser>[] = [
+  const columns: any[] = [
     {
       title: 'username',
       copyable: true,
@@ -146,12 +143,13 @@ const Index: React.FC<Props> = ({ projectId }) => {
       dataIndex: 'depart_id',
       valueType: 'select',
       valueEnum: departmentEnums,
-      render: (text, record) => {
+      render: (_: any, record: any) => {
         return (
           departIdToNameMap.current.get(record.depart_id) || record.depart_id
         );
       },
-      renderFormItem: (item, { type, defaultRender, ...rest }, form) => {
+      formItemRender: (item: any, params: any, form: any) => {
+        const { type, defaultRender, ...rest } = params;
         if (type === 'form') {
           return (
             <ProFormSelect
@@ -167,8 +165,7 @@ const Index: React.FC<Props> = ({ projectId }) => {
                   setCurrentDepartId(value as number);
                   const depart_name =
                     departIdToNameMap.current.get(value) || '';
-                  // 直接设置表单字段值
-                  form.setFieldValue('depart_name', depart_name);
+                  form?.setFieldValue('depart_name', depart_name);
                 },
               }}
             />
@@ -180,7 +177,7 @@ const Index: React.FC<Props> = ({ projectId }) => {
     {
       dataIndex: 'depart_name',
       hideInTable: true, // 在表格中隐藏，只在编辑时使用
-      hideInSearch: true,
+      search: true,
       editable: false, // 不可直接编辑，通过 admin_id 变化自动更新
     },
     {
@@ -189,7 +186,7 @@ const Index: React.FC<Props> = ({ projectId }) => {
       valueType: 'select',
       search: false,
       valueEnum: tagEnum,
-      render: (text) => {
+      render: (text: any) => {
         return <Tag color={'blue'}>{text}</Tag>;
       },
     },
@@ -199,16 +196,16 @@ const Index: React.FC<Props> = ({ projectId }) => {
       dataIndex: 'create_time',
       valueType: 'dateTime',
       sorter: true,
-      hideInSearch: true,
+      search: true,
       editable: false,
     },
     {
       title: '更新时间',
-      key: 'showTime',
+      key: 'update_time',
       dataIndex: 'update_time',
       valueType: 'dateTime',
       sorter: true,
-      hideInSearch: true,
+      search: true,
       editable: false,
     },
     {
@@ -217,7 +214,7 @@ const Index: React.FC<Props> = ({ projectId }) => {
       key: 'option',
       fixed: 'right',
       width: '8%',
-      render: (text, record, _, action) => [
+      render: (_: any, record: any, _2: any, action: any) => [
         <a
           key="editable"
           onClick={async () => {

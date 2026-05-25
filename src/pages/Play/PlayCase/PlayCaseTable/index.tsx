@@ -285,7 +285,7 @@ const Index: FC<SelfProps> = ({
     {
       title: '步骤数',
       dataIndex: 'step_num',
-      hideInSearch: true,
+      search: true,
       key: 'step_num',
       width: 100,
       render: (_, record) => (
@@ -328,7 +328,7 @@ const Index: FC<SelfProps> = ({
       dataIndex: 'creator',
       valueType: 'select',
       width: 120,
-      renderFormItem: () => {
+      formItemRender: () => {
         return <UserSelect />;
       },
       render: (_, record) => (

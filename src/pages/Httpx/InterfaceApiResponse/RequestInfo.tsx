@@ -100,7 +100,7 @@ const RequestInfo: FC<Props> = ({ info }) => {
   return (
     <ProCard split={'horizontal'}>
       <ProCard>
-        <Space direction={'horizontal'}>
+        <Space orientation={'horizontal'}>
           <Tag
             style={{
               background: 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)',

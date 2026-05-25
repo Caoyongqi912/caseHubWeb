@@ -40,14 +40,14 @@ const Index = () => {
       title: 'Value',
       dataIndex: 'value',
       copyable: true,
-      hideInSearch: true,
+      search: true,
       ellipsis: true,
     },
     {
       title: 'desc',
       dataIndex: 'description',
       valueType: 'textarea',
-      hideInSearch: true,
+      search: true,
       ellipsis: true,
     },
     {

@@ -104,7 +104,7 @@ const PlayStepGroupCollapsible: FC<ISelfProps> = (props) => {
         title={
           <Space>
             <Handler id={id} step={step} />
-            <Tag color={'gold-inverse'} icon={<PlayCircleOutlined />} />
+            <Tag color="gold" variant="solid" icon={<PlayCircleOutlined />} />
             {stepInfo.is_common ? (
               <Tag color={'#059669'}>共</Tag>
             ) : (

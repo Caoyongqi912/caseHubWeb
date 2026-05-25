@@ -53,9 +53,15 @@ const Index: FC<SelfProps> = ({ content }) => {
       defaultCollapsed
       title={
         <Space>
-          <Tag color={'green-inverse'}>STEP_{content.content_step}</Tag>
+          <Tag color="green" variant="solid">
+            STEP_{content.content_step}
+          </Tag>
           <Tooltip title={'UI 步骤'}>
-            <Tag color={'geekblue-inverse'} icon={<PlayCircleTwoTone />} />
+            <Tag
+              color="geekblue"
+              variant="solid"
+              icon={<PlayCircleTwoTone />}
+            />
           </Tooltip>
           {content.content_result ? (
             <CheckCircleTwoTone twoToneColor={'#52c41a'} />
@@ -85,7 +91,7 @@ const Index: FC<SelfProps> = ({ content }) => {
         </Space>
       }
     >
-      <Space direction={'vertical'} style={{ width: '100%' }}>
+      <Space orientation={'vertical'} style={{ width: '100%' }}>
         {content_asserts && content_asserts.length > 0 && (
           <div style={{ marginTop: 8 }}>
             <Divider orientation="left" plain>
@@ -107,7 +113,11 @@ const Index: FC<SelfProps> = ({ content }) => {
                   marginTop: 5,
                 }}
               >
-                <Space direction="vertical" size={12} style={{ width: '100%' }}>
+                <Space
+                  orientation="vertical"
+                  size={12}
+                  style={{ width: '100%' }}
+                >
                   {/* 标题行 */}
                   <Row justify="space-between" align="middle">
                     <Col>
@@ -224,7 +234,7 @@ const Index: FC<SelfProps> = ({ content }) => {
                   {/* 状态说明 */}
                   {!item.assert_result && (
                     <Alert
-                      message={
+                      title={
                         <Space>
                           <WarningOutlined />
                           <span>预期值与实际值不匹配</span>

@@ -184,9 +184,11 @@ const Index: FC<Props> = ({ result, content }) => {
         collapsibleIconRender={({}) => {
           return (
             <Space>
-              <Tag color={'green-inverse'}>STEP_{content.content_step}</Tag>
+              <Tag color="green" variant="solid">
+                STEP_{content.content_step}
+              </Tag>
               <Tooltip title={'接口'}>
-                <Tag color={'gold-inverse'} icon={<ApiOutlined />} />
+                <Tag color="gold" variant="solid" icon={<ApiOutlined />} />
               </Tooltip>
               {result.result === 'SUCCESS' ? (
                 <CheckCircleTwoTone twoToneColor="#52c41a" />

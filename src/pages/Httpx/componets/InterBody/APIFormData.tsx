@@ -261,7 +261,7 @@ const APIFormData: FC<SelfProps> = ({ form }) => {
       title: 'Key',
       dataIndex: 'key',
       width: '25%',
-      renderFormItem: (_, { record }) => {
+      formItemRender: (_, { record }) => {
         return <Input placeholder="请输入 Key" disabled={!record} />;
       },
       formItemProps: {
@@ -283,7 +283,7 @@ const APIFormData: FC<SelfProps> = ({ form }) => {
         text: { text: 'Text', status: 'Default' },
         file: { text: 'File', status: 'Warning' },
       },
-      renderFormItem: (_, { record }) => {
+      formItemRender: (_, { record }) => {
         return (
           <Select
             options={VALUE_TYPE_OPTIONS}
@@ -311,7 +311,7 @@ const APIFormData: FC<SelfProps> = ({ form }) => {
       dataIndex: 'value',
       width: '30%',
       render: (text, record) => renderValueDisplay(text, record),
-      renderFormItem: (_, { record }) => {
+      formItemRender: (_, { record }) => {
         if (!record) return null;
         const currentData = form.getFieldValue('interface_data') || [];
         const currentRecord =
@@ -324,7 +324,7 @@ const APIFormData: FC<SelfProps> = ({ form }) => {
       title: 'Desc',
       dataIndex: 'desc',
       width: '20%',
-      renderFormItem: () => {
+      formItemRender: () => {
         return <Input placeholder="请输入描述" />;
       },
     },

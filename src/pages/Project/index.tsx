@@ -207,11 +207,11 @@ const ProjectList: React.FC = () => {
                       transition: 'all 0.3s ease',
                       cursor: 'pointer',
                     }}
-                    headStyle={{
-                      background: 'transparent',
-                      borderBottom: `1px solid ${styles.colors.borderLight}`,
-                    }}
                     styles={{
+                      header: {
+                        background: 'transparent',
+                        borderBottom: `1px solid ${styles.colors.borderLight}`,
+                      },
                       body: {
                         background: 'transparent',
                       },
@@ -280,7 +280,7 @@ const ProjectList: React.FC = () => {
                       </div>
                     }
                   >
-                    <Space direction="vertical" style={{ width: '100%' }}>
+                    <Space orientation="vertical" style={{ width: '100%' }}>
                       {item.description ? (
                         <Paragraph
                           style={{

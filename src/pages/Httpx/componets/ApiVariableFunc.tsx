@@ -472,10 +472,7 @@ const ApiVariableFunc: FC<ISelfProps> = ({ value, index, setValue }) => {
     listHeight: 300,
   });
 
-  const dropdownRender = (
-    menu: React.ReactNode,
-    type: 'func' | 'var' | 'my',
-  ) => (
+  const popupRender = (menu: React.ReactNode, type: 'func' | 'var' | 'my') => (
     <ProCard split={'vertical'} style={{ minWidth: '400px' }}>
       <ProCard styles={{ body: commonStyles.cardBodyMinimal }}>{menu}</ProCard>
       {renderDetailPanel(
@@ -497,7 +494,7 @@ const ApiVariableFunc: FC<ISelfProps> = ({ value, index, setValue }) => {
           <ProCard styles={{ body: commonStyles.cardBodyCompact }}>
             <Select
               {...createSelectConfig(funcData, setCurrentValue)}
-              dropdownRender={(menu) => dropdownRender(menu, 'func')}
+              popupRender={(menu) => popupRender(menu, 'func')}
             />
           </ProCard>
           {renderContentPanel(currentValue, 'func')}
@@ -512,7 +509,7 @@ const ApiVariableFunc: FC<ISelfProps> = ({ value, index, setValue }) => {
           <ProCard styles={{ body: commonStyles.cardBodyCompact }}>
             <Select
               {...createSelectConfig(varData, setCurrentData)}
-              dropdownRender={(menu) => dropdownRender(menu, 'var')}
+              popupRender={(menu) => popupRender(menu, 'var')}
             />
           </ProCard>
           {renderContentPanel(currentData, 'var')}
@@ -527,7 +524,7 @@ const ApiVariableFunc: FC<ISelfProps> = ({ value, index, setValue }) => {
           <ProCard styles={{ body: commonStyles.cardBodyCompact }}>
             <Select
               {...createSelectConfig(myData, setCurrentMyData)}
-              dropdownRender={(menu) => dropdownRender(menu, 'my')}
+              popupRender={(menu) => popupRender(menu, 'my')}
               autoFocus={true}
             />
           </ProCard>
@@ -624,7 +621,7 @@ const ApiVariableFunc: FC<ISelfProps> = ({ value, index, setValue }) => {
         trigger="click"
         open={open}
         onOpenChange={handleOpenChange}
-        overlayStyle={commonStyles.popover}
+        styles={{ root: commonStyles.popover }}
         placement="bottomRight"
       >
         <FunctionOutlined

@@ -23,7 +23,6 @@ import {
   StatisticCard,
 } from '@ant-design/pro-components';
 import { Button, Col, Descriptions, Row, Spin, Tag } from 'antd';
-import DescriptionsItem from 'antd/es/descriptions/Item';
 import { useEffect, useRef, useState } from 'react';
 
 const PlayTaskResult = () => {
@@ -96,27 +95,27 @@ const PlayTaskResult = () => {
       title: '用例描述',
       dataIndex: 'ui_case_description',
       valueType: 'textarea',
-      hideInSearch: true,
+      search: true,
       ellipsis: true,
     },
     {
       title: '步长',
       dataIndex: 'ui_case_step_num',
       valueType: 'text',
-      hideInSearch: true,
+      search: true,
       ellipsis: true,
     },
     {
       title: '运行时间',
       dataIndex: 'start_time',
       valueType: 'dateTime',
-      hideInSearch: true,
+      search: true,
     },
     {
       title: '执行状态',
       dataIndex: 'status',
       valueType: 'select',
-      hideInSearch: true,
+      search: true,
       valueEnum: CONFIG.UI_STATUS_ENUM,
       render: (_, record) => {
         return CONFIG.UI_STATUS_ENUM[record.status].tag;
@@ -195,14 +194,14 @@ const PlayTaskResult = () => {
         <PlayCaseResultDetail resultId={currentDetailId} />
       </MyDrawer>
       <ProCard>
-        <Spin tip={'努力加载中。。'} size={'large'} spinning={loading}>
+        <Spin description={'努力加载中。。'} size={'large'} spinning={loading}>
           {baseInfo && (
             <ProCard title={`${baseInfo.task_name} 自动化测试报告`}>
               <Row gutter={[8, 8]}>
                 <Col span={17}>
                   <Row gutter={8}>
                     <Col span={6}>
-                      <ProCard hoverable bordered={false}>
+                      <ProCard hoverable>
                         <StatisticCard
                           statistic={{
                             title: '用例总数',
@@ -213,7 +212,7 @@ const PlayTaskResult = () => {
                       </ProCard>
                     </Col>
                     <Col span={6}>
-                      <ProCard hoverable bordered={false}>
+                      <ProCard hoverable>
                         <StatisticCard
                           statistic={{
                             title: '成功数量',
@@ -226,11 +225,7 @@ const PlayTaskResult = () => {
                       </ProCard>
                     </Col>
                     <Col span={6}>
-                      <ProCard
-                        hoverable
-                        bordered={false}
-                        className={'statisticCard'}
-                      >
+                      <ProCard hoverable className={'statisticCard'}>
                         <StatisticCard
                           statistic={{
                             title: '失败数量',
@@ -243,11 +238,7 @@ const PlayTaskResult = () => {
                       </ProCard>
                     </Col>
                     <Col span={6}>
-                      <ProCard
-                        hoverable
-                        bordered={false}
-                        className={'statisticCard'}
-                      >
+                      <ProCard hoverable className={'statisticCard'}>
                         <StatisticCard
                           statistic={{
                             title: '测试通过率',
@@ -267,25 +258,25 @@ const PlayTaskResult = () => {
                     </Col>
                   </Row>
                   <Descriptions style={{ marginTop: 10 }}>
-                    <DescriptionsItem label="执行状态">
+                    <Descriptions.Item label="执行状态">
                       <Tag
                         color={baseInfo.status === 'RUNNING' ? 'blue' : 'green'}
                       >
                         {baseInfo.status}
                       </Tag>
-                    </DescriptionsItem>
-                    <DescriptionsItem label="执行人">
+                    </Descriptions.Item>
+                    <Descriptions.Item label="执行人">
                       <Tag color={'orange'}>{baseInfo.starter_name}</Tag>
-                    </DescriptionsItem>
-                    <DescriptionsItem label="开始时间">
+                    </Descriptions.Item>
+                    <Descriptions.Item label="开始时间">
                       <Tag color={'processing'}>{baseInfo.start_time}</Tag>
-                    </DescriptionsItem>
-                    <DescriptionsItem label="结束时间">
+                    </Descriptions.Item>
+                    <Descriptions.Item label="结束时间">
                       <Tag color={'processing'}>{baseInfo.end_time}</Tag>
-                    </DescriptionsItem>
-                    <DescriptionsItem label="耗时">
+                    </Descriptions.Item>
+                    <Descriptions.Item label="耗时">
                       <Tag color={'processing'}>{baseInfo.total_usetime}</Tag>
-                    </DescriptionsItem>
+                    </Descriptions.Item>
                   </Descriptions>
                 </Col>
                 <Col span={7}>

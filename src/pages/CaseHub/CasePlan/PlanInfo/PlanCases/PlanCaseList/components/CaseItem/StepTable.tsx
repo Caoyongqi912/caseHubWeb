@@ -318,7 +318,7 @@ const StepTable: React.FC<StepTableProps> = ({ steps, planId }) => {
         key: 'status',
         dataIndex: 'status',
         width: '12%',
-        renderFormItem: () => {
+        formItemRender: () => {
           const statusOptions = [
             { label: '未填写', value: 0 },
             { label: '通过', value: 1 },

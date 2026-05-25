@@ -55,7 +55,7 @@ const Index: FC<SelfProps> = (props) => {
       }}
     >
       {projects.length > 0 ? (
-        <Space direction="vertical" size={12} style={{ width: '100%' }}>
+        <Space orientation="vertical" size={12} style={{ width: '100%' }}>
           <ProjectSelect
             projects={projects}
             currentProjectId={currentProjectId}

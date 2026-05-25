@@ -93,7 +93,7 @@ const DBEditorCard: FC<DBEditorCardProps> = ({
               options={dbOptions}
               style={{ minWidth: '180px' }}
               onChange={handleDBChange}
-              dropdownStyle={{ borderRadius: '8px' }}
+              styles={{ popup: { root: { borderRadius: '8px' } } }}
             />
           </div>
           <Popover

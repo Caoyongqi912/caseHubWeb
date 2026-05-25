@@ -100,10 +100,6 @@ const ModuleModal: FC<SelfProps> = ({ title, open, onFinish, setOpen }) => {
         destroyOnHidden: true,
         onCancel: () => setOpen(false),
         centered: true,
-        styles: {
-          body: styles.modalContent,
-          content: styles.modalBody,
-        },
       }}
       submitter={{
         searchConfig: {

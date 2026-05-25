@@ -257,7 +257,7 @@ const Index: FC<SelfProps> = (props) => {
       title: '用例数',
       valueType: 'text',
       dataIndex: 'play_case_num',
-      hideInSearch: true,
+      search: true,
       width: 100,
       render: (_, record) => (
         <Tag
@@ -277,7 +277,7 @@ const Index: FC<SelfProps> = (props) => {
       dataIndex: 'creator',
       valueType: 'select',
       width: 120,
-      renderFormItem: () => {
+      formItemRender: () => {
         return <UserSelect />;
       },
       render: (_, record) => (

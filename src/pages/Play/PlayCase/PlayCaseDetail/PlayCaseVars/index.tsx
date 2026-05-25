@@ -59,7 +59,7 @@ const Index: FC<ISelfProps> = ({ currentCaseId }) => {
       title: '值',
       dataIndex: 'value',
       valueType: 'text',
-      hideInSearch: true,
+      search: true,
       render: (text, record) => {
         if (record?.value?.includes('{{$')) {
           return <Tag color="orange">{text}</Tag>;
@@ -67,7 +67,7 @@ const Index: FC<ISelfProps> = ({ currentCaseId }) => {
           return <Tag color={'blue'}>{text}</Tag>;
         }
       },
-      renderFormItem: (_, { record }) => {
+      formItemRender: (_, { record }) => {
         return (
           <ProFormText
             noStyle

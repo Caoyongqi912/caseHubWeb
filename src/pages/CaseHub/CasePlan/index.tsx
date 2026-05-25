@@ -5,6 +5,7 @@
 import { IObjGet } from '@/api';
 import { deleteCasePlan, pageCasePlan } from '@/api/case/caseplan';
 import { queryProjectEnum } from '@/components/CommonFunc';
+import UserSelect from '@/components/Table/UserSelect';
 import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import { ICasePlan } from '@/pages/CaseHub/types';
 import { pageData } from '@/utils/somefunc';
@@ -148,14 +149,24 @@ const Index = () => {
     },
     {
       title: '负责人',
+      search: true,
+      dataIndex: 'charge_id',
+      hideInTable: true,
+      formItemRender: () => {
+        return <UserSelect multiple={true} />;
+      },
+    },
+    {
+      title: '负责人',
       dataIndex: 'charge_name',
+      search: false,
       width: '10%',
       render: (_, r) => r.charge_name || '-',
     },
     {
       title: '完成率',
       dataIndex: 'plan_completion_rate',
-      hideInSearch: true,
+      search: true,
       width: '12%',
       render: (_, r) => {
         const rate = r.plan_completion_rate || 0;
@@ -167,7 +178,7 @@ const Index = () => {
               strokeColor={
                 rate === 100 ? token.colorSuccess : token.colorPrimary
               }
-              trailColor={token.colorFillSecondary}
+              railColor={token.colorFillSecondary}
               format={() => ''}
               style={{ width: 80, marginBottom: 0 }}
             />
@@ -196,7 +207,7 @@ const Index = () => {
     {
       title: '计划时间',
       render: (_, r) => (
-        <Space direction="vertical" size={0}>
+        <Space orientation="vertical" size={0}>
           <span>{r.plan_start_time || '-'}</span>
           <span style={{ color: token.colorTextTertiary, fontSize: 12 }}>
             至 {r.plan_end_time || '-'}
@@ -208,7 +219,7 @@ const Index = () => {
       title: '备注',
       dataIndex: 'plan_mark',
       ellipsis: true,
-      hideInSearch: true,
+      search: true,
       width: '10%',
       render: (_, r) => r.plan_mark || '-',
     },
@@ -277,7 +288,7 @@ const Index = () => {
         {/* 占满剩余高度，内部滚动 */}
         <ProCard
           headerBordered
-          bordered
+          variant="outlined"
           style={{
             flex: 1,
             height: 0,

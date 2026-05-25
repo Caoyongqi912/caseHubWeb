@@ -106,7 +106,7 @@ const Index = () => {
             return (
               <Col span={12} key={index}>
                 <ProCard
-                  bordered
+                  variant="outlined"
                   onClick={() => onClick(item.value)}
                   hoverable
                   type="inner"
@@ -117,7 +117,7 @@ const Index = () => {
                       : 'transparent',
                   }}
                 >
-                  <Space direction="vertical" align="center" size={8}>
+                  <Space orientation="vertical" align="center" size={8}>
                     {item.icon}
                     <Text strong>{item.title}</Text>
                   </Space>

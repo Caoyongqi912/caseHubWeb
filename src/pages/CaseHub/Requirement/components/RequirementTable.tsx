@@ -4,6 +4,7 @@ import {
   updateRequirement,
 } from '@/api/case/requirement';
 import MyDrawer from '@/components/MyDrawer';
+import UserSelect from '@/components/Table/UserSelect';
 import {
   RequirementProcessEnum,
   RequirementProcessOption,
@@ -157,10 +158,10 @@ const RequirementTable: FC<SelfProps> = ({
             </Space>
           );
         },
-        renderFormItem: (text: number) => (
+        formItemRender: (_, config) => (
           <Select
             options={RequirementProcessOption}
-            value={text}
+            value={config.value || 0}
             style={{ width: '100%' }}
           />
         ),
@@ -169,7 +170,7 @@ const RequirementTable: FC<SelfProps> = ({
         title: '用例数',
         key: 'case_number',
         dataIndex: 'case_number',
-        hideInSearch: true,
+        search: true,
         editable: false,
         render: (num) => (
           <Tag
@@ -190,8 +191,11 @@ const RequirementTable: FC<SelfProps> = ({
         title: '创建人',
         key: 'creatorName',
         dataIndex: 'creatorName',
-        hideInSearch: true,
+        search: true,
         editable: false,
+        formItemRender: () => {
+          return <UserSelect multiple={true} />;
+        },
         render: (text) => <Text type="secondary">{text}</Text>,
       },
       {
@@ -334,11 +338,13 @@ const RequirementTable: FC<SelfProps> = ({
           // 🔥 核心：高度填充满父容器，表格内部滚动
           style={{ height: '100%' }}
           scroll={{
-            x: 1200,
+            x: 'auto',
             y: 'calc(100vh - 450px)', // 🔥 自适应屏幕高度，表格内部滚动
+            // y:"fill"
           }}
           actionRef={actionRef}
           columns={columns}
+          // @ts-ignore
           request={fetchPageData}
           pagination={{
             showQuickJumper: true,

@@ -151,7 +151,7 @@ const InterfaceApiResultTable: FC<SelfProps> = ({ taskResultId }) => {
   };
 
   return (
-    <ProCard bordered={false} styles={{ body: { padding: 0 } }}>
+    <ProCard styles={{ body: { padding: 0 } }}>
       <MyProTable
         toolBarRender={() => [
           <Button

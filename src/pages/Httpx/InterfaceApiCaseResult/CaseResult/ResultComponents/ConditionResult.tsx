@@ -100,9 +100,13 @@ const ConditionResult: FC<Props> = ({ result }) => {
       title={
         <Space style={{ width: '100%', justifyContent: 'space-between' }}>
           <Space>
-            <Tag color={'green-inverse'}>STEP_{result.content_step}</Tag>
+            <Tag color="green" variant="solid">
+              STEP_{result.content_step}
+            </Tag>
             <Tooltip title={'条件组'}>
-              <Tag color={'purple-inverse'}>IF</Tag>
+              <Tag color="purple" variant="solid">
+                IF
+              </Tag>
             </Tooltip>
             {result.result ? (
               <CheckCircleTwoTone twoToneColor={token.colorSuccess} />

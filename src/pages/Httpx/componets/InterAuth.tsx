@@ -118,7 +118,7 @@ const InterAuth: FC<IProps> = ({ form, currentMode }) => {
 
   return (
     <ProCard layout={'center'}>
-      <Space direction={'vertical'}>
+      <Space orientation={'vertical'}>
         <ProForm.Group disabled={currentMode === 1}>
           <ProFormSelect
             disabled={currentMode === 1}

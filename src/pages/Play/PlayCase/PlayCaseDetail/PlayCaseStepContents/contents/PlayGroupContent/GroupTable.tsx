@@ -82,7 +82,7 @@ const GroupTable: FC<SelfProps> = ({ groupId, callback }) => {
       dataIndex: 'creator',
       valueType: 'text',
       editable: false,
-      renderFormItem: () => {
+      formItemRender: () => {
         return <UserSelect />;
       },
       render: (_, record) => {

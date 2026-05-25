@@ -96,7 +96,7 @@ const ChoiceApiCasesTable: FC<IChoiceApiCasesTableProps> = ({
       title: '步骤数量',
       dataIndex: 'case_api_num',
       valueType: 'text',
-      hideInSearch: true,
+      search: true,
       render: (_, record) => {
         return <Tag color={'blue'}>{record.case_api_num}</Tag>;
       },

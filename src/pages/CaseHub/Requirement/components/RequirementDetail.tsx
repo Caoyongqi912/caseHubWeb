@@ -175,7 +175,6 @@ const RequirementDetail: FC<Props> = ({ callback, requirementId }) => {
             background: colors.primaryBg,
             borderRadius: borderRadius.lg,
           }}
-          bordered={false}
         >
           <ProForm.Group>
             <ProFormSelect
@@ -234,7 +233,6 @@ const RequirementDetail: FC<Props> = ({ callback, requirementId }) => {
             background: colors.infoBg,
             borderRadius: borderRadius.lg,
           }}
-          bordered={false}
         >
           <ProFormText
             name={'requirement_name'}
@@ -271,7 +269,6 @@ const RequirementDetail: FC<Props> = ({ callback, requirementId }) => {
             background: colors.warningBg,
             borderRadius: borderRadius.lg,
           }}
-          bordered={false}
         >
           <ProFormSelect
             showSearch

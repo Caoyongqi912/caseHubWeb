@@ -8,7 +8,6 @@ import { IHeaders, IInterfaceAPI } from '@/pages/Httpx/types';
 import {
   EditableFormInstance,
   EditableProTable,
-  ProColumns,
   ProForm,
   ProFormText,
 } from '@ant-design/pro-components';
@@ -48,112 +47,6 @@ const InterHeader: FC<SelfProps> = ({ form, readonly = false }) => {
     }
   };
 
-  const headerColumns: ProColumns<IHeaders>[] = [
-    {
-      title: 'Key',
-      key: 'key',
-      dataIndex: 'key',
-      fixed: 'left',
-      formItemProps: {
-        required: true,
-        rules: [
-          {
-            required: true,
-            message: 'Key 必填',
-          },
-        ],
-      },
-      renderFormItem: () => {
-        return (
-          <Select
-            showSearch
-            defaultActiveFirstOption={false}
-            filterOption={true}
-            onSearch={handleHeaderSearch}
-            notFoundContent={null}
-            options={(headerData || []).map((d) => ({
-              value: d.value,
-              label: d.text,
-            }))}
-          />
-        );
-      },
-    },
-    {
-      title: 'Value',
-      key: 'value',
-      dataIndex: 'value',
-      formItemProps: {
-        required: true,
-        rules: [
-          {
-            required: true,
-            message: 'Value 必填',
-          },
-        ],
-      },
-      render: (text, record) => {
-        if (record?.value?.includes('{{$')) {
-          return <Tag color={'orange'}>{text}</Tag>;
-        } else {
-          return <Tag color={'blue'}>{text}</Tag>;
-        }
-      },
-      renderFormItem: (_, { record }) => {
-        return (
-          <ProFormText
-            noStyle
-            name={'value'}
-            fieldProps={{
-              suffix: (
-                <ApiVariableFunc
-                  value={record?.value}
-                  index={record?.id as number}
-                  setValue={(index, newData) => {
-                    editorFormRef.current?.setRowData?.(index, newData);
-                    form.setFieldsValue({
-                      interface_headers: form
-                        .getFieldValue('interface_headers')
-                        .map((item: any) =>
-                          item.id === index
-                            ? { ...item, value: newData.value }
-                            : item,
-                        ),
-                    });
-                  }}
-                />
-              ),
-              value: record?.value,
-            }}
-          />
-        );
-      },
-    },
-    {
-      title: 'Desc',
-      key: 'desc',
-      dataIndex: 'desc',
-    },
-    {
-      title: 'Opt',
-      valueType: 'option',
-      fixed: 'right',
-      render: (_, record, __, action) => {
-        if (!readonly) {
-          return (
-            <a
-              onClick={() => {
-                action?.startEditable?.(record.id);
-              }}
-            >
-              编辑
-            </a>
-          );
-        }
-      },
-    },
-  ];
-
   return (
     <>
       <ProForm.Item name={'interface_headers'} trigger={'onValuesChange'}>
@@ -161,7 +54,98 @@ const InterHeader: FC<SelfProps> = ({ form, readonly = false }) => {
           editableFormRef={editorFormRef}
           rowKey={'id'}
           toolBarRender={false}
-          columns={headerColumns}
+          columns={
+            [
+              {
+                title: 'Key',
+                key: 'key',
+                dataIndex: 'key',
+                fixed: 'left' as const,
+                formItemRender: () => {
+                  return (
+                    <Select
+                      showSearch={{
+                        onSearch: handleHeaderSearch,
+                      }}
+                      defaultActiveFirstOption={false}
+                      notFoundContent={null}
+                      options={(headerData || []).map((d) => ({
+                        value: d.value,
+                        label: d.text,
+                      }))}
+                    />
+                  );
+                },
+              },
+              {
+                title: 'Value',
+                key: 'value',
+                dataIndex: 'value',
+                render: (text: any, record: IHeaders) => {
+                  if (record?.value?.includes('{{$')) {
+                    return <Tag color={'orange'}>{text}</Tag>;
+                  } else {
+                    return <Tag color={'blue'}>{text}</Tag>;
+                  }
+                },
+                formItemRender: (_: any, { record }: { record: IHeaders }) => {
+                  return (
+                    <ProFormText
+                      noStyle
+                      name={'value'}
+                      fieldProps={{
+                        suffix: (
+                          <ApiVariableFunc
+                            value={record?.value}
+                            index={record?.id as number}
+                            setValue={(index, newData) => {
+                              editorFormRef.current?.setRowData?.(
+                                index,
+                                newData,
+                              );
+                              form.setFieldsValue({
+                                interface_headers: form
+                                  .getFieldValue('interface_headers')
+                                  .map((item: any) =>
+                                    item.id === index
+                                      ? { ...item, value: newData.value }
+                                      : item,
+                                  ),
+                              });
+                            }}
+                          />
+                        ),
+                        value: record?.value,
+                      }}
+                    />
+                  );
+                },
+              },
+              {
+                title: 'Desc',
+                key: 'desc',
+                dataIndex: 'desc',
+              },
+              {
+                title: 'Opt',
+                valueType: 'option',
+                fixed: 'right' as const,
+                render: (_: any, record: IHeaders, __: any, action: any) => {
+                  if (!readonly) {
+                    return (
+                      <a
+                        onClick={() => {
+                          action?.startEditable?.(record.id);
+                        }}
+                      >
+                        编辑
+                      </a>
+                    );
+                  }
+                },
+              },
+            ] as any
+          }
           recordCreatorProps={
             !readonly && {
               newRecordType: 'dataSource',
@@ -180,7 +164,7 @@ const InterHeader: FC<SelfProps> = ({ form, readonly = false }) => {
             onDelete: async (key) => {
               await FormEditableOnValueRemove(form, 'interface_headers', key);
             },
-            actionRender: (_, __, dom) => {
+            actionRender: (_row: any, _config: any, dom: any) => {
               return [dom.save, dom.cancel, dom.delete];
             },
           }}

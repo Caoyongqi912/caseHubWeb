@@ -197,7 +197,7 @@ const InterApiHeaders = () => {
     {
       title: '项目',
       dataIndex: 'project_id',
-      hideInSearch: true,
+      search: true,
       width: '12%',
       valueEnum: projectEnum,
       render: (text, record) => (
@@ -228,7 +228,7 @@ const InterApiHeaders = () => {
       title: '描述',
       dataIndex: 'description',
       valueType: 'textarea',
-      hideInSearch: true,
+      search: true,
       width: '25%',
       render: (text, record) => (
         <span style={styles.descTag}>
@@ -302,10 +302,6 @@ const InterApiHeaders = () => {
         }
         modalProps={{
           centered: true,
-          styles: {
-            body: { padding: '24px 24px 12px' },
-            content: { borderRadius: 12 },
-          },
         }}
       >
         <ProFormSelect

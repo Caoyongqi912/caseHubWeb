@@ -29,9 +29,11 @@ const ScriptResult: FC<Props> = ({ result }) => {
       collapsibleIconRender={({}) => {
         return (
           <Space>
-            <Tag color={'green-inverse'}>STEP_{result.content_step}</Tag>
+            <Tag color="green" variant="solid">
+              STEP_{result.content_step}
+            </Tag>
             <Tooltip title={'脚本'}>
-              <Tag color={'geekblue-inverse'} icon={<PythonOutlined />} />
+              <Tag color="geekblue" variant="solid" icon={<PythonOutlined />} />
             </Tooltip>
             {result.result ? (
               <CheckCircleTwoTone twoToneColor={'#52c41a'} />

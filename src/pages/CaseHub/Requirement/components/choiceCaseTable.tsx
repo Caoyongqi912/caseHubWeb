@@ -138,7 +138,7 @@ const ChoiceCaseTable: FC<Props> = ({
       title: '创建人',
       dataIndex: 'creatorName',
       width: 100,
-      renderFormItem: () => {
+      formItemRender: () => {
         return <UserSelect />;
       },
       render: (text) => <Text type="secondary">{text}</Text>,
@@ -147,7 +147,7 @@ const ChoiceCaseTable: FC<Props> = ({
       title: '创建时间',
       dataIndex: 'create_time',
       valueType: 'dateTime',
-      hideInSearch: true,
+      search: true,
       width: 180,
     },
   ];

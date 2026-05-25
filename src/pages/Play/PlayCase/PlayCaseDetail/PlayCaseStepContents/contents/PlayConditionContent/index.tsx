@@ -1,8 +1,8 @@
 import Handler from '@/components/DnDDraggable/handler';
 import { IPlayStepContent } from '@/pages/Play/componets/uiTypes';
 import { BranchesOutlined } from '@ant-design/icons';
-import { ProCard, useToken } from '@ant-design/pro-components';
-import { Space, Tag, Typography } from 'antd';
+import { ProCard } from '@ant-design/pro-components';
+import { Space, Tag, theme, Typography } from 'antd';
 import { FC, useEffect, useState } from 'react';
 import ContentExtra from '../../contentExtra';
 import ConditionContentInfo from './ConditionContentInfo';
@@ -16,7 +16,7 @@ interface Props {
 }
 
 const Index: FC<Props> = ({ id, step, caseId, stepContent, callback }) => {
-  const { token } = useToken();
+  const { token } = theme.useToken();
   const [showOption, setShowOption] = useState(false);
   const [conditionKey, setConditionKey] = useState<string>();
   const [conditionValue, setConditionValue] = useState<string>();
@@ -76,7 +76,7 @@ const Index: FC<Props> = ({ id, step, caseId, stepContent, callback }) => {
   return (
     <>
       <ProCard
-        bordered
+        variant="outlined"
         collapsible
         hoverable
         styles={{ body: { padding: 0 } }}

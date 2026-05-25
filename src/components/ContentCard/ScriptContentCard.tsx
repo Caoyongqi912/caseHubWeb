@@ -400,7 +400,7 @@ const ScriptContentCard: FC<Props> = (props) => {
 
   return (
     <ProCard
-      bordered
+      variant="outlined"
       collapsible
       hoverable
       defaultCollapsed

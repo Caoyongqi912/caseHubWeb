@@ -145,7 +145,10 @@ const ToolBar: FC<Props> = (props) => {
             style={buttonStyle}
           />
         </Tooltip>
-        <Divider type="vertical" style={{ margin: `0 ${spacing.sm}px` }} />
+        <Divider
+          orientation="vertical"
+          style={{ margin: `0 ${spacing.sm}px` }}
+        />
         <Tooltip title="重置视图">
           <Button
             type="default"
@@ -164,7 +167,10 @@ const ToolBar: FC<Props> = (props) => {
             style={buttonStyle}
           />
         </Tooltip>
-        <Divider type="vertical" style={{ margin: `0 ${spacing.sm}px` }} />
+        <Divider
+          orientation="vertical"
+          style={{ margin: `0 ${spacing.sm}px` }}
+        />
         <Tooltip title="保存">
           <Button
             type="primary"

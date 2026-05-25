@@ -489,8 +489,10 @@ const Index: FC<SelfProps> = ({ interfaceCase, hiddenRunButton }) => {
           }}
           trigger={['click']}
           placement="bottomRight"
-          overlayStyle={{
-            borderRadius: 8,
+          styles={{
+            root: {
+              borderRadius: 8,
+            },
           }}
         >
           <Button

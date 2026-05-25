@@ -130,8 +130,8 @@ const StatisticsDashboard: React.FC = () => {
   };
 
   const handleDateRangeChange = (
-    dates: [Dayjs, Dayjs] | null,
-    dateStrings: [string, string],
+    dates: any,
+    _dateStrings: [string, string],
   ) => {
     setDateRange(dates);
     if (dates) {
@@ -593,7 +593,7 @@ const StatisticsDashboard: React.FC = () => {
         .chart-card:nth-child(3) { animation-delay: 0.5s; }
       `}</style>
 
-      <Spin spinning={loading} tip="加载中...">
+      <Spin spinning={loading} description="加载中...">
         <div style={styles.contentWrapper()}>
           <div style={styles.headerSection()}>
             <div style={styles.headerLeft()}>
@@ -622,7 +622,7 @@ const StatisticsDashboard: React.FC = () => {
                 popupMatchSelectWidth={false}
               />
               <RangePicker
-                value={dateRange}
+                value={dateType === 'custom' ? dateRange : undefined}
                 onChange={handleDateRangeChange}
                 disabled={dateType !== 'custom'}
               />

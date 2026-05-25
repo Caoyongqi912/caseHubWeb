@@ -9,7 +9,7 @@ const InterDoc = () => {
       <Tabs
         defaultActiveKey="1"
         size={'small'}
-        tabPlacement={'left'}
+        tabPlacement={'start'}
         items={[
           {
             key: '1',
