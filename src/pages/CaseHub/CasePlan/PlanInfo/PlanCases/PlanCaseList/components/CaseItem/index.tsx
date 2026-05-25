@@ -294,7 +294,7 @@ const CaseItem: React.FC<CaseItemProps> = (props) => {
     <>
       <ProCard
         title={cardTitle}
-        bordered
+        variant="outlined"
         hoverable
         headerBordered
         extra={cardExtra}
