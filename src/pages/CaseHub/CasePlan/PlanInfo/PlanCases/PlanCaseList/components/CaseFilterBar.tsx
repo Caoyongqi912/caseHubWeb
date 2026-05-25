@@ -4,24 +4,36 @@ import {
   FilterOutlined,
   ReloadOutlined,
   SearchOutlined,
-  SortAscendingOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import { Button, Dropdown, Input, Popover, Select, Space, Tag } from 'antd';
-import { FC, useCallback, useState } from 'react';
+import { FC, useCallback, useEffect, useState } from 'react';
 
+/**
+ * 筛选值类型定义
+ * @param keyword - 搜索关键字
+ * @param caseStatus - 用例状态筛选（0: 待执行, 1: 通过, 2: 失败）
+ * @param isReview - 评审状态筛选（true: 已评审, false: 未评审）
+ */
 export interface CaseFilterValues {
   keyword?: string;
   caseStatus?: number;
   isReview?: boolean;
-  sortBy?: string;
 }
 
 interface CaseFilterBarProps {
+  /** 筛选条件变化回调 */
   onFilterChange?: (filters: CaseFilterValues) => void;
+  /** 刷新列表回调 */
   onRefresh?: () => void;
+  /** 批量导出回调 */
   onBatchExport?: () => void;
+  /** 批量导入回调 */
   onBatchImport?: () => void;
+  /** 当前是否有激活的筛选条件（由父组件管理） */
+  hasActiveFilter?: boolean;
+  /** 当前生效的筛选条件（用于回显） */
+  filters?: CaseFilterValues;
 }
 
 const FILTER_LABEL_STYLE: React.CSSProperties = {
@@ -34,21 +46,29 @@ const CaseFilterBar: FC<CaseFilterBarProps> = ({
   onRefresh,
   onBatchExport,
   onBatchImport,
+  hasActiveFilter = false,
+  filters,
 }) => {
   const { colors, spacing, borderRadius, animations } = useCaseHubTheme();
   const [keyword, setKeyword] = useState('');
   const [filterOpen, setFilterOpen] = useState(false);
-  const [sortOpen, setSortOpen] = useState(false);
   const [tempStatus, setTempStatus] = useState<number | undefined>();
   const [tempReview, setTempReview] = useState<boolean | undefined>();
-  const [activeSort, setActiveSort] = useState('default');
 
   const dropdownItems: MenuProps['items'] = [
     { key: 'export', label: '批量导出', onClick: onBatchExport },
     { key: 'import', label: '批量导入', onClick: onBatchImport },
   ];
 
-  /** 触发搜索过滤 */
+  /** 当弹窗打开时，用当前生效的筛选条件初始化临时状态 */
+  useEffect(() => {
+    if (filterOpen) {
+      setTempStatus(filters?.caseStatus);
+      setTempReview(filters?.isReview);
+    }
+  }, [filterOpen, filters]);
+
+  /** 触发搜索过滤（实时搜索） */
   const handleSearch = useCallback(
     (value: string) => {
       setKeyword(value);
@@ -56,10 +76,9 @@ const CaseFilterBar: FC<CaseFilterBarProps> = ({
         keyword: value,
         caseStatus: tempStatus,
         isReview: tempReview,
-        sortBy: activeSort,
       });
     },
-    [tempStatus, tempReview, activeSort, onFilterChange],
+    [tempStatus, tempReview, onFilterChange],
   );
 
   /** 应用筛选条件并关闭弹窗 */
@@ -69,33 +88,15 @@ const CaseFilterBar: FC<CaseFilterBarProps> = ({
       keyword,
       caseStatus: tempStatus,
       isReview: tempReview,
-      sortBy: activeSort,
     });
-  }, [keyword, tempStatus, tempReview, activeSort, onFilterChange]);
+  }, [keyword, tempStatus, tempReview, onFilterChange]);
 
-  /** 重置所有筛选条件 */
+  /** 重置所有筛选条件（不包括搜索关键字） */
   const handleResetFilter = useCallback(() => {
     setTempStatus(undefined);
     setTempReview(undefined);
-    onFilterChange?.({ keyword, sortBy: activeSort });
-  }, [keyword, activeSort, onFilterChange]);
-
-  /** 选择排序方式 */
-  const handleSort = useCallback(
-    (sortKey: string) => {
-      setActiveSort(sortKey);
-      setSortOpen(false);
-      onFilterChange?.({
-        keyword,
-        caseStatus: tempStatus,
-        isReview: tempReview,
-        sortBy: sortKey,
-      });
-    },
-    [keyword, tempStatus, tempReview, onFilterChange],
-  );
-
-  const hasActiveFilter = tempStatus !== undefined || tempReview !== undefined;
+    onFilterChange?.({ keyword });
+  }, [keyword, onFilterChange]);
 
   return (
     <Space size={spacing.sm}>
@@ -108,94 +109,6 @@ const CaseFilterBar: FC<CaseFilterBarProps> = ({
         onChange={(e) => handleSearch(e.target.value)}
         style={{ width: 200 }}
       />
-
-      <Popover
-        content={
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: spacing.md,
-              minWidth: 220,
-              padding: `${spacing.xs}px 0`,
-            }}
-          >
-            <div>
-              <div
-                style={{
-                  ...FILTER_LABEL_STYLE,
-                  ...{ color: colors.textTertiary },
-                }}
-              >
-                执行状态
-              </div>
-              <Select
-                allowClear
-                placeholder="选择状态"
-                value={tempStatus}
-                onChange={setTempStatus}
-                style={{ width: '100%' }}
-                options={[
-                  { value: 0, label: '待执行' },
-                  { value: 1, label: '通过' },
-                  { value: 2, label: '失败' },
-                ]}
-              />
-            </div>
-            <div>
-              <div
-                style={{
-                  ...FILTER_LABEL_STYLE,
-                  ...{ color: colors.textTertiary },
-                }}
-              >
-                评审状态
-              </div>
-              <Select
-                allowClear
-                placeholder="选择评审状态"
-                value={tempReview}
-                onChange={setTempReview}
-                style={{ width: '100%' }}
-                options={[
-                  { value: true, label: '已评审' },
-                  { value: false, label: '未评审' },
-                ]}
-              />
-            </div>
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'flex-end',
-                gap: spacing.sm,
-                paddingTop: spacing.sm,
-                borderTop: `1px solid ${colors.border}`,
-              }}
-            >
-              <Button size="small" onClick={handleResetFilter}>
-                重置
-              </Button>
-              <Button size="small" type="primary" onClick={handleApplyFilter}>
-                确定
-              </Button>
-            </div>
-          </div>
-        }
-        trigger="click"
-        open={sortOpen}
-        onOpenChange={setSortOpen}
-        placement="bottomRight"
-      >
-        <Button
-          icon={<SortAscendingOutlined />}
-          style={{
-            borderColor: activeSort !== 'default' ? colors.primary : undefined,
-            color: activeSort !== 'default' ? colors.primary : undefined,
-          }}
-        >
-          排序
-        </Button>
-      </Popover>
 
       <Popover
         content={

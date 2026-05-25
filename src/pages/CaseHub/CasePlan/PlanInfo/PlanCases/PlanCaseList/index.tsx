@@ -52,6 +52,7 @@ const Index: FC<PlanCaseListProps> = ({
 
   /**
    * 获取计划用例列表
+   * 根据当前计划ID、目录ID和筛选条件从服务端获取数据
    */
   const fetchQueryPlanCases = useCallback(async () => {
     if (!planId || !moduleId) return;
@@ -75,6 +76,7 @@ const Index: FC<PlanCaseListProps> = ({
 
   /**
    * 当 planId 或 moduleId 变化时，重新加载用例列表
+   * 注意：filters 变化不会触发重新加载，保持筛选状态
    */
   useEffect(() => {
     setCaseList([]);
@@ -90,13 +92,15 @@ const Index: FC<PlanCaseListProps> = ({
 
   /**
    * 筛选条件变化
+   * 更新筛选状态后触发本地过滤（不请求服务端）
    */
   const handleFilterChange = useCallback((newFilters: CaseFilterValues) => {
     setFilters(newFilters);
   }, []);
 
   /**
-   * 根据筛选条件过滤并排序用例列表
+   * 根据筛选条件过滤用例列表（本地过滤）
+   * 当切换目录时，筛选条件会被保留，基于新加载的数据进行过滤
    */
   const filteredCaseList = useMemo(() => {
     let result = Array.isArray(caseList) ? [...caseList] : [];
@@ -114,21 +118,16 @@ const Index: FC<PlanCaseListProps> = ({
       result = result.filter((c) => c.is_review === filters.isReview);
     }
 
-    if (filters.sortBy && filters.sortBy !== 'default') {
-      result.sort((a, b) => {
-        switch (filters.sortBy) {
-          case 'status':
-            return (a.case_status ?? 0) - (b.case_status ?? 0);
-          case 'name':
-            return a.case_name.localeCompare(b.case_name);
-          default:
-            return 0;
-        }
-      });
-    }
-
     return result;
   }, [caseList, filters]);
+
+  /**
+   * 判断当前是否有激活的筛选条件
+   * 用于传递给 CaseFilterBar 控制"激活"状态显示
+   */
+  const hasActiveFilter = useMemo(() => {
+    return filters.caseStatus !== undefined || filters.isReview !== undefined;
+  }, [filters]);
 
   const handleBatchExport = useCallback(
     () => message.info('批量导出功能开发中'),
@@ -286,7 +285,9 @@ const Index: FC<PlanCaseListProps> = ({
     </Space>
   );
 
-  // 添加用例关联
+  /**
+   * 添加用例到计划
+   */
   const OnCaseSave = async (values: any) => {
     const newValue = {
       ...values,
@@ -303,12 +304,15 @@ const Index: FC<PlanCaseListProps> = ({
       message.error(msg || '保存失败');
     }
   };
+
   const CardExtra = () => (
     <CaseFilterBar
       onFilterChange={handleFilterChange}
       onRefresh={handleRefresh}
       onBatchExport={handleBatchExport}
       onBatchImport={handleBatchImport}
+      hasActiveFilter={hasActiveFilter}
+      filters={filters}
     />
   );
 

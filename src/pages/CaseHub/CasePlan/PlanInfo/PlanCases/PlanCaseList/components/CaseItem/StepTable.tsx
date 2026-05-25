@@ -1,13 +1,4 @@
-import {
-  CheckCircleFilled,
-  CheckOutlined,
-  CloseCircleFilled,
-  ExclamationCircleFilled,
-  LinkOutlined,
-  MinusCircleFilled,
-  PlusOutlined,
-  QuestionCircleFilled,
-} from '@ant-design/icons';
+import { CheckOutlined, LinkOutlined, PlusOutlined } from '@ant-design/icons';
 import {
   EditableFormInstance,
   EditableProTable,
@@ -27,8 +18,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { updateCaseStepResult } from '@/api/case/caseplan';
 import { CaseSubStep } from '@/pages/CaseHub/types';
 import debounce from 'lodash/debounce';
+import { STEP_STATUS_CONFIG } from './statusConfig';
 
 const { Text } = Typography;
+
 interface StepData {
   step_id: number;
   plan_id: number;
@@ -42,37 +35,6 @@ interface StepTableProps {
   planId?: string;
 }
 
-/** 状态枚举与颜色映射配置 */
-const STATUS_CONFIG = {
-  0: {
-    label: '未填写',
-    color: 'default',
-    icon: <QuestionCircleFilled style={{ fontSize: 16, color: '#aeaeaeff' }} />,
-  },
-  1: {
-    label: '通过',
-    color: 'success',
-    icon: <CheckCircleFilled style={{ fontSize: 16, color: '#13c2c2' }} />,
-  },
-  2: {
-    label: '阻塞',
-    color: 'error',
-    icon: <CloseCircleFilled style={{ fontSize: 16, color: '#FF4D4F' }} />,
-  },
-  3: {
-    label: '跳过',
-    color: 'warning',
-    icon: <MinusCircleFilled style={{ fontSize: 16, color: '#FF9900' }} />,
-  },
-  4: {
-    label: '其他',
-    color: 'purple',
-    icon: (
-      <ExclamationCircleFilled style={{ fontSize: 16, color: '#FF4D4F' }} />
-    ),
-  },
-} as const;
-
 /**
  * 用例步骤表格组件
  * 支持编辑实际结果、状态、缺陷链接，数据变更自动同步后端（防抖 1s）
@@ -82,7 +44,10 @@ const StepTable: React.FC<StepTableProps> = ({ steps, planId }) => {
   const [dataSource, setDataSource] = useState<CaseSubStep[]>(steps);
   const [popoverOpenId, setPopoverOpenId] = useState<number | null>(null);
 
-  // 用 ref 保存最新值，避免 debounce 因依赖变化而重新创建
+  /**
+   * 使用 ref 保存最新值，避免 debounce 因依赖变化而重新创建
+   * 这解决了闭包陷阱：debounce 内部可以访问最新数据和 props
+   */
   const dataSourceRef = useRef(dataSource);
   const planIdRef = useRef(planId);
 
@@ -94,13 +59,30 @@ const StepTable: React.FC<StepTableProps> = ({ steps, planId }) => {
     planIdRef.current = planId;
   }, [planId]);
 
+  /**
+   * 当外部 steps 变化时更新内部状态
+   * 使用函数式更新避免依赖 steps
+   */
   useEffect(() => {
     setDataSource(steps);
   }, [steps]);
 
   /**
+   * 步骤状态选项配置
+   * 用于表单下拉选择
+   */
+  const statusOptions = useMemo(
+    () =>
+      Object.entries(STEP_STATUS_CONFIG).map(([value, config]) => ({
+        value: Number(value),
+        label: config.label,
+      })),
+    [],
+  );
+
+  /**
    * 更新步骤数据并同步到后端（已做 1s 防抖）
-   * 注意：debounce 实例保持稳定，通过 ref 读取最新数据
+   * debounce 实例保持稳定，通过 ref 读取最新数据
    */
   const emitDataChange = useMemo(
     () =>
@@ -123,6 +105,7 @@ const StepTable: React.FC<StepTableProps> = ({ steps, planId }) => {
 
   /**
    * 将预期结果复制到实际结果，并标记为通过状态
+   * 同时更新前端状态和后端数据
    */
   const handleCopyExpectedToActual = useCallback(
     async (row: CaseSubStep) => {
@@ -210,13 +193,32 @@ const StepTable: React.FC<StepTableProps> = ({ steps, planId }) => {
     );
   };
 
+  /**
+   * 根据状态值获取配置并渲染选项
+   * 使用统一的状态配置
+   */
+  const renderStatusOption = useCallback((option: { value: number }) => {
+    const cfg = STEP_STATUS_CONFIG[option.value];
+    if (!cfg) return null;
+    return (
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+        {cfg.icon}
+        {cfg.label}
+      </span>
+    );
+  }, []);
+
+  /**
+   * 表格列配置
+   * 注意：handleCopyExpectedToActual 和 popoverOpenId 变化时会重建列配置
+   */
   const stepColumns: ProColumns<CaseSubStep>[] = useMemo(
     () => [
       {
         title: '序号',
         dataIndex: 'index',
         width: '6%',
-        align: 'center',
+        align: 'center' as const,
         editable: false,
         render: (_, __, index) => (
           <span
@@ -229,7 +231,7 @@ const StepTable: React.FC<StepTableProps> = ({ steps, planId }) => {
               borderRadius: 12,
               color: '#1890ff',
               fontSize: 12,
-              fontWeight: 60,
+              fontWeight: 600,
             }}
           >
             {index + 1}
@@ -242,9 +244,7 @@ const StepTable: React.FC<StepTableProps> = ({ steps, planId }) => {
         dataIndex: 'action',
         ellipsis: true,
         editable: false,
-        render: (_, record) => {
-          return <Text type="secondary">{record.action}</Text>;
-        },
+        render: (_, record) => <Text type="secondary">{record.action}</Text>,
       },
       {
         title: '预期',
@@ -291,8 +291,8 @@ const StepTable: React.FC<StepTableProps> = ({ steps, planId }) => {
         ellipsis: false,
         valueType: 'text',
         fieldProps: {
-          placeholder: '请输入预期结果',
-          variant: 'underlined',
+          placeholder: '请输入实际结果',
+          variant: 'underlined' as const,
         },
         render: (text) =>
           text ? (
@@ -318,57 +318,16 @@ const StepTable: React.FC<StepTableProps> = ({ steps, planId }) => {
         key: 'status',
         dataIndex: 'status',
         width: '12%',
-        formItemRender: () => {
-          const statusOptions = [
-            { label: '未填写', value: 0 },
-            { label: '通过', value: 1 },
-            { label: '阻塞', value: 2 },
-            { label: '跳过', value: 3 },
-            { label: '其他', value: 4 },
-          ];
-
-          return (
-            <Select
-              variant="underlined"
-              defaultValue={0}
-              style={{ width: '100%' }}
-              options={statusOptions}
-              optionRender={(option) => {
-                const cfg =
-                  STATUS_CONFIG[option.value as keyof typeof STATUS_CONFIG];
-                return (
-                  <span
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 6,
-                    }}
-                  >
-                    {cfg?.icon}
-                    {cfg?.label}
-                  </span>
-                );
-              }}
-              labelRender={(option) => {
-                if (!option) return null;
-                const cfg =
-                  STATUS_CONFIG[option.value as keyof typeof STATUS_CONFIG];
-                return (
-                  <span
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 6,
-                    }}
-                  >
-                    {cfg?.icon}
-                    {cfg?.label}
-                  </span>
-                );
-              }}
-            />
-          );
-        },
+        formItemRender: () => (
+          <Select
+            variant="underlined"
+            defaultValue={0}
+            style={{ width: '100%' }}
+            options={statusOptions}
+            optionRender={(option) => renderStatusOption(option)}
+            labelRender={(option) => renderStatusOption(option)}
+          />
+        ),
       },
       {
         title: '缺陷',
@@ -429,10 +388,18 @@ const StepTable: React.FC<StepTableProps> = ({ steps, planId }) => {
         },
       },
     ],
-    [handleCopyExpectedToActual, popoverOpenId, dataSource],
+    [
+      handleCopyExpectedToActual,
+      popoverOpenId,
+      statusOptions,
+      renderStatusOption,
+    ],
   );
 
-  /** 当前所有可编辑行的 key 集合 */
+  /**
+   * 可编辑行的 key 集合
+   * 用于标识哪些行可以编辑
+   */
   const editableKeys = useMemo(
     () => dataSource.map((item) => item.id),
     [dataSource],

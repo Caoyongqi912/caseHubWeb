@@ -2,8 +2,7 @@ import { movePlanCases } from '@/api/case/caseplan';
 import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import { Modal } from 'antd';
 import { FC, useCallback, useState } from 'react';
-import ModuleTreeSelect from './ModuleTreeSelect';
-import PlanSelect from './PlanSelect';
+import PlanModuleSelectForm from './PlanModuleSelectForm';
 
 export interface BatchMoveModalProps {
   open: boolean;
@@ -24,32 +23,32 @@ const BatchMoveModal: FC<BatchMoveModalProps> = ({
   onCancel,
   onSuccess,
 }) => {
-  const { colors, spacing, token } = useCaseHubTheme();
+  const { colors, token } = useCaseHubTheme();
   const [selectedPlanId, setSelectedPlanId] = useState<number | undefined>();
   const [selectedModuleId, setSelectedModuleId] = useState<
     number | undefined
   >();
   const [submitting, setSubmitting] = useState(false);
 
-  // 选择目标测试计划
+  /** 选择目标测试计划，清空目录选择 */
   const handlePlanChange = useCallback((planId: number | undefined) => {
     setSelectedPlanId(planId);
     setSelectedModuleId(undefined);
   }, []);
 
-  // 选择目标目录
+  /** 选择目标目录 */
   const handleModuleChange = useCallback((moduleId: number | undefined) => {
     setSelectedModuleId(moduleId);
   }, []);
 
-  // 关闭弹窗并重置状态
+  /** 关闭弹窗并重置状态 */
   const handleModalClose = useCallback(() => {
     setSelectedPlanId(undefined);
     setSelectedModuleId(undefined);
     onCancel();
   }, [onCancel]);
 
-  // 提交移动
+  /** 提交移动请求 */
   const handleSubmit = useCallback(async () => {
     if (!selectedPlanId) return;
 
@@ -87,53 +86,24 @@ const BatchMoveModal: FC<BatchMoveModalProps> = ({
       okButtonProps={{ disabled: !selectedPlanId || submitting }}
       confirmLoading={submitting}
     >
-      <div style={{ padding: `${spacing.md}px 0` }}>
+      <div style={{ padding: '16px 0' }}>
         <p
           style={{
             color: colors.textTertiary,
-            marginBottom: spacing.md,
+            marginBottom: 16,
             fontSize: token.fontSizeSM,
           }}
         >
           已选择 {selectedCaseIds.length} 项用例将被移动
         </p>
 
-        <div style={{ marginBottom: spacing.md }}>
-          <label
-            style={{
-              display: 'block',
-              marginBottom: spacing.xs,
-              color: colors.text,
-              fontSize: token.fontSize,
-            }}
-          >
-            目标测试计划
-          </label>
-          <PlanSelect
-            value={selectedPlanId}
-            onChange={handlePlanChange}
-            excludePlanId={currentPlanId ? Number(currentPlanId) : undefined}
-            placeholder="搜索测试计划..."
-          />
-        </div>
-
-        <div>
-          <label
-            style={{
-              display: 'block',
-              marginBottom: spacing.xs,
-              color: colors.text,
-              fontSize: token.fontSize,
-            }}
-          >
-            目标目录
-          </label>
-          <ModuleTreeSelect
-            planId={selectedPlanId}
-            value={selectedModuleId}
-            onChange={handleModuleChange}
-          />
-        </div>
+        <PlanModuleSelectForm
+          excludePlanId={currentPlanId ? Number(currentPlanId) : undefined}
+          planId={selectedPlanId}
+          moduleId={selectedModuleId}
+          onPlanChange={handlePlanChange}
+          onModuleChange={handleModuleChange}
+        />
       </div>
     </Modal>
   );

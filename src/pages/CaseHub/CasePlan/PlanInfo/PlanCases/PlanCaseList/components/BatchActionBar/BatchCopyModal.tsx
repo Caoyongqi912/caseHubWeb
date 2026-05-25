@@ -2,8 +2,7 @@ import { copyPlanCases } from '@/api/case/caseplan';
 import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import { Modal, Select } from 'antd';
 import { FC, useCallback, useState } from 'react';
-import ModuleTreeSelect from './ModuleTreeSelect';
-import PlanSelect from './PlanSelect';
+import PlanModuleSelectForm from './PlanModuleSelectForm';
 
 export interface BatchCopyModalProps {
   open: boolean;
@@ -13,7 +12,10 @@ export interface BatchCopyModalProps {
   onSuccess?: () => void;
 }
 
-// 用例状态枚举
+/**
+ * 用例状态选项
+ * 用于复制时的初始状态设置
+ */
 const CASE_STATUS_OPTIONS = [
   { label: '待执行', value: 0 },
   { label: '通过', value: 1 },
@@ -31,26 +33,26 @@ const BatchCopyModal: FC<BatchCopyModalProps> = ({
   onCancel,
   onSuccess,
 }) => {
-  const { colors, spacing, token } = useCaseHubTheme();
+  const { colors, token } = useCaseHubTheme();
   const [selectedPlanId, setSelectedPlanId] = useState<number | undefined>();
   const [selectedModuleId, setSelectedModuleId] = useState<
     number | undefined
   >();
-  const [is_review, setIsReview] = useState<number>(0);
+  const [isReview, setIsReview] = useState<number>(0);
   const [submitting, setSubmitting] = useState(false);
 
-  // 选择目标测试计划
+  /** 选择目标测试计划，清空目录选择 */
   const handlePlanChange = useCallback((planId: number | undefined) => {
     setSelectedPlanId(planId);
     setSelectedModuleId(undefined);
   }, []);
 
-  // 选择目标目录
+  /** 选择目标目录 */
   const handleModuleChange = useCallback((moduleId: number | undefined) => {
     setSelectedModuleId(moduleId);
   }, []);
 
-  // 关闭弹窗并重置状态
+  /** 关闭弹窗并重置状态 */
   const handleModalClose = useCallback(() => {
     setSelectedPlanId(undefined);
     setSelectedModuleId(undefined);
@@ -58,7 +60,7 @@ const BatchCopyModal: FC<BatchCopyModalProps> = ({
     onCancel();
   }, [onCancel]);
 
-  // 提交复制
+  /** 提交复制请求 */
   const handleSubmit = useCallback(async () => {
     if (!selectedPlanId) return;
 
@@ -68,7 +70,7 @@ const BatchCopyModal: FC<BatchCopyModalProps> = ({
         plan_id: selectedPlanId,
         case_id_list: selectedCaseIds,
         plan_case_module_id: selectedModuleId,
-        is_review: is_review,
+        is_review: isReview,
       });
 
       if (code === 0) {
@@ -82,7 +84,7 @@ const BatchCopyModal: FC<BatchCopyModalProps> = ({
     selectedPlanId,
     selectedCaseIds,
     selectedModuleId,
-    is_review,
+    isReview,
     handleModalClose,
     onSuccess,
   ]);
@@ -98,59 +100,30 @@ const BatchCopyModal: FC<BatchCopyModalProps> = ({
       okButtonProps={{ disabled: !selectedPlanId || submitting }}
       confirmLoading={submitting}
     >
-      <div style={{ padding: `${spacing.md}px 0` }}>
+      <div style={{ padding: '16px 0' }}>
         <p
           style={{
             color: colors.textTertiary,
-            marginBottom: spacing.md,
+            marginBottom: 16,
             fontSize: token.fontSizeSM,
           }}
         >
           已选择 {selectedCaseIds.length} 项用例将被复制
         </p>
 
-        <div style={{ marginBottom: spacing.md }}>
-          <label
-            style={{
-              display: 'block',
-              marginBottom: spacing.xs,
-              color: colors.text,
-              fontSize: token.fontSize,
-            }}
-          >
-            目标测试计划
-          </label>
-          <PlanSelect
-            value={selectedPlanId}
-            onChange={handlePlanChange}
-            excludePlanId={currentPlanId ? Number(currentPlanId) : undefined}
-            placeholder="搜索测试计划..."
-          />
-        </div>
+        <PlanModuleSelectForm
+          excludePlanId={currentPlanId ? Number(currentPlanId) : undefined}
+          planId={selectedPlanId}
+          moduleId={selectedModuleId}
+          onPlanChange={handlePlanChange}
+          onModuleChange={handleModuleChange}
+        />
 
-        <div style={{ marginBottom: spacing.md }}>
+        <div style={{ marginTop: 16 }}>
           <label
             style={{
               display: 'block',
-              marginBottom: spacing.xs,
-              color: colors.text,
-              fontSize: token.fontSize,
-            }}
-          >
-            目标目录
-          </label>
-          <ModuleTreeSelect
-            planId={selectedPlanId}
-            value={selectedModuleId}
-            onChange={handleModuleChange}
-          />
-        </div>
-
-        <div>
-          <label
-            style={{
-              display: 'block',
-              marginBottom: spacing.xs,
+              marginBottom: 4,
               color: colors.text,
               fontSize: token.fontSize,
             }}
@@ -159,7 +132,7 @@ const BatchCopyModal: FC<BatchCopyModalProps> = ({
           </label>
           <Select
             style={{ width: '100%' }}
-            value={is_review}
+            value={isReview}
             onChange={setIsReview}
             options={CASE_STATUS_OPTIONS}
           />

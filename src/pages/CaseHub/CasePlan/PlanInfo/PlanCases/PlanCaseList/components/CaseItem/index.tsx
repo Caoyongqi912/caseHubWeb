@@ -9,7 +9,7 @@ import {
   Tag,
   Typography,
 } from 'antd';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   copyOnePlanCase,
@@ -21,11 +21,12 @@ import TestCaseDetail from '@/pages/CaseHub/CaseLibrary/TestCaseDetail';
 import { ITestCase } from '@/pages/CaseHub/types';
 import { createMoreMenuItems } from './moreMenu';
 import {
+  CASE_STATUS_CONFIG,
   createStatusSelectItems,
-  STATUS_CONFIG_MAP,
   STATUS_ICON_MAP,
 } from './statusConfig';
 import StepTable from './StepTable';
+
 const { Text } = Typography;
 
 interface CaseItemProps {
@@ -69,12 +70,32 @@ const CaseItem: React.FC<CaseItemProps> = (props) => {
   const [removeLoading, setRemoveLoading] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [hasEdited, setHasEdited] = useState(false);
-  // 状态选择下拉菜单项
+
+  /**
+   * 使用 ref 保存回调函数，避免 useCallback 依赖变化导致的不必要重渲染
+   * 同时确保回调函数始终能访问最新的值
+   */
+  const onReviewChangeRef = useRef(onReviewChange);
+  const onStatusChangeRef = useRef(onStatusChange);
+  const onRefreshRef = useRef(onRefresh);
+
+  useEffect(() => {
+    onReviewChangeRef.current = onReviewChange;
+  }, [onReviewChange]);
+
+  useEffect(() => {
+    onStatusChangeRef.current = onStatusChange;
+  }, [onStatusChange]);
+
+  useEffect(() => {
+    onRefreshRef.current = onRefresh;
+  }, [onRefresh]);
+
+  /** 状态选择下拉菜单项 */
   const statusSelectItems = useMemo(() => createStatusSelectItems(), []);
 
   /**
    * 复制当前用例
-   * 调用 copyOnePlanCase API，成功后刷新列表
    */
   const handleCopyCase = useCallback(async () => {
     if (!planId || !caseId || !moduleId) {
@@ -92,7 +113,7 @@ const CaseItem: React.FC<CaseItemProps> = (props) => {
       });
       if (code === 0) {
         message.success('复制用例成功');
-        onRefresh?.();
+        onRefreshRef.current?.();
       } else {
         message.error('复制用例失败');
       }
@@ -101,11 +122,10 @@ const CaseItem: React.FC<CaseItemProps> = (props) => {
     } finally {
       setCopyLoading(false);
     }
-  }, [planId, caseId, moduleId, copyLoading, onRefresh]);
+  }, [planId, caseId, moduleId, copyLoading]);
 
   /**
    * 移除当前用例
-   * 调用 removeAssociatePlanCases API，成功后刷新列表
    */
   const handleRemoveCase = useCallback(async () => {
     if (!planId || !caseId) {
@@ -122,7 +142,7 @@ const CaseItem: React.FC<CaseItemProps> = (props) => {
       });
       if (code === 0) {
         message.success('移除用例成功');
-        onRefresh?.();
+        onRefreshRef.current?.();
       } else {
         message.error('移除用例失败');
       }
@@ -131,9 +151,9 @@ const CaseItem: React.FC<CaseItemProps> = (props) => {
     } finally {
       setRemoveLoading(false);
     }
-  }, [planId, caseId, removeLoading, onRefresh]);
+  }, [planId, caseId, removeLoading]);
 
-  // 更多操作下拉菜单项
+  /** 更多操作下拉菜单项 */
   const moreMenuItems = useMemo(
     () =>
       createMoreMenuItems({
@@ -143,7 +163,9 @@ const CaseItem: React.FC<CaseItemProps> = (props) => {
     [handleCopyCase, handleRemoveCase],
   );
 
-  // 排序后的用例步骤列表
+  /**
+   * 按 order 字段升序排列用例步骤
+   */
   const sortedSteps = useMemo(
     () =>
       [...(testCase.case_sub_steps || [])].sort(
@@ -160,7 +182,6 @@ const CaseItem: React.FC<CaseItemProps> = (props) => {
     async (updates: { case_status?: number; is_review?: number }) => {
       if (!caseId || !planId) return;
 
-      // 设置对应的加载状态
       if (updates.case_status !== undefined) {
         setSwitchingStatus(true);
       } else {
@@ -175,18 +196,15 @@ const CaseItem: React.FC<CaseItemProps> = (props) => {
         });
 
         if (code === 0) {
-          // 处理评审状态更新
           if (updates.is_review !== undefined) {
             message.success(
               updates.is_review ? '已标记为已评审' : '已取消评审',
             );
-            onReviewChange?.(caseId, !!updates.is_review);
+            onReviewChangeRef.current?.(caseId, !!updates.is_review);
           } else if (updates.case_status !== undefined) {
-            // 处理用例状态更新
-            message.success(
-              `已切换为${STATUS_CONFIG_MAP[updates.case_status].label}`,
-            );
-            onStatusChange?.(caseId, updates.case_status);
+            const config = CASE_STATUS_CONFIG[updates.case_status];
+            message.success(`已切换为${config?.label ?? '未知'}`);
+            onStatusChangeRef.current?.(caseId, updates.case_status);
           }
         } else {
           message.error('修改失败');
@@ -198,16 +216,16 @@ const CaseItem: React.FC<CaseItemProps> = (props) => {
         setSwitchingReview(false);
       }
     },
-    [caseId, planId, onReviewChange, onStatusChange],
+    [caseId, planId],
   );
 
-  // 切换评审状态
+  /** 切换评审状态 */
   const handleReviewToggle = useCallback(() => {
     if (switchingReview) return;
     handleStatusUpdate({ is_review: isReview ? 0 : 1 });
   }, [switchingReview, isReview, handleStatusUpdate]);
 
-  // 选择用例状态
+  /** 选择用例状态 */
   const handleStatusSelect = useCallback(
     (newStatus: number) => {
       if (switchingStatus) return;
@@ -217,9 +235,9 @@ const CaseItem: React.FC<CaseItemProps> = (props) => {
   );
 
   const currentStatusConfig =
-    STATUS_CONFIG_MAP[caseStatus] || STATUS_CONFIG_MAP[0];
+    CASE_STATUS_CONFIG[caseStatus] || CASE_STATUS_CONFIG[0];
 
-  // 卡片右侧操作区域：状态选择 + 更多操作
+  /** 卡片右侧操作区域：状态选择 + 更多操作 */
   const cardExtra = (
     <Space size="small">
       <Dropdown
@@ -252,7 +270,7 @@ const CaseItem: React.FC<CaseItemProps> = (props) => {
     </Space>
   );
 
-  // 卡片标题区域：复选框 + 评审状态 + 用例名称
+  /** 卡片标题区域：复选框 + 评审状态 + 用例名称 */
   const cardTitle = (
     <Space onClick={(e) => e.stopPropagation()}>
       <Checkbox
@@ -291,7 +309,7 @@ const CaseItem: React.FC<CaseItemProps> = (props) => {
         setOpen={setIsDetailOpen}
         onClose={() => {
           if (hasEdited) {
-            onRefresh?.();
+            onRefreshRef.current?.();
           }
           setHasEdited(false);
           setIsDetailOpen(false);
