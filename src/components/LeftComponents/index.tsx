@@ -12,7 +12,7 @@ interface SelfProps {
   currentProjectId?: number;
   moduleType: number;
   onProjectChange: (projectId: number | undefined) => void;
-  onModuleChange: (moduleId: number) => void;
+  onModuleChange: (moduleId: number | undefined) => void;
 }
 
 const Index: FC<SelfProps> = (props) => {

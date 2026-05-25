@@ -59,7 +59,7 @@ const Index = () => {
     setCurrentProjectId(projectId);
   };
 
-  const onModuleChange = (moduleId: number) => {
+  const onModuleChange = (moduleId: number | undefined) => {
     setCurrentModuleId(moduleId);
   };
 

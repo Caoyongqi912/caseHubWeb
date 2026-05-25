@@ -21,6 +21,7 @@ import {
   FileTextOutlined,
   FolderOpenOutlined,
   FolderOutlined,
+  InboxOutlined,
   MoreOutlined,
   PlusOutlined,
   SearchOutlined,
@@ -45,6 +46,19 @@ import React, { FC, useEffect, useMemo, useState } from 'react';
 const { Search } = Input;
 const { Text } = Typography;
 
+/**
+ * 未分组模块的 key 前缀
+ * 后端返回格式：{key: "ungrouped_module_{module_type}", title: "未分组数据", ...}
+ */
+const UNGROUPED_MODULE_PREFIX = 'ungrouped_module_';
+
+/**
+ * 检查是否为未分组模块
+ */
+const isUngroupedModule = (key: string | number): boolean => {
+  return String(key).startsWith(UNGROUPED_MODULE_PREFIX);
+};
+
 type HandleAction = { title: string; key: number };
 
 const Handle: Record<string, HandleAction> = {
@@ -57,7 +71,7 @@ const Handle: Record<string, HandleAction> = {
 interface IProps {
   currentProjectId?: number;
   moduleType: number;
-  onModuleChange: (moduleId: number) => void;
+  onModuleChange: (moduleId: number | undefined) => void;
 }
 
 const ModuleTree: FC<IProps> = ({
@@ -121,7 +135,17 @@ const ModuleTree: FC<IProps> = ({
     return buildTree(modules);
   }, [modules]);
 
+  /**
+   * 拖拽排序结束处理
+   * 不允许将节点拖拽到未分组模块上
+   */
   const onDrop: TreeProps['onDrop'] = async (info: any) => {
+    const targetKey = info.node.key;
+    if (isUngroupedModule(targetKey)) {
+      message.warning('无法将模块移动到未分组数据中');
+      return;
+    }
+
     const { code } = await dropModule({
       id: info.dragNode.key,
       targetId: info.dropToGap ? null : info.node.key,
@@ -130,6 +154,11 @@ const ModuleTree: FC<IProps> = ({
   };
 
   const handleDelete = (node: IModule) => {
+    if (isUngroupedModule(node.key)) {
+      message.warning('未分组数据模块无法删除');
+      return;
+    }
+
     Modal.confirm({
       title: '确认删除',
       content: '删除后该模块下的所有内容将无法恢复，确定要继续吗？',
@@ -147,27 +176,40 @@ const ModuleTree: FC<IProps> = ({
     });
   };
 
-  const menuItems = (node: IModule): MenuProps['items'] => [
-    {
-      key: 'edit',
-      label: <Text style={{ color: colors.error }}>编辑</Text>,
-      icon: <EditOutlined style={{ color: colors.primary }} />,
-      onClick: () => {
-        setOpen(true);
-        setCurrentModule(node);
-        setHandleModule(Handle.EditModule);
+  /**
+   * 生成节点右键菜单
+   * 未分组模块不显示编辑和删除菜单
+   */
+  const menuItems = (node: IModule): MenuProps['items'] => {
+    const nodeKey = String(node.key);
+    if (isUngroupedModule(nodeKey)) {
+      return [];
+    }
+
+    return [
+      {
+        key: 'edit',
+        label: <Text style={{ color: colors.error }}>编辑</Text>,
+        icon: <EditOutlined style={{ color: colors.primary }} />,
+        onClick: () => {
+          setOpen(true);
+          setCurrentModule(node);
+          setHandleModule(Handle.EditModule);
+        },
       },
-    },
-    { type: 'divider' as const },
-    {
-      key: 'delete',
-      label: <Text style={{ color: colors.error }}>删除</Text>,
-      icon: <DeleteOutlined style={{ color: colors.error }} />,
-      onClick: () => handleDelete(node),
-    },
-  ];
+      { type: 'divider' as const },
+      {
+        key: 'delete',
+        label: <Text style={{ color: colors.error }}>删除</Text>,
+        icon: <DeleteOutlined style={{ color: colors.error }} />,
+        onClick: () => handleDelete(node),
+      },
+    ];
+  };
 
   const TreeTitleRender = (node: any) => {
+    const nodeKey = String(node.key);
+    const isUngrouped = isUngroupedModule(nodeKey);
     const isSelected = selectedKeys.includes(node.key);
     const isHovered = currentModule?.key === node.key;
 
@@ -203,7 +245,11 @@ const ModuleTree: FC<IProps> = ({
             minWidth: 0,
           }}
         >
-          {node.children ? (
+          {isUngrouped ? (
+            <InboxOutlined
+              style={{ fontSize: 12, color: colors.textTertiary }}
+            />
+          ) : node.children ? (
             <FolderOutlined style={{ fontSize: 12, color: colors.primary }} />
           ) : (
             <FileTextOutlined
@@ -214,7 +260,12 @@ const ModuleTree: FC<IProps> = ({
             strong
             style={{
               fontSize: 13,
-              color: isSelected ? colors.primary : colors.text,
+              color: isUngrouped
+                ? colors.textTertiary
+                : isSelected
+                ? colors.primary
+                : colors.text,
+              fontStyle: isUngrouped ? 'italic' : 'normal',
               flex: 1,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
@@ -231,7 +282,7 @@ const ModuleTree: FC<IProps> = ({
             style={{ backgroundColor: colors.primary }}
           />
         )}
-        {isAdmin && isHovered && (
+        {isAdmin && isHovered && !isUngrouped && (
           <Space size={2}>
             <Button
               type="text"
@@ -287,11 +338,21 @@ const ModuleTree: FC<IProps> = ({
     }
   };
 
+  /**
+   * 选择节点处理
+   * 未分组模块传递 undefined，其他模块传递对应的 key
+   */
   const onSelect = (_: any, info: any) => {
     const nodeKey = info.node.key;
     setSelectedKeys([nodeKey]);
-    onModuleChange(nodeKey);
-    setLocalStorageModule(moduleType, nodeKey);
+
+    if (isUngroupedModule(nodeKey)) {
+      onModuleChange(undefined);
+      setLocalStorageModule(moduleType, '');
+    } else {
+      onModuleChange(nodeKey as number);
+      setLocalStorageModule(moduleType, String(nodeKey));
+    }
   };
 
   return (
@@ -397,7 +458,10 @@ const ModuleTree: FC<IProps> = ({
             <Tree
               showLine={{ showLeafIcon: false }}
               showIcon={false}
-              draggable={isAdmin}
+              draggable={{
+                icon: false,
+                nodeDraggable: (node) => !isUngroupedModule(String(node.key)),
+              }}
               blockNode
               onExpand={(keys) => {
                 setExpandedKeys(keys);

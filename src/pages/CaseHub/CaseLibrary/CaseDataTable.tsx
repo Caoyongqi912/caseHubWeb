@@ -144,6 +144,7 @@ const CaseDataTable: FC<Props> = (props) => {
         dataIndex: 'case_name',
         copyable: true,
         ellipsis: true,
+        fixed: 'left',
         width: 280,
         render: (text) => (
           <Tag
@@ -459,15 +460,15 @@ const CaseDataTable: FC<Props> = (props) => {
         }}
       >
         <ProTable
+          footer={() => false}
           cardBordered
           columnsState={{
             persistenceKey: perKey ?? 'pro-table',
             persistenceType: 'localStorage',
           }}
-          style={{ height: '100%' }}
           scroll={{
             x: 1200,
-            y: 'calc(100vh - 350px)', // 🔥 自适应屏幕高度，表格内部滚动
+            y: 'calc(100vh - 350px)',
           }}
           pagination={{
             showQuickJumper: true,
