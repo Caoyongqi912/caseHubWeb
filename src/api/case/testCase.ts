@@ -122,15 +122,87 @@ export const updateRequirementCase = async (
 };
 
 /**
- * uploadTestCase
- * @param data
- * @param options
+ * 上传预览用例（Step 1）
+ * POST /hub/cases/upload
+ * @param file - Excel 文件
  */
-export const uploadTestCase = async (data: any, options?: IObjGet) => {
-  return request<IResponse<ITestCase>>('/api/hub/cases/upload', {
+export const uploadPreviewCase = async (file: File) => {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  return request<{
+    file_md5: string;
+    total_count: number;
+    valid_count: number;
+    invalid_count: number;
+    errors: Array<{
+      row: number;
+      errors: Array<{ field: string; message: string }>;
+    }>;
+  }>('/api/hub/cases/upload', {
+    method: 'POST',
+    data: formData,
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+};
+
+/**
+ * 保留原 uploadTestCase 作为别名（向后兼容）
+ * @deprecated 请使用 uploadPreviewCase
+ */
+export const uploadTestCase = async (data: FormData, options?: IObjGet) => {
+  return request('/api/hub/cases/upload', {
     method: 'POST',
     data: data,
+    headers: { 'Content-Type': 'multipart/form-data' },
     ...(options || {}),
+  });
+};
+
+/**
+ * 确认导入用例（Step 2）
+ * POST /hub/cases/upload/commit
+ * @param data - { file_md5, valid_case_ids, project_id, module_id, requirement_id?, is_common? }
+ */
+export const commitImportCase = async (data: {
+  file_md5: string;
+  valid_case_ids: number[];
+  project_id: number;
+  module_id: number;
+  requirement_id?: number;
+  is_common?: boolean;
+}) => {
+  return request<{ imported_count: number }>('/api/hub/cases/upload/commit', {
+    method: 'POST',
+    data: data,
+  });
+};
+
+/**
+ * 保留原 confirmImportCase 作为别名（向后兼容）
+ * @deprecated 请使用 commitImportCase
+ */
+export const confirmImportCase = async (data: {
+  file_md5: string;
+  project_id: number;
+  module_id: number;
+  is_common?: boolean;
+}) => {
+  return request('/api/hub/cases/upload/commit', {
+    method: 'POST',
+    data: data,
+  });
+};
+
+/**
+ * 取消上传（Step 3）
+ * POST /hub/cases/upload/cancel
+ * @param file_md5 - 文件唯一标识
+ */
+export const cancelImportCase = async (file_md5: string) => {
+  return request('/api/hub/cases/upload/cancel', {
+    method: 'POST',
+    data: { file_md5 },
   });
 };
 
@@ -313,11 +385,30 @@ export const updateTestCaseStep = async (
   });
 };
 
+/**
+ * 下载用例模板 Excel
+ * @param options - 配置选项
+ * @returns 包含 blob 数据和文件名的对象
+ */
 export const downloadCaseExcel = async (options: { responseType: 'blob' }) => {
-  return request<any>('/api/hub/cases/downloadCaseDemo', {
+  const response = await request<any>('/api/hub/cases/downloadCaseDemo', {
     method: 'GET',
     ...(options || {}),
   });
+
+  const contentDisposition = response?.headers?.['content-disposition'];
+  let filename = '用例模板.xlsx';
+  if (contentDisposition) {
+    const match = contentDisposition.match(/filename\*?=['"]?([^;"'\n]+)/i);
+    if (match) {
+      filename = decodeURIComponent(match[1]);
+    }
+  }
+
+  return {
+    blob: response as unknown as Blob,
+    filename,
+  };
 };
 
 /**

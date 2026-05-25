@@ -621,11 +621,11 @@ const StatisticsDashboard: React.FC = () => {
                 style={{ width: 110 }}
                 popupMatchSelectWidth={false}
               />
-              <RangePicker
+              {/* <RangePicker
                 value={dateType === 'custom' ? dateRange : undefined}
                 onChange={handleDateRangeChange}
                 disabled={dateType !== 'custom'}
-              />
+              /> */}
             </div>
           </div>
 

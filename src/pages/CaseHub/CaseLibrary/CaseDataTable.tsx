@@ -83,10 +83,10 @@ const CaseDataTable: FC<Props> = (props) => {
 
   const download = async () => {
     try {
-      const response = await downloadCaseExcel({ responseType: 'blob' });
-      const blob = response as unknown as Blob;
+      const { blob, filename } = await downloadCaseExcel({
+        responseType: 'blob',
+      });
       const objectURL = URL.createObjectURL(blob);
-      const filename = '用例模板.xlsx';
       const link = document.createElement('a');
       link.href = objectURL;
       link.download = filename;
@@ -378,7 +378,6 @@ const CaseDataTable: FC<Props> = (props) => {
       projects={projects}
       moduleEnum={moduleEnum}
       onProjectChange={setSelectProjectId}
-      currentProjectId={currentProjectId}
       onSuccess={() => actionRef.current?.reload()}
     />,
 
