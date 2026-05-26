@@ -1,21 +1,22 @@
+import { IModuleEnum } from '@/api';
 import { updateTestCase } from '@/api/case/testCase';
 import { ITestCase } from '@/pages/CaseHub/types';
+import { ModuleEnum } from '@/utils/config';
+import { fetchModulesEnum } from '@/utils/somefunc';
 import {
   ProForm,
   ProFormSelect,
   ProFormTreeSelect,
 } from '@ant-design/pro-components';
+import { useModel } from '@umijs/max';
 import { Form, message, Modal } from 'antd';
-import { FC } from 'react';
+import { FC, useEffect, useState } from 'react';
 
 interface Props {
   open: boolean;
   onCancel: () => void;
   onSuccess: () => void;
   currentCaseId?: number;
-  projects: { label: string; value: number }[];
-  moduleEnum: { title: string; value: number; children?: any[] }[];
-  onProjectChange: (projectId: number) => void;
 }
 
 const MoveCaseModal: FC<Props> = ({
@@ -23,12 +24,22 @@ const MoveCaseModal: FC<Props> = ({
   onCancel,
   onSuccess,
   currentCaseId,
-  projects,
-  moduleEnum,
-  onProjectChange,
 }) => {
   const [moveForm] = Form.useForm();
-
+  const { initialState } = useModel('@@initialState');
+  const [selectProjectId, setSelectProjectId] = useState<number>();
+  const [moduleEnum, setModuleEnum] = useState<IModuleEnum[]>([]);
+  const projects = initialState?.projects || [];
+  useEffect(() => {
+    if (selectProjectId) {
+      fetchModulesEnum(
+        selectProjectId,
+        ModuleEnum.CASE,
+        setModuleEnum,
+        true,
+      ).then();
+    }
+  }, [selectProjectId]);
   const handleOk = async () => {
     try {
       const values = await moveForm.validateFields();
@@ -63,7 +74,7 @@ const MoveCaseModal: FC<Props> = ({
           label="项目"
           name="project_id"
           required
-          onChange={(value) => onProjectChange(value as number)}
+          onChange={(value) => setSelectProjectId(value as number)}
           fieldProps={{ placeholder: '请选择目标项目' }}
         />
         <ProFormTreeSelect

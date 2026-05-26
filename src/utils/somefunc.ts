@@ -57,8 +57,13 @@ export const fetchModulesEnum = async (
   projectId: number | string,
   module_Type: number,
   setModuleEnum: React.Dispatch<React.SetStateAction<IModuleEnum[]>>,
+  no_group?: boolean,
 ) => {
-  const { code, data } = await queryTreeModuleByProject(projectId, module_Type);
+  const { code, data } = await queryTreeModuleByProject(
+    projectId,
+    module_Type,
+    no_group,
+  );
   if (code === 0) {
     setModuleEnum(loopData(data));
   } else {

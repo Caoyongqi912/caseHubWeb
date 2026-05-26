@@ -1,4 +1,3 @@
-import { IModuleEnum } from '@/api';
 import {
   copyTestCase,
   downloadCaseExcel,
@@ -13,7 +12,7 @@ import { CaseHubConfig } from '@/pages/CaseHub/config/constants';
 import { caseLevelColors, useCaseHubTheme } from '@/pages/CaseHub/styles';
 import { ITestCase } from '@/pages/CaseHub/types';
 import { ModuleEnum } from '@/utils/config';
-import { fetchModulesEnum, pageData } from '@/utils/somefunc';
+import { pageData } from '@/utils/somefunc';
 import {
   CopyOutlined,
   DeleteOutlined,
@@ -28,7 +27,6 @@ import {
   ProColumns,
   ProTable,
 } from '@ant-design/pro-components';
-import { useModel } from '@umijs/max';
 import type { MenuProps } from 'antd';
 import {
   Button,
@@ -61,25 +59,12 @@ const CaseDataTable: FC<Props> = (props) => {
   const [currentCase, setCurrentCase] = useState<ITestCase>();
   const [showDynamic, setShowDynamic] = useState<boolean>(false);
   const [showCaseDetail, setShowCaseDetail] = useState<boolean>(false);
-  const { initialState } = useModel('@@initialState');
-  const projects = initialState?.projects || [];
-  const [selectProjectId, setSelectProjectId] = useState<number>();
-  const [moduleEnum, setModuleEnum] = useState<IModuleEnum[]>([]);
   const [openNewCaseDrawer, setOpenNewCaseDrawer] = useState<boolean>(false);
   const [openModal, setOpenModal] = useState(false);
 
   useEffect(() => {
-    if (selectProjectId) {
-      fetchModulesEnum(selectProjectId, ModuleEnum.CASE, setModuleEnum).then();
-    }
-  }, [selectProjectId]);
-
-  useEffect(() => {
     actionRef.current?.reload();
-    if (currentProjectId) {
-      setSelectProjectId(currentProjectId);
-    }
-  }, [currentModuleId, currentProjectId]);
+  }, [currentModuleId]);
 
   const download = async () => {
     try {
@@ -102,7 +87,6 @@ const CaseDataTable: FC<Props> = (props) => {
   /** 分页查询用例数据 */
   const fetchPageData = useCallback(
     async (params: any, sort: any) => {
-      console.log(params);
       const values = {
         ...params,
         is_common: true,
@@ -110,8 +94,6 @@ const CaseDataTable: FC<Props> = (props) => {
         module_type: ModuleEnum.CASE,
         sort: sort,
       };
-      console.log(values);
-
       const { code, data } = await pageTestCase(values);
       return pageData(code, data);
     },
@@ -374,12 +356,7 @@ const CaseDataTable: FC<Props> = (props) => {
       用例模版
     </Button>,
 
-    <UploadCaseModal
-      projects={projects}
-      moduleEnum={moduleEnum}
-      onProjectChange={setSelectProjectId}
-      onSuccess={() => actionRef.current?.reload()}
-    />,
+    <UploadCaseModal onSuccess={() => actionRef.current?.reload()} />,
 
     <Button key="add" type="primary" onClick={() => setOpenNewCaseDrawer(true)}>
       添加用例
@@ -402,9 +379,6 @@ const CaseDataTable: FC<Props> = (props) => {
           actionRef.current?.reload();
         }}
         currentCaseId={currentCaseId}
-        projects={projects}
-        moduleEnum={moduleEnum}
-        onProjectChange={setSelectProjectId}
       />
       <MyDrawer
         name={'动态'}

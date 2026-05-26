@@ -268,16 +268,18 @@ export const queryEnvBy = async (envInfo: IEnv, options?: IObjGet) => {
  * 通过project 获取模块树
  * @param projectId
  * @param moduleType
+ * @param no_group
  * @param options
  */
 export const queryTreeModuleByProject = async (
   projectId: number | string,
   moduleType: number,
+  no_group?: boolean,
   options?: IObjGet,
 ) => {
   return request<IResponse<IModule[]>>('/api/module/queryTreeByProject', {
     method: 'GET',
-    params: { project_id: projectId, module_type: moduleType },
+    params: { project_id: projectId, module_type: moduleType, no_group },
     ...(options || {}),
   });
 };
