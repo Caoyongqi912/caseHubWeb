@@ -32,16 +32,21 @@ export const CaseHubConfig: any = {
   CASE_TYPE_OPTION: [
     {
       label: '冒烟',
-      value: '1',
+      value: 1,
     },
     {
-      label: '普通',
-      value: '2',
+      label: '功能',
+      value: 2,
+    },
+    {
+      label: '回归',
+      value: 3,
     },
   ],
   CASE_TYPE_ENUM: {
     1: '冒烟',
-    2: '普通',
+    2: '功能',
+    3: '回归',
   },
   CASE_STATUS_TEXT_ENUM: {
     0: 'WAIT',

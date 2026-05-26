@@ -72,7 +72,7 @@ const collapseExpandIcon = (isActive: boolean): CSSProperties => ({
   width: 20,
   height: 20,
   borderRadius: borderRadius.sm,
-  background: isActive ? colors.primary : colors.primaryBg,
+  background: colors.primary,
   transition: 'all 200ms ease',
 });
 
@@ -89,7 +89,6 @@ const groupTitle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   gap: spacing.sm,
-  color: colors.text,
 };
 
 const groupCount: CSSProperties = {
@@ -476,7 +475,7 @@ const Index: React.FC = () => {
       label: (
         <div style={groupedCaseLabel}>
           <div style={groupTitle}>
-            <AppstoreOutlined style={{ color: colors.primary }} />
+            <AppstoreOutlined />
             <span>{group.tag}</span>
           </div>
           <span style={groupCount}>{group.cases.length} 个用例</span>
@@ -496,7 +495,7 @@ const Index: React.FC = () => {
         expandIcon={({ isActive }) => (
           <div style={collapseExpandIcon(!!isActive)}>
             {isActive ? (
-              <DownOutlined style={{ fontSize: 10, color: '#fff' }} />
+              <DownOutlined style={{ fontSize: 10 }} />
             ) : (
               <RightOutlined style={{ fontSize: 10 }} />
             )}

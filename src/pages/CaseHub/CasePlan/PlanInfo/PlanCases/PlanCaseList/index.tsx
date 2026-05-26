@@ -18,16 +18,19 @@ import BatchActionBar from './components/BatchActionBar';
 import CaseFilterBar, { CaseFilterValues } from './components/CaseFilterBar';
 import CaseItem from './components/CaseItem';
 import NewCaseForm from './components/NewCaseForm';
+import PlanCaseImportModal from './components/PlanCaseImportModal';
 
 interface PlanCaseListProps {
   planId?: string;
   moduleId?: number | null;
+  planModules: import('@/pages/CaseHub/types').IPlanModule[];
   onModulesRefresh?: () => void;
 }
 
 const Index: FC<PlanCaseListProps> = ({
   planId,
   moduleId,
+  planModules,
   onModulesRefresh,
 }) => {
   const styles = usePlanCaseListStyles();
@@ -41,6 +44,7 @@ const Index: FC<PlanCaseListProps> = ({
     new Set(),
   );
   const [drawerVisible, setDrawerVisible] = useState(false);
+  const [importModalVisible, setImportModalVisible] = useState(false);
 
   useEffect(() => {
     if (planId) {
@@ -134,10 +138,7 @@ const Index: FC<PlanCaseListProps> = ({
     [],
   );
 
-  const handleBatchImport = useCallback(
-    () => message.info('批量导入功能开发中'),
-    [],
-  );
+  const handleBatchImport = useCallback(() => setImportModalVisible(true), []);
 
   /**
    * 关联用例到当前计划
@@ -435,6 +436,14 @@ const Index: FC<PlanCaseListProps> = ({
           onExit={handleExitSelection}
         />
       )}
+
+      <PlanCaseImportModal
+        open={importModalVisible}
+        onOpenChange={setImportModalVisible}
+        planId={planId || ''}
+        planModules={planModules}
+        onUploadFinish={handleRefresh}
+      />
     </>
   );
 };

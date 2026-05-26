@@ -290,11 +290,12 @@ const UploadCaseModal: FC<Props> = ({ onSuccess }) => {
           resetText: '取消',
         },
         submitButtonProps: {
-          disabled: !validateResult?.file_md5,
+          disabled:
+            !validateResult?.file_md5 || validateResult.valid_count === 0,
           loading: confirming,
         },
         resetButtonProps: {
-          onClick: () => resetAllState(),
+          onClick: () => handleModalOpenChange(false),
         },
       }}
     >
@@ -611,6 +612,27 @@ const UploadCaseModal: FC<Props> = ({ onSuccess }) => {
           )}
 
           {validateResult.invalid_count > 0 &&
+            validateResult.valid_count === 0 && (
+              <div
+                style={{
+                  marginTop: 12,
+                  padding: 12,
+                  borderRadius: 6,
+                  fontSize: 13,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  color: styles.errorText,
+                  background: styles.errorBg,
+                  border: `1px solid ${styles.errorBorder}`,
+                }}
+              >
+                <span style={{ fontSize: 16 }}>⚠</span>
+                所有用例均无效，请检查文件格式或数据内容后重新上传
+              </div>
+            )}
+
+          {validateResult.invalid_count > 0 &&
             validateResult.valid_count > 0 && (
               <div
                 style={{
@@ -632,20 +654,21 @@ const UploadCaseModal: FC<Props> = ({ onSuccess }) => {
               </div>
             )}
 
-          {validateResult.invalid_count > 0 && (
-            <div
-              style={{
-                marginTop: 12,
-                fontSize: 12,
-                color: styles.tipColor,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-              }}
-            >
-              💡 提示：可点击上方「移除」按钮删除文件后重新上传
-            </div>
-          )}
+          {validateResult.invalid_count > 0 &&
+            validateResult.valid_count > 0 && (
+              <div
+                style={{
+                  marginTop: 12,
+                  fontSize: 12,
+                  color: styles.tipColor,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                💡 提示：可点击上方「移除」按钮删除文件后重新上传
+              </div>
+            )}
         </div>
       )}
     </ModalForm>

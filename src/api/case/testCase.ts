@@ -162,13 +162,17 @@ export const uploadTestCase = async (data: FormData, options?: IObjGet) => {
 /**
  * 确认导入用例（Step 2）
  * POST /hub/cases/upload/commit
- * @param data - { file_md5, project_id, module_id, is_common? }
+ * @param data - { file_md5, project_id, module_id, is_common?, requirement_id?, plan_id?, case_status?, is_review? }
  */
 export const commitImportCase = async (data: {
   file_md5: string;
   project_id: number;
-  module_id: number;
+  module_id?: number;
   is_common?: boolean;
+  requirement_id?: string;
+  plan_id?: string;
+  case_status?: number;
+  is_review?: boolean;
 }) => {
   return request<{ imported_count: number }>('/api/hub/cases/upload/commit', {
     method: 'POST',

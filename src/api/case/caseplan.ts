@@ -282,3 +282,21 @@ export const updateCaseStepResult = async (data: {
     data,
   });
 };
+
+/**
+ * 确认导入用例（Step 2）
+ * POST /hub/cases/upload/commit
+ * @param data - { file_md5, project_id, module_id, is_common?, requirement_id?, plan_id?, case_status?, is_review? }
+ */
+export const commitPlanImportCase = async (data: {
+  file_md5: string;
+  plan_id?: string;
+  plan_module_id?: number;
+  case_status?: number;
+  is_review?: boolean;
+}) => {
+  return request<{ imported_count: number }>('/api/hub/plan/upload/commit', {
+    method: 'POST',
+    data: data,
+  });
+};
