@@ -81,10 +81,10 @@ export const STEP_STATUS_CONFIG: Record<number, StepStatusConfig> = {
 };
 
 /**
- * 保持向后兼容的别名
- * @deprecated 使用 STEP_STATUS_CONFIG 代替
+ * 用例状态图标配置（用于下拉菜单选择项）
+ * 与 CASE_STATUS_CONFIG 一一对应
  */
-export const STATUS_ICON_MAP: Record<number, React.ReactNode> = {
+export const CASE_STATUS_ICONS: Record<number, React.ReactNode> = {
   0: <ClockCircleOutlined />,
   1: <CheckCircleOutlined />,
   2: <CloseCircleOutlined />,
@@ -101,7 +101,7 @@ export const createStatusSelectItems = (): MenuProps['items'] =>
     key,
     label: (
       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-        {STATUS_ICON_MAP[Number(key)]}
+        {CASE_STATUS_ICONS[Number(key)]}
         {config.label}
       </span>
     ),

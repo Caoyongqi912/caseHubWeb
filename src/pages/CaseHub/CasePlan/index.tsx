@@ -254,10 +254,10 @@ const Index = () => {
 
   return (
     <PageContainer
+      title={false}
       header={{
-        title: false,
         breadcrumb: {
-          items: [],
+          routes: [],
         },
       }}
       style={{

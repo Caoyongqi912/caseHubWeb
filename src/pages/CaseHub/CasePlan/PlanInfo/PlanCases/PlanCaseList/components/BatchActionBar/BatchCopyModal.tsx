@@ -15,6 +15,7 @@ export interface BatchCopyModalProps {
 /**
  * 用例状态选项
  * 用于复制时的初始状态设置
+ * @deprecated 使用 constants/caseStatus.ts 中的 CASE_STATUS_OPTIONS_FOR_COPY 代替
  */
 const CASE_STATUS_OPTIONS = [
   { label: '待执行', value: 0 },

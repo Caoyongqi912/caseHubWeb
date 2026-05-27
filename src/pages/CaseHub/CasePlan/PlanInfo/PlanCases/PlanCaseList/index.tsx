@@ -15,11 +15,16 @@ import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 import { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { usePlanCaseListStyles } from '../styles';
 import BatchActionBar from './components/BatchActionBar';
-import CaseFilterBar, { CaseFilterValues } from './components/CaseFilterBar';
+import CaseFilterBar from './components/CaseFilterBar';
 import CaseItem from './components/CaseItem';
 import NewCaseForm from './components/NewCaseForm';
 import PlanCaseImportModal from './components/PlanCaseImportModal';
+import { useCaseFilter } from './hooks/useCaseFilter';
+import { calculateSelectionState } from './hooks/useCaseSelection';
 
+/**
+ * 计划用例列表 Props
+ */
 interface PlanCaseListProps {
   planId?: string;
   moduleId?: number | null;
@@ -27,6 +32,10 @@ interface PlanCaseListProps {
   onModulesRefresh?: () => void;
 }
 
+/**
+ * 计划用例列表组件
+ * 展示指定计划下的所有测试用例，支持筛选、选中、批量操作等功能
+ */
 const Index: FC<PlanCaseListProps> = ({
   planId,
   moduleId,
@@ -35,17 +44,26 @@ const Index: FC<PlanCaseListProps> = ({
 }) => {
   const styles = usePlanCaseListStyles();
   const { colors, spacing } = useCaseHubTheme();
+
   const [planInfo, setPlanInfo] = useState<ICasePlan>();
   const [caseList, setCaseList] = useState<ITestCase[]>([]);
   const [loading, setLoading] = useState(false);
   const [openChoiceCaseDrawer, setOpenChoiceCaseDrawer] = useState(false);
-  const [filters, setFilters] = useState<CaseFilterValues>({});
   const [selectedCaseIds, setSelectedCaseIds] = useState<Set<number>>(
     new Set(),
   );
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [importModalVisible, setImportModalVisible] = useState(false);
 
+  /**
+   * 使用筛选 hook 管理筛选状态
+   */
+  const { filters, hasActiveFilter, filteredList, handleFilterChange } =
+    useCaseFilter(caseList);
+
+  /**
+   * 获取计划详情
+   */
   useEffect(() => {
     if (planId) {
       getPlanInfo(Number(planId)).then(({ code, data }) => {
@@ -94,45 +112,6 @@ const Index: FC<PlanCaseListProps> = ({
     fetchQueryPlanCases();
   }, [fetchQueryPlanCases]);
 
-  /**
-   * 筛选条件变化
-   * 更新筛选状态后触发本地过滤（不请求服务端）
-   */
-  const handleFilterChange = useCallback((newFilters: CaseFilterValues) => {
-    setFilters(newFilters);
-  }, []);
-
-  /**
-   * 根据筛选条件过滤用例列表（本地过滤）
-   * 当切换目录时，筛选条件会被保留，基于新加载的数据进行过滤
-   */
-  const filteredCaseList = useMemo(() => {
-    let result = Array.isArray(caseList) ? [...caseList] : [];
-
-    if (filters.keyword) {
-      const kw = filters.keyword.toLowerCase();
-      result = result.filter((c) => c.case_name.toLowerCase().includes(kw));
-    }
-
-    if (filters.caseStatus !== undefined) {
-      result = result.filter((c) => c.case_status === filters.caseStatus);
-    }
-
-    if (filters.isReview !== undefined) {
-      result = result.filter((c) => c.is_review === filters.isReview);
-    }
-
-    return result;
-  }, [caseList, filters]);
-
-  /**
-   * 判断当前是否有激活的筛选条件
-   * 用于传递给 CaseFilterBar 控制"激活"状态显示
-   */
-  const hasActiveFilter = useMemo(() => {
-    return filters.caseStatus !== undefined || filters.isReview !== undefined;
-  }, [filters]);
-
   const handleBatchExport = useCallback(
     () => message.info('批量导出功能开发中'),
     [],
@@ -159,32 +138,12 @@ const Index: FC<PlanCaseListProps> = ({
   };
 
   /**
-   * 计算是否全选（基于当前筛选后的列表）
+   * 计算选中状态（基于筛选后的列表）
    */
-  const isAllSelected = useMemo(() => {
-    if (filteredCaseList.length === 0) return false;
-    const selectableItems = filteredCaseList.filter(
-      (tc) => tc.id !== undefined,
-    );
-    if (selectableItems.length === 0) return false;
-    if (selectedCaseIds.size === 0) return false;
-    return selectableItems.every((tc) => selectedCaseIds.has(tc.id as number));
-  }, [filteredCaseList, selectedCaseIds]);
-
-  /**
-   * 计算是否半选
-   */
-  const isIndeterminate = useMemo(() => {
-    if (filteredCaseList.length === 0) return false;
-    const selectableItems = filteredCaseList.filter(
-      (tc) => tc.id !== undefined,
-    );
-    if (selectableItems.length === 0) return false;
-    const selectedCount = selectableItems.filter((tc) =>
-      selectedCaseIds.has(tc.id as number),
-    ).length;
-    return selectedCount > 0 && selectedCount < selectableItems.length;
-  }, [filteredCaseList, selectedCaseIds]);
+  const { isAllSelected, isIndeterminate } = useMemo(
+    () => calculateSelectionState(filteredList, selectedCaseIds),
+    [filteredList, selectedCaseIds],
+  );
 
   /**
    * 全选 / 取消全选
@@ -192,7 +151,7 @@ const Index: FC<PlanCaseListProps> = ({
   const handleSelectAll = useCallback(
     (e: CheckboxChangeEvent) => {
       if (e.target.checked) {
-        const allIds = filteredCaseList
+        const allIds = filteredList
           .map((tc) => tc.id)
           .filter((id): id is number => id !== undefined);
         setSelectedCaseIds(new Set(allIds));
@@ -200,7 +159,7 @@ const Index: FC<PlanCaseListProps> = ({
         setSelectedCaseIds(new Set());
       }
     },
-    [filteredCaseList],
+    [filteredList],
   );
 
   /**
@@ -263,6 +222,10 @@ const Index: FC<PlanCaseListProps> = ({
     setSelectedCaseIds(new Set());
   }, []);
 
+  /**
+   * 卡片标题区域
+   * 包含全选复选框、新增用例按钮、关联用例按钮
+   */
   const CardTitle = () => (
     <Space size="middle">
       <Checkbox
@@ -306,6 +269,10 @@ const Index: FC<PlanCaseListProps> = ({
     }
   };
 
+  /**
+   * 卡片额外区域
+   * 包含筛选栏
+   */
   const CardExtra = () => (
     <CaseFilterBar
       onFilterChange={handleFilterChange}
@@ -314,6 +281,7 @@ const Index: FC<PlanCaseListProps> = ({
       onBatchImport={handleBatchImport}
       hasActiveFilter={hasActiveFilter}
       filters={filters}
+      resultCount={filteredList.length}
     />
   );
 
@@ -374,8 +342,8 @@ const Index: FC<PlanCaseListProps> = ({
                 <Spin />
                 <span style={{ color: '#999', fontSize: 14 }}>加载中...</span>
               </div>
-            ) : filteredCaseList.length > 0 ? (
-              filteredCaseList.map((tc) => (
+            ) : filteredList.length > 0 ? (
+              filteredList.map((tc) => (
                 <CaseItem
                   key={tc.id ?? tc.uid}
                   testCase={tc}

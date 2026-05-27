@@ -2,12 +2,14 @@ import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import {
   EllipsisOutlined,
   FilterOutlined,
+  LoadingOutlined,
   ReloadOutlined,
   SearchOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import { Button, Dropdown, Input, Popover, Select, Space, Tag } from 'antd';
-import { FC, useCallback, useEffect, useState } from 'react';
+import debounce from 'lodash/debounce';
+import { FC, useCallback, useEffect, useMemo, useState } from 'react';
 
 /**
  * 筛选值类型定义
@@ -34,6 +36,8 @@ interface CaseFilterBarProps {
   hasActiveFilter?: boolean;
   /** 当前生效的筛选条件（用于回显） */
   filters?: CaseFilterValues;
+  /** 当前筛选后的用例数量 */
+  resultCount?: number;
 }
 
 const FILTER_LABEL_STYLE: React.CSSProperties = {
@@ -48,17 +52,56 @@ const CaseFilterBar: FC<CaseFilterBarProps> = ({
   onBatchImport,
   hasActiveFilter = false,
   filters,
+  resultCount,
 }) => {
   const { colors, spacing, borderRadius, animations } = useCaseHubTheme();
-  const [keyword, setKeyword] = useState('');
+  const [keyword, setKeyword] = useState(filters?.keyword || '');
   const [filterOpen, setFilterOpen] = useState(false);
   const [tempStatus, setTempStatus] = useState<number | undefined>();
   const [tempReview, setTempReview] = useState<boolean | undefined>();
+  const [isSearching, setIsSearching] = useState(false);
 
   const dropdownItems: MenuProps['items'] = [
     { key: 'export', label: '批量导出', onClick: onBatchExport },
     { key: 'import', label: '批量导入', onClick: onBatchImport },
   ];
+
+  /**
+   * 防抖搜索回调
+   * 使用 useMemo 保持 debounce 实例稳定，避免每次渲染重新创建
+   * 延迟 500ms 后触发搜索，减少不必要的过滤操作
+   */
+  const debouncedSearch = useMemo(
+    () =>
+      debounce((searchValue: string, status?: number, review?: boolean) => {
+        setIsSearching(true);
+        onFilterChange?.({
+          keyword: searchValue,
+          caseStatus: status,
+          isReview: review,
+        });
+        setTimeout(() => setIsSearching(false), 300);
+      }, 500),
+    [onFilterChange],
+  );
+
+  /** 组件卸载时取消防抖调用 */
+  useEffect(() => {
+    return () => {
+      debouncedSearch.cancel();
+    };
+  }, [debouncedSearch]);
+
+  /**
+   * 同步外部 filters.keyword 到本地 keyword 状态
+   * 解决外部筛选条件变化时输入框值被清空的问题
+   * 仅在 filters.keyword 与本地 keyword 不同且本地无输入时才同步
+   */
+  useEffect(() => {
+    if (filters?.keyword !== undefined && filters.keyword !== keyword) {
+      setKeyword(filters.keyword || '');
+    }
+  }, [filters?.keyword]);
 
   /** 当弹窗打开时，用当前生效的筛选条件初始化临时状态 */
   useEffect(() => {
@@ -68,18 +111,36 @@ const CaseFilterBar: FC<CaseFilterBarProps> = ({
     }
   }, [filterOpen, filters]);
 
-  /** 触发搜索过滤（实时搜索） */
+  /**
+   * 处理搜索输入
+   * 1. 立即更新本地 keyword 状态以实现实时渲染输入内容
+   * 2. 防抖触发 onFilterChange 回调进行实际过滤
+   */
   const handleSearch = useCallback(
     (value: string) => {
       setKeyword(value);
-      onFilterChange?.({
-        keyword: value,
-        caseStatus: tempStatus,
-        isReview: tempReview,
-      });
+      debouncedSearch(value, tempStatus, tempReview);
     },
-    [tempStatus, tempReview, onFilterChange],
+    [debouncedSearch, tempStatus, tempReview],
   );
+
+  /** 清空搜索关键字 */
+  const handleClearKeyword = useCallback(() => {
+    setKeyword('');
+    debouncedSearch('', tempStatus, tempReview);
+  }, [debouncedSearch, tempStatus, tempReview]);
+
+  /** 立即触发搜索（回车时调用，清除防抖延迟） */
+  const handleImmediateSearch = useCallback(() => {
+    debouncedSearch.cancel();
+    setIsSearching(true);
+    onFilterChange?.({
+      keyword,
+      caseStatus: tempStatus,
+      isReview: tempReview,
+    });
+    setTimeout(() => setIsSearching(false), 300);
+  }, [keyword, tempStatus, tempReview, onFilterChange, debouncedSearch]);
 
   /** 应用筛选条件并关闭弹窗 */
   const handleApplyFilter = useCallback(() => {
@@ -103,11 +164,36 @@ const CaseFilterBar: FC<CaseFilterBarProps> = ({
       <Button icon={<ReloadOutlined />} onClick={onRefresh} />
       <Input
         placeholder="搜索用例名称"
-        prefix={<SearchOutlined style={{ color: colors.textTertiary }} />}
+        prefix={
+          isSearching ? (
+            <LoadingOutlined style={{ color: colors.primary }} spin />
+          ) : (
+            <SearchOutlined style={{ color: colors.textTertiary }} />
+          )
+        }
+        suffix={
+          keyword ? (
+            <span
+              style={{
+                fontSize: 12,
+                color: isSearching ? colors.primary : colors.textTertiary,
+                transition: `color ${animations.fast} ${animations.easeInOut}`,
+              }}
+            >
+              {isSearching ? '搜索中...' : `约 ${resultCount ?? 0} 条结果`}
+            </span>
+          ) : null
+        }
         allowClear
         value={keyword}
         onChange={(e) => handleSearch(e.target.value)}
-        style={{ width: 200 }}
+        onPressEnter={handleImmediateSearch}
+        onClear={handleClearKeyword}
+        style={{
+          width: 200,
+          transition: `border-color ${animations.fast} ${animations.easeInOut}`,
+          borderColor: isSearching ? colors.primary : undefined,
+        }}
       />
 
       <Popover

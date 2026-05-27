@@ -9,7 +9,7 @@ import {
   Tag,
   Typography,
 } from 'antd';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import {
   copyOnePlanCase,
@@ -19,11 +19,12 @@ import {
 import MyDrawer from '@/components/MyDrawer';
 import TestCaseDetail from '@/pages/CaseHub/CaseLibrary/TestCaseDetail';
 import { ITestCase } from '@/pages/CaseHub/types';
+import { useFnsRef } from '../../hooks/useFnRef';
 import { createMoreMenuItems } from './moreMenu';
 import {
   CASE_STATUS_CONFIG,
+  CASE_STATUS_ICONS,
   createStatusSelectItems,
-  STATUS_ICON_MAP,
 } from './statusConfig';
 import StepTable from './StepTable';
 
@@ -72,24 +73,14 @@ const CaseItem: React.FC<CaseItemProps> = (props) => {
   const [hasEdited, setHasEdited] = useState(false);
 
   /**
-   * 使用 ref 保存回调函数，避免 useCallback 依赖变化导致的不必要重渲染
-   * 同时确保回调函数始终能访问最新的值
+   * 使用 useFnsRef 保持回调函数引用稳定
+   * 解决在异步操作中访问最新回调函数的问题
    */
-  const onReviewChangeRef = useRef(onReviewChange);
-  const onStatusChangeRef = useRef(onStatusChange);
-  const onRefreshRef = useRef(onRefresh);
-
-  useEffect(() => {
-    onReviewChangeRef.current = onReviewChange;
-  }, [onReviewChange]);
-
-  useEffect(() => {
-    onStatusChangeRef.current = onStatusChange;
-  }, [onStatusChange]);
-
-  useEffect(() => {
-    onRefreshRef.current = onRefresh;
-  }, [onRefresh]);
+  const callbacksRef = useFnsRef({
+    onReviewChange,
+    onStatusChange,
+    onRefresh,
+  });
 
   /** 状态选择下拉菜单项 */
   const statusSelectItems = useMemo(() => createStatusSelectItems(), []);
@@ -113,7 +104,7 @@ const CaseItem: React.FC<CaseItemProps> = (props) => {
       });
       if (code === 0) {
         message.success('复制用例成功');
-        onRefreshRef.current?.();
+        callbacksRef.current.onRefresh?.();
       } else {
         message.error('复制用例失败');
       }
@@ -142,7 +133,7 @@ const CaseItem: React.FC<CaseItemProps> = (props) => {
       });
       if (code === 0) {
         message.success('移除用例成功');
-        onRefreshRef.current?.();
+        callbacksRef.current.onRefresh?.();
       } else {
         message.error('移除用例失败');
       }
@@ -200,11 +191,11 @@ const CaseItem: React.FC<CaseItemProps> = (props) => {
             message.success(
               updates.is_review ? '已标记为已评审' : '已取消评审',
             );
-            onReviewChangeRef.current?.(caseId, !!updates.is_review);
+            callbacksRef.current.onReviewChange?.(caseId, !!updates.is_review);
           } else if (updates.case_status !== undefined) {
             const config = CASE_STATUS_CONFIG[updates.case_status];
             message.success(`已切换为${config?.label ?? '未知'}`);
-            onStatusChangeRef.current?.(caseId, updates.case_status);
+            callbacksRef.current.onStatusChange?.(caseId, updates.case_status);
           }
         } else {
           message.error('修改失败');
@@ -259,7 +250,7 @@ const CaseItem: React.FC<CaseItemProps> = (props) => {
             gap: 4,
           }}
         >
-          {STATUS_ICON_MAP[caseStatus] || STATUS_ICON_MAP[0]}
+          {CASE_STATUS_ICONS[caseStatus] || CASE_STATUS_ICONS[0]}
           {currentStatusConfig.label}
           <DownOutlined style={{ fontSize: 10, opacity: 0.6 }} />
         </Tag>
@@ -309,7 +300,7 @@ const CaseItem: React.FC<CaseItemProps> = (props) => {
         setOpen={setIsDetailOpen}
         onClose={() => {
           if (hasEdited) {
-            onRefreshRef.current?.();
+            callbacksRef.current.onRefresh?.();
           }
           setHasEdited(false);
           setIsDetailOpen(false);

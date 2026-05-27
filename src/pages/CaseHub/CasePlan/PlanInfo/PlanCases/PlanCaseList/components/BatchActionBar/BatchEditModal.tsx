@@ -2,6 +2,10 @@ import { updateAssociatePlanCases } from '@/api/case/caseplan';
 import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import { Modal, Radio, Select } from 'antd';
 import { FC, useCallback, useState } from 'react';
+import {
+  CASE_STATUS_OPTIONS,
+  REVIEW_STATUS_OPTIONS,
+} from '../constants/caseStatus';
 
 export interface BatchEditModalProps {
   open: boolean;
@@ -10,21 +14,6 @@ export interface BatchEditModalProps {
   onCancel: () => void;
   onSuccess?: () => void;
 }
-
-// 用例状态枚举
-const CASE_STATUS_OPTIONS = [
-  { label: '未开始', value: 0 },
-  { label: '通过', value: 1 },
-  { label: '失败', value: 2 },
-  { label: '阻塞', value: 3 },
-  { label: '跳过', value: 4 },
-];
-
-// 评审状态选项
-const REVIEW_OPTIONS = [
-  { label: '待评审', value: 0 },
-  { label: '已评审', value: 1 },
-];
 
 /**
  * 批量修改用例弹窗
@@ -125,7 +114,7 @@ const BatchEditModal: FC<BatchEditModalProps> = ({
             value={isReview}
             onChange={(e) => setIsReview(e.target.value)}
           >
-            {REVIEW_OPTIONS.map((option) => (
+            {REVIEW_STATUS_OPTIONS.map((option) => (
               <Radio key={option.value} value={option.value}>
                 {option.label}
               </Radio>

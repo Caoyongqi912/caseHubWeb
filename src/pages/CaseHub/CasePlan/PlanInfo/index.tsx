@@ -141,6 +141,11 @@ const Index = () => {
   return (
     <PageContainer
       title={false}
+      header={{
+        breadcrumb: {
+          items: [],
+        },
+      }}
       style={{
         height: '100vh',
         minHeight: '100vh',
