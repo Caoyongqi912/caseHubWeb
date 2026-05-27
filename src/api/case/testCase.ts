@@ -94,6 +94,47 @@ export const updateTestCase = async (
 };
 
 /**
+ * updateBatchCase
+ * @param data
+ * @param options
+ */
+export const updateBatchTestCase = async (
+  data: {
+    update_case_list: number[];
+    project_id?: number;
+    module_id?: number;
+    case_level?: string;
+    case_type?: number;
+    case_tag?: string;
+  },
+  options?: IObjGet,
+) => {
+  return request<IResponse<ITestCase>>('/api/hub/cases/batchUpdate', {
+    method: 'POST',
+    data: data,
+    ...(options || {}),
+  });
+};
+
+/**
+ * deleteBatchCase
+ * @param data
+ * @param options
+ */
+export const deleteBatchTestCase = async (
+  data: {
+    delete_case_list: number[];
+  },
+  options?: IObjGet,
+) => {
+  return request<IResponse<number>>('/api/hub/cases/batchDelete', {
+    method: 'POST',
+    data: data,
+    ...(options || {}),
+  });
+};
+
+/**
  * updateRequirementCase
  * @param {
     requirement_id: number;
@@ -509,6 +550,11 @@ export const insertTestCaseMind = async (
   });
 };
 
+/**
+ * updateTestCaseMind
+ * @param info
+ * @param options
+ */
 export const updateTestCaseMind = async (
   info: {
     id: number;

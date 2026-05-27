@@ -38,6 +38,7 @@ import {
   Typography,
 } from 'antd';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import BatchActionBar from './components/BatchActionBar';
 import CaseForm from './components/CaseForm';
 import MoveCaseModal from './components/MoveCaseModal';
 import UploadCaseModal from './components/UploadCaseModal';
@@ -61,9 +62,20 @@ const CaseDataTable: FC<Props> = (props) => {
   const [showCaseDetail, setShowCaseDetail] = useState<boolean>(false);
   const [openNewCaseDrawer, setOpenNewCaseDrawer] = useState<boolean>(false);
   const [openModal, setOpenModal] = useState(false);
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+  const [selectedRows, setSelectedRows] = useState<ITestCase[]>([]);
+
+  const selectedCaseIds = selectedRows.map((row) => row.id!).filter(Boolean);
 
   useEffect(() => {
     actionRef.current?.reload();
+  }, [currentModuleId]);
+
+  useEffect(() => {
+    if (!currentModuleId) {
+      setSelectedRowKeys([]);
+      setSelectedRows([]);
+    }
   }, [currentModuleId]);
 
   const download = async () => {
@@ -106,7 +118,7 @@ const CaseDataTable: FC<Props> = (props) => {
         dataIndex: 'uid',
         fixed: 'left',
         copyable: true,
-        width: '8%',
+        width: '6%',
         render: (_, record) => (
           <Tag
             style={{
@@ -127,23 +139,14 @@ const CaseDataTable: FC<Props> = (props) => {
         copyable: true,
         ellipsis: true,
         fixed: 'left',
-        width: 280,
-        render: (text) => (
-          <Tag
-            style={{
-              borderColor: colors.border,
-              color: colors.text,
-              borderRadius: borderRadius.sm,
-            }}
-          >
-            {text}
-          </Tag>
-        ),
+        width: '20%',
+        render: (text) => <Text>{text}</Text>,
       },
       {
         title: '标签',
         dataIndex: 'case_tag',
         ellipsis: true,
+        width: '15%',
         render: (text) => (
           <Text strong ellipsis={{ tooltip: text }}>
             {text}
@@ -155,7 +158,7 @@ const CaseDataTable: FC<Props> = (props) => {
         dataIndex: 'case_level',
         valueType: 'select',
         valueEnum: CASE_LEVEL_ENUM,
-        width: 120,
+        width: '10%',
         render: (_, record: ITestCase) => {
           if (!record.case_level) {
             return <Text type="secondary">-</Text>;
@@ -184,7 +187,7 @@ const CaseDataTable: FC<Props> = (props) => {
         dataIndex: 'case_type',
         valueType: 'select',
         valueEnum: CASE_TYPE_ENUM,
-        width: 120,
+        width: '10%',
         render: (_, record: ITestCase) => (
           <Text
             type="secondary"
@@ -203,6 +206,7 @@ const CaseDataTable: FC<Props> = (props) => {
         title: '创建人',
         dataIndex: 'creator',
         valueType: 'select',
+        width: '10%',
         formItemRender: () => {
           return <UserSelect multiple={true} />;
         },
@@ -216,6 +220,7 @@ const CaseDataTable: FC<Props> = (props) => {
         dataIndex: 'create_time',
         valueType: 'dateTime',
         search: true,
+        width: '10%',
       },
 
       {
@@ -346,6 +351,26 @@ const CaseDataTable: FC<Props> = (props) => {
     }
   };
 
+  const rowSelection = {
+    selectedRowKeys,
+    columnWidth: '3%',
+    onChange: (keys: React.Key[], rows: ITestCase[]) => {
+      setSelectedRowKeys(keys);
+      setSelectedRows(rows);
+    },
+  };
+
+  const handleBatchSuccess = useCallback(() => {
+    setSelectedRowKeys([]);
+    setSelectedRows([]);
+    actionRef.current?.reload();
+  }, []);
+
+  const handleExitBatch = useCallback(() => {
+    setSelectedRowKeys([]);
+    setSelectedRows([]);
+  }, []);
+
   const toolBarRender = [
     <Button
       key="download"
@@ -454,8 +479,18 @@ const CaseDataTable: FC<Props> = (props) => {
           request={fetchPageData}
           columns={column}
           rowKey={'uid'}
+          rowSelection={rowSelection}
         />
       </ProCard>
+
+      {selectedRowKeys.length > 0 && (
+        <BatchActionBar
+          selectedCount={selectedRowKeys.length}
+          selectedCaseIds={selectedCaseIds}
+          onBatchSuccess={handleBatchSuccess}
+          onExit={handleExitBatch}
+        />
+      )}
     </div>
   );
 };

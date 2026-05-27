@@ -335,7 +335,7 @@ const Index: FC<PlanCaseListProps> = ({
         <ProCard
           title={<CardTitle />}
           headerBordered
-          bordered
+          variant={'outlined'}
           style={{
             flex: 1,
             height: '100%',
@@ -424,6 +424,7 @@ const Index: FC<PlanCaseListProps> = ({
         <ChoiceCaseTable
           onCaseSelect={handleAssociateCases}
           hideAddButton={false}
+          projectId={planInfo?.project_id}
         />
       </MyDrawer>
 
