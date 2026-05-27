@@ -18,6 +18,7 @@ import { Avatar, Dropdown, MenuProps, Segmented } from 'antd';
 import { useState } from 'react';
 import { history, RunTimeLayoutConfig } from 'umi';
 import defaultSetting from '../config/defaultSetting';
+import { clearToken } from './utils/token';
 
 const loginPath = '/userLogin';
 const THEME_KEY = 'app-theme';
@@ -45,7 +46,9 @@ const fetchUserInfo = async (): Promise<IUser | undefined> => {
     const res = await currentUser();
     return res.data;
   } catch {
-    history.push(loginPath);
+    const currentPath = history.location.pathname;
+    const redirect = encodeURIComponent(currentPath);
+    history.push(`${loginPath}?redirect=${redirect}`);
     return undefined;
   }
 };
@@ -109,6 +112,7 @@ export const layout: RunTimeLayoutConfig = ({
       label: '登出',
       onClick: () => {
         setInitialState((s) => ({ ...s, currentUser: undefined }));
+        clearToken();
         history.push(loginPath);
       },
     },

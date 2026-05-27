@@ -32,8 +32,12 @@ const Index: React.FC = () => {
           setToken(data);
         }
         const urlParams = new URL(window.location.href).searchParams;
-        const redirectUrl = urlParams.get('redirect') || '/';
-        window.location.href = redirectUrl;
+        const redirectUrl = urlParams.get('redirect');
+        if (redirectUrl) {
+          window.location.href = decodeURIComponent(redirectUrl);
+        } else {
+          window.location.href = '/';
+        }
         return Promise.resolve();
       }
     } catch (error) {

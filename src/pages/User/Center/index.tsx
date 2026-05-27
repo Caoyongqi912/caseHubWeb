@@ -23,7 +23,7 @@ const Index = () => {
       <ProCard variant="outlined" style={{ height: '100vh' }}>
         <MyTabs
           title={'用户中心'}
-          tabPlacement={'left'}
+          tabPlacement={'start'}
           defaultActiveKey={'2'}
           items={items}
         />

@@ -440,7 +440,7 @@ const CaseDataTable: FC<Props> = (props) => {
             persistenceType: 'localStorage',
           }}
           scroll={{
-            x: 1200,
+            x: 1500,
             y: 'calc(100vh - 350px)',
           }}
           pagination={{
