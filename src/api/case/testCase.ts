@@ -258,12 +258,14 @@ export const queryTestCaseSupStep = async (
  */
 export const queryTestCaseDynamic = async (
   caseId: number,
+  planId?: string,
   options?: IObjGet,
 ) => {
   return request<IResponse<ICaseDynamic[]>>(
     `/api/hub/cases/queryDynamic/${caseId}`,
     {
       method: 'GET',
+      params: { plan_id: planId },
       ...(options || {}),
     },
   );

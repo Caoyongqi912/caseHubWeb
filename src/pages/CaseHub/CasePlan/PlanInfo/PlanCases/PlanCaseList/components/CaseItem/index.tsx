@@ -308,6 +308,7 @@ const CaseItem: React.FC<CaseItemProps> = (props) => {
       >
         <TestCaseDetail
           testcase={testCase}
+          planId={planId}
           callback={() => setHasEdited(true)}
         />
       </MyDrawer>

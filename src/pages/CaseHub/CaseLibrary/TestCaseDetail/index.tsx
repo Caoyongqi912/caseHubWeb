@@ -7,6 +7,7 @@ import {
   updateTestCase,
   updateTestCaseStep,
 } from '@/api/case/testCase';
+import DynamicInfo from '@/pages/CaseHub/components/DynamicInfo';
 import { CaseHubConfig } from '@/pages/CaseHub/config/constants';
 import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import { CaseSubStep, ITestCase } from '@/pages/CaseHub/types';
@@ -17,13 +18,12 @@ import {
   ProFormSelect,
   ProFormTextArea,
 } from '@ant-design/pro-components';
-import { Button, Form, Space, Spin, Tag, theme, Typography } from 'antd';
+import { Button, Form, Space, Spin, Tag, Typography } from 'antd';
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
 import StepItem from '../../components/CaseSubSteps/StepItem';
 import { useTestCaseDetailStyles } from './styles';
 
 const { Text } = Typography;
-const { useToken } = theme;
 
 /**
  * 用例详情组件 Props
@@ -31,6 +31,7 @@ const { useToken } = theme;
 interface Props {
   testcase?: ITestCase;
   callback: () => void;
+  planId?: string;
 }
 
 /**
@@ -41,10 +42,11 @@ interface Props {
  * - 管理测试步骤（拖拽排序、新增、复制、删除）
  * - 编辑前置条件和备注
  * - 自动保存修改内容
+ * - 当 showDynamic 为 true 时，支持 Tab 切换查看操作动态
  */
-const TestCaseDetail: FC<Props> = ({ testcase, callback }) => {
+const TestCaseDetail: FC<Props> = ({ planId, testcase, callback }: Props) => {
   const [form] = Form.useForm();
-  const { token } = useToken();
+  const { token } = useCaseHubTheme();
   const { colors, spacing } = useCaseHubTheme();
   const styles = useTestCaseDetailStyles();
 
@@ -60,6 +62,8 @@ const TestCaseDetail: FC<Props> = ({ testcase, callback }) => {
 
   const stepsRef = useRef<CaseSubStep[]>(steps);
   const draggedIdRef = useRef<string | null>(null);
+
+  const dynamicInfoRef = useRef<{ refresh: () => void }>(null);
 
   // ==================== 副作用 ====================
 
@@ -200,7 +204,6 @@ const TestCaseDetail: FC<Props> = ({ testcase, callback }) => {
     async (_changedValues: Partial<ITestCase>, allValues: ITestCase) => {
       if (!testcase?.id) return;
 
-      // 检测是否有字段发生变化
       const hasChanges =
         allValues.case_mark !== testcase.case_mark ||
         allValues.case_setup !== testcase.case_setup ||
@@ -209,7 +212,6 @@ const TestCaseDetail: FC<Props> = ({ testcase, callback }) => {
         allValues.case_type !== testcase.case_type;
 
       if (hasChanges) {
-        // 防抖保存
         if (saveTimeoutRef.current) {
           clearTimeout(saveTimeoutRef.current);
         }
@@ -236,195 +238,230 @@ const TestCaseDetail: FC<Props> = ({ testcase, callback }) => {
     [testcase, callback],
   );
 
-  return (
-    <div>
-      <ProCard style={styles.mainCard()} styles={{ body: { padding: 0 } }}>
-        {/* ==================== 头部区域 ==================== */}
-        <div style={styles.header()}>
-          {/* 左侧：创建者信息 */}
-          <div style={styles.headerLeft()}>
-            <Text type="secondary" style={{ fontSize: 12 }}>
-              创建者
-            </Text>
-            <Text style={{ fontSize: 13, fontWeight: 500 }}>
-              {testcase?.creatorName || '-'}
-            </Text>
-          </div>
-
-          {/* 右侧：保存状态 */}
-          <div style={styles.headerRight()}>
-            {isSaving ? (
-              <Tag icon={<Spin size="small" />} color="processing">
-                保存中...
-              </Tag>
-            ) : isSaved ? (
-              <Tag icon={<SaveOutlined />} color="success">
-                已保存
-              </Tag>
-            ) : null}
-          </div>
+  /**
+   * 渲染用例详情 Tab 内容
+   */
+  const renderCaseDetailTab = () => (
+    <ProCard styles={{ body: { padding: 0 } }}>
+      {/* ==================== 头部区域 ==================== */}
+      <div style={styles.header()}>
+        {/* 左侧：创建者信息 */}
+        <div style={styles.headerLeft()}>
+          <Text type="secondary" style={{ fontSize: 12 }}>
+            创建者
+          </Text>
+          <Text style={{ fontSize: 13, fontWeight: 500 }}>
+            {testcase?.creatorName || '-'}
+          </Text>
         </div>
 
-        {/* ==================== 内容区域 ==================== */}
-        <div style={styles.body()}>
-          <ProForm
-            form={form}
-            submitter={false}
-            onValuesChange={handleFormValuesChange}
-          >
-            <div style={styles.formGrid()}>
-              {/* 用例标题 - 占满整行 */}
-              <ProFormTextArea
-                name="case_name"
-                placeholder="请输入用例标题..."
-                required
-                //@ts-ignore
-                width="100%"
-                rules={[{ required: true, message: '标题不能为空' }]}
-                fieldProps={{
-                  variant: 'filled',
-                  autoSize: { minRows: 2, maxRows: 4 },
-                }}
-              />
-            </div>
+        {/* 右侧：保存状态 */}
+        <div style={styles.headerRight()}>
+          {isSaving ? (
+            <Tag icon={<Spin size="small" />} color="processing">
+              保存中...
+            </Tag>
+          ) : isSaved ? (
+            <Tag icon={<SaveOutlined />} color="success">
+              已保存
+            </Tag>
+          ) : null}
+        </div>
+      </div>
 
-            {/* 前置条件 */}
-            <div style={{ marginBottom: spacing.lg }}>
-              <Space style={{ marginBottom: spacing.sm }}>
-                <Text strong>前置条件</Text>
-                <Text type="secondary" style={{ fontSize: 12 }}>
-                  （可选）
-                </Text>
-              </Space>
-              <ProFormTextArea
-                name="case_setup"
-                placeholder="输入用例执行的前置条件..."
-                fieldProps={{
-                  variant: 'filled',
-                  autoSize: { minRows: 2, maxRows: 4 },
-                }}
-              />
-            </div>
+      {/* ==================== 内容区域 ==================== */}
+      <div style={styles.body()}>
+        <ProForm
+          form={form}
+          submitter={false}
+          onValuesChange={handleFormValuesChange}
+        >
+          <div style={styles.formGrid()}>
+            {/* 用例标题 - 占满整行 */}
+            <ProFormTextArea
+              name="case_name"
+              placeholder="请输入用例标题..."
+              required
+              //@ts-ignore
+              width="100%"
+              rules={[{ required: true, message: '标题不能为空' }]}
+              fieldProps={{
+                variant: 'filled',
+                autoSize: { minRows: 2, maxRows: 4 },
+              }}
+            />
+          </div>
 
-            {/* 测试步骤区域 */}
-            <div style={styles.sectionHeader()}>
-              <Text style={styles.sectionTitle()}>测试步骤</Text>
-              <Text type="secondary" style={{ fontSize: token.fontSizeSM }}>
-                拖拽调整顺序
+          {/* 前置条件 */}
+          <div style={{ marginBottom: spacing.lg }}>
+            <Space style={{ marginBottom: spacing.sm }}>
+              <Text strong>前置条件</Text>
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                （可选）
               </Text>
-              <div style={styles.sectionDivider()} />
-              <Space size="large">
-                <Space>
-                  <HolderOutlined style={{ color: colors.textSecondary }} />
-                  <Text type="secondary">{steps.length} 个步骤</Text>
-                </Space>
-              </Space>
-            </div>
+            </Space>
+            <ProFormTextArea
+              name="case_setup"
+              placeholder="输入用例执行的前置条件..."
+              fieldProps={{
+                variant: 'filled',
+                autoSize: { minRows: 2, maxRows: 4 },
+              }}
+            />
+          </div>
 
-            {/* 步骤列表 */}
-            <div style={{ marginBottom: token.marginLG }}>
-              <Space
-                orientation="vertical"
-                style={{ width: '100%', marginBottom: spacing.lg }}
-              >
-                {steps.map((step, index) => (
-                  <StepItem
-                    key={step.uid}
-                    index={index}
-                    action={step.action || ''}
-                    expectedResult={step.expected_result || ''}
-                    isDragging={draggingId === step.uid}
-                    isDragOver={dragOverId === step.uid}
-                    onDragStart={() => handleDragStart(step.uid)}
-                    onDragEnd={handleDragEnd}
-                    onDragOver={() => handleDragOver(step.uid)}
-                    onDragLeave={handleDragLeave}
-                    onDrop={() => handleDrop(step.uid)}
-                    onActionChange={(value) =>
-                      handleFieldChange(step.uid, 'action', value)
-                    }
-                    onExpectedResultChange={(value) =>
-                      handleFieldChange(step.uid, 'expected_result', value)
-                    }
-                    onBlur={() => handleFieldBlur(step.uid)}
-                    onCopy={() =>
-                      typeof step.id === 'number' && copyStep(step.id as number)
-                    }
-                    onDelete={() =>
-                      typeof step.id === 'number' &&
-                      deleteStep(step.id as number)
-                    }
-                  />
-                ))}
+          {/* 测试步骤区域 */}
+          <div style={styles.sectionHeader()}>
+            <Text style={styles.sectionTitle()}>测试步骤</Text>
+            <Text type="secondary" style={{ fontSize: token.fontSizeSM }}>
+              拖拽调整顺序
+            </Text>
+            <div style={styles.sectionDivider()} />
+            <Space size="large">
+              <Space>
+                <HolderOutlined style={{ color: colors.textSecondary }} />
+                <Text type="secondary">{steps.length} 个步骤</Text>
               </Space>
+            </Space>
+          </div>
 
-              {/* 空状态 */}
-              {steps.length === 0 && (
-                <div style={styles.emptySteps()}>
-                  <div style={{ marginBottom: token.marginXS }}>
-                    暂无测试步骤
-                  </div>
-                  <div style={{ fontSize: token.fontSizeSM }}>
-                    点击下方按钮添加测试步骤
-                  </div>
+          {/* 步骤列表 */}
+          <div style={{ marginBottom: token.marginLG }}>
+            <Space
+              orientation="vertical"
+              style={{ width: '100%', marginBottom: spacing.lg }}
+            >
+              {steps.map((step, index) => (
+                <StepItem
+                  key={step.uid}
+                  index={index}
+                  action={step.action || ''}
+                  expectedResult={step.expected_result || ''}
+                  isDragging={draggingId === step.uid}
+                  isDragOver={dragOverId === step.uid}
+                  onDragStart={() => handleDragStart(step.uid)}
+                  onDragEnd={handleDragEnd}
+                  onDragOver={() => handleDragOver(step.uid)}
+                  onDragLeave={handleDragLeave}
+                  onDrop={() => handleDrop(step.uid)}
+                  onActionChange={(value) =>
+                    handleFieldChange(step.uid, 'action', value)
+                  }
+                  onExpectedResultChange={(value) =>
+                    handleFieldChange(step.uid, 'expected_result', value)
+                  }
+                  onBlur={() => handleFieldBlur(step.uid)}
+                  onCopy={() =>
+                    typeof step.id === 'number' && copyStep(step.id as number)
+                  }
+                  onDelete={() =>
+                    typeof step.id === 'number' && deleteStep(step.id as number)
+                  }
+                />
+              ))}
+            </Space>
+
+            {/* 空状态 */}
+            {steps.length === 0 && (
+              <div style={styles.emptySteps()}>
+                <div style={{ marginBottom: token.marginXS }}>暂无测试步骤</div>
+                <div style={{ fontSize: token.fontSizeSM }}>
+                  点击下方按钮添加测试步骤
                 </div>
-              )}
+              </div>
+            )}
 
-              <Button
-                type="dashed"
-                icon={<PlusOutlined />}
-                onClick={addStep}
-                block
-                style={{
-                  marginTop: token.marginMD,
-                  height: 40,
-                  borderStyle: 'dashed',
-                }}
-              >
-                新增步骤
-              </Button>
-            </div>
+            <Button
+              type="dashed"
+              icon={<PlusOutlined />}
+              onClick={addStep}
+              block
+              style={{
+                marginTop: token.marginMD,
+                height: 40,
+                borderStyle: 'dashed',
+              }}
+            >
+              新增步骤
+            </Button>
+          </div>
 
-            {/* 用例等级和类型 - 占满一行居中 */}
-            <ProForm.Group>
-              <ProFormSelect
-                name="case_level"
-                placeholder="请选择用例等级"
-                options={CASE_LEVEL_OPTION}
-                fieldProps={{ variant: 'filled' }}
-                width={'md'}
-              />
-              <ProFormSelect
-                name="case_type"
-                placeholder="请选择用例类型"
-                options={CASE_TYPE_OPTION}
-                fieldProps={{ variant: 'filled' }}
-                width={'md'}
-              />
-            </ProForm.Group>
+          {/* 用例等级和类型 - 占满一行居中 */}
+          <ProForm.Group>
+            <ProFormSelect
+              name="case_level"
+              placeholder="请选择用例等级"
+              options={CASE_LEVEL_OPTION}
+              fieldProps={{ variant: 'filled' }}
+              width={'md'}
+            />
+            <ProFormSelect
+              name="case_type"
+              placeholder="请选择用例类型"
+              options={CASE_TYPE_OPTION}
+              fieldProps={{ variant: 'filled' }}
+              width={'md'}
+            />
+          </ProForm.Group>
 
-            {/* 备注 */}
-            <div style={{ marginBottom: spacing.lg }}>
-              <Space style={{ marginBottom: spacing.sm }}>
-                <Text strong>备注</Text>
-                <Text type="secondary" style={{ fontSize: 12 }}>
-                  （可选）
-                </Text>
-              </Space>
+          {/* 备注 */}
+          <div style={{ marginBottom: spacing.lg }}>
+            <Space style={{ marginBottom: spacing.sm }}>
+              <Text strong>备注</Text>
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                （可选）
+              </Text>
+            </Space>
 
-              <ProFormTextArea
-                name="case_mark"
-                placeholder="输入备注信息..."
-                fieldProps={{
-                  variant: 'filled',
-                  autoSize: { minRows: 2, maxRows: 4 },
-                }}
-              />
-            </div>
-          </ProForm>
-        </div>
-      </ProCard>
-    </div>
+            <ProFormTextArea
+              name="case_mark"
+              placeholder="输入备注信息..."
+              fieldProps={{
+                variant: 'filled',
+                autoSize: { minRows: 2, maxRows: 4 },
+              }}
+            />
+          </div>
+        </ProForm>
+      </div>
+    </ProCard>
+  );
+
+  /**
+   * 渲染操作动态 Tab 内容
+   */
+  const renderDynamicTab = () => (
+    <DynamicInfo ref={dynamicInfoRef} caseId={testcase?.id} planId={planId} />
+  );
+
+  /**
+   * Tab 配置项
+   */
+  const tabItems = [
+    {
+      key: 'detail',
+      label: '用例详情',
+      children: renderCaseDetailTab(),
+    },
+    ...(planId
+      ? [
+          {
+            key: 'dynamic',
+            label: '操作动态',
+            children: renderDynamicTab(),
+          },
+        ]
+      : []),
+  ];
+
+  return (
+    <ProCard
+      style={styles.mainCard()}
+      tabs={{
+        items: tabItems,
+        defaultActiveKey: 'detail',
+      }}
+    />
   );
 };
 
