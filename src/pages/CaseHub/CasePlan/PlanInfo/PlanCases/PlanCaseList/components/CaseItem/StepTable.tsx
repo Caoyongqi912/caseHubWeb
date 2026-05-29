@@ -196,9 +196,10 @@ const StepTable: React.FC<StepTableProps> = ({ steps, planId }) => {
   /**
    * 根据状态值获取配置并渲染选项
    * 使用统一的状态配置
+   * @param value - 状态值
    */
-  const renderStatusOption = useCallback((option: { value: number }) => {
-    const cfg = STEP_STATUS_CONFIG[option.value];
+  const renderStatusOption = useCallback((value: number) => {
+    const cfg = STEP_STATUS_CONFIG[value];
     if (!cfg) return null;
     return (
       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
@@ -318,14 +319,16 @@ const StepTable: React.FC<StepTableProps> = ({ steps, planId }) => {
         key: 'status',
         dataIndex: 'status',
         width: '12%',
-        formItemRender: () => (
+        formItemRender: (_, { record }) => (
           <Select
             variant="underlined"
-            defaultValue={0}
+            value={record?.status ?? 0}
             style={{ width: '100%' }}
             options={statusOptions}
-            optionRender={(option) => renderStatusOption(option)}
-            labelRender={(option) => renderStatusOption(option)}
+            optionRender={(option) =>
+              renderStatusOption(Number(option.data.value))
+            }
+            labelRender={(option) => renderStatusOption(Number(option.value))}
           />
         ),
       },

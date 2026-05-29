@@ -1,15 +1,14 @@
-/**
- * CasePlan - 测试计划管理页面
- */
-
-import { IObjGet } from '@/api';
 import { deleteCasePlan, pageCasePlan } from '@/api/case/caseplan';
-import { queryProjectEnum } from '@/components/CommonFunc';
 import UserSelect from '@/components/Table/UserSelect';
 import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import { ICasePlan } from '@/pages/CaseHub/types';
 import { pageData } from '@/utils/somefunc';
-import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
+import {
+  DeleteOutlined,
+  EditOutlined,
+  PlusOutlined,
+  ProjectOutlined,
+} from '@ant-design/icons';
 import {
   ActionType,
   PageContainer,
@@ -17,39 +16,65 @@ import {
   ProColumns,
   ProTable,
 } from '@ant-design/pro-components';
-import { useNavigate } from '@umijs/max';
-import { Button, Form, message, Modal, Progress, Space, Tag } from 'antd';
+import { useModel, useNavigate } from '@umijs/max';
+import {
+  Button,
+  Form,
+  message,
+  Modal,
+  Progress,
+  Select,
+  Space,
+  Tag,
+} from 'antd';
 import dayjs from 'dayjs';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import CasePlanForm from './components/CasePlanForm';
+
+const UserSelectMultiple = () => <UserSelect multiple />;
 
 const Index = () => {
   const actionRef = useRef<ActionType>();
   const navigate = useNavigate();
   const [form] = Form.useForm<ICasePlan>();
-  const [projectEnumMap, setProjectEnumMap] = useState<IObjGet>({});
 
-  const { token } = useCaseHubTheme();
+  const { initialState } = useModel('@@initialState');
+  const projectList = initialState?.projects || [];
 
-  /** 加载项目枚举数据 */
+  const [selectedProjectId, setSelectedProjectId] = useState<number>();
+  const [openModal, setOpenModal] = useState(false);
+  const [isEdit, setIsEdit] = useState(false);
+  const [currentRecord, setCurrentRecord] = useState<ICasePlan | null>(null);
+
+  const { token, colors, spacing } = useCaseHubTheme();
+
   useEffect(() => {
-    queryProjectEnum(setProjectEnumMap);
-  }, []);
+    if (projectList.length > 0 && selectedProjectId === undefined) {
+      setSelectedProjectId(projectList[0].value);
+    }
+  }, [projectList, selectedProjectId]);
 
-  /**
-   * 查询测试计划列表数据
-   * @param params - ProTable 查询参数
-   * @param sort - 排序配置
-   */
-  const queryRecord = useCallback(async (params: any, sort: any) => {
-    const { code, data } = await pageCasePlan({ ...params, sort });
-    return pageData(code, data);
-  }, []);
+  const queryRecord = useCallback(
+    async (params: any, sort: any) => {
+      if (selectedProjectId === undefined) {
+        return { data: [], success: true, total: 0 };
+      }
+      const { code, data } = await pageCasePlan({
+        ...params,
+        sort,
+        project_id: selectedProjectId,
+      });
+      return pageData(code, data);
+    },
+    [selectedProjectId],
+  );
 
-  /**
-   * 打开编辑弹窗前，将后端数据格式转换为表单可用格式
-   * @param record - 当前计划记录
-   */
+  useEffect(() => {
+    if (selectedProjectId !== undefined) {
+      actionRef.current?.reload();
+    }
+  }, [selectedProjectId]);
+
   const handleEdit = useCallback(
     (record: ICasePlan) => {
       form.setFieldsValue({
@@ -69,10 +94,6 @@ const Index = () => {
     [form],
   );
 
-  /**
-   * 删除计划（带二次确认）
-   * @param record - 要删除的计划记录
-   */
   const handleDelete = useCallback((record: ICasePlan) => {
     Modal.confirm({
       title: '确认删除',
@@ -89,14 +110,6 @@ const Index = () => {
     });
   }, []);
 
-  const [openModal, setOpenModal] = useState(false);
-  const [isEdit, setIsEdit] = useState(false);
-  const [currentRecord, setCurrentRecord] = useState<ICasePlan | null>(null);
-
-  /**
-   * 弹窗开关状态变化处理
-   * 关闭时重置表单和编辑状态
-   */
   const handleOpenChange = useCallback(
     (open: boolean) => {
       setOpenModal(open);
@@ -109,10 +122,6 @@ const Index = () => {
     [form],
   );
 
-  /**
-   * 打开表单弹窗
-   * @param record - 传入则进入编辑模式，不传则进入新增模式
-   */
   const openFormModal = useCallback(
     (record?: ICasePlan) => {
       if (record) {
@@ -129,128 +138,127 @@ const Index = () => {
     [form, handleEdit],
   );
 
-  const columns: ProColumns<ICasePlan>[] = [
-    {
-      title: '项目',
-      valueType: 'select',
-      valueEnum: projectEnumMap,
-      hideInTable: true,
-    },
-    {
-      title: '计划名称',
-      dataIndex: 'plan_name',
-      fixed: 'left',
-      width: '18%',
-      render: (_, r) => (
-        <a onClick={() => navigate(`/cases/casePlan/planInfo/${r.id}`)}>
-          {r.plan_name}
-        </a>
-      ),
-    },
-    {
-      title: '负责人',
-      search: true,
-      dataIndex: 'charge_id',
-      hideInTable: true,
-      formItemRender: () => {
-        return <UserSelect multiple={true} />;
+  const columns = useMemo<ProColumns<ICasePlan>[]>(
+    () => [
+      {
+        title: '计划名称',
+        dataIndex: 'plan_name',
+        fixed: 'left',
+        width: '18%',
+        render: (_, r) => (
+          <a onClick={() => navigate(`/cases/casePlan/planInfo/${r.id}`)}>
+            {r.plan_name}
+          </a>
+        ),
       },
-    },
-    {
-      title: '负责人',
-      dataIndex: 'charge_name',
-      search: false,
-      width: '10%',
-      render: (_, r) => r.charge_name || '-',
-    },
-    {
-      title: '完成率',
-      dataIndex: 'plan_completion_rate',
-      search: true,
-      width: '12%',
-      render: (_, r) => {
-        const rate = r.plan_completion_rate || 0;
-        return (
-          <Space size={8}>
-            <Progress
-              percent={rate}
-              size="small"
-              strokeColor={
-                rate === 100 ? token.colorSuccess : token.colorPrimary
-              }
-              railColor={token.colorFillSecondary}
-              format={() => ''}
-              style={{ width: 80, marginBottom: 0 }}
-            />
-            <span style={{ color: token.colorTextSecondary, fontSize: 12 }}>
-              {rate}%
+      {
+        title: '负责人',
+        search: true,
+        dataIndex: 'charge_id',
+        hideInTable: true,
+        formItemRender: () => <UserSelectMultiple />,
+      },
+      {
+        title: '负责人',
+        dataIndex: 'charge_name',
+        search: false,
+        width: '10%',
+        render: (_, r) => r.charge_name || '-',
+      },
+      {
+        title: '完成率',
+        dataIndex: 'completion_rate',
+        search: true,
+        width: '12%',
+        render: (_, r) => {
+          const rate = r.completion_rate || 0;
+          return (
+            <Space size={8}>
+              <Progress
+                percent={rate}
+                size="small"
+                strokeColor={
+                  rate === 100 ? token.colorSuccess : token.colorPrimary
+                }
+                railColor={token.colorFillSecondary}
+                format={() => ''}
+                style={{ width: 80, marginBottom: 0 }}
+              />
+              <span style={{ color: token.colorTextSecondary, fontSize: 12 }}>
+                {rate}%
+              </span>
+            </Space>
+          );
+        },
+      },
+      {
+        title: '状态',
+        dataIndex: 'plan_status',
+        width: '9%',
+        render: (_, r) => (
+          <Tag color={r.plan_status === '已完成' ? 'success' : 'default'}>
+            {r.plan_status || '-'}
+          </Tag>
+        ),
+      },
+      {
+        title: '执行阶段',
+        dataIndex: 'plan_phase',
+        render: (_, r) => <Tag>{r.plan_phase || '-'}</Tag>,
+      },
+      {
+        title: '计划时间',
+        dataIndex: 'plan_start_time',
+        width: '12%',
+        render: (_, r) => (
+          <Space direction="vertical" size={0}>
+            <span>{r.plan_start_time || '-'}</span>
+            <span style={{ color: token.colorTextTertiary, fontSize: 12 }}>
+              至 {r.plan_end_time || '-'}
             </span>
           </Space>
-        );
+        ),
       },
-    },
-    {
-      title: '状态',
-      dataIndex: 'plan_status',
-      width: '9%',
-      render: (_, r) => (
-        <Tag color={r.plan_status === '已完成' ? 'success' : 'default'}>
-          {r.plan_status || '-'}
-        </Tag>
-      ),
-    },
-    {
-      title: '执行阶段',
-      dataIndex: 'plan_phase',
-      render: (_, r) => <Tag>{r.plan_phase || '-'}</Tag>,
-    },
-    {
-      title: '计划时间',
-      render: (_, r) => (
-        <Space orientation="vertical" size={0}>
-          <span>{r.plan_start_time || '-'}</span>
-          <span style={{ color: token.colorTextTertiary, fontSize: 12 }}>
-            至 {r.plan_end_time || '-'}
-          </span>
-        </Space>
-      ),
-    },
-    {
-      title: '备注',
-      dataIndex: 'plan_mark',
-      ellipsis: true,
-      search: true,
-      width: '10%',
-      render: (_, r) => r.plan_mark || '-',
-    },
-    {
-      title: '操作',
-      valueType: 'option',
-      fixed: 'right',
-      width: '10%',
-      render: (_, r) => (
-        <Space>
-          <Button
-            type="text"
-            size="small"
-            icon={<EditOutlined />}
-            onClick={() => openFormModal(r)}
-          >
-            编辑
-          </Button>
-          <Button
-            type="text"
-            size="small"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => handleDelete(r)}
-          >
-            删除
-          </Button>
-        </Space>
-      ),
-    },
-  ];
+      {
+        title: '备注',
+        dataIndex: 'plan_mark',
+        ellipsis: true,
+        search: true,
+        width: '10%',
+        render: (_, r) => r.plan_mark || '-',
+      },
+      {
+        title: '操作',
+        valueType: 'option',
+        fixed: 'right',
+        width: '10%',
+        render: (_, r) => (
+          <Space>
+            <Button
+              type="text"
+              size="small"
+              icon={<EditOutlined />}
+              onClick={() => openFormModal(r)}
+            >
+              编辑
+            </Button>
+            <Button
+              type="text"
+              size="small"
+              danger
+              icon={<DeleteOutlined />}
+              onClick={() => handleDelete(r)}
+            >
+              删除
+            </Button>
+          </Space>
+        ),
+      },
+    ],
+    [navigate, token, openFormModal, handleDelete],
+  );
+
+  const handleAdd = useCallback(() => openFormModal(), [openFormModal]);
 
   return (
     <PageContainer
@@ -273,9 +281,7 @@ const Index = () => {
         form={form}
         open={openModal}
         onOpenChange={handleOpenChange}
-        onReload={() => {
-          actionRef.current?.reload();
-        }}
+        onReload={() => actionRef.current?.reload()}
       />
       <div
         style={{
@@ -285,8 +291,42 @@ const Index = () => {
           overflow: 'hidden',
         }}
       >
-        {/* 占满剩余高度，内部滚动 */}
         <ProCard
+          title={
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: spacing.md,
+              }}
+            >
+              <ProjectOutlined
+                style={{
+                  fontSize: 18,
+                  color: colors.primary,
+                }}
+              />
+              <span
+                style={{
+                  fontSize: 14,
+                  fontWeight: 500,
+                  color: colors.text,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                所属项目
+              </span>
+              <Select
+                showSearch
+                placeholder="请选择项目"
+                value={selectedProjectId}
+                onChange={setSelectedProjectId}
+                options={projectList}
+                style={{ minWidth: 240 }}
+                fieldNames={{ label: 'label', value: 'value' }}
+              />
+            </div>
+          }
           headerBordered
           variant="outlined"
           style={{
@@ -313,7 +353,7 @@ const Index = () => {
             style={{ height: '100%' }}
             scroll={{
               x: 1200,
-              y: 'calc(100vh - 350px)', // 🔥 自适应屏幕高度，表格内部滚动
+              y: 'calc(100vh - 420px)',
             }}
             request={queryRecord}
             pagination={{
@@ -327,7 +367,7 @@ const Index = () => {
                 key="add"
                 type="primary"
                 icon={<PlusOutlined />}
-                onClick={() => openFormModal()}
+                onClick={handleAdd}
               >
                 新增计划
               </Button>,

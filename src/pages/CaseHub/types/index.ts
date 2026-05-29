@@ -79,7 +79,7 @@ export interface ICasePlan {
   plan_description?: string;
   plan_status?: string;
   plan_phase?: string;
-  plan_completion_rate?: number;
+  completion_rate?: number;
   plan_mark?: string;
 
   charge_id?: number;

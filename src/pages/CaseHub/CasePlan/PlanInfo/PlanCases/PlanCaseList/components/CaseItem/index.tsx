@@ -9,7 +9,13 @@ import {
   Tag,
   Typography,
 } from 'antd';
-import { useCallback, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import {
   copyOnePlanCase,
@@ -49,7 +55,7 @@ interface CaseItemProps {
  * - 状态切换操作
  * - 更多操作菜单
  */
-const CaseItem: React.FC<CaseItemProps> = (props) => {
+const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
   const {
     testCase,
     planId,
@@ -64,6 +70,22 @@ const CaseItem: React.FC<CaseItemProps> = (props) => {
   const caseId = testCase.id;
   const caseStatus = testCase.case_status ?? 0;
   const isReview = testCase.is_review ?? false;
+
+  /**
+   * 性能调试：记录组件渲染次数
+   * 用于验证 React.memo 优化效果
+   */
+  const renderCountRef = useRef(0);
+  const prevSelectedRef = useRef(selected);
+  useEffect(() => {
+    renderCountRef.current += 1;
+    const isSelectedChanged = prevSelectedRef.current !== selected;
+    prevSelectedRef.current = selected;
+    console.log(
+      `[CaseItem][caseId=${caseId}] 第 ${renderCountRef.current} 次渲染，` +
+        `selected: ${selected}${isSelectedChanged ? ' (选中状态变化)' : ''}`,
+    );
+  });
 
   const [switchingReview, setSwitchingReview] = useState(false);
   const [switchingStatus, setSwitchingStatus] = useState(false);
@@ -232,7 +254,7 @@ const CaseItem: React.FC<CaseItemProps> = (props) => {
   const cardExtra = (
     <Space size="small">
       <Dropdown
-        trigger={['click', 'hover']}
+        trigger={['click']}
         menu={{
           items: statusSelectItems,
           onClick: ({ key }) => handleStatusSelect(Number(key)),
@@ -314,7 +336,9 @@ const CaseItem: React.FC<CaseItemProps> = (props) => {
       </MyDrawer>
     </>
   );
-};
+});
+
+CaseItem.displayName = 'CaseItem';
 
 export default CaseItem;
 export type { CaseItemProps };

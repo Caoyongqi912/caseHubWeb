@@ -152,6 +152,7 @@ const TestCaseDetail: FC<Props> = ({ planId, testcase, callback }: Props) => {
         setIsSaving(false);
         setIsSaved(true);
         setTimeout(() => setIsSaved(false), 2000);
+        callback?.();
       }
     }, 500);
   }, []);

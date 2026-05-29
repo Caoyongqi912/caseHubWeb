@@ -454,7 +454,7 @@ const Index: FC<PlanModuleProps> = ({
       <ProCard
         title="计划目录"
         headerBordered
-        bordered
+        variant="outlined"
         style={{
           flex: 1,
           height: '100%',

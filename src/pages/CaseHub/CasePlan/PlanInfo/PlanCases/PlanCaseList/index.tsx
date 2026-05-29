@@ -89,7 +89,12 @@ const Index: FC<PlanCaseListProps> = ({
       if (code === 0) {
         setSelectedCaseIds(new Set());
         const list = Array.isArray(data) ? data : [];
-        setCaseList(list);
+        // 根据 case id 去重，避免同一个用例被重复关联到同一目录下
+        const uniqueList = list.filter(
+          (item, index, self) =>
+            index === self.findIndex((t) => t.id === item.id),
+        );
+        setCaseList(uniqueList);
       }
     } finally {
       setLoading(false);
@@ -343,9 +348,9 @@ const Index: FC<PlanCaseListProps> = ({
                 <span style={{ color: '#999', fontSize: 14 }}>加载中...</span>
               </div>
             ) : filteredList.length > 0 ? (
-              filteredList.map((tc) => (
+              filteredList.map((tc, index) => (
                 <CaseItem
-                  key={tc.id ?? tc.uid}
+                  key={`${tc.id ?? tc.uid ?? 'item'}-${index}`}
                   testCase={tc}
                   planId={planId}
                   moduleId={moduleId}

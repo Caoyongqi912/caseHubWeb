@@ -106,8 +106,8 @@ const DynamicInfo = forwardRef<DynamicInfoRef, IProps>(
             ) : (
               <Timeline
                 items={displayData.map((item, index) => ({
-                  dot: <div style={styles.dot(index)} />,
-                  children: (
+                  icon: <div style={styles.dot(index)} />,
+                  content: (
                     <div style={styles.timelineItem(index)} key={item.id}>
                       <div style={styles.contentCard() as any}>
                         <div
@@ -182,19 +182,6 @@ const DynamicInfo = forwardRef<DynamicInfoRef, IProps>(
             )}
           </div>
         </ProCard>
-
-        <style>{`
-        @keyframes slideIn {
-          from {
-            opacity: 0;
-            transform: translateX(-20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-      `}</style>
       </div>
     );
   },
