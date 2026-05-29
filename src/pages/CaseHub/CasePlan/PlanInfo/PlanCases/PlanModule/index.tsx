@@ -2,6 +2,7 @@ import {
   deletePlanModule,
   insertPlanModule,
   movePlanModule,
+  queryPlanCases,
   updatePlanModule,
 } from '@/api/case/caseplan';
 import {
@@ -20,9 +21,9 @@ import {
 } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
 import type { MenuProps } from 'antd';
-import { Dropdown, message, Modal, theme, Tree } from 'antd';
+import { Dropdown, message, Modal, Progress, theme, Tooltip, Tree } from 'antd';
 import type { AntTreeNodeProps, DataNode, TreeProps } from 'antd/es/tree';
-import { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ModuleEditModal from './ModuleEditModal';
 
 const { useToken } = theme;
@@ -36,9 +37,19 @@ interface PlanModuleProps {
 
 interface TreeDataNode extends DataNode {
   key: number;
-  title: React.ReactNode;
+  title?: React.ReactNode;
   data: IPlanModule;
   isRoot?: boolean;
+}
+
+/** 模块用例统计 */
+interface ModuleStats {
+  total: number;
+  passed: number;
+  failed: number;
+  pending: number;
+  passRate: number;
+  executionRate: number;
 }
 
 type ModalMode = 'add' | 'edit';
@@ -75,16 +86,97 @@ const Index: FC<PlanModuleProps> = ({
   const [hoveredKey, setHoveredKey] = useState<number | null>(null);
   const [modalState, setModalState] = useState<ModalState>(createModalState());
   const [treeData, setTreeData] = useState<TreeDataNode[]>([]);
+  const [moduleStatsMap, setModuleStatsMap] = useState<
+    Map<number, ModuleStats>
+  >(new Map());
+  const loadingStatsRef = useRef<Set<number>>(new Set());
+  const isInitializedRef = useRef(false);
 
   const isRootNode = (module: IPlanModule) =>
     module.parent_id === null && module.order === ROOT_ORDER;
 
-  /** 将模块数据转换为 Tree 组件需要的树形结构 */
+  /** 扁平化模块树，收集所有有 case 的模块 */
+  const flattenModules = useCallback(
+    (modules: IPlanModule[]): IPlanModule[] => {
+      const result: IPlanModule[] = [];
+      const walk = (list: IPlanModule[]) => {
+        for (const m of list) {
+          if (m.case_nums > 0) result.push(m);
+          if (m.children?.length) walk(m.children);
+        }
+      };
+      walk(modules);
+      return result;
+    },
+    [],
+  );
+
+  /** 加载单个模块的用例统计 */
+  const loadModuleStats = useCallback(
+    async (moduleId: number) => {
+      if (!planId || loadingStatsRef.current.has(moduleId)) return;
+      loadingStatsRef.current.add(moduleId);
+
+      try {
+        const { code, data } = await queryPlanCases({
+          plan_id: Number(planId),
+          plan_module_id: moduleId,
+        });
+        if (code === 0) {
+          const cases = Array.isArray(data) ? data : [];
+          const passed = cases.filter((c) => c.case_status === 1).length;
+          const failed = cases.filter((c) => c.case_status === 2).length;
+          const pending = cases.filter(
+            (c) => c.case_status === undefined || c.case_status === 0,
+          ).length;
+          const executed = passed + failed;
+
+          setModuleStatsMap((prev) => {
+            const next = new Map(prev);
+            next.set(moduleId, {
+              total: cases.length,
+              passed,
+              failed,
+              pending,
+              passRate:
+                executed > 0 ? Math.round((passed / executed) * 100) : 0,
+              executionRate:
+                cases.length > 0
+                  ? Math.round((executed / cases.length) * 100)
+                  : 0,
+            });
+            return next;
+          });
+        }
+      } finally {
+        loadingStatsRef.current.delete(moduleId);
+      }
+    },
+    [planId],
+  );
+
+  /** 分批并行加载所有模块统计，每批 5 个避免后端压力 */
+  const loadAllModuleStats = useCallback(
+    async (modules: IPlanModule[]) => {
+      const all = flattenModules(modules);
+      const batchSize = 5;
+      for (let i = 0; i < all.length; i += batchSize) {
+        const batch = all.slice(i, i + batchSize);
+        await Promise.all(batch.map((m) => loadModuleStats(m.id)));
+      }
+    },
+    [flattenModules, loadModuleStats],
+  );
+
+  /** 将模块数据转换为 Tree 组件需要的树形结构
+   *
+   * 注意：不设置 title 字段，避免 rc-tree 在内部元素上渲染默认的
+   * 浏览器原生 tooltip。模块标题通过 data.title 在 titleRender 中渲染。
+   */
   const convertToTreeData = useCallback(
     (modules: IPlanModule[]): TreeDataNode[] =>
       modules.map((module) => ({
         key: module.id,
-        title: module.title,
         data: module,
         isRoot: isRootNode(module),
         icon: (props: AntTreeNodeProps) =>
@@ -96,20 +188,44 @@ const Index: FC<PlanModuleProps> = ({
     [],
   );
 
-  /** 初始化树形数据并默认展开、激活根节点 */
+  /** 初始化树形数据并默认展开、激活根节点，同时加载模块统计 */
   useEffect(() => {
     if (!planModules?.length) {
       setTreeData([]);
       setActiveKey(null);
+      isInitializedRef.current = false;
       return;
     }
     const convertedData = convertToTreeData(planModules);
     setTreeData(convertedData);
     const rootId = planModules[0]?.id;
-    setExpandedKeys(rootId ? [rootId] : []);
-    setActiveKey(rootId ?? null);
-    onSelect?.(rootId ?? null);
-  }, [planModules, convertToTreeData, onSelect]);
+
+    // 仅在首次加载时初始化展开和选中状态，避免后续数据更新时重置用户选择
+    if (!isInitializedRef.current) {
+      setExpandedKeys(rootId ? [rootId] : []);
+      setActiveKey(rootId ?? null);
+      onSelect?.(rootId ?? null);
+      isInitializedRef.current = true;
+    }
+
+    // 清空旧统计并加载新模块的统计
+    setModuleStatsMap(new Map());
+    loadingStatsRef.current.clear();
+    loadAllModuleStats(planModules);
+  }, [planModules, convertToTreeData, onSelect, loadAllModuleStats]);
+
+  /**
+   * 移除 rc-tree 内部 .ant-tree-title 上的浏览器原生 title 属性，
+   * 避免和我们自定义的 Tooltip 冲突，出现多余的空 tooltip。
+   */
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      document
+        .querySelectorAll('.ant-tree-title[title]')
+        .forEach((el) => el.removeAttribute('title'));
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [treeData]);
 
   const resetModal = useCallback(() => setModalState(createModalState()), []);
 
@@ -239,18 +355,17 @@ const Index: FC<PlanModuleProps> = ({
         whiteSpace: 'nowrap',
       },
       rightArea: {
-        position: 'relative' as const,
+        display: 'flex' as const,
+        alignItems: 'center' as const,
+        justifyContent: 'flex-end' as const,
         marginLeft: 'auto',
         paddingRight: spacing.xs,
-        width: 40,
+        gap: 4,
+        minWidth: 56,
         height: 24,
         lineHeight: '24px',
       },
       caseCount: {
-        position: 'absolute' as const,
-        right: spacing.xs,
-        top: 0,
-        height: '100%',
         fontSize: typography.fontSize.sm,
         color: token.colorTextTertiary,
         lineHeight: 'inherit',
@@ -291,7 +406,7 @@ const Index: FC<PlanModuleProps> = ({
             icon: <EditOutlined />,
             label: '重命名',
             onClick: () =>
-              handleOpenEditModal(node.key as number, node.title as string),
+              handleOpenEditModal(node.key as number, node.data.title),
           },
           {
             key: 'delete',
@@ -308,12 +423,81 @@ const Index: FC<PlanModuleProps> = ({
     [handleOpenAddModal, handleOpenEditModal, handleDeleteModule],
   );
 
-  /** 渲染自定义节点标题（含高亮、hover、右键菜单、用例数量） */
+  /** 渲染迷你统计进度环 */
+  const renderStatRing = useCallback(
+    (stats: ModuleStats | undefined, caseCount: number) => {
+      if (!stats || caseCount === 0) {
+        return caseCount > 0 ? (
+          <span style={nodeStyles.caseCount}>{caseCount}</span>
+        ) : null;
+      }
+
+      const strokeColor =
+        stats.failed > 0
+          ? token.colorError
+          : stats.executionRate === 100
+          ? token.colorSuccess
+          : token.colorPrimary;
+
+      const tooltipTitle = (
+        <div style={{ fontSize: 12, lineHeight: 1.8 }}>
+          <div>
+            总计: <strong>{stats.total}</strong> 条
+          </div>
+          <div style={{ color: token.colorSuccess }}>
+            通过: {stats.passed} 条
+          </div>
+          {stats.failed > 0 && (
+            <div style={{ color: token.colorError }}>
+              失败: {stats.failed} 条
+            </div>
+          )}
+          {stats.pending > 0 && (
+            <div style={{ color: token.colorTextTertiary }}>
+              未执行: {stats.pending} 条
+            </div>
+          )}
+          <div
+            style={{
+              borderTop: `1px solid ${token.colorBorder}`,
+              marginTop: 4,
+              paddingTop: 4,
+            }}
+          >
+            通过率: <strong>{stats.passRate}%</strong>
+          </div>
+        </div>
+      );
+
+      return (
+        <Tooltip title={tooltipTitle} placement="right">
+          <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Progress
+              type="circle"
+              percent={stats.executionRate}
+              size={18}
+              strokeWidth={10}
+              strokeColor={strokeColor}
+              railColor={token.colorFillSecondary}
+              format={() => ''}
+              showInfo={false}
+              style={{ marginBottom: 0 }}
+            />
+            <span style={nodeStyles.caseCount}>{caseCount}</span>
+          </span>
+        </Tooltip>
+      );
+    },
+    [nodeStyles, token],
+  );
+
+  /** 渲染自定义节点标题（含高亮、hover、右键菜单、用例统计） */
   const renderNodeTitle = useCallback(
     (node: TreeDataNode) => {
       const isActive = activeKey === node.key;
       const isHovered = hoveredKey === node.key;
       const caseCount = node.data.case_nums || 0;
+      const stats = moduleStatsMap.get(node.key as number);
 
       return (
         <Dropdown
@@ -331,23 +515,31 @@ const Index: FC<PlanModuleProps> = ({
             onMouseLeave={() => setHoveredKey(null)}
           >
             <HolderOutlined style={nodeStyles.dragHandle} />
-            <span style={nodeStyles.titleText}>{node.title as string}</span>
-            <span style={nodeStyles.rightArea}>
-              {caseCount > 0 && (
-                <span
-                  style={{
-                    ...nodeStyles.caseCount,
-                    opacity: isHovered ? 0 : 1,
-                    ...styleHelpers.transition(['opacity']),
-                  }}
-                >
-                  {caseCount}
-                </span>
-              )}
+            <span style={nodeStyles.titleText}>{node.data.title}</span>
+            <span
+              style={{
+                ...nodeStyles.rightArea,
+                position: 'relative',
+              }}
+            >
+              <span
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  opacity: isHovered ? 0 : 1,
+                  ...styleHelpers.transition(['opacity']),
+                }}
+              >
+                {renderStatRing(stats, caseCount)}
+              </span>
               <PlusOutlined
                 style={{
                   ...nodeStyles.addIcon,
                   opacity: isHovered ? 1 : 0,
+                  position: 'absolute',
+                  right: spacing.xs,
+                  top: 0,
                 }}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -362,11 +554,14 @@ const Index: FC<PlanModuleProps> = ({
     [
       activeKey,
       hoveredKey,
+      moduleStatsMap,
       nodeStyles,
       token,
       buildMenuItems,
       handleOpenAddModal,
       styleHelpers,
+      spacing,
+      renderStatRing,
     ],
   );
 

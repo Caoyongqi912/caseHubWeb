@@ -1,7 +1,7 @@
 import { copyPlanCases } from '@/api/case/caseplan';
 import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import { Modal, Select } from 'antd';
-import { FC, useCallback, useState } from 'react';
+import { FC, useCallback, useEffect, useState } from 'react';
 import PlanModuleSelectForm from './PlanModuleSelectForm';
 
 export interface BatchCopyModalProps {
@@ -41,6 +41,13 @@ const BatchCopyModal: FC<BatchCopyModalProps> = ({
   >();
   const [isReview, setIsReview] = useState<number>(0);
   const [submitting, setSubmitting] = useState(false);
+
+  /** 弹窗打开时默认选中当前测试计划 */
+  useEffect(() => {
+    if (open && currentPlanId) {
+      setSelectedPlanId(Number(currentPlanId));
+    }
+  }, [open, currentPlanId]);
 
   /** 选择目标测试计划，清空目录选择 */
   const handlePlanChange = useCallback((planId: number | undefined) => {
@@ -113,7 +120,6 @@ const BatchCopyModal: FC<BatchCopyModalProps> = ({
         </p>
 
         <PlanModuleSelectForm
-          excludePlanId={currentPlanId ? Number(currentPlanId) : undefined}
           planId={selectedPlanId}
           moduleId={selectedModuleId}
           onPlanChange={handlePlanChange}

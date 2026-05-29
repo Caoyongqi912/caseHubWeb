@@ -28,39 +28,38 @@ const PlanSelect: FC<PlanSelectProps> = ({
 }) => {
   const [fetching, setFetching] = useState(false);
   const [options, setOptions] = useState<PlanOption[]>([]);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const lastFetchId = useRef<number>(0);
+  const hasFetchedEmpty = useRef(false);
 
   /**
    * 搜索测试计划（带竞态保护）
    * 使用 lastFetchId 丢弃过期请求结果
    */
-  const handleSearch = useCallback(
-    async (planName: string) => {
-      lastFetchId.current += 1;
-      const fetchId = lastFetchId.current;
-      setFetching(true);
+  const handleSearch = useCallback(async (planName: string) => {
+    lastFetchId.current += 1;
+    const fetchId = lastFetchId.current;
+    setFetching(true);
 
-      await queryCasePlan(planName)
-        .then(({ code, data }) => {
-          if (fetchId !== lastFetchId.current) return;
+    try {
+      const { code, data } = await queryCasePlan(planName);
+      if (fetchId !== lastFetchId.current) return;
 
-          if (code === 0 && data) {
-            const newOptions: PlanOption[] = data.map((plan) => ({
-              label: plan.plan_name,
-              value: plan.id,
-            }));
-            setOptions(newOptions);
-          } else {
-            setOptions([]);
-          }
-        })
-        .catch(() => setOptions([]))
-        .finally(() => {
-          if (fetchId === lastFetchId.current) setFetching(false);
-        });
-    },
-    [excludePlanId],
-  );
+      if (code === 0 && data) {
+        const newOptions: PlanOption[] = data.map((plan) => ({
+          label: plan.plan_name,
+          value: plan.id,
+        }));
+        setOptions(newOptions);
+      } else {
+        setOptions([]);
+      }
+    } catch {
+      if (fetchId === lastFetchId.current) setOptions([]);
+    } finally {
+      if (fetchId === lastFetchId.current) setFetching(false);
+    }
+  }, []);
 
   const debounceSearch = useMemo(
     () => debounce(handleSearch, 500),
@@ -70,6 +69,20 @@ const PlanSelect: FC<PlanSelectProps> = ({
   useEffect(() => {
     return () => debounceSearch.cancel();
   }, [debounceSearch]);
+
+  /** 首次渲染及下拉展开时自动加载计划列表 */
+  useEffect(() => {
+    if (!dropdownOpen || hasFetchedEmpty.current) return;
+    hasFetchedEmpty.current = true;
+    handleSearch('');
+  }, [dropdownOpen, handleSearch]);
+
+  /** value 已设置但 options 为空时，自动加载以确保 label 正确显示 */
+  useEffect(() => {
+    if (value !== undefined && options.length === 0 && !fetching) {
+      handleSearch('');
+    }
+  }, [value, options.length, fetching, handleSearch]);
 
   const handleChange = useCallback(
     (newValue: number) => onChange?.(newValue),
@@ -83,6 +96,7 @@ const PlanSelect: FC<PlanSelectProps> = ({
       value={value}
       onChange={handleChange}
       onSearch={debounceSearch}
+      onDropdownVisibleChange={setDropdownOpen}
       placeholder={placeholder}
       notFoundContent={fetching ? <Spin size="small" /> : '暂无结果'}
       filterOption={false}

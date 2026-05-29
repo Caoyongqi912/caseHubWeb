@@ -1,7 +1,7 @@
 import { movePlanCases } from '@/api/case/caseplan';
 import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import { Modal } from 'antd';
-import { FC, useCallback, useState } from 'react';
+import { FC, useCallback, useEffect, useState } from 'react';
 import PlanModuleSelectForm from './PlanModuleSelectForm';
 
 export interface BatchMoveModalProps {
@@ -29,6 +29,13 @@ const BatchMoveModal: FC<BatchMoveModalProps> = ({
     number | undefined
   >();
   const [submitting, setSubmitting] = useState(false);
+
+  /** 弹窗打开时默认选中当前测试计划 */
+  useEffect(() => {
+    if (open && currentPlanId) {
+      setSelectedPlanId(Number(currentPlanId));
+    }
+  }, [open, currentPlanId]);
 
   /** 选择目标测试计划，清空目录选择 */
   const handlePlanChange = useCallback((planId: number | undefined) => {
@@ -98,7 +105,6 @@ const BatchMoveModal: FC<BatchMoveModalProps> = ({
         </p>
 
         <PlanModuleSelectForm
-          excludePlanId={currentPlanId ? Number(currentPlanId) : undefined}
           planId={selectedPlanId}
           moduleId={selectedModuleId}
           onPlanChange={handlePlanChange}

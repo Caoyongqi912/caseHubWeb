@@ -202,7 +202,7 @@ const Index: FC<PlanCaseListProps> = ({
   }, [handleRefresh, onModulesRefresh]);
 
   /**
-   * 单个用例评审状态切换（仅更新本地状态）
+   * 单个用例评审状态切换
    */
   const handleReviewChange = useCallback(
     (caseId: number, isReview: boolean) => {
@@ -211,20 +211,25 @@ const Index: FC<PlanCaseListProps> = ({
           tc.id === caseId ? { ...tc, is_review: isReview } : tc,
         ),
       );
+      onModulesRefresh?.();
     },
-    [],
+    [onModulesRefresh],
   );
 
   /**
-   * 单个用例状态切换（仅更新本地状态）
+   * 单个用例状态切换
    */
-  const handleStatusChange = useCallback((caseId: number, status: number) => {
-    setCaseList((prev) =>
-      prev.map((tc) =>
-        tc.id === caseId ? { ...tc, case_status: status } : tc,
-      ),
-    );
-  }, []);
+  const handleStatusChange = useCallback(
+    (caseId: number, status: number) => {
+      setCaseList((prev) =>
+        prev.map((tc) =>
+          tc.id === caseId ? { ...tc, case_status: status } : tc,
+        ),
+      );
+      onModulesRefresh?.();
+    },
+    [onModulesRefresh],
+  );
 
   /**
    * 退出批量选择模式
