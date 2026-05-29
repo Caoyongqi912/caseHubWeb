@@ -370,19 +370,6 @@ const Index: FC<PlanModuleProps> = ({
     ],
   );
 
-  /** 递归为每个节点注入自定义标题渲染 */
-  const processTreeNodes = useCallback(
-    (nodes: TreeDataNode[]): TreeDataNode[] =>
-      nodes.map((node) => ({
-        ...node,
-        title: renderNodeTitle(node),
-        children: node.children?.length
-          ? processTreeNodes(node.children as TreeDataNode[])
-          : undefined,
-      })),
-    [renderNodeTitle],
-  );
-
   /** 在树中递归查找指定 key 的节点 */
   const findNodeInTree = useCallback(
     (nodes: TreeDataNode[], key: number): TreeDataNode | null => {
@@ -437,11 +424,6 @@ const Index: FC<PlanModuleProps> = ({
     [expandedKeys, activeKey, handleTreeSelect, handleDragEnd],
   );
 
-  const processedTreeData = useMemo(
-    () => processTreeNodes(treeData),
-    [treeData, processTreeNodes],
-  );
-
   return (
     <div
       style={{
@@ -461,7 +443,6 @@ const Index: FC<PlanModuleProps> = ({
           display: 'flex',
           flexDirection: 'column',
         }}
-        // 👇 关键：只让 body 区域滚动，头部固定
         styles={{
           body: {
             flex: 1,
@@ -470,8 +451,11 @@ const Index: FC<PlanModuleProps> = ({
           },
         }}
       >
-        {/* Tree 也要充满 */}
-        <Tree {...treeProps} treeData={processedTreeData} />
+        <Tree
+          {...treeProps}
+          treeData={treeData}
+          titleRender={(nodeData) => renderNodeTitle(nodeData as TreeDataNode)}
+        />
         <ModuleEditModal
           title={modalState.mode === 'add' ? '新增目录' : '编辑目录'}
           open={modalState.visible}

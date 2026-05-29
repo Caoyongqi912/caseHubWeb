@@ -8,6 +8,7 @@ import {
   forwardRef,
   useEffect,
   useImperativeHandle,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -27,28 +28,31 @@ export interface DynamicInfoRef {
 const DynamicInfo = forwardRef<DynamicInfoRef, IProps>(
   ({ caseId, planId }, ref) => {
     const [originalData, setOriginalData] = useState<ICaseDynamic[]>([]);
-    const [displayData, setDisplayData] = useState<ICaseDynamic[]>([]);
     const [showMore, setShowMore] = useState(false);
-    const [shouldShowToggle, setShouldShowToggle] = useState(false);
     const { colors, spacing } = useCaseHubTheme();
     const styles = useDynamicInfoStyles();
     const fetchingRef = useRef(false);
+
+    /** 派生：实际展示的数据（支持展开/收起） */
+    const displayData = useMemo(() => {
+      if (showMore) return originalData;
+      return originalData.length > 5 ? originalData.slice(0, 5) : originalData;
+    }, [showMore, originalData]);
+
+    /** 派生：是否显示展开/收起按钮 */
+    const shouldShowToggle = useMemo(
+      () => originalData.length > 5,
+      [originalData],
+    );
 
     const fetchData = () => {
       if (!caseId) return;
       fetchingRef.current = true;
       setShowMore(false);
-      queryTestCaseDynamic(caseId, planId).then(async ({ code, data }) => {
+      queryTestCaseDynamic(caseId, planId).then(({ code, data }) => {
         fetchingRef.current = false;
         if (code === 0) {
           setOriginalData(data);
-          setShouldShowToggle(data.length > 5);
-
-          if (data.length > 5) {
-            setDisplayData(data.slice(0, 5));
-          } else {
-            setDisplayData(data);
-          }
         }
       });
     };
@@ -62,18 +66,6 @@ const DynamicInfo = forwardRef<DynamicInfoRef, IProps>(
         fetchData();
       }
     }, [caseId]);
-
-    useEffect(() => {
-      if (originalData.length === 0) return;
-
-      if (showMore) {
-        setDisplayData(originalData);
-      } else {
-        setDisplayData(
-          originalData.length > 5 ? originalData.slice(0, 5) : originalData,
-        );
-      }
-    }, [showMore, originalData]);
 
     return (
       <div style={styles.container()}>

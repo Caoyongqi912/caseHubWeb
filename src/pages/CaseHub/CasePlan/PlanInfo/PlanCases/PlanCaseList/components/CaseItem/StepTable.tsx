@@ -1,23 +1,16 @@
-import { CheckOutlined, LinkOutlined, PlusOutlined } from '@ant-design/icons';
+import { CheckOutlined } from '@ant-design/icons';
 import {
   EditableFormInstance,
   EditableProTable,
   ProColumns,
 } from '@ant-design/pro-components';
-import {
-  Button,
-  Input,
-  message,
-  Popover,
-  Select,
-  Tooltip,
-  Typography,
-} from 'antd';
+import { Button, message, Select, Tooltip, Typography } from 'antd';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { updateCaseStepResult } from '@/api/case/caseplan';
 import { CaseSubStep } from '@/pages/CaseHub/types';
 import debounce from 'lodash/debounce';
+import BugUrlPopover from './BugUrlPopover';
 import { STEP_STATUS_CONFIG } from './statusConfig';
 
 const { Text } = Typography;
@@ -42,7 +35,6 @@ interface StepTableProps {
 const StepTable: React.FC<StepTableProps> = ({ steps, planId }) => {
   const editorFormRef = useRef<EditableFormInstance<CaseSubStep>>();
   const [dataSource, setDataSource] = useState<CaseSubStep[]>(steps);
-  const [popoverOpenId, setPopoverOpenId] = useState<number | null>(null);
 
   /**
    * 使用 ref 保存最新值，避免 debounce 因依赖变化而重新创建
@@ -103,6 +95,13 @@ const StepTable: React.FC<StepTableProps> = ({ steps, planId }) => {
     [],
   );
 
+  /** 组件卸载时取消未执行的 debounce */
+  useEffect(() => {
+    return () => {
+      emitDataChange.cancel();
+    };
+  }, [emitDataChange]);
+
   /**
    * 将预期结果复制到实际结果，并标记为通过状态
    * 同时更新前端状态和后端数据
@@ -142,56 +141,6 @@ const StepTable: React.FC<StepTableProps> = ({ steps, planId }) => {
     },
     [dataSource, emitDataChange, planId],
   );
-
-  /**
-   * 缺陷链接输入组件 - Popover 内嵌输入框
-   * 内部独立管理输入状态，避免输入时触发父组件重渲染导致卡顿
-   */
-  const BugUrlInput: React.FC<{ record: CaseSubStep; onClose: () => void }> = ({
-    record,
-    onClose,
-  }) => {
-    const [inputValue, setInputValue] = useState('');
-
-    const handleConfirm = () => {
-      if (!inputValue.trim()) {
-        message.warning('请输入缺陷链接');
-        return;
-      }
-
-      const rowIndex = dataSource.findIndex((item) => item.id === record.id);
-      if (rowIndex === -1) return;
-
-      const newRow = { ...dataSource[rowIndex], bug_url: inputValue.trim() };
-      editorFormRef.current?.setRowData?.(rowIndex, newRow);
-      setDataSource((prev) =>
-        prev.map((item) => (item.id === record.id ? newRow : item)),
-      );
-
-      onClose();
-      message.success('缺陷链接已添加');
-    };
-
-    return (
-      <div style={{ width: 280 }}>
-        <Input
-          placeholder="请输入缺陷URL"
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          onPressEnter={handleConfirm}
-          autoFocus
-        />
-        <div style={{ marginTop: 8, textAlign: 'right' }}>
-          <Button size="small" onClick={onClose} style={{ marginRight: 8 }}>
-            取消
-          </Button>
-          <Button type="primary" size="small" onClick={handleConfirm}>
-            确认
-          </Button>
-        </div>
-      </div>
-    );
-  };
 
   /**
    * 根据状态值获取配置并渲染选项
@@ -338,64 +287,34 @@ const StepTable: React.FC<StepTableProps> = ({ steps, planId }) => {
         width: '12%',
         ellipsis: true,
         editable: false,
-        render: (_, record: CaseSubStep) => {
-          const bugUrl = record.bug_url;
-          if (bugUrl) {
-            return (
-              <Tooltip title={`跳转至: ${bugUrl}`}>
-                <a
-                  href={bugUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ display: 'flex', alignItems: 'center', gap: 4 }}
-                >
-                  <LinkOutlined />
-                  <span
-                    style={{
-                      maxWidth: 80,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    }}
-                  >
-                    BUG
-                  </span>
-                </a>
-              </Tooltip>
-            );
-          }
-
-          return (
-            <Popover
-              trigger="click"
-              open={popoverOpenId === record.id}
-              onOpenChange={(open) => {
-                setPopoverOpenId(open ? record.id : null);
-              }}
-              content={
-                <BugUrlInput
-                  record={record}
-                  onClose={() => setPopoverOpenId(null)}
-                />
-              }
-            >
-              <Button
-                type="link"
-                size="small"
-                icon={<PlusOutlined />}
-                onClick={(e) => e.stopPropagation()}
-              >
-                添加缺陷
-              </Button>
-            </Popover>
-          );
-        },
+        render: (_, record: CaseSubStep) => (
+          <BugUrlPopover
+            record={record}
+            onConfirm={(bugUrl) => {
+              const rowIndex = dataSource.findIndex(
+                (item) => item.id === record.id,
+              );
+              if (rowIndex === -1) return;
+              const newRow = {
+                ...dataSource[rowIndex],
+                bug_url: bugUrl,
+              };
+              editorFormRef.current?.setRowData?.(rowIndex, newRow);
+              setDataSource((prev) =>
+                prev.map((item) => (item.id === record.id ? newRow : item)),
+              );
+              emitDataChange(newRow);
+            }}
+          />
+        ),
       },
     ],
     [
       handleCopyExpectedToActual,
-      popoverOpenId,
       statusOptions,
       renderStatusOption,
+      dataSource,
+      emitDataChange,
     ],
   );
 

@@ -9,13 +9,7 @@ import {
   Tag,
   Typography,
 } from 'antd';
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import {
   copyOnePlanCase,
@@ -70,22 +64,6 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
   const caseId = testCase.id;
   const caseStatus = testCase.case_status ?? 0;
   const isReview = testCase.is_review ?? false;
-
-  /**
-   * 性能调试：记录组件渲染次数
-   * 用于验证 React.memo 优化效果
-   */
-  const renderCountRef = useRef(0);
-  const prevSelectedRef = useRef(selected);
-  useEffect(() => {
-    renderCountRef.current += 1;
-    const isSelectedChanged = prevSelectedRef.current !== selected;
-    prevSelectedRef.current = selected;
-    console.log(
-      `[CaseItem][caseId=${caseId}] 第 ${renderCountRef.current} 次渲染，` +
-        `selected: ${selected}${isSelectedChanged ? ' (选中状态变化)' : ''}`,
-    );
-  });
 
   const [switchingReview, setSwitchingReview] = useState(false);
   const [switchingStatus, setSwitchingStatus] = useState(false);

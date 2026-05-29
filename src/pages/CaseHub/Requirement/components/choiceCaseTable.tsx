@@ -91,18 +91,12 @@ const ChoiceCaseTable: FC<Props> = ({
       copyable: true,
       ellipsis: true,
       search: true,
-      width: 250,
-      render: (text) => (
-        <Text strong ellipsis={{ tooltip: text }}>
-          {text}
-        </Text>
-      ),
+      width: '20%',
     },
     {
       title: '标签',
       dataIndex: 'case_tag',
-      width: 100,
-
+      width: '15%',
       render: (text) => (
         <Text strong ellipsis={{ tooltip: text }}>
           {text}
@@ -112,9 +106,9 @@ const ChoiceCaseTable: FC<Props> = ({
     {
       title: '等级',
       dataIndex: 'case_level',
+      width: '10%',
       sorter: true,
       valueEnum: CASE_LEVEL_ENUM,
-      width: 80,
       render: (_, record) => {
         const levelColor =
           caseLevelColors[record.case_level] || caseLevelColors.P2;
@@ -137,7 +131,7 @@ const ChoiceCaseTable: FC<Props> = ({
     {
       title: '创建人',
       dataIndex: 'creatorName',
-      width: 100,
+      width: '10%',
       formItemRender: () => {
         return <UserSelect />;
       },
@@ -148,7 +142,6 @@ const ChoiceCaseTable: FC<Props> = ({
       dataIndex: 'create_time',
       valueType: 'dateTime',
       search: true,
-      width: 180,
     },
   ];
   return (

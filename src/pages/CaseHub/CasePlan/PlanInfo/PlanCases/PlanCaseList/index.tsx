@@ -228,33 +228,6 @@ const Index: FC<PlanCaseListProps> = ({
   }, []);
 
   /**
-   * 卡片标题区域
-   * 包含全选复选框、新增用例按钮、关联用例按钮
-   */
-  const CardTitle = () => (
-    <Space size="middle">
-      <Checkbox
-        checked={isAllSelected}
-        indeterminate={isIndeterminate}
-        onChange={handleSelectAll}
-      />
-      <Button
-        type="primary"
-        icon={<PlusOutlined />}
-        onClick={() => setDrawerVisible(true)}
-      >
-        新增用例
-      </Button>
-      <Button
-        icon={<LinkOutlined />}
-        onClick={() => setOpenChoiceCaseDrawer(true)}
-      >
-        关联用例
-      </Button>
-    </Space>
-  );
-
-  /**
    * 添加用例到计划
    */
   const OnCaseSave = async (values: any) => {
@@ -274,22 +247,6 @@ const Index: FC<PlanCaseListProps> = ({
     }
   };
 
-  /**
-   * 卡片额外区域
-   * 包含筛选栏
-   */
-  const CardExtra = () => (
-    <CaseFilterBar
-      onFilterChange={handleFilterChange}
-      onRefresh={handleRefresh}
-      onBatchExport={handleBatchExport}
-      onBatchImport={handleBatchImport}
-      hasActiveFilter={hasActiveFilter}
-      filters={filters}
-      resultCount={filteredList.length}
-    />
-  );
-
   const selectedCaseIdsArray = useMemo(
     () => Array.from(selectedCaseIds),
     [selectedCaseIds],
@@ -306,7 +263,28 @@ const Index: FC<PlanCaseListProps> = ({
         }}
       >
         <ProCard
-          title={<CardTitle />}
+          title={
+            <Space size="middle">
+              <Checkbox
+                checked={isAllSelected}
+                indeterminate={isIndeterminate}
+                onChange={handleSelectAll}
+              />
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() => setDrawerVisible(true)}
+              >
+                新增用例
+              </Button>
+              <Button
+                icon={<LinkOutlined />}
+                onClick={() => setOpenChoiceCaseDrawer(true)}
+              >
+                关联用例
+              </Button>
+            </Space>
+          }
           headerBordered
           variant={'outlined'}
           style={{
@@ -322,7 +300,17 @@ const Index: FC<PlanCaseListProps> = ({
               padding: '12px',
             },
           }}
-          extra={<CardExtra />}
+          extra={
+            <CaseFilterBar
+              onFilterChange={handleFilterChange}
+              onRefresh={handleRefresh}
+              onBatchExport={handleBatchExport}
+              onBatchImport={handleBatchImport}
+              hasActiveFilter={hasActiveFilter}
+              filters={filters}
+              resultCount={filteredList.length}
+            />
+          }
         >
           <div
             style={{
