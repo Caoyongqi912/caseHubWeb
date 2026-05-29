@@ -55,6 +55,12 @@ const Index: FC<PlanCaseListProps> = ({
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [importModalVisible, setImportModalVisible] = useState(false);
 
+  /** 展开/收起指令版本号，通过 revision 变化通知所有 CaseItem */
+  const [collapseRevision, setCollapseRevision] = useState(0);
+  const [collapseAction, setCollapseAction] = useState<'expand' | 'collapse'>(
+    'expand',
+  );
+
   /**
    * 使用筛选 hook 管理筛选状态
    */
@@ -227,6 +233,18 @@ const Index: FC<PlanCaseListProps> = ({
     setSelectedCaseIds(new Set());
   }, []);
 
+  /** 全部展开 */
+  const handleExpandAll = useCallback(() => {
+    setCollapseAction('expand');
+    setCollapseRevision((prev) => prev + 1);
+  }, []);
+
+  /** 全部收起 */
+  const handleCollapseAll = useCallback(() => {
+    setCollapseAction('collapse');
+    setCollapseRevision((prev) => prev + 1);
+  }, []);
+
   /**
    * 添加用例到计划
    */
@@ -304,6 +322,8 @@ const Index: FC<PlanCaseListProps> = ({
             <CaseFilterBar
               onFilterChange={handleFilterChange}
               onRefresh={handleRefresh}
+              onExpandAll={handleExpandAll}
+              onCollapseAll={handleCollapseAll}
               onBatchExport={handleBatchExport}
               onBatchImport={handleBatchImport}
               hasActiveFilter={hasActiveFilter}
@@ -343,6 +363,10 @@ const Index: FC<PlanCaseListProps> = ({
                   planId={planId}
                   moduleId={moduleId}
                   selected={tc.id !== undefined && selectedCaseIds.has(tc.id)}
+                  collapseCommand={{
+                    action: collapseAction,
+                    revision: collapseRevision,
+                  }}
                   onSelectedChange={handleCaseSelectedChange}
                   onReviewChange={handleReviewChange}
                   onStatusChange={handleStatusChange}

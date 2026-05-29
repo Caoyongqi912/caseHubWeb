@@ -211,7 +211,7 @@ const Index = () => {
         dataIndex: 'plan_start_time',
         width: '12%',
         render: (_, r) => (
-          <Space direction="vertical" size={0}>
+          <Space orientation="vertical" size={0}>
             <span>{r.plan_start_time || '-'}</span>
             <span style={{ color: token.colorTextTertiary, fontSize: 12 }}>
               至 {r.plan_end_time || '-'}

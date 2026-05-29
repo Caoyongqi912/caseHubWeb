@@ -88,7 +88,7 @@ const Index = () => {
       <Descriptions.Item label="完成率">
         <Space>
           <CheckCircleOutlined style={{ color: token.colorSuccess }} />
-          {planInfo?.plan_completion_rate ?? 0}%
+          {planInfo?.completion_rate ?? 0}%
         </Space>
       </Descriptions.Item>
       <Descriptions.Item label="备注" span={2}>

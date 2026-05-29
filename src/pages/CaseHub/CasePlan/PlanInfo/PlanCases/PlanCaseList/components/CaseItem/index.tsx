@@ -9,7 +9,7 @@ import {
   Tag,
   Typography,
 } from 'antd';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
   copyOnePlanCase,
@@ -30,11 +30,17 @@ import StepTable from './StepTable';
 
 const { Text } = Typography;
 
+interface CollapseCommand {
+  action: 'expand' | 'collapse';
+  revision: number;
+}
+
 interface CaseItemProps {
   testCase: ITestCase;
   selected?: boolean;
   planId?: string;
   moduleId?: number | null;
+  collapseCommand?: CollapseCommand;
   onSelectedChange?: (id: number | undefined, selected: boolean) => void;
   onReviewChange?: (caseId: number, isReview: boolean) => void;
   onStatusChange?: (caseId: number, status: number) => void;
@@ -55,6 +61,7 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
     planId,
     moduleId,
     selected = false,
+    collapseCommand,
     onSelectedChange,
     onReviewChange,
     onStatusChange,
@@ -65,12 +72,22 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
   const caseStatus = testCase.case_status ?? 0;
   const isReview = testCase.is_review ?? false;
 
+  const [collapsed, setCollapsed] = useState(false);
   const [switchingReview, setSwitchingReview] = useState(false);
   const [switchingStatus, setSwitchingStatus] = useState(false);
   const [copyLoading, setCopyLoading] = useState(false);
   const [removeLoading, setRemoveLoading] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [hasEdited, setHasEdited] = useState(false);
+
+  /**
+   * 响应外部展开/收起指令
+   * 通过 revision 变化检测新指令，避免频繁重渲染
+   */
+  useEffect(() => {
+    if (!collapseCommand) return;
+    setCollapsed(collapseCommand.action === 'collapse');
+  }, [collapseCommand?.revision]);
 
   /**
    * 使用 useFnsRef 保持回调函数引用稳定
@@ -290,6 +307,8 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
         headerBordered
         extra={cardExtra}
         collapsible
+        collapsed={collapsed}
+        onCollapse={setCollapsed}
         styles={{ body: { padding: 3 } }}
       >
         <StepTable steps={sortedSteps} planId={planId} />
@@ -319,4 +338,4 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
 CaseItem.displayName = 'CaseItem';
 
 export default CaseItem;
-export type { CaseItemProps };
+export type { CaseItemProps, CollapseCommand };
