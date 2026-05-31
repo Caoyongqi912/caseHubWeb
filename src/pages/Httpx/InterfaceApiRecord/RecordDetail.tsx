@@ -47,7 +47,7 @@ const RecordDetail: FC<IRecordDetailProps> = ({ interfaceAPIRecordInfo }) => {
           {
             key: '3',
             label: 'Body',
-            children: <InterBody form={interApiForm} mode={1} />,
+            children: <InterBody form={interApiForm} />,
           },
           {
             key: '5',

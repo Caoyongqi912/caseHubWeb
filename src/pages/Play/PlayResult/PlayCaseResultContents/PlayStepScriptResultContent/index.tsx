@@ -25,7 +25,7 @@ const Index: FC<SelfProps> = ({ content }) => {
           )}
         </Space>
       }
-      bordered
+      variant="outlined"
       style={{
         borderRadius: '5px',
         borderLeft: `3px solid ${

@@ -159,7 +159,7 @@ const PlayStepGroupDetail = () => {
         />
       </MyDrawer>
       <ProCard
-        bordered
+        variant="outlined"
         styles={{
           body: {
             minHeight: '100vh',

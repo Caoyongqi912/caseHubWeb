@@ -83,7 +83,7 @@ const PlayStepGroupCollapsible: FC<ISelfProps> = (props) => {
   return (
     <>
       <ProCard
-        bordered
+        variant="outlined"
         collapsible={false}
         hoverable
         defaultCollapsed

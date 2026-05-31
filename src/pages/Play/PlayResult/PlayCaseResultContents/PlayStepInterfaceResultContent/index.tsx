@@ -5,7 +5,7 @@ import RequestHeaders from '@/pages/Httpx/InterfaceApiResponse/RequestHeaders';
 import RequestInfo from '@/pages/Httpx/InterfaceApiResponse/RequestInfo';
 import ResponseExtractColumns from '@/pages/Httpx/InterfaceApiResponse/ResponseExtract';
 import RespProTable from '@/pages/Httpx/InterfaceApiResponse/RespProTable';
-import { ITryResponseInfo } from '@/pages/Httpx/types';
+import { IResponseInfo, ITryResponseInfo } from '@/pages/Httpx/types';
 import { IPlayCaseContentResult } from '@/pages/Play/componets/uiTypes';
 import { CONFIG } from '@/utils/config';
 import {
@@ -175,7 +175,7 @@ const Index: FC<Props> = ({ result, content }) => {
     <div>
       <ProCard
         extra={tabExtra(result)}
-        bordered
+        variant="outlined"
         style={{
           borderRadius: '5px',
           borderLeft: `3px solid ${result.result ? '#52c41a' : '#ff4d4f'}`,
@@ -248,10 +248,7 @@ const Index: FC<Props> = ({ result, content }) => {
               key: '6',
               label: '实际请求',
               children: (
-                <RequestInfo
-                  method={result.request_method}
-                  interfaceApiInfo={result.request_info}
-                />
+                <RequestInfo info={result.request_info as IResponseInfo} />
               ),
             },
           ]}
