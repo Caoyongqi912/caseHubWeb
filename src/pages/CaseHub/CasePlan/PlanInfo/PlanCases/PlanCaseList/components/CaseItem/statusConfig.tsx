@@ -59,20 +59,20 @@ export const STEP_STATUS_CONFIG: Record<number, StepStatusConfig> = {
   1: {
     label: '通过',
     color: 'success',
-    icon: <CheckCircleFilled style={{ fontSize: 16, color: '#13c2c2' }} />,
+    icon: <CheckCircleFilled style={{ fontSize: 16, color: '#0aff57ff' }} />,
   },
   2: {
-    label: '阻塞',
+    label: '失败',
     color: 'error',
     icon: <CloseCircleFilled style={{ fontSize: 16, color: '#FF4D4F' }} />,
   },
   3: {
-    label: '跳过',
+    label: '阻塞',
     color: 'warning',
     icon: <MinusCircleFilled style={{ fontSize: 16, color: '#FF9900' }} />,
   },
   4: {
-    label: '其他',
+    label: '跳过',
     color: 'purple',
     icon: (
       <ExclamationCircleFilled style={{ fontSize: 16, color: '#FF4D4F' }} />

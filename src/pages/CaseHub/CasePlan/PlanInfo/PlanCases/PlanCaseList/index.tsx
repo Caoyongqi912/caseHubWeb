@@ -68,39 +68,48 @@ const Index: FC<PlanCaseListProps> = ({
     useCaseFilter(caseList);
 
   /**
-   * 获取计划详情
+   * 并行获取计划详情和用例列表
+   * 避免瀑布式请求，提升加载性能
    */
-  useEffect(() => {
-    if (planId) {
-      getPlanInfo(Number(planId)).then(({ code, data }) => {
-        if (code === 0) setPlanInfo(data);
-      });
-    }
-  }, [planId]);
+  const fetchPlanData = useCallback(async () => {
+    if (!planId) return;
 
-  /**
-   * 获取计划用例列表
-   * 根据当前计划ID、目录ID和筛选条件从服务端获取数据
-   */
-  const fetchQueryPlanCases = useCallback(async () => {
-    if (!planId || !moduleId) return;
+    // 并行获取计划详情
+    const planInfoPromise = getPlanInfo(Number(planId)).then(
+      ({ code, data }) => {
+        if (code === 0) setPlanInfo(data);
+      },
+    );
+
+    if (!moduleId) {
+      await planInfoPromise;
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const { code, data } = await queryPlanCases({
-        plan_id: Number(planId),
-        plan_module_id: moduleId,
-        is_review: filters.isReview,
-      });
+      // 并行执行：等待计划详情 + 获取用例列表
+      const [{ code, data }] = await Promise.all([
+        queryPlanCases({
+          plan_id: Number(planId),
+          plan_module_id: moduleId,
+          is_review: filters.isReview,
+        }),
+        planInfoPromise,
+      ]);
+
       if (code === 0) {
         setSelectedCaseIds(new Set());
         const list = Array.isArray(data) ? data : [];
-        // 根据 case id 去重，避免同一个用例被重复关联到同一目录下
-        const uniqueList = list.filter(
-          (item, index, self) =>
-            index === self.findIndex((t) => t.id === item.id),
-        );
-        setCaseList(uniqueList);
+        // 使用 Map 去重，比 filter + findIndex 性能更好 O(n) vs O(n²)
+        const uniqueMap = new Map<number, ITestCase>();
+        list.forEach((item) => {
+          if (item.id !== undefined) {
+            uniqueMap.set(item.id, item);
+          }
+        });
+        setCaseList(Array.from(uniqueMap.values()));
       }
     } finally {
       setLoading(false);
@@ -108,20 +117,20 @@ const Index: FC<PlanCaseListProps> = ({
   }, [planId, moduleId, filters]);
 
   /**
-   * 当 planId 或 moduleId 变化时，重新加载用例列表
+   * 当 planId 或 moduleId 变化时，重新加载数据
    * 注意：filters 变化不会触发重新加载，保持筛选状态
    */
   useEffect(() => {
     setCaseList([]);
-    fetchQueryPlanCases();
+    fetchPlanData();
   }, [planId, moduleId]);
 
   /**
    * 刷新列表
    */
   const handleRefresh = useCallback(() => {
-    fetchQueryPlanCases();
-  }, [fetchQueryPlanCases]);
+    fetchPlanData();
+  }, [fetchPlanData]);
 
   const handleBatchExport = useCallback(
     () => message.info('批量导出功能开发中'),
@@ -218,6 +227,7 @@ const Index: FC<PlanCaseListProps> = ({
 
   /**
    * 单个用例状态切换
+   * 更新本地状态并触发重新获取数据，确保子组件获取最新数据
    */
   const handleStatusChange = useCallback(
     (caseId: number, status: number) => {
@@ -226,9 +236,11 @@ const Index: FC<PlanCaseListProps> = ({
           tc.id === caseId ? { ...tc, case_status: status } : tc,
         ),
       );
+      // 触发重新获取用例列表，确保 StepTable 等子组件获取最新数据
+      handleRefresh();
       onModulesRefresh?.();
     },
-    [onModulesRefresh],
+    [handleRefresh, onModulesRefresh],
   );
 
   /**

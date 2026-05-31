@@ -172,17 +172,6 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
   );
 
   /**
-   * 按 order 字段升序排列用例步骤
-   */
-  const sortedSteps = useMemo(
-    () =>
-      [...(testCase.case_sub_steps || [])].sort(
-        (a, b) => (a.order ?? 0) - (b.order ?? 0),
-      ),
-    [testCase.case_sub_steps],
-  );
-
-  /**
    * 统一的状态更新处理函数
    * @param updates - 更新内容，支持 case_status 或 is_review
    */
@@ -245,57 +234,78 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
   const currentStatusConfig =
     CASE_STATUS_CONFIG[caseStatus] || CASE_STATUS_CONFIG[0];
 
-  /** 卡片右侧操作区域：状态选择 + 更多操作 */
-  const cardExtra = (
-    <Space size="small">
-      <Dropdown
-        trigger={['click']}
-        menu={{
-          items: statusSelectItems,
-          onClick: ({ key }) => handleStatusSelect(Number(key)),
-        }}
-        disabled={switchingStatus}
-      >
+  /** 卡片标题区域：复选框 + 评审状态 + 用例名称 */
+  const cardTitle = useMemo(
+    () => (
+      <Space onClick={(e) => e.stopPropagation()}>
+        <Checkbox
+          checked={selected}
+          onChange={(e) => onSelectedChange?.(caseId, e.target.checked)}
+        />
         <Tag
-          color={currentStatusConfig.color}
-          style={{
-            margin: 0,
-            cursor: switchingStatus ? 'wait' : 'pointer',
-            opacity: switchingStatus ? 0.5 : 1,
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 4,
-          }}
+          color={isReview ? 'success' : 'default'}
+          style={{ cursor: switchingReview ? 'wait' : 'pointer' }}
+          onClick={handleReviewToggle}
         >
-          {CASE_STATUS_ICONS[caseStatus] || CASE_STATUS_ICONS[0]}
-          {currentStatusConfig.label}
-          <DownOutlined style={{ fontSize: 10, opacity: 0.6 }} />
+          {switchingReview ? '切换中...' : isReview ? '已评审' : '待评审'}
         </Tag>
-      </Dropdown>
-      <Dropdown menu={{ items: moreMenuItems }} trigger={['click']}>
-        <Button type="text" size="small" icon={<MoreOutlined />} />
-      </Dropdown>
-    </Space>
+        <Text strong onClick={() => setIsDetailOpen(true)}>
+          {testCase.case_name}
+        </Text>
+      </Space>
+    ),
+    [
+      selected,
+      caseId,
+      isReview,
+      switchingReview,
+      handleReviewToggle,
+      testCase.case_name,
+      onSelectedChange,
+    ],
   );
 
-  /** 卡片标题区域：复选框 + 评审状态 + 用例名称 */
-  const cardTitle = (
-    <Space onClick={(e) => e.stopPropagation()}>
-      <Checkbox
-        checked={selected}
-        onChange={(e) => onSelectedChange?.(caseId, e.target.checked)}
-      />
-      <Tag
-        color={isReview ? 'success' : 'default'}
-        style={{ cursor: switchingReview ? 'wait' : 'pointer' }}
-        onClick={handleReviewToggle}
-      >
-        {switchingReview ? '切换中...' : isReview ? '已评审' : '待评审'}
-      </Tag>
-      <Text strong onClick={() => setIsDetailOpen(true)}>
-        {testCase.case_name}
-      </Text>
-    </Space>
+  /** 卡片右侧操作区域：状态选择 + 更多操作 */
+  const cardExtra = useMemo(
+    () => (
+      <Space size="small">
+        <Dropdown
+          trigger={['click']}
+          menu={{
+            items: statusSelectItems,
+            onClick: ({ key }) => handleStatusSelect(Number(key)),
+          }}
+          disabled={switchingStatus}
+        >
+          <Tag
+            color={currentStatusConfig.color}
+            style={{
+              margin: 0,
+              cursor: switchingStatus ? 'wait' : 'pointer',
+              opacity: switchingStatus ? 0.5 : 1,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+            }}
+          >
+            {CASE_STATUS_ICONS[caseStatus] || CASE_STATUS_ICONS[0]}
+            {currentStatusConfig.label}
+            <DownOutlined style={{ fontSize: 10, opacity: 0.6 }} />
+          </Tag>
+        </Dropdown>
+        <Dropdown menu={{ items: moreMenuItems }} trigger={['click']}>
+          <Button type="text" size="small" icon={<MoreOutlined />} />
+        </Dropdown>
+      </Space>
+    ),
+    [
+      statusSelectItems,
+      handleStatusSelect,
+      switchingStatus,
+      currentStatusConfig,
+      caseStatus,
+      moreMenuItems,
+    ],
   );
 
   return (
@@ -311,7 +321,7 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
         onCollapse={setCollapsed}
         styles={{ body: { padding: 3 } }}
       >
-        <StepTable steps={sortedSteps} planId={planId} />
+        <StepTable steps={testCase.case_sub_steps || []} planId={planId} />
       </ProCard>
       <MyDrawer
         width={'60%'}

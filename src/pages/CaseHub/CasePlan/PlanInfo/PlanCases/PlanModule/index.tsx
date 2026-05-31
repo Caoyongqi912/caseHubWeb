@@ -214,19 +214,6 @@ const Index: FC<PlanModuleProps> = ({
     loadAllModuleStats(planModules);
   }, [planModules, convertToTreeData, onSelect, loadAllModuleStats]);
 
-  /**
-   * 移除 rc-tree 内部 .ant-tree-title 上的浏览器原生 title 属性，
-   * 避免和我们自定义的 Tooltip 冲突，出现多余的空 tooltip。
-   */
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      document
-        .querySelectorAll('.ant-tree-title[title]')
-        .forEach((el) => el.removeAttribute('title'));
-    }, 0);
-    return () => clearTimeout(timer);
-  }, [treeData]);
-
   const resetModal = useCallback(() => setModalState(createModalState()), []);
 
   const handleOpenAddModal = useCallback(
@@ -423,9 +410,20 @@ const Index: FC<PlanModuleProps> = ({
     [handleOpenAddModal, handleOpenEditModal, handleDeleteModule],
   );
 
-  /** 渲染迷你统计进度环 */
+  /** 渲染迷你统计进度环
+   * 只在 root 目录下展示全量数据的统计情况（包含进度环和详细统计）
+   * 子目录只展示简单的用例数量
+   */
   const renderStatRing = useCallback(
-    (stats: ModuleStats | undefined, caseCount: number) => {
+    (stats: ModuleStats | undefined, caseCount: number, isRoot: boolean) => {
+      // 子目录只显示简单数量
+      if (!isRoot) {
+        return caseCount > 0 ? (
+          <span style={nodeStyles.caseCount}>{caseCount}</span>
+        ) : null;
+      }
+
+      // root 目录显示全量统计
       if (!stats || caseCount === 0) {
         return caseCount > 0 ? (
           <span style={nodeStyles.caseCount}>{caseCount}</span>
@@ -531,7 +529,7 @@ const Index: FC<PlanModuleProps> = ({
                   ...styleHelpers.transition(['opacity']),
                 }}
               >
-                {renderStatRing(stats, caseCount)}
+                {renderStatRing(stats, caseCount, node.isRoot ?? false)}
               </span>
               <PlusOutlined
                 style={{
