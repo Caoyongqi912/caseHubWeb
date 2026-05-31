@@ -1,6 +1,5 @@
 import {
   associatePlanCases,
-  getPlanInfo,
   insertPlanCases,
   queryPlanCases,
 } from '@/api/case/caseplan';
@@ -29,6 +28,7 @@ interface PlanCaseListProps {
   planId?: string;
   moduleId?: number | null;
   planModules: import('@/pages/CaseHub/types').IPlanModule[];
+  planInfo?: ICasePlan;
   onModulesRefresh?: () => void;
 }
 
@@ -40,12 +40,12 @@ const Index: FC<PlanCaseListProps> = ({
   planId,
   moduleId,
   planModules,
+  planInfo,
   onModulesRefresh,
 }) => {
   const styles = usePlanCaseListStyles();
   const { colors, spacing } = useCaseHubTheme();
 
-  const [planInfo, setPlanInfo] = useState<ICasePlan>();
   const [caseList, setCaseList] = useState<ITestCase[]>([]);
   const [loading, setLoading] = useState(false);
   const [openChoiceCaseDrawer, setOpenChoiceCaseDrawer] = useState(false);
@@ -68,36 +68,20 @@ const Index: FC<PlanCaseListProps> = ({
     useCaseFilter(caseList);
 
   /**
-   * 并行获取计划详情和用例列表
-   * 避免瀑布式请求，提升加载性能
+   * 获取用例列表
+   * planInfo 由父组件传入，无需重复请求
    */
   const fetchPlanData = useCallback(async () => {
-    if (!planId) return;
-
-    // 并行获取计划详情
-    const planInfoPromise = getPlanInfo(Number(planId)).then(
-      ({ code, data }) => {
-        if (code === 0) setPlanInfo(data);
-      },
-    );
-
-    if (!moduleId) {
-      await planInfoPromise;
-      return;
-    }
+    if (!planId || !moduleId) return;
 
     setLoading(true);
 
     try {
-      // 并行执行：等待计划详情 + 获取用例列表
-      const [{ code, data }] = await Promise.all([
-        queryPlanCases({
-          plan_id: Number(planId),
-          plan_module_id: moduleId,
-          is_review: filters.isReview,
-        }),
-        planInfoPromise,
-      ]);
+      const { code, data } = await queryPlanCases({
+        plan_id: Number(planId),
+        plan_module_id: moduleId,
+        is_review: filters.isReview,
+      });
 
       if (code === 0) {
         setSelectedCaseIds(new Set());
@@ -227,7 +211,7 @@ const Index: FC<PlanCaseListProps> = ({
 
   /**
    * 单个用例状态切换
-   * 更新本地状态并触发重新获取数据，确保子组件获取最新数据
+   * 更新本地状态，避免不必要的全量刷新
    */
   const handleStatusChange = useCallback(
     (caseId: number, status: number) => {
@@ -236,11 +220,9 @@ const Index: FC<PlanCaseListProps> = ({
           tc.id === caseId ? { ...tc, case_status: status } : tc,
         ),
       );
-      // 触发重新获取用例列表，确保 StepTable 等子组件获取最新数据
-      handleRefresh();
       onModulesRefresh?.();
     },
-    [handleRefresh, onModulesRefresh],
+    [onModulesRefresh],
   );
 
   /**

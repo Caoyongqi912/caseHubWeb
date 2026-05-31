@@ -1,5 +1,5 @@
 import { getPlanModules } from '@/api/case/caseplan';
-import { IPlanModule } from '@/pages/CaseHub/types';
+import { ICasePlan, IPlanModule } from '@/pages/CaseHub/types';
 import { ProCard } from '@ant-design/pro-components';
 import { Splitter } from 'antd';
 import { FC, useCallback, useEffect, useState } from 'react';
@@ -8,9 +8,10 @@ import PlanModule from './PlanModule';
 
 interface Props {
   planId?: string;
+  planInfo?: ICasePlan;
 }
 
-const Index: FC<Props> = ({ planId }) => {
+const Index: FC<Props> = ({ planId, planInfo }) => {
   const [planModules, setPlanModules] = useState<IPlanModule[]>([]);
   const [selectedModuleId, setSelectedModuleId] = useState<number | null>(null);
 
@@ -63,6 +64,7 @@ const Index: FC<Props> = ({ planId }) => {
             planId={planId}
             moduleId={selectedModuleId}
             planModules={planModules}
+            planInfo={planInfo}
             onModulesRefresh={fetchPlanModules}
           />
         </Splitter.Panel>

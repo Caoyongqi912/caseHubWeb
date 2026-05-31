@@ -142,8 +142,14 @@ export const movePlanModule = async (data: {
   });
 };
 
+const pendingPlanCasesRequests = new Map<
+  string,
+  Promise<IResponse<ITestCase[]>>
+>();
+
 /**
  * 查询测试计划下的用例列表
+ * 自动去重：相同参数的并发请求共享同一个 Promise，避免重复网络请求
  * @param plan_id - 测试计划 ID
  * @param plan_module_id - 模块 ID，null 表示查询所有用例
  * @param case_level - 用例等级
@@ -158,10 +164,19 @@ export const queryPlanCases = async (data: {
   case_level?: number;
   is_review?: boolean;
 }) => {
-  return request<IResponse<ITestCase[]>>(`/api/hub/plan/cases`, {
+  const key = JSON.stringify(data);
+  const pending = pendingPlanCasesRequests.get(key);
+  if (pending) return pending;
+
+  const promise = request<IResponse<ITestCase[]>>(`/api/hub/plan/cases`, {
     method: 'GET',
     params: data,
+  }).finally(() => {
+    pendingPlanCasesRequests.delete(key);
   });
+
+  pendingPlanCasesRequests.set(key, promise);
+  return promise;
 };
 
 /**

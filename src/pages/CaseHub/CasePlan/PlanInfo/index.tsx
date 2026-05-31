@@ -116,7 +116,7 @@ const Index = () => {
     {
       key: 'cases',
       label: '用例',
-      children: <PlanCases planId={planId} />,
+      children: <PlanCases planId={planId} planInfo={planInfo} />,
     },
     {
       key: 'requirement',
