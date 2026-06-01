@@ -20,6 +20,8 @@ export interface UsePlanModuleSelectionResult {
   selectedModuleId: number | undefined;
   submitting: boolean;
   setSubmitting: Dispatch<SetStateAction<boolean>>;
+  setSelectedPlanId: Dispatch<SetStateAction<number | undefined>>;
+  setSelectedModuleId: Dispatch<SetStateAction<number | undefined>>;
   handlePlanChange: (planId: number | undefined) => void;
   handleModuleChange: (moduleId: number | undefined) => void;
   handleModalClose: () => void;
@@ -70,6 +72,8 @@ export const usePlanModuleSelection = ({
     selectedModuleId,
     submitting,
     setSubmitting,
+    setSelectedPlanId,
+    setSelectedModuleId,
     handlePlanChange,
     handleModuleChange,
     handleModalClose,

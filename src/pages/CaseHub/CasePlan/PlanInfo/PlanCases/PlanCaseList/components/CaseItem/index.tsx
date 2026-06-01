@@ -1,4 +1,4 @@
-import { DownOutlined, MoreOutlined, UpOutlined } from '@ant-design/icons';
+import { DownOutlined, MoreOutlined } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
 import {
   Button,
@@ -35,9 +35,6 @@ interface CaseItemProps {
   selected?: boolean;
   planId?: string;
   moduleId?: number | null;
-  /** 父组件控制折叠态，便于虚拟化时按需挂载 StepTable */
-  expanded?: boolean;
-  onExpandedChange?: (expanded: boolean) => void;
   onSelectedChange?: (id: number | undefined, selected: boolean) => void;
   onReviewChange?: (caseId: number, isReview: boolean) => void;
   onStatusChange?: (caseId: number, status: number) => void;
@@ -58,8 +55,6 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
     planId,
     moduleId,
     selected = false,
-    expanded = false,
-    onExpandedChange,
     onSelectedChange,
     onReviewChange,
     onStatusChange,
@@ -68,9 +63,9 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
 
   const caseId = testCase.id;
   const caseStatus = testCase.case_status ?? 0;
+  console.log('caseStatus', caseStatus);
   const isReview = testCase.is_review ?? false;
 
-  // 折叠态由父组件控制（便于虚拟化时按需挂载 StepTable）
   const [switchingReview, setSwitchingReview] = useState(false);
   const [switchingStatus, setSwitchingStatus] = useState(false);
   const [copyLoading, setCopyLoading] = useState(false);
@@ -270,25 +265,10 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
     ],
   );
 
-  /** 切换展开/收起（手动触发，避免 ProCard collapsible 在 absolute 容器里异常） */
-  const handleToggleExpanded = useCallback(() => {
-    onExpandedChange?.(!expanded);
-  }, [onExpandedChange, expanded]);
-
-  /** 卡片右侧操作区域：状态选择 + 更多操作 + 折叠 chevron */
+  /** 卡片右侧操作区域：状态选择 + 更多操作 */
   const cardExtra = useMemo(
     () => (
       <Space size="small" onClick={(e) => e.stopPropagation()}>
-        <Button
-          type="text"
-          size="small"
-          icon={expanded ? <UpOutlined /> : <DownOutlined />}
-          onClick={(e) => {
-            e.stopPropagation();
-            handleToggleExpanded();
-          }}
-          title={expanded ? '收起' : '展开'}
-        />
         <Dropdown
           trigger={['click']}
           menu={{
@@ -324,8 +304,6 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
       </Space>
     ),
     [
-      expanded,
-      handleToggleExpanded,
       statusSelectItems,
       handleStatusSelect,
       switchingStatus,
@@ -344,10 +322,7 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
         extra={cardExtra}
         styles={{ body: { padding: 2 } }}
       >
-        {/* 折叠时不渲染 StepTable，避免 EditableProTable 提前挂载（虚拟化场景下的延迟挂载） */}
-        {expanded && (
-          <StepTable steps={testCase.case_sub_steps || []} planId={planId} />
-        )}
+        <StepTable steps={testCase.case_sub_steps || []} planId={planId} />
       </ProCard>
       <MyDrawer
         width={'60%'}

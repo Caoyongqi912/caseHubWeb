@@ -84,14 +84,12 @@ const useElementHeight = (ref: React.RefObject<HTMLElement>): number => {
  */
 interface CaseRowData {
   list: ITestCase[];
-  expandedIds: Set<number>;
   selectedCaseIds: Set<number>;
   planId?: string;
   moduleId?: number | null;
   onSelectedChange: (id: number | undefined, selected: boolean) => void;
   onReviewChange: (caseId: number, isReview: boolean) => void;
   onStatusChange: (caseId: number, status: number) => void;
-  onExpandedChange: (caseId: number, expanded: boolean) => void;
   onRefresh: () => void;
 }
 
@@ -109,7 +107,6 @@ const CaseRow: React.FC<{
   // 改为：即使数据不完整，也渲染一个占位 div 撑住槽位（react-window 依赖槽位来算 scrollHeight）。
   const safeList = data && Array.isArray(data.list) ? data.list : [];
   const safeSelected = data?.selectedCaseIds ?? new Set<number>();
-  const safeExpanded = data?.expandedIds ?? new Set<number>();
   const tc =
     typeof index === 'number' && index >= 0 && index < safeList.length
       ? safeList[index]
@@ -121,7 +118,7 @@ const CaseRow: React.FC<{
         ...style,
         display: 'block',
         boxSizing: 'border-box',
-        // 卡片之间留 4px 视觉间隙（itemSize 已在 COLLAPSED_HEIGHT 计入此 padding）
+        // 卡片之间留 4px 视觉间隙（itemSize 已在 EXPANDED_HEIGHT 计入此 padding）
         paddingBottom: 6,
       }}
     >
@@ -131,15 +128,9 @@ const CaseRow: React.FC<{
           planId={data?.planId}
           moduleId={data?.moduleId}
           selected={tc.id !== undefined && safeSelected.has(tc.id)}
-          expanded={tc.id !== undefined ? safeExpanded.has(tc.id) : false}
           onSelectedChange={data?.onSelectedChange ?? (() => {})}
           onReviewChange={data?.onReviewChange ?? (() => {})}
           onStatusChange={data?.onStatusChange ?? (() => {})}
-          onExpandedChange={(e) => {
-            if (tc.id !== undefined && data?.onExpandedChange) {
-              data.onExpandedChange(tc.id, e);
-            }
-          }}
           onRefresh={data?.onRefresh ?? (() => {})}
         />
       ) : (
@@ -185,22 +176,8 @@ const Index: FC<PlanCaseListProps> = ({
   const [importModalVisible, setImportModalVisible] = useState(false);
 
   /**
-   * 已展开的用例 id 集合
-   * 由父组件统一管理，配合虚拟化按需挂载 StepTable
-   * 默认空集，初始数据到达后由 auto-expand effect 一次性全展
-   * 之后用户可手动收起/展开，不会被覆盖
-   */
-  const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
-
-  /**
-   * 标记"是否已自动全展过"，避免每次筛选/数据刷新都重新全展覆盖用户操作
-   * 切换 planId / moduleId 时重置，让新模块也能默认全展
-   */
-  const hasAutoExpandedRef = useRef(false);
-
-  /**
    * 虚拟列表容器 ref + VariableSizeList ref
-   * 用于测量容器高度与在 expandedIds 变化时触发重测
+   * 用于测量容器高度
    */
   const listContainerRef = useRef<HTMLDivElement>(null);
   const virtualListRef = useRef<VariableSizeList>(null);
@@ -245,7 +222,22 @@ const Index: FC<PlanCaseListProps> = ({
           });
           const next: ITestCase[] = [];
           uniqueMap.forEach((v, k) => {
-            next.push(prevMap.get(k) ?? v);
+            const prevItem = prevMap.get(k);
+            if (prevItem) {
+              const keysA = Object.keys(prevItem);
+              const keysB = Object.keys(v);
+              const unchanged =
+                keysA.length === keysB.length &&
+                keysA.every((key) =>
+                  Object.is(
+                    prevItem[key as keyof ITestCase],
+                    v[key as keyof ITestCase],
+                  ),
+                );
+              next.push(unchanged ? prevItem : v);
+            } else {
+              next.push(v);
+            }
           });
           return next;
         });
@@ -261,32 +253,18 @@ const Index: FC<PlanCaseListProps> = ({
    */
   useEffect(() => {
     setCaseList([]);
-    hasAutoExpandedRef.current = false; // 切换模块/计划后允许重新全展
     fetchPlanData();
   }, [planId, moduleId]);
 
   /**
    * 刷新列表
+   * 同步触发 module 刷新，用于复制/删除等引起数据增减的场景，
+   * 保证左侧模块树的计数与列表保持一致
    */
   const handleRefresh = useCallback(() => {
     fetchPlanData();
-  }, [fetchPlanData]);
-
-  /**
-   * 默认展开子步骤
-   * 首次 filteredList 有数据时一次性把全部 id 加入 expandedIds
-   * 之后用户的收起操作不会被覆盖
-   */
-  useEffect(() => {
-    if (hasAutoExpandedRef.current) return;
-    if (filteredList.length === 0) return;
-    const ids = filteredList
-      .map((tc) => tc.id)
-      .filter((id): id is number => id !== undefined);
-    if (ids.length === 0) return;
-    setExpandedIds(new Set(ids));
-    hasAutoExpandedRef.current = true;
-  }, [filteredList]);
+    onModulesRefresh?.();
+  }, [fetchPlanData, onModulesRefresh]);
 
   const handleBatchExport = useCallback(
     () => message.info('批量导出功能开发中'),
@@ -433,56 +411,32 @@ const Index: FC<PlanCaseListProps> = ({
   /** 跟踪容器实际高度，供 VariableSizeList 使用 */
   const listHeight = useElementHeight(listContainerRef);
 
-  /**
-   * 折叠态单卡高度
-   * 仅含标题/状态/评审 tag/more 菜单等轻量内容
-   * 压到 64px 让卡片更紧凑（用户反馈"间距有点大"）
-   */
-  const COLLAPSED_HEIGHT = 70;
-  /** 展开态基线高度（ProCard 头部 + 边距） */
+  /** 用例卡片基线高度（ProCard 头部 + 边距） */
   const EXPANDED_BASE = 120;
   /** StepTable 中每行步骤的估算高度 */
   const STEP_ROW_HEIGHT = 32;
 
   /**
    * 估算某条用例的渲染高度
-   * 折叠时：固定 COLLAPSED_HEIGHT
-   * 展开时：基线 + 步骤数 × 行高（按当前 case_sub_steps 长度估算）
+   * 始终展开：基线 + 步骤数 × 行高（按当前 case_sub_steps 长度估算）
    */
   const itemSize = useCallback(
     (index: number) => {
       const tc = filteredList[index];
-      if (!tc || tc.id === undefined) return COLLAPSED_HEIGHT;
-      if (!expandedIds.has(tc.id)) return COLLAPSED_HEIGHT;
+      if (!tc || tc.id === undefined) return EXPANDED_BASE;
       const stepCount = tc.case_sub_steps?.length || 0;
       return EXPANDED_BASE + stepCount * STEP_ROW_HEIGHT;
     },
-    [filteredList, expandedIds],
+    [filteredList],
   );
 
   /**
-   * 展开/收起时让虚拟列表重新测量
+   * 列表数据变化时让虚拟列表重新测量
    * resetAfterIndex 让从 0 起的所有项重新计算偏移
    */
   useEffect(() => {
     virtualListRef.current?.resetAfterIndex(0, true);
-  }, [expandedIds, filteredList]);
-
-  /**
-   * 单条用例展开态变化回调
-   * 维持 setExpandedIds 的不可变更新
-   */
-  const handleExpandedChange = useCallback(
-    (caseId: number, expanded: boolean) => {
-      setExpandedIds((prev) => {
-        const next = new Set(prev);
-        if (expanded) next.add(caseId);
-        else next.delete(caseId);
-        return next;
-      });
-    },
-    [],
-  );
+  }, [filteredList]);
 
   /**
    * 构造虚拟列表行数据
@@ -493,26 +447,22 @@ const Index: FC<PlanCaseListProps> = ({
     () => ({
       // ?? [] 兜底，防止极短瞬间 filteredList 处于 undefined 状态
       list: filteredList ?? [],
-      expandedIds: expandedIds ?? new Set<number>(),
       selectedCaseIds: selectedCaseIds ?? new Set<number>(),
       planId,
       moduleId,
       onSelectedChange: handleCaseSelectedChange,
       onReviewChange: handleReviewChange,
       onStatusChange: handleStatusChange,
-      onExpandedChange: handleExpandedChange,
       onRefresh: handleRefresh,
     }),
     [
       filteredList,
-      expandedIds,
       selectedCaseIds,
       planId,
       moduleId,
       handleCaseSelectedChange,
       handleReviewChange,
       handleStatusChange,
-      handleExpandedChange,
       handleRefresh,
     ],
   );
