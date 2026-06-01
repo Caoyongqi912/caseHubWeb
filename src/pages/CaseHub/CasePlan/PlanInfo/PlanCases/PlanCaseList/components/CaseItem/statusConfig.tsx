@@ -26,8 +26,6 @@ export interface StepStatusConfig extends StatusConfig {
   icon: React.ReactNode;
 }
 
-export const QUICK_TOGGLE_STATUS: number[] = [1, 2];
-
 /**
  * 用例状态配置映射
  * 用于 CaseItem 组件的状态展示和批量操作
@@ -39,12 +37,6 @@ export const CASE_STATUS_CONFIG: Record<number, StatusConfig> = {
   3: { label: '阻塞', color: 'warning' },
   4: { label: '跳过', color: 'processing' },
 };
-
-/**
- * 保持向后兼容的别名
- * @deprecated 使用 CASE_STATUS_CONFIG 代替
- */
-export const STATUS_CONFIG_MAP = CASE_STATUS_CONFIG;
 
 /**
  * 步骤状态配置映射（用于步骤表格）
@@ -106,15 +98,3 @@ export const createStatusSelectItems = (): MenuProps['items'] =>
       </span>
     ),
   }));
-
-/**
- * 获取用例状态配置
- */
-export const getCaseStatusConfig = (status: number): StatusConfig =>
-  CASE_STATUS_CONFIG[status] || CASE_STATUS_CONFIG[0];
-
-/**
- * 获取步骤状态配置
- */
-export const getStepStatusConfig = (status: number): StepStatusConfig =>
-  STEP_STATUS_CONFIG[status] || STEP_STATUS_CONFIG[0];

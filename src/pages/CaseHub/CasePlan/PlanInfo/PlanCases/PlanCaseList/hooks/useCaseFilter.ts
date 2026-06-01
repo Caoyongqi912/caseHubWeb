@@ -24,7 +24,6 @@ export interface UseCaseFilterResult {
   hasActiveFilter: boolean;
   filteredList: ITestCase[];
   handleFilterChange: (newFilters: CaseFilterValues) => void;
-  clearFilters: () => void;
 }
 
 /**
@@ -38,7 +37,6 @@ export interface UseCaseFilterResult {
  *   hasActiveFilter,
  *   filteredList,
  *   handleFilterChange,
- *   clearFilters,
  * } = useCaseFilter(caseList);
  */
 export const useCaseFilter = (
@@ -71,9 +69,14 @@ export const useCaseFilter = (
   /**
    * 判断当前是否有激活的筛选条件
    * 用于控制筛选按钮的"激活"状态显示
+   * keyword 非空时也算激活
    */
   const hasActiveFilter = useMemo(() => {
-    return filters.caseStatus !== undefined || filters.isReview !== undefined;
+    return (
+      !!filters.keyword ||
+      filters.caseStatus !== undefined ||
+      filters.isReview !== undefined
+    );
   }, [filters]);
 
   /**
@@ -83,61 +86,10 @@ export const useCaseFilter = (
     setFilters(newFilters);
   }, []);
 
-  /**
-   * 清除所有筛选条件
-   */
-  const clearFilters = useCallback(() => {
-    setFilters({});
-  }, []);
-
   return {
     filters,
     hasActiveFilter,
     filteredList,
     handleFilterChange,
-    clearFilters,
   };
-};
-
-/**
- * 根据筛选条件过滤单个用例
- * @param testCase - 用例对象
- * @param filters - 筛选条件
- * @returns 是否满足筛选条件
- */
-export const filterTestCase = (
-  testCase: ITestCase,
-  filters: CaseFilterValues,
-): boolean => {
-  if (filters.keyword) {
-    const kw = filters.keyword.toLowerCase();
-    if (!testCase.case_name.toLowerCase().includes(kw)) {
-      return false;
-    }
-  }
-
-  if (filters.caseStatus !== undefined) {
-    if (testCase.case_status !== filters.caseStatus) {
-      return false;
-    }
-  }
-
-  if (filters.isReview !== undefined) {
-    if (testCase.is_review !== filters.isReview) {
-      return false;
-    }
-  }
-
-  return true;
-};
-
-/**
- * 筛选条件是否为空
- */
-export const isFilterEmpty = (filters: CaseFilterValues): boolean => {
-  return (
-    filters.keyword === undefined &&
-    filters.caseStatus === undefined &&
-    filters.isReview === undefined
-  );
 };

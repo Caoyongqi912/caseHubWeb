@@ -89,7 +89,6 @@ const StepTable: React.FC<StepTableProps> = ({ steps, planId }) => {
           actual_result: targetRow.actual_result ?? '',
           bug_url: targetRow.bug_url ?? '',
         };
-        console.log('[StepTable] 数据变更:', stepData);
         await updateCaseStepResult(stepData);
       }, 1000),
     [],
@@ -127,17 +126,9 @@ const StepTable: React.FC<StepTableProps> = ({ steps, planId }) => {
         prev.map((item) => (item.id === row.id ? newRow : item)),
       );
 
+      // 通过 emitDataChange 异步同步后端，避免与 debounce 重复触发接口
       emitDataChange(newRow);
-      await updateCaseStepResult({
-        plan_id: Number(planId),
-        step_id: row.id,
-        status: 1,
-        actual_result: newValue,
-      }).then(({ code }) => {
-        if (code === 0) {
-          message.success('已复制预期结果到实际结果');
-        }
-      });
+      message.success('已复制预期结果到实际结果');
     },
     [dataSource, emitDataChange, planId],
   );
@@ -291,12 +282,14 @@ const StepTable: React.FC<StepTableProps> = ({ steps, planId }) => {
           <BugUrlPopover
             record={record}
             onConfirm={(bugUrl) => {
-              const rowIndex = dataSource.findIndex(
+              // 通过 dataSourceRef 读取最新数据，避免 columns useMemo 依赖 dataSource
+              const current = dataSourceRef.current;
+              const rowIndex = current.findIndex(
                 (item) => item.id === record.id,
               );
               if (rowIndex === -1) return;
               const newRow = {
-                ...dataSource[rowIndex],
+                ...current[rowIndex],
                 bug_url: bugUrl,
               };
               editorFormRef.current?.setRowData?.(rowIndex, newRow);
@@ -313,7 +306,6 @@ const StepTable: React.FC<StepTableProps> = ({ steps, planId }) => {
       handleCopyExpectedToActual,
       statusOptions,
       renderStatusOption,
-      dataSource,
       emitDataChange,
     ],
   );

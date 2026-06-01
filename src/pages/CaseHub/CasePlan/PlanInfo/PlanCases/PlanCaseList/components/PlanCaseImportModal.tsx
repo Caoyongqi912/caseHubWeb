@@ -324,43 +324,46 @@ const PlanCaseImportModal: FC<PlanCaseImportModalProps> = ({
     [onOpenChange, resetAllState],
   );
 
-  const handleUpload = useCallback(async (fileList: any[]) => {
-    const rawFile = fileList?.[0]?.originFileObj as File;
-    if (!rawFile) return;
+  const handleUpload = useCallback(
+    async (fileList: { originFileObj?: File }[]) => {
+      const rawFile = fileList?.[0]?.originFileObj as File;
+      if (!rawFile) return;
 
-    setFile(rawFile);
-    setValidateResult(null);
-    setUploadError(null);
-    setUploading(true);
-
-    try {
-      const response = (await uploadPreviewCase(rawFile)) as any;
-      if (!response) {
-        setUploadError('服务器未返回数据，请重试');
-        return;
-      }
-
-      if (response.code === 0 && response.data) {
-        setValidateResult({
-          file_md5: response.data.file_md5 || '',
-          total_count: response.data.total_count || 0,
-          valid_count: response.data.valid_count || 0,
-          invalid_count: response.data.invalid_count || 0,
-          errors: response.data.errors || [],
-        });
-        setUploadError(null);
-      } else {
-        setUploadError(response.msg || '上传失败');
-        setValidateResult(null);
-      }
-    } catch (err: any) {
-      console.error('上传预览错误:', err);
-      setUploadError(err?.msg || err?.message || '上传失败，请重试');
+      setFile(rawFile);
       setValidateResult(null);
-    } finally {
-      setUploading(false);
-    }
-  }, []);
+      setUploadError(null);
+      setUploading(true);
+
+      try {
+        const response = (await uploadPreviewCase(rawFile)) as any;
+        if (!response) {
+          setUploadError('服务器未返回数据，请重试');
+          return;
+        }
+
+        if (response.code === 0 && response.data) {
+          setValidateResult({
+            file_md5: response.data.file_md5 || '',
+            total_count: response.data.total_count || 0,
+            valid_count: response.data.valid_count || 0,
+            invalid_count: response.data.invalid_count || 0,
+            errors: response.data.errors || [],
+          });
+          setUploadError(null);
+        } else {
+          setUploadError(response.msg || '上传失败');
+          setValidateResult(null);
+        }
+      } catch (err: any) {
+        console.error('上传预览错误:', err);
+        setUploadError(err?.msg || err?.message || '上传失败，请重试');
+        setValidateResult(null);
+      } finally {
+        setUploading(false);
+      }
+    },
+    [],
+  );
 
   const handleRemove = useCallback(async () => {
     if (validateResult?.file_md5) {

@@ -148,6 +148,26 @@ const pendingPlanCasesRequests = new Map<
 >();
 
 /**
+ * 生成稳定的去重 key
+ * - 未定义字段不参与序列化，避免 {is_review: undefined} 与 {} 被识别为不同 key
+ * - 字段按字典序排序，调用方传入顺序不影响命中
+ * 命中后：stats 路径（不传 is_review）与列表"未筛选"路径会复用同一份 in-flight 请求
+ */
+const buildPlanCasesKey = (data: {
+  plan_id: number;
+  plan_module_id?: number;
+  case_level?: number;
+  is_review?: boolean;
+}): string => {
+  const normalized: Record<string, unknown> = {};
+  for (const k of Object.keys(data).sort()) {
+    const v = (data as Record<string, unknown>)[k];
+    if (v !== undefined) normalized[k] = v;
+  }
+  return JSON.stringify(normalized);
+};
+
+/**
  * 查询测试计划下的用例列表
  * 自动去重：相同参数的并发请求共享同一个 Promise，避免重复网络请求
  * @param plan_id - 测试计划 ID
@@ -164,7 +184,7 @@ export const queryPlanCases = async (data: {
   case_level?: number;
   is_review?: boolean;
 }) => {
-  const key = JSON.stringify(data);
+  const key = buildPlanCasesKey(data);
   const pending = pendingPlanCasesRequests.get(key);
   if (pending) return pending;
 
@@ -314,4 +334,33 @@ export const commitPlanImportCase = async (data: {
     method: 'POST',
     data: data,
   });
+};
+/**
+ * 模块用例状态分布统计
+ * 对应后端 GET /api/hub/plan/modules/stats
+ */
+export interface ModuleStats {
+  total: number;
+  passed: number;
+  failed: number;
+  pending: number;
+  blocked: number;
+  skipped: number;
+  pass_rate: number;
+  execution_rate: number;
+}
+
+/**
+ * 批量获取计划下各模块的用例状态分布
+ * 用于替换对每个模块单独调用 queryPlanCases 的 N+1 模式
+ * @param plan_id - 测试计划 ID
+ */
+export const getPlanModulesStats = async (plan_id: number) => {
+  return request<IResponse<Record<string, ModuleStats>>>(
+    `/api/hub/plan/modules/stats`,
+    {
+      method: 'GET',
+      params: { plan_id },
+    },
+  );
 };

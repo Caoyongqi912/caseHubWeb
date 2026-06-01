@@ -1,7 +1,9 @@
 import { copyPlanCases } from '@/api/case/caseplan';
 import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import { Modal, Select } from 'antd';
-import { FC, useCallback, useEffect, useState } from 'react';
+import { FC, useCallback, useState } from 'react';
+import { CASE_STATUS_OPTIONS_FOR_COPY } from '../constants/caseStatus';
+import { usePlanModuleSelection } from './hooks/usePlanModuleSelection';
 import PlanModuleSelectForm from './PlanModuleSelectForm';
 
 export interface BatchCopyModalProps {
@@ -11,17 +13,6 @@ export interface BatchCopyModalProps {
   onCancel: () => void;
   onSuccess?: () => void;
 }
-
-/**
- * 用例状态选项
- * 用于复制时的初始状态设置
- * @deprecated 使用 constants/caseStatus.ts 中的 CASE_STATUS_OPTIONS_FOR_COPY 代替
- */
-const CASE_STATUS_OPTIONS = [
-  { label: '待执行', value: 0 },
-  { label: '通过', value: 1 },
-  { label: '失败', value: 2 },
-];
 
 /**
  * 批量复制用例弹窗
@@ -35,38 +26,26 @@ const BatchCopyModal: FC<BatchCopyModalProps> = ({
   onSuccess,
 }) => {
   const { colors, token } = useCaseHubTheme();
-  const [selectedPlanId, setSelectedPlanId] = useState<number | undefined>();
-  const [selectedModuleId, setSelectedModuleId] = useState<
-    number | undefined
-  >();
+  const {
+    selectedPlanId,
+    selectedModuleId,
+    submitting,
+    setSubmitting,
+    setSelectedPlanId,
+    setSelectedModuleId,
+    handlePlanChange,
+    handleModuleChange,
+  } = usePlanModuleSelection({ open, currentPlanId, onClose: onCancel });
+
   const [isReview, setIsReview] = useState<number>(0);
-  const [submitting, setSubmitting] = useState(false);
-
-  /** 弹窗打开时默认选中当前测试计划 */
-  useEffect(() => {
-    if (open && currentPlanId) {
-      setSelectedPlanId(Number(currentPlanId));
-    }
-  }, [open, currentPlanId]);
-
-  /** 选择目标测试计划，清空目录选择 */
-  const handlePlanChange = useCallback((planId: number | undefined) => {
-    setSelectedPlanId(planId);
-    setSelectedModuleId(undefined);
-  }, []);
-
-  /** 选择目标目录 */
-  const handleModuleChange = useCallback((moduleId: number | undefined) => {
-    setSelectedModuleId(moduleId);
-  }, []);
 
   /** 关闭弹窗并重置状态 */
   const handleModalClose = useCallback(() => {
+    setIsReview(0);
     setSelectedPlanId(undefined);
     setSelectedModuleId(undefined);
-    setIsReview(0);
     onCancel();
-  }, [onCancel]);
+  }, [onCancel, setSelectedPlanId, setSelectedModuleId]);
 
   /** 提交复制请求 */
   const handleSubmit = useCallback(async () => {
@@ -95,6 +74,7 @@ const BatchCopyModal: FC<BatchCopyModalProps> = ({
     isReview,
     handleModalClose,
     onSuccess,
+    setSubmitting,
   ]);
 
   return (
@@ -141,7 +121,7 @@ const BatchCopyModal: FC<BatchCopyModalProps> = ({
             style={{ width: '100%' }}
             value={isReview}
             onChange={setIsReview}
-            options={CASE_STATUS_OPTIONS}
+            options={CASE_STATUS_OPTIONS_FOR_COPY}
           />
         </div>
       </div>

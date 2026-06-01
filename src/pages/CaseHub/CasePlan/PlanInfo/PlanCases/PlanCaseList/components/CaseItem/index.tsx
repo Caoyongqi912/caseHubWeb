@@ -1,4 +1,4 @@
-import { DownOutlined, MoreOutlined } from '@ant-design/icons';
+import { DownOutlined, MoreOutlined, UpOutlined } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
 import {
   Button,
@@ -9,7 +9,7 @@ import {
   Tag,
   Typography,
 } from 'antd';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import {
   copyOnePlanCase,
@@ -19,7 +19,7 @@ import {
 import MyDrawer from '@/components/MyDrawer';
 import TestCaseDetail from '@/pages/CaseHub/CaseLibrary/TestCaseDetail';
 import { ITestCase } from '@/pages/CaseHub/types';
-import { useFnsRef } from '../../hooks/useFnRef';
+
 import { createMoreMenuItems } from './moreMenu';
 import {
   CASE_STATUS_CONFIG,
@@ -30,17 +30,14 @@ import StepTable from './StepTable';
 
 const { Text } = Typography;
 
-interface CollapseCommand {
-  action: 'expand' | 'collapse';
-  revision: number;
-}
-
 interface CaseItemProps {
   testCase: ITestCase;
   selected?: boolean;
   planId?: string;
   moduleId?: number | null;
-  collapseCommand?: CollapseCommand;
+  /** 父组件控制折叠态，便于虚拟化时按需挂载 StepTable */
+  expanded?: boolean;
+  onExpandedChange?: (expanded: boolean) => void;
   onSelectedChange?: (id: number | undefined, selected: boolean) => void;
   onReviewChange?: (caseId: number, isReview: boolean) => void;
   onStatusChange?: (caseId: number, status: number) => void;
@@ -61,7 +58,8 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
     planId,
     moduleId,
     selected = false,
-    collapseCommand,
+    expanded = false,
+    onExpandedChange,
     onSelectedChange,
     onReviewChange,
     onStatusChange,
@@ -72,7 +70,7 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
   const caseStatus = testCase.case_status ?? 0;
   const isReview = testCase.is_review ?? false;
 
-  const [collapsed, setCollapsed] = useState(false);
+  // 折叠态由父组件控制（便于虚拟化时按需挂载 StepTable）
   const [switchingReview, setSwitchingReview] = useState(false);
   const [switchingStatus, setSwitchingStatus] = useState(false);
   const [copyLoading, setCopyLoading] = useState(false);
@@ -81,23 +79,11 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
   const [hasEdited, setHasEdited] = useState(false);
 
   /**
-   * 响应外部展开/收起指令
-   * 通过 revision 变化检测新指令，避免频繁重渲染
+   * 同步 ref 维持最新 callback（render 期间同步赋值，不依赖 useEffect）
+   * 解决 useFnsRef 在 useEffect 异步更新中可能拿到陈旧 callback 的边界情况
    */
-  useEffect(() => {
-    if (!collapseCommand) return;
-    setCollapsed(collapseCommand.action === 'collapse');
-  }, [collapseCommand?.revision]);
-
-  /**
-   * 使用 useFnsRef 保持回调函数引用稳定
-   * 解决在异步操作中访问最新回调函数的问题
-   */
-  const callbacksRef = useFnsRef({
-    onReviewChange,
-    onStatusChange,
-    onRefresh,
-  });
+  const callbacksRef = useRef({ onReviewChange, onStatusChange, onRefresh });
+  callbacksRef.current = { onReviewChange, onStatusChange, onRefresh };
 
   /** 状态选择下拉菜单项 */
   const statusSelectItems = useMemo(() => createStatusSelectItems(), []);
@@ -197,11 +183,12 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
             message.success(
               updates.is_review ? '已标记为已评审' : '已取消评审',
             );
-            callbacksRef.current.onReviewChange?.(caseId, !!updates.is_review);
+            // 直接读 prop，不走 callbacksRef（避免 useEffect 时序问题）
+            onReviewChange?.(caseId, !!updates.is_review);
           } else if (updates.case_status !== undefined) {
             const config = CASE_STATUS_CONFIG[updates.case_status];
             message.success(`已切换为${config?.label ?? '未知'}`);
-            callbacksRef.current.onStatusChange?.(caseId, updates.case_status);
+            onStatusChange?.(caseId, updates.case_status);
           }
         } else {
           message.error('修改失败');
@@ -234,28 +221,46 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
   const currentStatusConfig =
     CASE_STATUS_CONFIG[caseStatus] || CASE_STATUS_CONFIG[0];
 
-  /** 卡片标题区域：复选框 + 评审状态 + 用例名称 */
+  /** 卡片标题区域：复选框 + 评审状态 + 用例名称
+   *  Checkbox 完全裸着不加任何 stopPropagation（之前 span+stopPropagation 吞了点击）
+   *  Tag / Text 加 onClick stopPropagation 避免触发 onHeaderClick
+   */
   const cardTitle = useMemo(
     () => (
-      <Space onClick={(e) => e.stopPropagation()}>
+      <Space size="small" wrap={false}>
         <Checkbox
           checked={selected}
-          onChange={(e) => onSelectedChange?.(caseId, e.target.checked)}
+          disabled={switchingStatus}
+          onChange={(e) => {
+            e.stopPropagation();
+            onSelectedChange?.(caseId, e.target.checked);
+          }}
         />
         <Tag
           color={isReview ? 'success' : 'default'}
           style={{ cursor: switchingReview ? 'wait' : 'pointer' }}
-          onClick={handleReviewToggle}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleReviewToggle();
+          }}
         >
           {switchingReview ? '切换中...' : isReview ? '已评审' : '待评审'}
         </Tag>
-        <Text strong onClick={() => setIsDetailOpen(true)}>
+        <Text
+          strong
+          style={{ cursor: 'pointer' }}
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsDetailOpen(true);
+          }}
+        >
           {testCase.case_name}
         </Text>
       </Space>
     ),
     [
       selected,
+      switchingStatus,
       caseId,
       isReview,
       switchingReview,
@@ -265,10 +270,25 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
     ],
   );
 
-  /** 卡片右侧操作区域：状态选择 + 更多操作 */
+  /** 切换展开/收起（手动触发，避免 ProCard collapsible 在 absolute 容器里异常） */
+  const handleToggleExpanded = useCallback(() => {
+    onExpandedChange?.(!expanded);
+  }, [onExpandedChange, expanded]);
+
+  /** 卡片右侧操作区域：状态选择 + 更多操作 + 折叠 chevron */
   const cardExtra = useMemo(
     () => (
-      <Space size="small">
+      <Space size="small" onClick={(e) => e.stopPropagation()}>
+        <Button
+          type="text"
+          size="small"
+          icon={expanded ? <UpOutlined /> : <DownOutlined />}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleToggleExpanded();
+          }}
+          title={expanded ? '收起' : '展开'}
+        />
         <Dropdown
           trigger={['click']}
           menu={{
@@ -294,11 +314,18 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
           </Tag>
         </Dropdown>
         <Dropdown menu={{ items: moreMenuItems }} trigger={['click']}>
-          <Button type="text" size="small" icon={<MoreOutlined />} />
+          <Button
+            type="text"
+            size="small"
+            icon={<MoreOutlined />}
+            onClick={(e) => e.stopPropagation()}
+          />
         </Dropdown>
       </Space>
     ),
     [
+      expanded,
+      handleToggleExpanded,
       statusSelectItems,
       handleStatusSelect,
       switchingStatus,
@@ -313,15 +340,14 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
       <ProCard
         title={cardTitle}
         variant="outlined"
-        hoverable
         headerBordered
         extra={cardExtra}
-        collapsible
-        collapsed={collapsed}
-        onCollapse={setCollapsed}
-        styles={{ body: { padding: 3 } }}
+        styles={{ body: { padding: 2 } }}
       >
-        <StepTable steps={testCase.case_sub_steps || []} planId={planId} />
+        {/* 折叠时不渲染 StepTable，避免 EditableProTable 提前挂载（虚拟化场景下的延迟挂载） */}
+        {expanded && (
+          <StepTable steps={testCase.case_sub_steps || []} planId={planId} />
+        )}
       </ProCard>
       <MyDrawer
         width={'60%'}
@@ -348,4 +374,4 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
 CaseItem.displayName = 'CaseItem';
 
 export default CaseItem;
-export type { CaseItemProps, CollapseCommand };
+export type { CaseItemProps };

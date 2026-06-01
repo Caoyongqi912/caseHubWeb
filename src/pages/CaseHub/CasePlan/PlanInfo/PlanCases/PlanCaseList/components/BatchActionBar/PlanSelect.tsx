@@ -7,7 +7,6 @@ import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 export interface PlanSelectProps {
   value?: number;
   onChange?: (planId: number | undefined, planInfo?: ICasePlan) => void;
-  excludePlanId?: number;
   placeholder?: string;
 }
 
@@ -23,7 +22,6 @@ interface PlanOption {
 const PlanSelect: FC<PlanSelectProps> = ({
   value,
   onChange,
-  excludePlanId,
   placeholder = '搜索测试计划...',
 }) => {
   const [fetching, setFetching] = useState(false);

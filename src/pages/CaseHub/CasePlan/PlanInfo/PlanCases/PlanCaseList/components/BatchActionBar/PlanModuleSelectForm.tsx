@@ -8,8 +8,6 @@ import PlanSelect from './PlanSelect';
  * 用于批量移动、复制等弹窗中的通用选择逻辑
  */
 interface PlanModuleSelectFormProps {
-  /** 当前计划ID（用于排除自身） */
-  excludePlanId?: number;
   /** 选中的计划ID */
   planId?: number;
   /** 选中的目录ID */
@@ -18,16 +16,9 @@ interface PlanModuleSelectFormProps {
   onPlanChange: (planId: number | undefined) => void;
   /** 目录选择变化回调 */
   onModuleChange: (moduleId: number | undefined) => void;
-  /** 是否显示评审状态选择（仅复制弹窗需要） */
-  showReviewStatus?: boolean;
-  /** 评审状态值 */
-  reviewStatus?: number;
-  /** 评审状态变化回调 */
-  onReviewStatusChange?: (status: number) => void;
 }
 
 const PlanModuleSelectForm: FC<PlanModuleSelectFormProps> = ({
-  excludePlanId,
   planId,
   moduleId,
   onPlanChange,
@@ -49,7 +40,6 @@ const PlanModuleSelectForm: FC<PlanModuleSelectFormProps> = ({
         <PlanSelect
           value={planId}
           onChange={onPlanChange}
-          excludePlanId={excludePlanId}
           placeholder="搜索测试计划..."
         />
       </div>

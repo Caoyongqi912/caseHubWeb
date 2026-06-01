@@ -1,101 +1,13 @@
-import { getPlanInfo } from '@/api/case/caseplan';
 import { useCaseHubTheme } from '@/pages/CaseHub/styles';
-import { ICasePlan } from '@/pages/CaseHub/types';
-import {
-  CalendarOutlined,
-  CheckCircleOutlined,
-  UserOutlined,
-} from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
 import { useParams } from '@umijs/max';
-import { Descriptions, Skeleton, Space, Tabs, Tag } from 'antd';
-import { useCallback, useEffect, useState } from 'react';
+import { Tabs } from 'antd';
 import PlanCases from './PlanCases';
+import PlanOverview from './PlanOverview';
 
 const Index = () => {
   const { planId } = useParams<{ planId: string }>();
   const { token } = useCaseHubTheme();
-  const [planInfo, setPlanInfo] = useState<ICasePlan>();
-  const [loading, setLoading] = useState(true);
-
-  /** 获取计划详情 */
-  const fetchPlanInfo = useCallback(() => {
-    if (!planId) return;
-    setLoading(true);
-    getPlanInfo(Number(planId))
-      .then(({ code, data }) => {
-        if (code === 0) setPlanInfo(data);
-      })
-      .finally(() => setLoading(false));
-  }, [planId]);
-
-  useEffect(() => {
-    fetchPlanInfo();
-  }, [fetchPlanInfo]);
-
-  /** 根据状态获取对应颜色 */
-  const getStatusColor = (status?: string) => {
-    const statusMap: Record<string, string> = {
-      进行中: token.colorInfo,
-      已完成: token.colorSuccess,
-      已暂停: token.colorWarning,
-      已取消: token.colorError,
-    };
-    return statusMap[status || ''] || token.colorTextTertiary;
-  };
-
-  /** 渲染计划概览信息 */
-  const renderPlanOverview = () => (
-    <Descriptions bordered column={2} size="small">
-      <Descriptions.Item label="计划名称" span={2}>
-        {planInfo?.plan_name || '-'}
-      </Descriptions.Item>
-      <Descriptions.Item label="负责人">
-        <Space>
-          <UserOutlined style={{ color: token.colorTextSecondary }} />
-          {planInfo?.charge_name || '-'}
-        </Space>
-      </Descriptions.Item>
-      <Descriptions.Item label="状态">
-        <Tag
-          style={{
-            color: getStatusColor(planInfo?.plan_status),
-            background:
-              planInfo?.plan_status === '已完成'
-                ? token.colorSuccessBg
-                : 'transparent',
-            border: `1px solid ${getStatusColor(planInfo?.plan_status)}`,
-          }}
-        >
-          {planInfo?.plan_status || '-'}
-        </Tag>
-      </Descriptions.Item>
-      <Descriptions.Item label="开始时间">
-        <Space>
-          <CalendarOutlined style={{ color: token.colorTextSecondary }} />
-          {planInfo?.plan_start_time || '-'}
-        </Space>
-      </Descriptions.Item>
-      <Descriptions.Item label="结束时间">
-        <Space>
-          <CalendarOutlined style={{ color: token.colorTextSecondary }} />
-          {planInfo?.plan_end_time || '-'}
-        </Space>
-      </Descriptions.Item>
-      <Descriptions.Item label="执行阶段">
-        {planInfo?.plan_phase || '-'}
-      </Descriptions.Item>
-      <Descriptions.Item label="完成率">
-        <Space>
-          <CheckCircleOutlined style={{ color: token.colorSuccess }} />
-          {planInfo?.completion_rate ?? 0}%
-        </Space>
-      </Descriptions.Item>
-      <Descriptions.Item label="备注" span={2}>
-        {planInfo?.plan_mark || '-'}
-      </Descriptions.Item>
-    </Descriptions>
-  );
 
   /** 需求模块占位 */
   const renderRequirementPlaceholder = () => (
@@ -116,7 +28,8 @@ const Index = () => {
     {
       key: 'cases',
       label: '用例',
-      children: <PlanCases planId={planId} planInfo={planInfo} />,
+      // PlanCases 自管理 planInfo（通过 props 接收可选值），此处不强制要求 planInfo 已加载
+      children: <PlanCases planId={planId} />,
     },
     {
       key: 'requirement',
@@ -126,17 +39,10 @@ const Index = () => {
     {
       key: 'overview',
       label: '概览',
-      children: renderPlanOverview(),
+      // PlanOverview 内部自管理 getPlanInfo loading，切换到此 Tab 时再加载
+      children: <PlanOverview planId={planId} />,
     },
   ];
-
-  if (loading) {
-    return (
-      <PageContainer>
-        <Skeleton active paragraph={{ rows: 6 }} />
-      </PageContainer>
-    );
-  }
 
   return (
     <PageContainer

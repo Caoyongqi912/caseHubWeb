@@ -1,5 +1,6 @@
 import {
   deletePlanModule,
+  getPlanModulesStats,
   insertPlanModule,
   movePlanModule,
   queryPlanCases,
@@ -188,7 +189,7 @@ const Index: FC<PlanModuleProps> = ({
     [],
   );
 
-  /** 初始化树形数据并默认展开、激活根节点，同时加载模块统计 */
+  /** 初始化树形数据并默认展开、激活根节点（统计加载由独立 useEffect 负责） */
   useEffect(() => {
     if (!planModules?.length) {
       setTreeData([]);
@@ -207,12 +208,68 @@ const Index: FC<PlanModuleProps> = ({
       onSelect?.(rootId ?? null);
       isInitializedRef.current = true;
     }
+  }, [planModules, convertToTreeData, onSelect]);
 
-    // 清空旧统计并加载新模块的统计
+  /**
+   * 将后端 /api/hub/plan/modules/stats 返回的 snake_case 字段映射到本地 camelCase 类型
+   * 保持组件其余逻辑（renderStatRing 等）不感知接口字段名变化
+   */
+  const mapApiStats = useCallback(
+    (api: {
+      total: number;
+      passed: number;
+      failed: number;
+      pending: number;
+      pass_rate: number;
+      execution_rate: number;
+    }): ModuleStats => ({
+      total: api.total,
+      passed: api.passed,
+      failed: api.failed,
+      pending: api.pending,
+      passRate: api.pass_rate,
+      executionRate: api.execution_rate,
+    }),
+    [],
+  );
+
+  /**
+   * 加载计划下所有模块的用例统计
+   * 优先调用聚合接口 /api/hub/plan/modules/stats，失败时回退到逐模块 queryPlanCases
+   * 含取消控制：planId 变化或组件卸载时丢弃过期响应
+   */
+  useEffect(() => {
+    if (!planId || !planModules?.length) return;
+    let cancelled = false;
+
+    // 清空旧统计，避免新旧数据串味
     setModuleStatsMap(new Map());
     loadingStatsRef.current.clear();
-    loadAllModuleStats(planModules);
-  }, [planModules, convertToTreeData, onSelect, loadAllModuleStats]);
+
+    getPlanModulesStats(Number(planId))
+      .then(({ code, data }) => {
+        if (cancelled) return;
+        if (code === 0 && data && typeof data === 'object') {
+          const next = new Map<number, ModuleStats>();
+          Object.entries(data).forEach(([k, v]) => {
+            if (v) next.set(Number(k), mapApiStats(v));
+          });
+          setModuleStatsMap(next);
+        } else {
+          // 业务码非 0 时回退到旧路径
+          loadAllModuleStats(planModules);
+        }
+      })
+      .catch(() => {
+        if (cancelled) return;
+        // 网络/服务异常时回退到旧路径
+        loadAllModuleStats(planModules);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [planId, planModules, mapApiStats, loadAllModuleStats]);
 
   const resetModal = useCallback(() => setModalState(createModalState()), []);
 
