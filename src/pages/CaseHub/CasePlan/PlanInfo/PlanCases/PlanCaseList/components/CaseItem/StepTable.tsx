@@ -421,14 +421,6 @@ const StepTable: React.FC<StepTableProps> = ({
           ),
       },
       {
-        title: '状态',
-        key: 'status',
-        dataIndex: 'status',
-        width: '10%',
-        render: (_, record) => renderStatusDisplay(record?.status),
-        formItemRender: () => renderStatusFormItem('status'),
-      },
-      {
         title: '一轮测试状态',
         key: 'first_status',
         dataIndex: 'first_status',
