@@ -89,7 +89,12 @@ interface CaseRowData {
   moduleId?: number | null;
   onSelectedChange: (id: number | undefined, selected: boolean) => void;
   onReviewChange: (caseId: number, isReview: boolean) => void;
-  onStatusChange: (caseId: number, status: number) => void;
+  /** 一轮测试状态变更回调（同步更新左侧模块树计数） */
+  onFirstStatusChange: (caseId: number, status: number) => void;
+  /** 二轮测试状态变更回调 */
+  onSecondStatusChange: (caseId: number, status: number) => void;
+  /** 卡片折叠状态变更回调（用于虚拟列表动态调整行高） */
+  onCollapsedChange: (caseId: number | undefined, collapsed: boolean) => void;
   onRefresh: () => void;
 }
 
@@ -130,7 +135,9 @@ const CaseRow: React.FC<{
           selected={tc.id !== undefined && safeSelected.has(tc.id)}
           onSelectedChange={data?.onSelectedChange ?? (() => {})}
           onReviewChange={data?.onReviewChange ?? (() => {})}
-          onStatusChange={data?.onStatusChange ?? (() => {})}
+          onFirstStatusChange={data?.onFirstStatusChange ?? (() => {})}
+          onSecondStatusChange={data?.onSecondStatusChange ?? (() => {})}
+          onCollapsedChange={data?.onCollapsedChange ?? (() => {})}
           onRefresh={data?.onRefresh ?? (() => {})}
         />
       ) : (
@@ -174,6 +181,14 @@ const Index: FC<PlanCaseListProps> = ({
   );
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [importModalVisible, setImportModalVisible] = useState(false);
+
+  /**
+   * 跟踪已折叠的用例 ID 集合
+   * 用于 itemSize 动态计算：折叠态的卡片只返回头部高度（不含表格）
+   */
+  const [collapsedCaseIds, setCollapsedCaseIds] = useState<Set<number>>(
+    () => new Set(),
+  );
 
   /**
    * 虚拟列表容器 ref + VariableSizeList ref
@@ -360,14 +375,30 @@ const Index: FC<PlanCaseListProps> = ({
   );
 
   /**
-   * 单个用例状态切换
-   * 更新本地状态，避免不必要的全量刷新
+   * 单个用例一轮测试状态切换
+   * 仅更新对应字段，保持其它状态不变；同步触发 onModulesRefresh 以更新左侧模块树计数
    */
-  const handleStatusChange = useCallback(
+  const handleFirstStatusChange = useCallback(
     (caseId: number, status: number) => {
       setCaseList((prev) =>
         prev.map((tc) =>
-          tc.id === caseId ? { ...tc, case_status: status } : tc,
+          tc.id === caseId ? { ...tc, first_status: status } : tc,
+        ),
+      );
+      onModulesRefresh?.();
+    },
+    [onModulesRefresh],
+  );
+
+  /**
+   * 单个用例二轮测试状态切换
+   * 逻辑同 handleFirstStatusChange
+   */
+  const handleSecondStatusChange = useCallback(
+    (caseId: number, status: number) => {
+      setCaseList((prev) =>
+        prev.map((tc) =>
+          tc.id === caseId ? { ...tc, second_status: status } : tc,
         ),
       );
       onModulesRefresh?.();
@@ -381,6 +412,28 @@ const Index: FC<PlanCaseListProps> = ({
   const handleExitSelection = useCallback(() => {
     setSelectedCaseIds(new Set());
   }, []);
+
+  /**
+   * 处理卡片折叠状态变更
+   * 更新 collapsedCaseIds 集合，并通知虚拟列表从该索引起重新测量行高
+   */
+  const handleCollapsedChange = useCallback(
+    (caseId: number | undefined, collapsed: boolean) => {
+      if (caseId === undefined) return;
+      setCollapsedCaseIds((prev) => {
+        const next = new Set(prev);
+        if (collapsed) {
+          next.add(caseId);
+        } else {
+          next.delete(caseId);
+        }
+        return next;
+      });
+      // 让虚拟列表重新计算受影响行的高度（含当前行及之后所有行）
+      virtualListRef.current?.resetAfterIndex(0, true);
+    },
+    [],
+  );
 
   /**
    * 添加用例到计划
@@ -415,19 +468,29 @@ const Index: FC<PlanCaseListProps> = ({
   const EXPANDED_BASE = 120;
   /** StepTable 中每行步骤的估算高度 */
   const STEP_ROW_HEIGHT = 32;
+  /**
+   * 折叠态卡片仅保留头部的高度（不含表格）
+   * 约等于 ProCard headerBordered 区域 + padding
+   */
+  const COLLAPSED_HEIGHT = 52;
 
   /**
    * 估算某条用例的渲染高度
-   * 始终展开：基线 + 步骤数 × 行高（按当前 case_sub_steps 长度估算）
+   * 折叠时只返回头部高度（COLLAPSED_HEIGHT），
+   * 展开时返回基线 + 步骤数 × 行高
+   *
+   * 注意：collapsedCaseIds 变化时会触发 resetAfterIndex(0)，
+   * 让 VariableSizeList 重新测量所有行高，无需在此处做增量更新。
    */
   const itemSize = useCallback(
     (index: number) => {
       const tc = filteredList[index];
       if (!tc || tc.id === undefined) return EXPANDED_BASE;
+      if (collapsedCaseIds.has(tc.id)) return COLLAPSED_HEIGHT;
       const stepCount = tc.case_sub_steps?.length || 0;
       return EXPANDED_BASE + stepCount * STEP_ROW_HEIGHT;
     },
-    [filteredList],
+    [filteredList, collapsedCaseIds],
   );
 
   /**
@@ -452,7 +515,9 @@ const Index: FC<PlanCaseListProps> = ({
       moduleId,
       onSelectedChange: handleCaseSelectedChange,
       onReviewChange: handleReviewChange,
-      onStatusChange: handleStatusChange,
+      onFirstStatusChange: handleFirstStatusChange,
+      onSecondStatusChange: handleSecondStatusChange,
+      onCollapsedChange: handleCollapsedChange,
       onRefresh: handleRefresh,
     }),
     [
@@ -462,7 +527,9 @@ const Index: FC<PlanCaseListProps> = ({
       moduleId,
       handleCaseSelectedChange,
       handleReviewChange,
-      handleStatusChange,
+      handleFirstStatusChange,
+      handleSecondStatusChange,
+      handleCollapsedChange,
       handleRefresh,
     ],
   );
@@ -579,8 +646,11 @@ const Index: FC<PlanCaseListProps> = ({
                   description={
                     <span style={{ color: colors.textTertiary }}>
                       {filters.keyword ||
-                      filters.caseStatus !== undefined ||
-                      filters.isReview !== undefined
+                      filters.firstStatus !== undefined ||
+                      filters.secondStatus !== undefined ||
+                      filters.isReview !== undefined ||
+                      (filters.creators !== undefined &&
+                        filters.creators.length > 0)
                         ? '没有匹配的用例'
                         : '暂无用例，请新增或规划用例'}
                     </span>

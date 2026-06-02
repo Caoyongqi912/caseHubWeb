@@ -8,12 +8,28 @@ import { ITestCase } from '@/pages/CaseHub/types';
 import { useCallback, useMemo, useState } from 'react';
 
 /**
+ * 创建人筛选条目
+ * - id: 用户 ID，对应 ITestCase.creatorId，用于精确匹配
+ * - name: 用户名，对应 ITestCase.creatorName，用于 Chip 展示
+ */
+export interface CreatorFilterItem {
+  id: number;
+  name: string;
+}
+
+/**
  * 筛选值类型定义
+ * - firstStatus: 一轮执行状态（0=待执行 / 1=通过 / 2=失败）
+ * - secondStatus: 二轮执行状态（取值同 firstStatus）
+ * - creators: 创建人多选，命中用例的 creatorId 字段（精确 ID 匹配）
+ *   存 id + name 是为了 Chip 展示无需回查用户名
  */
 export interface CaseFilterValues {
   keyword?: string;
-  caseStatus?: number;
+  firstStatus?: number;
+  secondStatus?: number;
   isReview?: boolean;
+  creators?: CreatorFilterItem[];
 }
 
 /**
@@ -55,8 +71,22 @@ export const useCaseFilter = (
       result = result.filter((c) => c.case_name.toLowerCase().includes(kw));
     }
 
-    if (filters.caseStatus !== undefined) {
-      result = result.filter((c) => c.case_status === filters.caseStatus);
+    if (filters.firstStatus !== undefined) {
+      result = result.filter(
+        (c) => (c.first_status ?? 0) === filters.firstStatus,
+      );
+    }
+
+    if (filters.secondStatus !== undefined) {
+      result = result.filter(
+        (c) => (c.second_status ?? 0) === filters.secondStatus,
+      );
+    }
+
+    if (filters.creators && filters.creators.length > 0) {
+      // 使用 Set 提升 O(1) 查找性能（filter 内被调用次数等于用例数 × 选中人数）
+      const creatorIds = new Set(filters.creators.map((c) => c.id));
+      result = result.filter((c) => creatorIds.has(c.creatorId));
     }
 
     if (filters.isReview !== undefined) {
@@ -74,8 +104,10 @@ export const useCaseFilter = (
   const hasActiveFilter = useMemo(() => {
     return (
       !!filters.keyword ||
-      filters.caseStatus !== undefined ||
-      filters.isReview !== undefined
+      filters.firstStatus !== undefined ||
+      filters.secondStatus !== undefined ||
+      filters.isReview !== undefined ||
+      (filters.creators !== undefined && filters.creators.length > 0)
     );
   }, [filters]);
 

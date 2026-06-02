@@ -4,7 +4,7 @@ import {
   EditableProTable,
   ProColumns,
 } from '@ant-design/pro-components';
-import { Button, message, Select, Tooltip, Typography } from 'antd';
+import { Button, Form, message, Select, Tooltip, Typography } from 'antd';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { updateCaseStepResult } from '@/api/case/caseplan';
@@ -18,7 +18,9 @@ const { Text } = Typography;
 interface StepData {
   step_id: number;
   plan_id: number;
-  status: number;
+  status?: number;
+  first_status?: number;
+  second_status?: number;
   actual_result: string;
   bug_url: string;
 }
@@ -26,13 +28,22 @@ interface StepData {
 interface StepTableProps {
   steps: CaseSubStep[];
   planId?: string;
+  /** 父用例一轮测试状态（可选），变化时级联更新所有步骤 first_status */
+  firstStatus?: number;
+  /** 父用例二轮测试状态（可选），变化时级联更新所有步骤 second_status */
+  secondStatus?: number;
 }
 
 /**
  * 用例步骤表格组件
  * 支持编辑实际结果、状态、缺陷链接，数据变更自动同步后端（防抖 1s）
  */
-const StepTable: React.FC<StepTableProps> = ({ steps, planId }) => {
+const StepTable: React.FC<StepTableProps> = ({
+  steps,
+  planId,
+  firstStatus,
+  secondStatus,
+}) => {
   const editorFormRef = useRef<EditableFormInstance<CaseSubStep>>();
   const [dataSource, setDataSource] = useState<CaseSubStep[]>(steps);
 
@@ -60,8 +71,17 @@ const StepTable: React.FC<StepTableProps> = ({ steps, planId }) => {
   }, [steps]);
 
   /**
+   * 跟踪上一次参与级联更新的状态值
+   * 使用 ref 而非 state：
+   * - 仅作为读取源判断"是否变化"，无需订阅变更
+   * - 避免在级联过程中触发额外重渲染
+   */
+  const lastCascadeFirstStatusRef = useRef<number | undefined>(undefined);
+  const lastCascadeSecondStatusRef = useRef<number | undefined>(undefined);
+
+  /**
    * 步骤状态选项配置
-   * 用于表单下拉选择
+   * 用于表单下拉选择（步骤主状态 / 一轮 / 二轮共用同一份枚举）
    */
   const statusOptions = useMemo(
     () =>
@@ -86,6 +106,8 @@ const StepTable: React.FC<StepTableProps> = ({ steps, planId }) => {
           step_id: targetRow.id,
           plan_id: Number(planIdRef.current),
           status: targetRow.status ?? 0,
+          first_status: targetRow.first_status,
+          second_status: targetRow.second_status,
           actual_result: targetRow.actual_result ?? '',
           bug_url: targetRow.bug_url ?? '',
         };
@@ -100,6 +122,111 @@ const StepTable: React.FC<StepTableProps> = ({ steps, planId }) => {
       emitDataChange.cancel();
     };
   }, [emitDataChange]);
+
+  /**
+   * 批量同步所有步骤状态到后端（防抖 1s）
+   * 用途：父用例状态变更时级联更新其下全部步骤
+   * - 并行调用每条步骤的 updateCaseStepResult 接口
+   * - 通过 ref 读取最新数据，函数体无需依赖外部 state
+   * - 接受部分更新对象（first_status / second_status），仅提交变更字段
+   */
+  const emitBatchStatusChange = useMemo(
+    () =>
+      debounce(
+        async (updates: { first_status?: number; second_status?: number }) => {
+          const current = dataSourceRef.current;
+          if (!current.length || !planIdRef.current) return;
+
+          // 并行调用每条步骤的更新接口，单条失败不影响其他步骤
+          await Promise.all(
+            current.map((row) =>
+              updateCaseStepResult({
+                step_id: row.id,
+                plan_id: Number(planIdRef.current),
+                ...updates,
+                actual_result: row.actual_result ?? '',
+                bug_url: row.bug_url ?? '',
+              }),
+            ),
+          );
+        },
+        1000,
+      ),
+    [],
+  );
+
+  /** 组件卸载时取消批量同步的未执行 debounce */
+  useEffect(() => {
+    return () => {
+      emitBatchStatusChange.cancel();
+    };
+  }, [emitBatchStatusChange]);
+
+  /**
+   * 将父用例级联状态应用到全部步骤（本地 + 编辑表单）
+   * 仅做本地状态与 ProTable 行数据同步，不直接发请求；
+   * 防抖请求由调用方通过 emitBatchStatusChange 触发
+   * @param field 状态字段名
+   * @param value 新状态值
+   */
+  const applyCascadeToSteps = useCallback(
+    (field: 'first_status' | 'second_status', value: number) => {
+      const current = dataSourceRef.current;
+      if (current.length === 0) return;
+
+      // 本地状态：批量覆盖所有步骤的指定字段
+      const updatedSteps = current.map((step) => ({
+        ...step,
+        [field]: value,
+      }));
+      setDataSource(updatedSteps);
+
+      // 同步更新可编辑表单中的行数据，保证 ProTable 渲染一致
+      updatedSteps.forEach((row, index) => {
+        editorFormRef.current?.setRowData?.(index, row);
+      });
+    },
+    [],
+  );
+
+  /**
+   * 监听父用例一轮测试状态变更，级联更新所有步骤 first_status
+   * - 仅在 firstStatus 实际变化时触发
+   * - 跳过初次挂载（lastCascadeFirstStatusRef.current 为 undefined）以避免覆盖已有数据
+   * - 立即更新本地 dataSource 与编辑表单行数据（视觉即时反馈）
+   * - 触发防抖批量同步到后端（避免与单步编辑接口重复请求）
+   */
+  useEffect(() => {
+    if (firstStatus === undefined) return;
+    if (lastCascadeFirstStatusRef.current === firstStatus) return;
+
+    if (lastCascadeFirstStatusRef.current === undefined) {
+      lastCascadeFirstStatusRef.current = firstStatus;
+      return;
+    }
+
+    lastCascadeFirstStatusRef.current = firstStatus;
+    applyCascadeToSteps('first_status', firstStatus);
+    emitBatchStatusChange({ first_status: firstStatus });
+  }, [firstStatus, emitBatchStatusChange, applyCascadeToSteps]);
+
+  /**
+   * 监听父用例二轮测试状态变更，级联更新所有步骤 second_status
+   * 逻辑同 caseStatus 级联
+   */
+  useEffect(() => {
+    if (secondStatus === undefined) return;
+    if (lastCascadeSecondStatusRef.current === secondStatus) return;
+
+    if (lastCascadeSecondStatusRef.current === undefined) {
+      lastCascadeSecondStatusRef.current = secondStatus;
+      return;
+    }
+
+    lastCascadeSecondStatusRef.current = secondStatus;
+    applyCascadeToSteps('second_status', secondStatus);
+    emitBatchStatusChange({ second_status: secondStatus });
+  }, [secondStatus, emitBatchStatusChange, applyCascadeToSteps]);
 
   /**
    * 将预期结果复制到实际结果，并标记为通过状态
@@ -148,6 +275,45 @@ const StepTable: React.FC<StepTableProps> = ({ steps, planId }) => {
       </span>
     );
   }, []);
+
+  /**
+   * 渲染状态展示单元格（非编辑模式）
+   * 仅展示当前状态对应的图标 + label
+   */
+  const renderStatusDisplay = useCallback((value?: number) => {
+    const cfg = STEP_STATUS_CONFIG[value ?? 0];
+    if (!cfg) return <Text type="secondary">-</Text>;
+    return (
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+        {cfg.icon}
+        {cfg.label}
+      </span>
+    );
+  }, []);
+
+  /**
+   * 渲染状态可编辑单元格（编辑模式）
+   * 关键：必须用 Form.Item 包裹 Select，让 EditableProTable 的编辑表单
+   * 知道这个字段存在；否则用户在下拉里选新状态后，编辑表单感知不到变化，
+   * onValuesChange 不会触发，dataSource 不会更新，关闭后 UI 又回到旧值。
+   * @param field 字段名（status / first_status / second_status）
+   */
+  const renderStatusFormItem = useCallback(
+    (field: 'status' | 'first_status' | 'second_status') => (
+      <Form.Item name={field} noStyle>
+        <Select
+          variant="underlined"
+          style={{ width: '100%' }}
+          options={statusOptions}
+          optionRender={(option) =>
+            renderStatusOption(Number(option.data.value))
+          }
+          labelRender={(option) => renderStatusOption(Number(option.value))}
+        />
+      </Form.Item>
+    ),
+    [statusOptions, renderStatusOption],
+  );
 
   /**
    * 表格列配置
@@ -258,24 +424,30 @@ const StepTable: React.FC<StepTableProps> = ({ steps, planId }) => {
         title: '状态',
         key: 'status',
         dataIndex: 'status',
-        width: '12%',
-        formItemRender: (_, { record }) => (
-          <Select
-            variant="underlined"
-            value={record?.status ?? 0}
-            style={{ width: '100%' }}
-            options={statusOptions}
-            optionRender={(option) =>
-              renderStatusOption(Number(option.data.value))
-            }
-            labelRender={(option) => renderStatusOption(Number(option.value))}
-          />
-        ),
+        width: '10%',
+        render: (_, record) => renderStatusDisplay(record?.status),
+        formItemRender: () => renderStatusFormItem('status'),
+      },
+      {
+        title: '一轮测试状态',
+        key: 'first_status',
+        dataIndex: 'first_status',
+        width: '11%',
+        render: (_, record) => renderStatusDisplay(record?.first_status),
+        formItemRender: () => renderStatusFormItem('first_status'),
+      },
+      {
+        title: '二轮测试状态',
+        key: 'second_status',
+        dataIndex: 'second_status',
+        width: '11%',
+        render: (_, record) => renderStatusDisplay(record?.second_status),
+        formItemRender: () => renderStatusFormItem('second_status'),
       },
       {
         title: '缺陷',
         dataIndex: 'bug_url',
-        width: '12%',
+        width: '10%',
         ellipsis: true,
         editable: false,
         render: (_, record: CaseSubStep) => (
@@ -304,8 +476,8 @@ const StepTable: React.FC<StepTableProps> = ({ steps, planId }) => {
     ],
     [
       handleCopyExpectedToActual,
-      statusOptions,
-      renderStatusOption,
+      renderStatusDisplay,
+      renderStatusFormItem,
       emitDataChange,
     ],
   );
@@ -331,6 +503,7 @@ const StepTable: React.FC<StepTableProps> = ({ steps, planId }) => {
       options={false}
       columns={stepColumns}
       recordCreatorProps={false}
+      scroll={{ x: 'max-content' }}
       editable={{
         type: 'multiple',
         editableKeys,

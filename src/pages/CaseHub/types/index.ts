@@ -40,6 +40,8 @@ export interface ITestCase {
   creatorId: number;
   project_id?: number;
   module_id?: number;
+  first_status?: number;
+  second_status?: number;
 }
 
 export interface CaseSubStep {
@@ -50,6 +52,8 @@ export interface CaseSubStep {
   expected_result: string | null;
   actual_result?: string | null;
   status?: number;
+  first_status?: number;
+  second_status?: number;
   bug_url?: string | null;
 }
 

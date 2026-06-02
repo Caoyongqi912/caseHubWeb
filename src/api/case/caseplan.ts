@@ -237,6 +237,10 @@ export const updateAssociatePlanCases = async (data: {
   case_id_list: number[];
   is_review?: number;
   case_status?: number;
+  /** 一轮测试状态（与 case_status 复用同一枚举：0=未开始/1=通过/2=失败/3=阻塞/4=跳过） */
+  first_status?: number;
+  /** 二轮测试状态（枚举值同 first_status） */
+  second_status?: number;
 }) => {
   return request<IResponse<number>>('/api/hub/plan/cases/update', {
     method: 'POST',
@@ -309,6 +313,10 @@ export const updateCaseStepResult = async (data: {
   plan_id: number;
   step_id: number;
   status?: number;
+  /** 一轮测试状态 */
+  first_status?: number;
+  /** 二轮测试状态 */
+  second_status?: number;
   actual_result?: string;
   bug_url?: string;
 }) => {
@@ -336,8 +344,26 @@ export const commitPlanImportCase = async (data: {
   });
 };
 /**
+ * 单轮测试统计（一轮 / 二轮），用于模块目录节点的 per-round Progress 展示
+ * 对应后端 GET /api/hub/plan/modules/stats 响应中的 first / second 字段
+ */
+export interface RoundStats {
+  passed: number;
+  failed: number;
+  pending: number;
+  pass_rate: number;
+  execution_rate: number;
+}
+
+/**
  * 模块用例状态分布统计
+ *
  * 对应后端 GET /api/hub/plan/modules/stats
+ *
+ * 字段说明：
+ * - 旧字段（total / passed / failed / ...）保留以兼容历史数据，对应旧版主状态维度
+ * - first / second 为一轮 / 二轮测试的 per-round 统计，可选，后端支持后回填
+ *   旧版本接口不返回时，前端按 0 降级展示
  */
 export interface ModuleStats {
   total: number;
@@ -348,6 +374,10 @@ export interface ModuleStats {
   skipped: number;
   pass_rate: number;
   execution_rate: number;
+  /** 一轮测试统计（可选） */
+  first?: RoundStats;
+  /** 二轮测试统计（可选） */
+  second?: RoundStats;
 }
 
 /**

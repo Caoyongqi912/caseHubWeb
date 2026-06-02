@@ -1,6 +1,5 @@
 import {
   deletePlanModule,
-  getPlanModulesStats,
   insertPlanModule,
   movePlanModule,
   queryPlanCases,
@@ -43,15 +42,65 @@ interface TreeDataNode extends DataNode {
   isRoot?: boolean;
 }
 
-/** 模块用例统计 */
-interface ModuleStats {
-  total: number;
+/**
+ * 单轮测试统计（一轮 / 二轮）
+ * 与 API 层 @/api/case/caseplan 中 RoundStats 字段一一对应，但采用 camelCase 命名
+ */
+interface RoundStats {
   passed: number;
   failed: number;
   pending: number;
   passRate: number;
   executionRate: number;
 }
+
+/** 模块用例统计（按测试轮次拆分） */
+interface ModuleStats {
+  /** 模块下用例总数（两个轮次共享） */
+  total: number;
+  /** 一轮测试统计 */
+  first: RoundStats;
+  /** 二轮测试统计 */
+  second: RoundStats;
+}
+
+/**
+ * 用例状态字段名（用于本地按轮次聚合统计）
+ * 0=未开始 / 1=通过 / 2=失败 / 3=阻塞 / 4=跳过
+ */
+type RoundStatusField = 'first_status' | 'second_status';
+
+/**
+ * 从用例列表按指定状态字段聚合单轮统计
+ * 通过单次遍历累计三个计数器（passed/failed/pending），避免 filter + length 多次扫描
+ * @param cases - 用例列表
+ * @param field - 要统计的状态字段名（first_status / second_status）
+ * @returns 该轮次的统计数据
+ */
+const computeRoundStats = (
+  cases: ReadonlyArray<Partial<Record<RoundStatusField, number | undefined>>>,
+  field: RoundStatusField,
+): RoundStats => {
+  let passed = 0;
+  let failed = 0;
+  let pending = 0;
+  for (const c of cases) {
+    const v = c[field];
+    if (v === 1) passed += 1;
+    else if (v === 2) failed += 1;
+    // 0 / undefined / 3 / 4 都归为未执行（含未开始 / 阻塞 / 跳过）
+    else pending += 1;
+  }
+  const executed = passed + failed;
+  return {
+    passed,
+    failed,
+    pending,
+    passRate: executed > 0 ? Math.round((passed / executed) * 100) : 0,
+    executionRate:
+      cases.length > 0 ? Math.round((executed / cases.length) * 100) : 0,
+  };
+};
 
 type ModalMode = 'add' | 'edit';
 
@@ -112,7 +161,9 @@ const Index: FC<PlanModuleProps> = ({
     [],
   );
 
-  /** 加载单个模块的用例统计 */
+  /** 加载单个模块的用例统计
+   * 本地按 first_status / second_status 字段分别聚合一轮 / 二轮统计
+   */
   const loadModuleStats = useCallback(
     async (moduleId: number) => {
       if (!planId || loadingStatsRef.current.has(moduleId)) return;
@@ -125,26 +176,16 @@ const Index: FC<PlanModuleProps> = ({
         });
         if (code === 0) {
           const cases = Array.isArray(data) ? data : [];
-          const passed = cases.filter((c) => c.case_status === 1).length;
-          const failed = cases.filter((c) => c.case_status === 2).length;
-          const pending = cases.filter(
-            (c) => c.case_status === undefined || c.case_status === 0,
-          ).length;
-          const executed = passed + failed;
+          // 一次遍历同时计算两轮统计（computeRoundStats 内部已优化为单次循环）
+          const first = computeRoundStats(cases, 'first_status');
+          const second = computeRoundStats(cases, 'second_status');
 
           setModuleStatsMap((prev) => {
             const next = new Map(prev);
             next.set(moduleId, {
               total: cases.length,
-              passed,
-              failed,
-              pending,
-              passRate:
-                executed > 0 ? Math.round((passed / executed) * 100) : 0,
-              executionRate:
-                cases.length > 0
-                  ? Math.round((executed / cases.length) * 100)
-                  : 0,
+              first,
+              second,
             });
             return next;
           });
@@ -211,65 +252,24 @@ const Index: FC<PlanModuleProps> = ({
   }, [planModules, convertToTreeData, onSelect]);
 
   /**
-   * 将后端 /api/hub/plan/modules/stats 返回的 snake_case 字段映射到本地 camelCase 类型
-   * 保持组件其余逻辑（renderStatRing 等）不感知接口字段名变化
-   */
-  const mapApiStats = useCallback(
-    (api: {
-      total: number;
-      passed: number;
-      failed: number;
-      pending: number;
-      pass_rate: number;
-      execution_rate: number;
-    }): ModuleStats => ({
-      total: api.total,
-      passed: api.passed,
-      failed: api.failed,
-      pending: api.pending,
-      passRate: api.pass_rate,
-      executionRate: api.execution_rate,
-    }),
-    [],
-  );
-
-  /**
-   * 加载计划下所有模块的用例统计
-   * 优先调用聚合接口 /api/hub/plan/modules/stats，失败时回退到逐模块 queryPlanCases
-   * 含取消控制：planId 变化或组件卸载时丢弃过期响应
+   * 加载各模块用例统计：直接走本地计算路径
+   *
+   * 历史原因：
+   * - 原主路径 getPlanModulesStats 旧版不返回 per-round（first/second）字段，
+   *   即便 type 扩展了，仍会被 mapApiStats 降级为 emptyRoundStats()，导致双 Progress 显示 0
+   * - 旧版 fallback 路径 loadAllModuleStats 在每模块调用一次 queryPlanCases，
+   *   拿到首层 + 步进数据后由 computeRoundStats 一次遍历算出 first / second，是当前唯一正确的来源
+   * - 后端 /api/hub/plan/modules/stats 后续若支持 per-round，可在此处重新切换到主路径
    */
   useEffect(() => {
     if (!planId || !planModules?.length) return;
-    let cancelled = false;
 
     // 清空旧统计，避免新旧数据串味
     setModuleStatsMap(new Map());
     loadingStatsRef.current.clear();
 
-    getPlanModulesStats(Number(planId))
-      .then(({ code, data }) => {
-        if (cancelled) return;
-        if (code === 0 && data && typeof data === 'object') {
-          const next = new Map<number, ModuleStats>();
-          Object.entries(data).forEach(([k, v]) => {
-            if (v) next.set(Number(k), mapApiStats(v));
-          });
-          setModuleStatsMap(next);
-        } else {
-          // 业务码非 0 时回退到旧路径
-          loadAllModuleStats(planModules);
-        }
-      })
-      .catch(() => {
-        if (cancelled) return;
-        // 网络/服务异常时回退到旧路径
-        loadAllModuleStats(planModules);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [planId, planModules, mapApiStats, loadAllModuleStats]);
+    loadAllModuleStats(planModules);
+  }, [planId, planModules, loadAllModuleStats]);
 
   const resetModal = useCallback(() => setModalState(createModalState()), []);
 
@@ -467,7 +467,17 @@ const Index: FC<PlanModuleProps> = ({
     [handleOpenAddModal, handleOpenEditModal, handleDeleteModule],
   );
 
-  /** 渲染迷你统计进度环
+  /**
+   * 单轮 Progress 描边色
+   * 优先级：失败 > 100% 完成 > 进行中
+   */
+  const getRoundStrokeColor = (round: RoundStats): string => {
+    if (round.failed > 0) return token.colorError;
+    if (round.executionRate === 100) return token.colorSuccess;
+    return token.colorPrimary;
+  };
+
+  /** 渲染迷你统计进度环（一轮 + 二轮两个圆环）
    * 只在 root 目录下展示全量数据的统计情况（包含进度环和详细统计）
    * 子目录只展示简单的用例数量
    */
@@ -480,38 +490,69 @@ const Index: FC<PlanModuleProps> = ({
         ) : null;
       }
 
-      // root 目录显示全量统计
+      // root 目录但无统计或无用例时，仅显示数量
       if (!stats || caseCount === 0) {
         return caseCount > 0 ? (
           <span style={nodeStyles.caseCount}>{caseCount}</span>
         ) : null;
       }
 
-      const strokeColor =
-        stats.failed > 0
-          ? token.colorError
-          : stats.executionRate === 100
-          ? token.colorSuccess
-          : token.colorPrimary;
+      /**
+       * 渲染单个圆环 Progress（无文本信息）
+       * @param round - 该轮统计数据
+       */
+      const renderRoundProgress = (round: RoundStats) => (
+        <Progress
+          type="circle"
+          percent={round.executionRate}
+          size={14}
+          strokeWidth={7}
+          strokeColor={getRoundStrokeColor(round)}
+          railColor={token.colorFillSecondary}
+          format={() => ''}
+          showInfo={false}
+          style={{ marginBottom: 0 }}
+        />
+      );
+
+      /**
+       * 渲染单轮 Tooltip 详情片段
+       * @param label - 轮次名称（"一轮测试" / "二轮测试"）
+       * @param round - 该轮统计数据
+       */
+      const renderRoundTooltipBlock = (label: string, round: RoundStats) => (
+        <div>
+          <div style={{ fontWeight: 600 }}>{label}</div>
+          <div style={{ color: token.colorSuccess }}>
+            通过 {round.passed} 条
+          </div>
+          {round.failed > 0 && (
+            <div style={{ color: token.colorError }}>
+              失败 {round.failed} 条
+            </div>
+          )}
+          {round.pending > 0 && (
+            <div style={{ color: token.colorTextTertiary }}>
+              未执行 {round.pending} 条
+            </div>
+          )}
+          <div>
+            通过率 <strong>{round.passRate}%</strong> · 执行率{' '}
+            <strong>{round.executionRate}%</strong>
+          </div>
+        </div>
+      );
 
       const tooltipTitle = (
         <div style={{ fontSize: 12, lineHeight: 1.8 }}>
-          <div>
-            总计: <strong>{stats.total}</strong> 条
-          </div>
-          <div style={{ color: token.colorSuccess }}>
-            通过: {stats.passed} 条
-          </div>
-          {stats.failed > 0 && (
-            <div style={{ color: token.colorError }}>
-              失败: {stats.failed} 条
-            </div>
-          )}
-          {stats.pending > 0 && (
-            <div style={{ color: token.colorTextTertiary }}>
-              未执行: {stats.pending} 条
-            </div>
-          )}
+          {renderRoundTooltipBlock('一轮测试', stats.first)}
+          <div
+            style={{
+              borderTop: `1px solid ${token.colorBorder}`,
+              margin: '4px 0',
+            }}
+          />
+          {renderRoundTooltipBlock('二轮测试', stats.second)}
           <div
             style={{
               borderTop: `1px solid ${token.colorBorder}`,
@@ -519,25 +560,24 @@ const Index: FC<PlanModuleProps> = ({
               paddingTop: 4,
             }}
           >
-            通过率: <strong>{stats.passRate}%</strong>
+            总计 <strong>{stats.total}</strong> 条
           </div>
         </div>
       );
 
       return (
         <Tooltip title={tooltipTitle} placement="right">
-          <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <Progress
-              type="circle"
-              percent={stats.executionRate}
-              size={18}
-              strokeWidth={10}
-              strokeColor={strokeColor}
-              railColor={token.colorFillSecondary}
-              format={() => ''}
-              showInfo={false}
-              style={{ marginBottom: 0 }}
-            />
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+            }}
+          >
+            {/* 左侧：一轮测试进度环 */}
+            {renderRoundProgress(stats.first)}
+            {/* 右侧：二轮测试进度环 */}
+            {renderRoundProgress(stats.second)}
             <span style={nodeStyles.caseCount}>{caseCount}</span>
           </span>
         </Tooltip>

@@ -99,6 +99,11 @@ export default [
         component: '@/pages/CaseHub/CasePlan',
       },
       {
+        path: '/cases/caseConfig',
+        name: '用例配置',
+        component: '@/pages/CaseHub/CaseConfig',
+      },
+      {
         path: '/cases/casePlan/planInfo/:planId',
         name: '测试计划详情',
         component: '@/pages/CaseHub/CasePlan/PlanInfo',
