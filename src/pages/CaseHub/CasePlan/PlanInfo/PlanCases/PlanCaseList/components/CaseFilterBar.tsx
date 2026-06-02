@@ -346,11 +346,6 @@ const CaseFilterBar: FC<CaseFilterBarProps> = ({
     onFilterChange?.({ keyword });
   }, [keyword, onFilterChange]);
 
-  /** 清除全部非关键字筛选（用于 Chip 条上的"清除全部"按钮） */
-  const handleClearAllNonKeyword = useCallback(() => {
-    onFilterChange?.({ keyword: filters?.keyword });
-  }, [filters?.keyword, onFilterChange]);
-
   /**
    * 从当前 filters 派生激活的 Chip 列表
    * 每个 chip 携带 onRemove 回调，直接更新 filter（绕过弹窗临时状态）

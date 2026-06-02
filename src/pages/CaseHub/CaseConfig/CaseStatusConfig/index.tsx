@@ -36,7 +36,7 @@ import {
   ProTable,
 } from '@ant-design/pro-components';
 import { Button, Form, message, Modal, Space, Tag, Typography } from 'antd';
-import { FC, useCallback, useMemo, useRef, useState } from 'react';
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 const { Text, Paragraph } = Typography;
 
@@ -62,6 +62,18 @@ const CaseStatusConfig: FC<CaseStatusConfigProps> = ({
     null,
   );
   const isEdit = editingRecord !== null;
+
+  /**
+   * 监听 configKey 变化：切换 Tab（用例状态 ↔ 评审状态 ↔ 用例等级）时
+   * 主动 reload ProTable，避免同一组件实例复用时表格仍展示上一个 Tab 的数据
+   * 同时关闭弹窗、清空表单与编辑状态，防止上一个 Tab 的残留状态污染当前 Tab
+   */
+  useEffect(() => {
+    actionRef.current?.reload();
+    setOpenModal(false);
+    setEditingRecord(null);
+    form.resetFields();
+  }, [configKey, form]);
 
   /**
    * value 字段类型派生
