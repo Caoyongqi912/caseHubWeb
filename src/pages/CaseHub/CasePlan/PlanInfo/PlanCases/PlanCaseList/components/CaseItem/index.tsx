@@ -1,6 +1,13 @@
 import { useCaseEnumConfig } from '@/pages/CaseHub/hooks/useCaseEnumConfig';
-import { DownOutlined, MoreOutlined, UpOutlined } from '@ant-design/icons';
+import {
+  DownOutlined,
+  HolderOutlined,
+  MoreOutlined,
+  UpOutlined,
+} from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import {
   Button,
   Checkbox,
@@ -10,7 +17,13 @@ import {
   Tag,
   Typography,
 } from 'antd';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import {
   copyOnePlanCase,
@@ -40,6 +53,12 @@ interface CaseItemProps {
   onSecondStatusChange?: (caseId: number, status: string) => void;
   /** 卡片折叠状态变更回调（用于通知父级虚拟列表重新计算行高） */
   onCollapsedChange?: (caseId: number | undefined, collapsed: boolean) => void;
+  /** 在此用例之后插入新用例 */
+  onInsertAfter?: (afterCaseId: number) => void;
+  /** 是否启用拖拽排序 */
+  isSortable?: boolean;
+  /** 受控折叠状态（由父组件 collapsedCaseIds 驱动，一键折叠时使用） */
+  collapsed?: boolean;
   onRefresh?: () => void;
 }
 
@@ -62,6 +81,9 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
     onFirstStatusChange,
     onSecondStatusChange,
     onCollapsedChange,
+    onInsertAfter,
+    isSortable = false,
+    collapsed: externalCollapsed,
     onRefresh,
   } = props;
 
@@ -70,6 +92,33 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
   const firstStatus = testCase.first_status ?? '';
   const secondStatus = testCase.second_status ?? '';
   const isReview = testCase.is_review ?? '';
+
+  /**
+   * useSortable: 拖拽排序能力（仅 isSortable 时启用）
+   * id 使用 caseId 确保唯一性
+   */
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: caseId!,
+    disabled: !isSortable,
+  });
+
+  /** 拖拽样式：基于 dnd-kit transform 计算 */
+  const sortableStyle: React.CSSProperties = isSortable
+    ? {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.85 : 1,
+        zIndex: isDragging ? 1000 : 'auto',
+        boxShadow: isDragging ? '0 8px 24px rgba(0, 0, 0, 0.15)' : undefined,
+      }
+    : {};
 
   const [switchingReview, setSwitchingReview] = useState(false);
   const [switchingFirstStatus, setSwitchingFirstStatus] = useState(false);
@@ -105,6 +154,16 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
    * 4. body 区域使用 display:none + 条件渲染双重保障，确保彻底隐藏
    */
   const [collapsed, setCollapsed] = useState(false);
+
+  /**
+   * 受控模式：当父组件传入 collapsed prop（一键折叠场景）时，
+   * 同步内部状态，确保 StepTable 正确隐藏/显示
+   */
+  useEffect(() => {
+    if (externalCollapsed !== undefined && externalCollapsed !== collapsed) {
+      setCollapsed(externalCollapsed);
+    }
+  }, [externalCollapsed]);
 
   /**
    * 处理折叠状态变更：同步更新本地状态 + 通知父级虚拟列表重新计算行高
@@ -202,8 +261,9 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
       createMoreMenuItems({
         onCopyCase: handleCopyCase,
         onRemoveCase: handleRemoveCase,
+        onInsertAfter: onInsertAfter ? () => onInsertAfter(caseId!) : undefined,
       }),
-    [handleCopyCase, handleRemoveCase],
+    [handleCopyCase, handleRemoveCase, onInsertAfter, caseId],
   );
 
   /**
@@ -342,13 +402,29 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
     </Dropdown>
   );
 
-  /** 卡片标题区域：复选框 + 评审状态 + 用例名称
+  /** 卡片标题区域：拖拽手柄 + 复选框 + 评审状态 + 用例名称
    *  Checkbox 完全裸着不加任何 stopPropagation（之前 span+stopPropagation 吞了点击）
    *  Tag / Text 加 onClick stopPropagation 避免触发 onHeaderClick
    */
   const cardTitle = useMemo(
     () => (
       <Space size="small" wrap={false}>
+        {isSortable && (
+          <Button
+            type="text"
+            size="small"
+            icon={<HolderOutlined />}
+            style={{
+              cursor: 'grab',
+              touchAction: 'none',
+              color: '#999',
+              padding: 0,
+              flexShrink: 0,
+            }}
+            {...attributes}
+            {...listeners}
+          />
+        )}
         <Checkbox
           checked={selected}
           onChange={(e) => {
@@ -402,6 +478,7 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
       handleReviewSelect,
       testCase.case_name,
       onSelectedChange,
+      isSortable,
     ],
   );
 
@@ -457,7 +534,7 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
   );
 
   return (
-    <>
+    <div ref={isSortable ? setNodeRef : undefined} style={sortableStyle}>
       <ProCard
         title={cardTitle}
         variant="outlined"
@@ -514,7 +591,7 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
           callback={() => setHasEdited(true)}
         />
       </MyDrawer>
-    </>
+    </div>
   );
 });
 

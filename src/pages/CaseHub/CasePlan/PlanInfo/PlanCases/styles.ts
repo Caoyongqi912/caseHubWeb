@@ -294,6 +294,55 @@ export const usePlanCaseListStyles = () => {
     };
   };
 
+  /** 拖拽手柄样式 */
+  const dragHandle = (): CSSProperties => ({
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 20,
+    height: 20,
+    borderRadius: borderRadius.sm,
+    cursor: 'grab',
+    color: colors.textTertiary,
+    flexShrink: 0,
+    transition: `color ${animations.fast} ${animations.easeInOut}`,
+    ':hover': {
+      color: colors.primary,
+      background: `${colors.primary}10`,
+    },
+    ':active': {
+      cursor: 'grabbing',
+    },
+  });
+
+  /** 插入按钮条样式（悬停显示） */
+  const insertBar = (isVisible: boolean): CSSProperties => ({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    padding: '4px 0',
+    margin: '2px 0',
+    borderRadius: borderRadius.md,
+    border: `1px dashed ${isVisible ? colors.primary : colors.border}`,
+    color: isVisible ? colors.primary : colors.textTertiary,
+    fontSize: 12,
+    cursor: 'pointer',
+    opacity: isVisible ? 1 : 0,
+    transition: `opacity ${animations.base} ${animations.easeInOut}, border-color ${animations.fast} ${animations.easeInOut}`,
+    background: isVisible ? `${colors.primary}06` : 'transparent',
+  });
+
+  /** 拖拽中项容器样式 */
+  const sortableItem = (isDragging: boolean): CSSProperties => ({
+    transition: isDragging
+      ? undefined
+      : `box-shadow ${animations.base} ${animations.easeInOut}`,
+    opacity: isDragging ? 0.85 : 1,
+    zIndex: isDragging ? 1000 : 'auto',
+    boxShadow: isDragging ? `0 8px 24px rgba(0, 0, 0, 0.15)` : shadows.sm,
+  });
+
   return {
     container,
     listContainer,
@@ -312,5 +361,8 @@ export const usePlanCaseListStyles = () => {
     stepsContainer,
     emptyState,
     leftAccent,
+    dragHandle,
+    insertBar,
+    sortableItem,
   };
 };

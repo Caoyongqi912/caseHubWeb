@@ -2,6 +2,7 @@ import {
   associatePlanCases,
   insertPlanCases,
   queryPlanCases,
+  reorderPlanCases,
 } from '@/api/case/caseplan';
 import MyDrawer from '@/components/MyDrawer';
 import ChoiceCaseTable from '@/pages/CaseHub/Requirement/components/ChoiceCaseTable';
@@ -9,6 +10,7 @@ import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import { ICasePlan, ITestCase } from '@/pages/CaseHub/types';
 import { LinkOutlined, PlusOutlined } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
+import { arrayMove } from '@dnd-kit/sortable';
 import { Button, Checkbox, Empty, message, Space, Spin } from 'antd';
 import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 import {
@@ -28,6 +30,7 @@ import CaseFilterBar from './components/CaseFilterBar';
 import CaseItem from './components/CaseItem';
 import NewCaseForm from './components/NewCaseForm';
 import PlanCaseImportModal from './components/PlanCaseImportModal';
+import PlanCaseSortableWrapper from './components/PlanCaseSortableWrapper';
 import { useCaseFilter } from './hooks/useCaseFilter';
 
 /**
@@ -96,7 +99,13 @@ interface CaseRowData {
   onSecondStatusChange: (caseId: number, status: string) => void;
   /** 卡片折叠状态变更回调（用于虚拟列表动态调整行高） */
   onCollapsedChange: (caseId: number | undefined, collapsed: boolean) => void;
+  /** 在指定用例之后插入新用例 */
+  onInsertAfter?: (afterCaseId: number) => void;
+  /** 是否启用拖拽排序 */
+  isSortable: boolean;
   onRefresh: () => void;
+  /** 已折叠的用例 ID 集合（用于受控折叠状态） */
+  collapsedCaseIds: Set<number>;
 }
 
 /**
@@ -139,7 +148,13 @@ const CaseRow: React.FC<{
           onFirstStatusChange={data?.onFirstStatusChange ?? (() => {})}
           onSecondStatusChange={data?.onSecondStatusChange ?? (() => {})}
           onCollapsedChange={data?.onCollapsedChange ?? (() => {})}
+          onInsertAfter={data?.onInsertAfter}
+          isSortable={data?.isSortable ?? false}
           onRefresh={data?.onRefresh ?? (() => {})}
+          collapsed={
+            tc.id !== undefined &&
+            (data?.collapsedCaseIds ?? new Set()).has(tc.id)
+          }
         />
       ) : (
         // 槽位占位，避免空白行
@@ -182,6 +197,10 @@ const Index: FC<PlanCaseListProps> = ({
   );
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [importModalVisible, setImportModalVisible] = useState(false);
+  /** 记录要在哪个 case 之后插入（null 表示追加到末尾） */
+  const [insertAfterCaseId, setInsertAfterCaseId] = useState<number | null>(
+    null,
+  );
 
   /**
    * 跟踪已折叠的用例 ID 集合
@@ -413,7 +432,8 @@ const Index: FC<PlanCaseListProps> = ({
 
   /**
    * 处理卡片折叠状态变更
-   * 更新 collapsedCaseIds 集合，并通知虚拟列表从该索引起重新测量行高
+   * 更新 collapsedCaseIds 集合
+   * 注意：不在此处调用 resetAfterIndex，由 useEffect 统一处理
    */
   const handleCollapsedChange = useCallback(
     (caseId: number | undefined, collapsed: boolean) => {
@@ -427,14 +447,153 @@ const Index: FC<PlanCaseListProps> = ({
         }
         return next;
       });
-      // 让虚拟列表重新计算受影响行的高度（含当前行及之后所有行）
-      virtualListRef.current?.resetAfterIndex(0, true);
     },
     [],
   );
 
   /**
+   * 一键折叠 / 展开所有用例卡片
+   * collapsed=true → 将当前列表所有 caseId 加入 collapsedCaseIds
+   * collapsed=false → 清空 collapsedCaseIds
+   *
+   * 注意：仅更新状态，不在此处调用 resetAfterIndex。
+   * 虚拟列表的重测量由下方的 useEffect 统一处理（rerender-move-effect-to-event），
+   * 确保 resetAfterIndex 在 collapsedCaseIds 已落盘后才执行，
+   * 避免 itemSize 回调读到旧 Set 导致高度计算错误。
+   */
+  const handleCollapseAllChange = useCallback(
+    (collapsed: boolean) => {
+      setCollapsedCaseIds(() => {
+        if (collapsed) {
+          // 折叠全部：将 filteredList 中所有有 id 的 case 加入 Set
+          return new Set(
+            filteredList
+              .map((tc) => tc.id)
+              .filter((id): id is number => id !== undefined),
+          );
+        }
+        // 展开全部：清空
+        return new Set();
+      });
+    },
+    [filteredList],
+  );
+
+  /**
+   * collapsedCaseIds 变化后，通知虚拟列表从索引 0 起重新测量所有行高
+   * 统一处理「单个卡片折叠」和「一键折叠/展开」两种场景的高度同步
+   */
+  useEffect(() => {
+    // 使用 requestAnimationFrame 确保 DOM 已提交新布局后再重测
+    const rafId = requestAnimationFrame(() => {
+      virtualListRef.current?.resetAfterIndex(0, true);
+    });
+    return () => cancelAnimationFrame(rafId);
+  }, [collapsedCaseIds]);
+
+  /**
+   * 在指定用例之后插入新用例
+   * 设置插入位置标记，打开新建表单抽屉
+   */
+  const handleInsertAfter = useCallback((afterCaseId: number) => {
+    setInsertAfterCaseId(afterCaseId);
+    setDrawerVisible(true);
+  }, []);
+
+  /**
+   * 在指定用例之后批量上传导入
+   * 设置插入位置标记，打开导入弹窗
+   * 导入完成后通过 onUploadFinish 触发 reorder 到目标位置
+   */
+  const handleInsertAfterImport = useCallback((afterCaseId: number) => {
+    setInsertAfterCaseId(afterCaseId);
+    setImportModalVisible(true);
+  }, []);
+
+  /**
+   * 导入完成回调
+   * 如果有指定插入位置（insertAfterCaseId），刷新后自动将新导入的用例移到目标位置
+   */
+  const handleImportFinish = useCallback(async () => {
+    const targetInsertId = insertAfterCaseId;
+    // 先清空标记，避免后续刷新重复触发
+    setInsertAfterCaseId(null);
+    // 刷新列表获取最新数据（包含新导入的用例）
+    handleRefresh();
+
+    // 如果指定了目标位置，等刷新后将新导入的用例排序到目标之后
+    if (targetInsertId !== null) {
+      setTimeout(async () => {
+        try {
+          const { data: freshList } = await queryPlanCases({
+            plan_id: Number(planId),
+            plan_module_id: moduleId ?? undefined,
+          });
+          if (!freshList || !Array.isArray(freshList)) return;
+
+          // 新导入的用例通常在列表末尾
+          // 找到目标位置的索引，将末尾的新用例移到其后
+          const targetIndex = freshList.findIndex(
+            (tc) => tc.id === targetInsertId,
+          );
+          if (targetIndex >= 0 && targetIndex < freshList.length - 1) {
+            // 假设新导入的用例在末尾，将其移到 targetIndex + 1 的位置
+            const reordered = [...freshList];
+            const lastIdx = reordered.length - 1;
+            const [importedCase] = reordered.splice(lastIdx, 1);
+            reordered.splice(targetIndex + 1, 0, importedCase);
+            await reorderPlanCases({
+              plan_id: Number(planId),
+              plan_module_id: moduleId ?? undefined,
+              case_ids: reordered.map((c) => c.id!).filter(Boolean),
+            });
+            handleRefresh();
+          }
+        } catch {
+          // 排序失败不影响导入成功的结果
+        }
+      }, 800);
+    }
+  }, [insertAfterCaseId, handleRefresh, planId, moduleId]);
+
+  /**
+   * 拖拽排序处理
+   * 乐观更新列表顺序，异步调用 API 持久化
+   * 失败时回滚到原始顺序
+   */
+  const handleCaseReorder = useCallback(
+    async (activeId: number, overId: number) => {
+      // 在 filteredList 中找到位置（filteredList 与 caseList 保持同序）
+      const oldIndex = filteredList.findIndex((tc) => tc.id === activeId);
+      const newIndex = filteredList.findIndex((tc) => tc.id === overId);
+      if (oldIndex === -1 || newIndex === -1) return;
+
+      // 乐观更新：立即调整 caseList 顺序
+      const prevList = [...caseList];
+      const moved = arrayMove(prevList, oldIndex, newIndex);
+      setCaseList(moved);
+
+      try {
+        const { code } = await reorderPlanCases({
+          plan_id: Number(planId),
+          plan_module_id: moduleId ?? undefined,
+          case_ids: moved.map((c) => c.id!).filter(Boolean),
+        });
+        if (code !== 0) {
+          throw new Error('排序失败');
+        }
+      } catch {
+        message.error('排序失败，已回滚');
+        // 回滚到原始顺序
+        setCaseList(prevList);
+      }
+    },
+    [filteredList, caseList, planId, moduleId],
+  );
+
+  /**
    * 添加用例到计划
+   * 支持指定位置插入（insertAfterCaseId 不为 null 时）
    */
   const OnCaseSave = async (values: Record<string, unknown>) => {
     const newValue = {
@@ -448,8 +607,49 @@ const Index: FC<PlanCaseListProps> = ({
     );
 
     if (code === 0) {
-      handleRefresh();
+      // 如果有指定插入位置，记录下来，刷新后需要将新用例移到正确位置
+      const targetInsertAfterId = insertAfterCaseId;
+      setInsertAfterCaseId(null);
       setDrawerVisible(false);
+      // 先刷新列表获取最新数据（包含新插入的用例）
+      handleRefresh();
+
+      // 如果指定了插入位置，等刷新后将新用例排序到目标位置
+      if (targetInsertAfterId !== null) {
+        // 延迟执行：等待 fetchPlanData 完成后获取新列表
+        setTimeout(async () => {
+          try {
+            const { data: freshList } = await queryPlanCases({
+              plan_id: Number(planId),
+              plan_module_id: moduleId ?? undefined,
+            });
+            if (!freshList || !Array.isArray(freshList)) return;
+
+            // 找到新插入的用例（通常是最后一个）和目标位置
+            const newCaseId = freshList[freshList.length - 1]?.id;
+            const targetIndex = freshList.findIndex(
+              (tc) => tc.id === targetInsertAfterId,
+            );
+            if (newCaseId && targetIndex >= 0) {
+              // 构建目标顺序：新用例放到 targetIndex + 1 的位置
+              const reordered = [...freshList];
+              const newIdx = reordered.findIndex((tc) => tc.id === newCaseId);
+              if (newIdx !== -1 && newIdx !== targetIndex + 1) {
+                const [newCase] = reordered.splice(newIdx, 1);
+                reordered.splice(targetIndex + 1, 0, newCase);
+                await reorderPlanCases({
+                  plan_id: Number(planId),
+                  plan_module_id: moduleId ?? undefined,
+                  case_ids: reordered.map((c) => c.id!).filter(Boolean),
+                });
+                handleRefresh();
+              }
+            }
+          } catch {
+            // 排序失败不影响插入成功的结果
+          }
+        }, 500);
+      }
     } else {
       message.error(msg || '保存失败');
     }
@@ -516,7 +716,10 @@ const Index: FC<PlanCaseListProps> = ({
       onFirstStatusChange: handleFirstStatusChange,
       onSecondStatusChange: handleSecondStatusChange,
       onCollapsedChange: handleCollapsedChange,
+      onInsertAfter: handleInsertAfter,
+      isSortable: true,
       onRefresh: handleRefresh,
+      collapsedCaseIds: collapsedCaseIds ?? new Set<number>(),
     }),
     [
       filteredList,
@@ -528,7 +731,9 @@ const Index: FC<PlanCaseListProps> = ({
       handleFirstStatusChange,
       handleSecondStatusChange,
       handleCollapsedChange,
+      handleInsertAfter,
       handleRefresh,
+      collapsedCaseIds,
     ],
   );
 
@@ -595,6 +800,7 @@ const Index: FC<PlanCaseListProps> = ({
               onRefresh={handleRefresh}
               onBatchExport={handleBatchExport}
               onBatchImport={handleBatchImport}
+              onCollapseAllChange={handleCollapseAllChange}
               hasActiveFilter={hasActiveFilter}
               filters={filters}
               resultCount={filteredList.length}
@@ -627,17 +833,22 @@ const Index: FC<PlanCaseListProps> = ({
                 <span style={{ color: '#999', fontSize: 14 }}>加载中...</span>
               </div>
             ) : filteredList.length > 0 && listHeight > 0 ? (
-              <VariableSizeList
-                ref={virtualListRef}
-                height={listHeight}
-                itemCount={filteredList.length}
-                itemSize={itemSize}
-                width="100%"
-                itemData={rowData}
-                overscanCount={3}
+              <PlanCaseSortableWrapper
+                items={filteredList}
+                onReorder={handleCaseReorder}
               >
-                {CaseRow}
-              </VariableSizeList>
+                <VariableSizeList
+                  ref={virtualListRef}
+                  height={listHeight}
+                  itemCount={filteredList.length}
+                  itemSize={itemSize}
+                  width="100%"
+                  itemData={rowData}
+                  overscanCount={3}
+                >
+                  {CaseRow}
+                </VariableSizeList>
+              </PlanCaseSortableWrapper>
             ) : !loading ? (
               <div style={styles.emptyState()}>
                 <Empty
@@ -688,6 +899,8 @@ const Index: FC<PlanCaseListProps> = ({
           planId={planId}
           onBatchSuccess={handleBatchMoveSuccess}
           onExit={handleExitSelection}
+          onInsertAfter={handleInsertAfter}
+          onInsertAfterImport={handleInsertAfterImport}
         />
       )}
 
@@ -696,7 +909,7 @@ const Index: FC<PlanCaseListProps> = ({
         onOpenChange={setImportModalVisible}
         planId={planId || ''}
         planModules={planModules}
-        onUploadFinish={handleRefresh}
+        onUploadFinish={handleImportFinish}
       />
     </>
   );

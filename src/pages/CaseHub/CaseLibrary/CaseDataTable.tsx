@@ -181,8 +181,13 @@ const CaseDataTable: FC<Props> = (props) => {
           }
           const levelText =
             levelValueEnum[record.case_level]?.text || record.case_level;
-          const levelColors =
-            levelColorMap.get(record.case_level) || levelColorMap.get('P3')!;
+          const levelColors = levelColorMap.get(record.case_level) ||
+            levelColorMap.get('P3') || {
+              bg: token.colorFillAlter,
+              border: token.colorBorderSecondary,
+              color: token.colorTextSecondary,
+              text: token.colorTextSecondary,
+            };
           return (
             <Tag
               style={{

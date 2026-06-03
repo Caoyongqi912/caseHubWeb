@@ -290,6 +290,21 @@ export const insertPlanCases = async (data: ITestCase) => {
 };
 
 /**
+ * 重排序计划下的用例
+ * @param data - 包含 plan_id、plan_module_id、按目标顺序排列的 case_ids 数组
+ */
+export const reorderPlanCases = async (data: {
+  plan_id: number;
+  plan_module_id?: number;
+  case_ids: number[];
+}) => {
+  return request<IResponse<null>>('/api/hub/plan/cases/reorder', {
+    method: 'POST',
+    data,
+  });
+};
+
+/**
  * 复制测试计划下的单个用例
  * @param data - 包含 plan_id、case_id、plan_case_module_id、case_status 的对象
  */

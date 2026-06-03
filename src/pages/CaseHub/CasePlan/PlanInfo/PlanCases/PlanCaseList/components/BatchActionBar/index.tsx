@@ -4,7 +4,9 @@ import {
   CopyOutlined,
   DeleteOutlined,
   EditOutlined,
+  PlusOutlined,
   SwapOutlined,
+  UploadOutlined,
 } from '@ant-design/icons';
 import { Button, Modal, Space, Tooltip } from 'antd';
 import { FC, useCallback, useState } from 'react';
@@ -22,6 +24,10 @@ export interface BatchActionBarProps {
   planId?: string;
   onBatchSuccess?: () => void;
   onExit?: () => void;
+  /** 单选时：在选中用例之后插入新用例 */
+  onInsertAfter?: (afterCaseId: number) => void;
+  /** 单选时：在选中用例之后批量上传 */
+  onInsertAfterImport?: (afterCaseId: number) => void;
 }
 
 /**
@@ -34,6 +40,8 @@ const BatchActionBar: FC<BatchActionBarProps> = ({
   planId,
   onBatchSuccess,
   onExit,
+  onInsertAfter,
+  onInsertAfterImport,
 }) => {
   const { colors, spacing, borderRadius, shadows, token } = useCaseHubTheme();
   const [moveModalVisible, setMoveModalVisible] = useState(false);
@@ -147,6 +155,43 @@ const BatchActionBar: FC<BatchActionBarProps> = ({
 
         {/* 操作按钮组 */}
         <Space size={spacing.md}>
+          {/* 单选时显示：在选中用例之后操作 */}
+          {selectedCount === 1 && (onInsertAfter || onInsertAfterImport) && (
+            <>
+              {onInsertAfter && (
+                <Tooltip title="在此之后插入用例" placement="top">
+                  <Button
+                    icon={<PlusOutlined />}
+                    onClick={() => onInsertAfter(selectedCaseIds[0])}
+                    type="primary"
+                    size="small"
+                    style={{ fontWeight: 500 }}
+                  >
+                    插入用例
+                  </Button>
+                </Tooltip>
+              )}
+              {onInsertAfterImport && (
+                <Tooltip title="在此之后批量导入" placement="top">
+                  <Button
+                    icon={<UploadOutlined />}
+                    onClick={() => onInsertAfterImport(selectedCaseIds[0])}
+                    size="small"
+                    style={{ fontWeight: 500 }}
+                  >
+                    批量上传
+                  </Button>
+                </Tooltip>
+              )}
+              <div
+                style={{
+                  width: 1,
+                  height: 24,
+                  backgroundColor: colors.borderSecondary,
+                }}
+              />
+            </>
+          )}
           <Tooltip title="批量移动" placement="top">
             <Button
               icon={<SwapOutlined />}

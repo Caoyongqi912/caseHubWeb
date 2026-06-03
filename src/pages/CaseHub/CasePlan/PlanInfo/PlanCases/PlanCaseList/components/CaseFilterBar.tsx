@@ -20,7 +20,15 @@ import {
   SearchOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
-import { Button, Dropdown, Input, Popover, Select, Space } from 'antd';
+import {
+  Button,
+  Dropdown,
+  Input,
+  Popover,
+  Segmented,
+  Select,
+  Space,
+} from 'antd';
 import debounce from 'lodash/debounce';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type {
@@ -37,6 +45,8 @@ interface CaseFilterBarProps {
   onBatchExport?: () => void;
   /** 批量导入回调 */
   onBatchImport?: () => void;
+  /** 全部折叠 / 全部展开切换 */
+  onCollapseAllChange?: (collapsed: boolean) => void;
   /** 当前是否有激活的筛选条件（由父组件管理） */
   hasActiveFilter?: boolean;
   /** 当前生效的筛选条件（用于回显） */
@@ -141,6 +151,7 @@ const CaseFilterBar: FC<CaseFilterBarProps> = ({
   onRefresh,
   onBatchExport,
   onBatchImport,
+  onCollapseAllChange,
   hasActiveFilter = false,
   filters,
   resultCount,
@@ -560,6 +571,17 @@ const CaseFilterBar: FC<CaseFilterBarProps> = ({
             {activeChips.length > 0 && ` (${activeChips.length})`}
           </Button>
         </Popover>
+
+        {onCollapseAllChange && (
+          <Segmented
+            size="small"
+            options={[
+              { label: '展开全部', value: 'expand' },
+              { label: '折叠全部', value: 'collapse' },
+            ]}
+            onChange={(val) => onCollapseAllChange(val === 'collapse')}
+          />
+        )}
 
         <Dropdown menu={{ items: dropdownItems }} trigger={['click']}>
           <EllipsisOutlined
