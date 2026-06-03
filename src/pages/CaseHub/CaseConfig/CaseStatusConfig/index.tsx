@@ -49,6 +49,61 @@ interface CaseStatusConfigProps {
   description: string;
 }
 
+/**
+ * value 字段定义：
+ * - type: 表单控件类型（text | digit）
+ * - label / placeholder / tooltip: 文案
+ * - rules: 校验规则
+ * - toFormValue: 编辑时把后端值转成 form 期望的类型（如 Number 转换）
+ *
+ * 不同枚举类型在这里注册，组件渲染时按 configKey 查表，无需在 JSX 中分支
+ */
+export interface ValueFieldDef {
+  type: 'text' | 'digit';
+  label: string;
+  placeholder: string;
+  tooltip?: string;
+  rules: Array<Record<string, unknown>>;
+  toFormValue: (v: unknown) => unknown;
+}
+
+const VALUE_FIELD_DEFS: Record<string, ValueFieldDef> = {
+  [CaseConfigKeyEnum.CASE_LEVEL]: {
+    type: 'text',
+    label: '值（等级标识）',
+    placeholder: '请输入等级标识，如 P1 / P2',
+    tooltip: '等级场景下 value 与 label 一致，便于筛选与展示',
+    rules: [
+      { required: true, message: '等级标识必填' },
+      { max: 32, message: '等级标识长度不能超过 32' },
+    ],
+    toFormValue: (v) => v,
+  },
+  [CaseConfigKeyEnum.CASE_TYPE]: {
+    type: 'text',
+    label: '值（类型标识）',
+    placeholder: '请输入类型标识，如 回归 / 冒烟',
+    tooltip: '类型场景下 value 与 label 一致',
+    rules: [
+      { required: true, message: '类型标识必填' },
+      { max: 32, message: '类型标识长度不能超过 32' },
+    ],
+    toFormValue: (v) => v,
+  },
+};
+
+/**
+ * 默认 value 字段定义：数字类型，用于 CASE_STATUS / REVIEW_STATUS
+ * 编辑时如果 value 是字符串则转为数字（保持与 form field 期望类型一致）
+ */
+const DEFAULT_VALUE_FIELD_DEF: ValueFieldDef = {
+  type: 'digit',
+  label: '值（枚举值）',
+  placeholder: '请输入枚举值，建议为整数',
+  rules: [{ required: true, message: '枚举值必填' }],
+  toFormValue: (v) => (typeof v === 'string' ? Number(v) : v),
+};
+
 const CaseStatusConfig: FC<CaseStatusConfigProps> = ({
   configKey,
   title,
@@ -76,11 +131,11 @@ const CaseStatusConfig: FC<CaseStatusConfigProps> = ({
   }, [configKey, form]);
 
   /**
-   * value 字段类型派生
-   * - 用例等级（CASE_LEVEL）：value 与 label 一致为字符串（如 P1 / P2），使用文本输入
-   * - 其他枚举（用例状态 / 评审状态）：value 沿用数字，与现有 CASE_STATUS_OPTIONS 保持一致
+   * value 字段定义
+   * 不同枚举类型的 value 字段差异（类型 / 标签 / 校验 / 编辑转换）通过查表驱动
+   * 后续新增枚举类型只需在 VALUE_FIELD_DEFS 中追加即可，UI 渲染无需修改
    */
-  const isStringValue = configKey === CaseConfigKeyEnum.CASE_LEVEL;
+  const valueFieldDef = VALUE_FIELD_DEFS[configKey] ?? DEFAULT_VALUE_FIELD_DEF;
 
   /**
    * 颜色字段标准化
@@ -423,13 +478,8 @@ const CaseStatusConfig: FC<CaseStatusConfigProps> = ({
                 setEditingRecord(record);
                 form.setFieldsValue({
                   ...record,
-                  // 字符串值类型（如 CASE_LEVEL）不做 Number 强转，
-                  // 否则会把 "P1" 错误地变为 NaN
-                  value: isStringValue
-                    ? record.value
-                    : typeof record.value === 'string'
-                    ? Number(record.value)
-                    : record.value,
+                  // 不同枚举类型 value 字段的转换规则从查表中读取
+                  value: valueFieldDef.toFormValue(record.value),
                 } as ICaseEnumConfig);
                 setOpenModal(true);
               }}
@@ -619,25 +669,22 @@ const CaseStatusConfig: FC<CaseStatusConfigProps> = ({
           ]}
           placeholder="请输入显示名称，如：通过"
         />
-        {isStringValue ? (
+        {valueFieldDef.type === 'text' ? (
           <ProFormText
             name="value"
-            label="值（等级标识）"
+            label={valueFieldDef.label}
             required
-            rules={[
-              { required: true, message: '等级标识必填' },
-              { max: 32, message: '等级标识长度不能超过 32' },
-            ]}
-            placeholder="请输入等级标识，如 P1 / P2"
-            tooltip="等级场景下 value 与 label 一致，便于筛选与展示"
+            rules={valueFieldDef.rules}
+            placeholder={valueFieldDef.placeholder}
+            tooltip={valueFieldDef.tooltip}
           />
         ) : (
           <ProFormDigit
             name="value"
-            label="值（枚举值）"
+            label={valueFieldDef.label}
             required
-            rules={[{ required: true, message: '枚举值必填' }]}
-            placeholder="请输入枚举值，建议为整数"
+            rules={valueFieldDef.rules}
+            placeholder={valueFieldDef.placeholder}
             min={0}
             fieldProps={{ precision: 0 }}
           />

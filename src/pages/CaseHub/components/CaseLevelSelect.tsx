@@ -1,9 +1,11 @@
-import { CaseHubConfig } from '@/pages/CaseHub/config/constants';
-import { caseLevelColors } from '@/pages/CaseHub/styles';
+import { toSelectOptions } from '@/pages/CaseHub/hooks/caseEnumOption';
+import { useCaseEnumConfig } from '@/pages/CaseHub/hooks/useCaseEnumConfig';
+import { useCaseLevelColorMap } from '@/pages/CaseHub/hooks/useCaseLevelColor';
+
 import { ITestCase } from '@/pages/CaseHub/types';
 import { ProFormSelect } from '@ant-design/pro-components';
 import { Tag } from 'antd';
-import { FC, useEffect, useState } from 'react';
+import { FC, useEffect, useMemo, useState } from 'react';
 
 interface Props {
   testcaseData?: ITestCase;
@@ -13,7 +15,15 @@ interface Props {
 const CaseLevelSelect: FC<Props> = ({ testcaseData, onLevelChange }) => {
   const [levelVisible, setLevelVisible] = useState(true);
   const [level, setLevel] = useState('P2');
-  const { CASE_LEVEL_OPTION } = CaseHubConfig;
+
+  // 用例等级从后端枚举配置拉取（管理员在配置中心增删后自动生效）
+  const { options: levelOptions } = useCaseEnumConfig('CASE_LEVEL');
+  const levelSelectOptions = useMemo(
+    () => toSelectOptions(levelOptions),
+    [levelOptions],
+  );
+  // 用例等级颜色（按 levelValue 索引，用于 Tag / 徽标等）
+  const levelColorMap = useCaseLevelColorMap();
 
   useEffect(() => {
     if (testcaseData?.case_level) {
@@ -22,9 +32,7 @@ const CaseLevelSelect: FC<Props> = ({ testcaseData, onLevelChange }) => {
     }
   }, [testcaseData]);
 
-  const levelColor =
-    caseLevelColors[level as keyof typeof caseLevelColors] ||
-    caseLevelColors.P2;
+  const levelColor = levelColorMap.get(level) || levelColorMap.get('P2')!;
 
   const handleLevelChange = (value: string) => {
     setLevel(value);
@@ -50,7 +58,7 @@ const CaseLevelSelect: FC<Props> = ({ testcaseData, onLevelChange }) => {
           name="case_level"
           onChange={handleLevelChange}
           initialValue="P2"
-          options={CASE_LEVEL_OPTION}
+          options={levelSelectOptions}
           fieldProps={{
             variant: 'filled',
             style: { minWidth: 70, borderRadius: 10 },

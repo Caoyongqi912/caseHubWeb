@@ -3,6 +3,8 @@
  */
 import { commitPlanImportCase } from '@/api/case/caseplan';
 import { cancelImportCase, uploadPreviewCase } from '@/api/case/testCase';
+import { toSelectOptions } from '@/pages/CaseHub/hooks/caseEnumOption';
+import { useCaseEnumConfig } from '@/pages/CaseHub/hooks/useCaseEnumConfig';
 import type { IPlanModule } from '@/pages/CaseHub/types';
 import {
   CheckCircleOutlined,
@@ -42,8 +44,8 @@ interface ValidateResult {
 }
 
 interface FormValues {
-  case_status: number;
-  is_review: number;
+  case_status: string;
+  is_review: string;
   module_id?: number;
   file?: File;
 }
@@ -81,7 +83,7 @@ const getPassRateColor = (passRate: number) => {
 const StatusSelect: FC<{
   name: string;
   label: string;
-  options: { value: number; label: string }[];
+  options: { value: string; label: string }[];
   required?: boolean;
   message?: string;
 }> = ({ name, label, options, required, message }) => (
@@ -282,6 +284,21 @@ const PlanCaseImportModal: FC<PlanCaseImportModalProps> = ({
 
   const isDark = token.colorBgContainer === '#141414';
   const styles = useModalTheme(isDark);
+  /**
+   * 从 Context 动态获取评审状态选项
+   * 用于导入表单中的评审状态 Select
+   */
+  const { options: reviewOptions } = useCaseEnumConfig('REVIEW_STATUS');
+  /** 评审状态选项（转换为 FormSelect 所需格式） */
+  const reviewStatusFormOptions = useMemo(() => {
+    const opts = toSelectOptions(reviewOptions);
+    return opts.length > 0
+      ? opts
+      : [
+          { value: '1', label: '已评审' },
+          { value: '0', label: '未评审' },
+        ];
+  }, [reviewOptions]);
   const passRate = useMemo(() => {
     if (!validateResult || validateResult.total_count === 0) return 0;
     return Math.round(
@@ -390,7 +407,7 @@ const PlanCaseImportModal: FC<PlanCaseImportModalProps> = ({
           plan_module_id: values.module_id,
           plan_id: planId,
           case_status: values.case_status,
-          is_review: values.is_review === 1,
+          is_review: values.is_review,
         })) as any;
 
         if (!response || response.code !== 0) {
@@ -477,10 +494,7 @@ const PlanCaseImportModal: FC<PlanCaseImportModalProps> = ({
             label="评审状态"
             required
             message="请选择评审状态"
-            options={[
-              { value: 1, label: '已评审' },
-              { value: 0, label: '未评审' },
-            ]}
+            options={reviewStatusFormOptions}
           />
         </ProForm.Group>
 

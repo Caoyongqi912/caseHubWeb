@@ -2,10 +2,11 @@ import {
   BatchEditValues,
   useBatchEdit,
 } from '@/pages/CaseHub/CaseLibrary/components/hooks';
-import { CaseHubConfig } from '@/pages/CaseHub/config/constants';
+import { toSelectOptions } from '@/pages/CaseHub/hooks/caseEnumOption';
+import { useCaseEnumConfig } from '@/pages/CaseHub/hooks/useCaseEnumConfig';
 import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import { Checkbox, Input, Modal, Select } from 'antd';
-import { FC, useCallback, useState } from 'react';
+import { FC, useCallback, useMemo, useState } from 'react';
 
 export interface BatchEditModalProps {
   open: boolean;
@@ -20,8 +21,21 @@ const BatchEditModal: FC<BatchEditModalProps> = ({
   onCancel,
   onSuccess,
 }) => {
+  // 用例类型从后端枚举配置拉取（管理员在配置中心增删后自动生效）
+  const { options: typeOptions } = useCaseEnumConfig('CASE_TYPE');
+  const typeSelectOptions = useMemo(
+    () => toSelectOptions(typeOptions),
+    [typeOptions],
+  );
+
   const { colors, spacing, token } = useCaseHubTheme();
-  const { CASE_LEVEL_OPTION, CASE_TYPE_OPTION } = CaseHubConfig;
+
+  // 用例等级从后端枚举配置拉取（管理员在配置中心增删后自动生效）
+  const { options: levelOptions } = useCaseEnumConfig('CASE_LEVEL');
+  const levelSelectOptions = useMemo(
+    () => toSelectOptions(levelOptions),
+    [levelOptions],
+  );
 
   const [caseTag, setCaseTag] = useState<string>('');
   const [caseLevel, setCaseLevel] = useState<string | undefined>(undefined);
@@ -136,7 +150,7 @@ const BatchEditModal: FC<BatchEditModalProps> = ({
               placeholder="选择用例等级"
               value={caseLevel}
               onChange={setCaseLevel}
-              options={CASE_LEVEL_OPTION}
+              options={levelSelectOptions}
               allowClear
             />
           )}
@@ -168,7 +182,7 @@ const BatchEditModal: FC<BatchEditModalProps> = ({
               placeholder="选择用例类型"
               value={caseType}
               onChange={setCaseType}
-              options={CASE_TYPE_OPTION}
+              options={typeSelectOptions}
               allowClear
             />
           )}

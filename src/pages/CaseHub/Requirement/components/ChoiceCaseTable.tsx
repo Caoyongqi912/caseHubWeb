@@ -2,17 +2,19 @@ import { IModuleEnum, IObjGet } from '@/api';
 import { pageTestCase } from '@/api/case/testCase';
 import MyProTable from '@/components/Table/MyProTable';
 import UserSelect from '@/components/Table/UserSelect';
+import { toValueEnum } from '@/pages/CaseHub/hooks/caseEnumOption';
+import { useCaseEnumConfig } from '@/pages/CaseHub/hooks/useCaseEnumConfig';
+import { useCaseLevelColorMap } from '@/pages/CaseHub/hooks/useCaseLevelColor';
 import { ModuleEnum } from '@/utils/config';
 import { fetchModulesEnum, pageData } from '@/utils/somefunc';
 import { ActionType, ProColumns } from '@ant-design/pro-components';
 import { TableRowSelection } from 'antd/es/table/interface';
-import { FC, useCallback, useEffect, useRef, useState } from 'react';
-import { CaseHubConfig } from '../../config/constants';
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ITestCase } from '../../types';
 
 import { queryProjectEnum } from '@/components/CommonFunc';
 import { borderRadius } from '@/components/LeftComponents/styles';
-import { caseLevelColors } from '@/pages/CaseHub/styles';
+
 import { Button, Tag, Typography } from 'antd';
 
 interface Props {
@@ -27,7 +29,14 @@ const ChoiceCaseTable: FC<Props> = ({
   projectId,
   hideAddButton = true,
 }) => {
-  const { CASE_LEVEL_ENUM } = CaseHubConfig;
+  // 用例等级从后端枚举配置拉取（管理员在配置中心增删后自动生效）
+  const { options: levelOptions } = useCaseEnumConfig('CASE_LEVEL');
+  const levelValueEnum = useMemo(
+    () => toValueEnum(levelOptions),
+    [levelOptions],
+  );
+  const levelColorMap = useCaseLevelColorMap();
+
   const actionRef = useRef<ActionType>();
 
   const [projectEnumMap, setProjectEnumMap] = useState<IObjGet>({});
@@ -108,10 +117,10 @@ const ChoiceCaseTable: FC<Props> = ({
       dataIndex: 'case_level',
       width: '10%',
       sorter: true,
-      valueEnum: CASE_LEVEL_ENUM,
+      valueEnum: levelValueEnum,
       render: (_, record) => {
         const levelColor =
-          caseLevelColors[record.case_level] || caseLevelColors.P2;
+          levelColorMap.get(record.case_level) || levelColorMap.get('P2')!;
         return (
           <Tag
             style={{

@@ -1,18 +1,11 @@
-import {
-  CheckCircleFilled,
-  CheckCircleOutlined,
-  ClockCircleOutlined,
-  CloseCircleFilled,
-  CloseCircleOutlined,
-  ExclamationCircleFilled,
-  MinusCircleFilled,
-  MinusCircleOutlined,
-  QuestionCircleFilled,
-} from '@ant-design/icons';
 import type { MenuProps } from 'antd';
+import { useMemo } from 'react';
+
+import { useCaseEnumConfig } from '@/pages/CaseHub/hooks/useCaseEnumConfig';
 
 /**
  * 用例状态配置（用于列表展示和批量操作）
+ * 从 useCaseEnumConfig 动态获取，支持后端配置化
  */
 export interface StatusConfig {
   label: string;
@@ -20,81 +13,106 @@ export interface StatusConfig {
 }
 
 /**
- * 步骤状态配置（用于步骤表格，包含图标）
+ * 从动态枚举数据构建用例状态配置映射
+ * @param options - 从 Context 获取的状态选项列表（value 为 string 类型）
+ * @returns 按 status value 索引的配置映射（无数据时返回空对象）
  */
-export interface StepStatusConfig extends StatusConfig {
-  icon: React.ReactNode;
-}
-
-/**
- * 用例状态配置映射
- * 用于 CaseItem 组件的状态展示和批量操作
- */
-export const CASE_STATUS_CONFIG: Record<number, StatusConfig> = {
-  0: { label: '未开始', color: 'default' },
-  1: { label: '通过', color: 'success' },
-  2: { label: '失败', color: 'error' },
-  3: { label: '阻塞', color: 'warning' },
-  4: { label: '跳过', color: 'processing' },
+export const buildStatusConfig = (
+  options: Array<{ value: string; label: string; color: string }>,
+): Record<string, StatusConfig> => {
+  if (!options.length) return {};
+  const config: Record<string, StatusConfig> = {};
+  options.forEach((opt) => {
+    config[opt.value] = {
+      label: opt.label,
+      color: opt.color,
+    };
+  });
+  return config;
 };
 
 /**
- * 步骤状态配置映射（用于步骤表格）
- * 包含状态图标，区分"未填写"与"通过"等状态
+ * 创建带颜色圆点的下拉菜单项（统一函数）
+ * 用于 CaseItem 组件的状态切换 / 评审状态切换下拉菜单
+ * 无数据时返回空数组
+ *
+ * 原代码中 createStatusSelectItems 与 createReviewSelectItems 实现完全一致，
+ * 已合并为单一函数避免重复
  */
-export const STEP_STATUS_CONFIG: Record<number, StepStatusConfig> = {
-  0: {
-    label: '未填写',
-    color: 'default',
-    icon: <QuestionCircleFilled style={{ fontSize: 16, color: '#aeaeaeff' }} />,
-  },
-  1: {
-    label: '通过',
-    color: 'success',
-    icon: <CheckCircleFilled style={{ fontSize: 16, color: '#0aff57ff' }} />,
-  },
-  2: {
-    label: '失败',
-    color: 'error',
-    icon: <CloseCircleFilled style={{ fontSize: 16, color: '#FF4D4F' }} />,
-  },
-  3: {
-    label: '阻塞',
-    color: 'warning',
-    icon: <MinusCircleFilled style={{ fontSize: 16, color: '#FF9900' }} />,
-  },
-  4: {
-    label: '跳过',
-    color: 'purple',
-    icon: (
-      <ExclamationCircleFilled style={{ fontSize: 16, color: '#FF4D4F' }} />
-    ),
-  },
-};
+export const createSelectMenuItems = (
+  options: Array<{ value: string; label: string; color: string }>,
+): MenuProps['items'] =>
+  options.length > 0
+    ? options.map((opt) => ({
+        key: opt.value,
+        label: (
+          <span
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}
+          >
+            <span
+              style={{
+                display: 'inline-block',
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                backgroundColor: opt.color || '#999',
+              }}
+            />
+            {opt.label}
+          </span>
+        ),
+      }))
+    : [];
+
+/** @deprecated 使用 createSelectMenuItems 替代 */
+export const createStatusSelectItems = createSelectMenuItems;
+
+/** @deprecated 使用 createSelectMenuItems 替代 */
+export const createReviewSelectItems = createSelectMenuItems;
 
 /**
- * 用例状态图标配置（用于下拉菜单选择项）
- * 与 CASE_STATUS_CONFIG 一一对应
+ * Hook：获取动态构建的状态配置
+ * 内部消费 useCaseEnumConfig，返回可直接使用的配置对象
+ * 所有需要状态配置的组件应优先使用此 Hook
+ *
+ * @returns {
+ *   caseStatusConfig - 用例状态配置（用于 Tag 展示、消息提示等），key 为 string
+ *   stepStatusConfig - 步骤状态配置（与 caseStatusConfig 完全相同，保留别名兼容旧引用）
+ *   statusSelectItems - 下拉菜单项（用于 Dropdown 选择器）
+ *   reviewSelectItems - 评审状态下拉菜单项（用于评审状态 Dropdown 选择器）
+ * }
+ *
+ * @example
+ * const { caseStatusConfig, statusSelectItems } = useDynamicStatusConfig();
+ * const config = caseStatusConfig[firstStatusStr];
  */
-export const CASE_STATUS_ICONS: Record<number, React.ReactNode> = {
-  0: <ClockCircleOutlined />,
-  1: <CheckCircleOutlined />,
-  2: <CloseCircleOutlined />,
-  3: <MinusCircleOutlined />,
-  4: <MinusCircleOutlined />,
-};
+export const useDynamicStatusConfig = () => {
+  const { options: caseOptions } = useCaseEnumConfig('CASE_STATUS');
+  const { options: reviewOptions } = useCaseEnumConfig('REVIEW_STATUS');
 
-/**
- * 创建状态选择下拉菜单项
- * 用于 CaseItem 组件的状态切换下拉菜单
- */
-export const createStatusSelectItems = (): MenuProps['items'] =>
-  Object.entries(CASE_STATUS_CONFIG).map(([key, config]) => ({
-    key,
-    label: (
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-        {CASE_STATUS_ICONS[Number(key)]}
-        {config.label}
-      </span>
-    ),
-  }));
+  const caseStatusConfig = useMemo(
+    () => buildStatusConfig(caseOptions),
+    [caseOptions],
+  );
+
+  // 步骤状态复用同一份执行状态枚举配置（一轮/二轮/步骤主状态共用）
+  // 直接使用同一引用，无需重复构建
+  const stepStatusConfig = caseStatusConfig;
+
+  const statusSelectItems = useMemo(
+    () => createSelectMenuItems(caseOptions),
+    [caseOptions],
+  );
+
+  const reviewSelectItems = useMemo(
+    () => createSelectMenuItems(reviewOptions),
+    [reviewOptions],
+  );
+
+  return {
+    caseStatusConfig,
+    stepStatusConfig,
+    statusSelectItems,
+    reviewSelectItems,
+  };
+};

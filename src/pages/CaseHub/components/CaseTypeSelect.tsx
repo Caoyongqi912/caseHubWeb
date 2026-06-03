@@ -1,47 +1,53 @@
-import { CaseHubConfig } from '@/pages/CaseHub/config/constants';
+import {
+  toSelectOptions,
+  toValueEnum,
+} from '@/pages/CaseHub/hooks/caseEnumOption';
+import { useCaseEnumConfig } from '@/pages/CaseHub/hooks/useCaseEnumConfig';
 import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import { ITestCase } from '@/pages/CaseHub/types';
 import { ProFormSelect } from '@ant-design/pro-components';
 import { Tag } from 'antd';
-import { FC, useEffect, useState } from 'react';
+import { FC, useEffect, useMemo, useState } from 'react';
 
 interface Props {
   testcaseData?: ITestCase;
-  onTypeChange?: (caseId: number, newType: number) => void;
+  onTypeChange?: (caseId: number, newType: string) => void;
 }
 
 const CaseTypeSelect: FC<Props> = ({ testcaseData, onTypeChange }) => {
   const [typeVisible, setTypeVisible] = useState(true);
-  const [typeValue, setTypeValue] = useState(2);
+  // 用例类型从后端枚举配置拉取（管理员在配置中心增删后自动生效）
+  // value 是 string 类型（与 ICaseEnumConfig.value 对齐）
+  const [typeValue, setTypeValue] = useState<string>('');
   const { colors } = useCaseHubTheme();
-  const { CASE_TYPE_OPTION, CASE_TYPE_ENUM } = CaseHubConfig;
+
+  const { options: typeOptions } = useCaseEnumConfig('CASE_TYPE');
+  const typeSelectOptions = useMemo(
+    () => toSelectOptions(typeOptions),
+    [typeOptions],
+  );
+  const typeValueEnum = useMemo(() => toValueEnum(typeOptions), [typeOptions]);
 
   useEffect(() => {
-    if (testcaseData?.case_type) {
-      setTypeValue(testcaseData.case_type);
+    if (testcaseData?.case_type != null) {
+      setTypeValue(String(testcaseData.case_type));
       setTypeVisible(false);
     }
   }, [testcaseData]);
 
+  // 用例类型颜色（默认基于 antd token 派生）
+  // 留空 Map 让 Tag 直接走 ICaseEnumConfig.color 派生（后续可接入 useCaseLevelColorMap 类似机制）
   const typeColorMap: Record<
-    number,
+    string,
     { bg: string; border: string; text: string }
-  > = {
-    1: {
-      bg: `${colors.warning}12`,
-      border: `${colors.warning}25`,
-      text: colors.warning,
-    },
-    2: {
-      bg: `${colors.info}12`,
-      border: `${colors.info}25`,
-      text: colors.info,
-    },
+  > = {};
+  const typeColor = typeColorMap[typeValue] || {
+    bg: `${colors.info}12`,
+    border: `${colors.info}25`,
+    text: colors.info,
   };
 
-  const typeColor = typeColorMap[typeValue] || typeColorMap[2];
-
-  const handleTypeChange = (value: number) => {
+  const handleTypeChange = (value: string) => {
     setTypeValue(value);
     setTypeVisible(false);
     if (testcaseData?.id) {
@@ -64,8 +70,7 @@ const CaseTypeSelect: FC<Props> = ({ testcaseData, onTypeChange }) => {
           allowClear={false}
           onChange={handleTypeChange}
           name="case_type"
-          initialValue={2}
-          options={CASE_TYPE_OPTION}
+          options={typeSelectOptions}
           fieldProps={{
             variant: 'filled',
             style: { minWidth: 70, borderRadius: 10 },
@@ -95,7 +100,7 @@ const CaseTypeSelect: FC<Props> = ({ testcaseData, onTypeChange }) => {
             (e.currentTarget as HTMLElement).style.transform = 'scale(1)';
           }}
         >
-          {CASE_TYPE_ENUM[typeValue]}
+          {typeValueEnum[typeValue]?.text || typeValue || '-'}
         </Tag>
       )}
     </>

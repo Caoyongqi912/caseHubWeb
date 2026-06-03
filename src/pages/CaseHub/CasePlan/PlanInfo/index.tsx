@@ -24,7 +24,7 @@ const Index = () => {
     </div>
   );
 
-  const PlanTiems = [
+  const PlanItems = [
     {
       key: 'cases',
       label: '用例',
@@ -61,7 +61,7 @@ const Index = () => {
       <Tabs
         type="card"
         size="small"
-        items={PlanTiems}
+        items={PlanItems}
         defaultActiveKey={'cases'}
         style={{ height: '100%' }}
       />

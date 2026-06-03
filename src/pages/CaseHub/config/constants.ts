@@ -1,3 +1,8 @@
+/**
+ * @deprecated CASE_LEVEL_OPTION / CASE_LEVEL_ENUM 已迁至后端配置中心
+ * 请改用 useCaseEnumConfig('CASE_LEVEL') 拉取动态选项
+ * 见 pages/CaseHub/hooks/useCaseEnumConfig.ts
+ */
 export const CaseHubConfig: any = {
   CASE_LEVEL_OPTION: [
     {
@@ -29,6 +34,11 @@ export const CaseHubConfig: any = {
     P3: 'geekblue',
     P0: 'red',
   },
+  /**
+   * @deprecated 用例类型已迁至后端配置中心
+   * 请改用 useCaseEnumConfig('CASE_TYPE') 拉取动态选项
+   * 见 pages/CaseHub/hooks/useCaseEnumConfig.ts
+   */
   CASE_TYPE_OPTION: [
     {
       label: '冒烟',
@@ -43,6 +53,10 @@ export const CaseHubConfig: any = {
       value: 3,
     },
   ],
+  /**
+   * @deprecated 用例类型已迁至后端配置中心
+   * 见 pages/CaseHub/hooks/useCaseEnumConfig.ts
+   */
   CASE_TYPE_ENUM: {
     1: '冒烟',
     2: '功能',

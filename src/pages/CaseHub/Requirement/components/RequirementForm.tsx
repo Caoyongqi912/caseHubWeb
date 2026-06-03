@@ -2,7 +2,8 @@ import { IModuleEnum } from '@/api';
 import { searchUser } from '@/api/base';
 import { insertRequirement } from '@/api/case/requirement';
 import MyDrawer from '@/components/MyDrawer';
-import { CaseHubConfig } from '@/pages/CaseHub/config/constants';
+import { toSelectOptions } from '@/pages/CaseHub/hooks/caseEnumOption';
+import { useCaseEnumConfig } from '@/pages/CaseHub/hooks/useCaseEnumConfig';
 import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import { IRequirement } from '@/pages/CaseHub/types';
 import { ModuleEnum } from '@/utils/config';
@@ -40,7 +41,13 @@ const RequirementForm: FC<Props> = ({
   const { initialState } = useModel('@@initialState');
   const projects = initialState?.projects || [];
   const currentUser = initialState?.currentUser;
-  const { CASE_LEVEL_OPTION } = CaseHubConfig;
+  // 用例等级从后端枚举配置拉取（管理员在配置中心增删后自动生效）
+  const { options: levelOptions } = useCaseEnumConfig('CASE_LEVEL');
+  const levelSelectOptions = useMemo(
+    () => toSelectOptions(levelOptions),
+    [levelOptions],
+  );
+
   const { colors, spacing, borderRadius } = useCaseHubTheme();
 
   useEffect(() => {
@@ -152,7 +159,7 @@ const RequirementForm: FC<Props> = ({
         label={'需求等级'}
         required={true}
         initialValue={'P2'}
-        options={CASE_LEVEL_OPTION}
+        options={levelSelectOptions}
         fieldProps={{
           variant: 'filled',
         }}

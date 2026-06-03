@@ -19,16 +19,18 @@ export interface CreatorFilterItem {
 
 /**
  * 筛选值类型定义
- * - firstStatus: 一轮执行状态（0=待执行 / 1=通过 / 2=失败）
+ * 状态字段均为 string 类型（与后端枚举 value 对齐）
+ * - firstStatus: 一轮执行状态
  * - secondStatus: 二轮执行状态（取值同 firstStatus）
+ * - isReview: 评审状态
  * - creators: 创建人多选，命中用例的 creatorId 字段（精确 ID 匹配）
  *   存 id + name 是为了 Chip 展示无需回查用户名
  */
 export interface CaseFilterValues {
   keyword?: string;
-  firstStatus?: number;
-  secondStatus?: number;
-  isReview?: boolean;
+  firstStatus?: string;
+  secondStatus?: string;
+  isReview?: string;
   creators?: CreatorFilterItem[];
 }
 
@@ -72,15 +74,12 @@ export const useCaseFilter = (
     }
 
     if (filters.firstStatus !== undefined) {
-      result = result.filter(
-        (c) => (c.first_status ?? 0) === filters.firstStatus,
-      );
+      // ITestCase.first_status 已为 string 类型，直接比较无需转换
+      result = result.filter((c) => c.first_status === filters.firstStatus);
     }
 
     if (filters.secondStatus !== undefined) {
-      result = result.filter(
-        (c) => (c.second_status ?? 0) === filters.secondStatus,
-      );
+      result = result.filter((c) => c.second_status === filters.secondStatus);
     }
 
     if (filters.creators && filters.creators.length > 0) {

@@ -1,7 +1,8 @@
 import { IModuleEnum } from '@/api';
 import { queryUser } from '@/api/base';
 import { getRequirement, updateRequirement } from '@/api/case/requirement';
-import { CaseHubConfig } from '@/pages/CaseHub/config/constants';
+import { toSelectOptions } from '@/pages/CaseHub/hooks/caseEnumOption';
+import { useCaseEnumConfig } from '@/pages/CaseHub/hooks/useCaseEnumConfig';
 import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import { IRequirement } from '@/pages/CaseHub/types';
 import { ModuleEnum } from '@/utils/config';
@@ -33,7 +34,13 @@ const RequirementDetail: FC<Props> = ({ callback, requirementId }) => {
   const { initialState } = useModel('@@initialState');
 
   const [moduleEnum, setModuleEnum] = useState<IModuleEnum[]>([]);
-  const { CASE_LEVEL_OPTION } = CaseHubConfig;
+  // 用例等级从后端枚举配置拉取（管理员在配置中心增删后自动生效）
+  const { options: levelOptions } = useCaseEnumConfig('CASE_LEVEL');
+  const levelSelectOptions = useMemo(
+    () => toSelectOptions(levelOptions),
+    [levelOptions],
+  );
+
   const [selectProjectId, setSelectProjectId] = useState<number>();
   const [users, setUsers] = useState<any[]>([]);
   const { colors, spacing, borderRadius } = useCaseHubTheme();
@@ -251,7 +258,7 @@ const RequirementDetail: FC<Props> = ({ callback, requirementId }) => {
             required={true}
             width={'lg'}
             initialValue={'P2'}
-            options={CASE_LEVEL_OPTION}
+            options={levelSelectOptions}
             fieldProps={{
               variant: 'filled',
             }}

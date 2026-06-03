@@ -2,7 +2,8 @@
  * 用例搜索字段组件
  * 支持按名称、标签、等级、类型、评审状态、公共属性筛选
  */
-import { CaseHubConfig } from '@/pages/CaseHub/config/constants';
+import { toSelectOptions } from '@/pages/CaseHub/hooks/caseEnumOption';
+import { useCaseEnumConfig } from '@/pages/CaseHub/hooks/useCaseEnumConfig';
 import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import { CaseSearchForm } from '@/pages/CaseHub/types';
 import { SearchOutlined } from '@ant-design/icons';
@@ -12,7 +13,7 @@ import {
   ProFormText,
 } from '@ant-design/pro-components';
 import { Button, Form, Space } from 'antd';
-import { FC, useCallback } from 'react';
+import { FC, useCallback, useMemo } from 'react';
 
 /**
  * SearchFields 组件属性
@@ -32,8 +33,22 @@ interface SearchFieldsProps {
  * @param props - 组件属性
  */
 const SearchFields: FC<SearchFieldsProps> = ({ tags, onSearch, onReset }) => {
+  // 用例类型从后端枚举配置拉取（管理员在配置中心增删后自动生效）
+  const { options: typeOptions } = useCaseEnumConfig('CASE_TYPE');
+  const typeSelectOptions = useMemo(
+    () => toSelectOptions(typeOptions),
+    [typeOptions],
+  );
+
   const [form] = Form.useForm();
-  const { CASE_LEVEL_OPTION, CASE_TYPE_OPTION } = CaseHubConfig;
+
+  // 用例等级从后端枚举配置拉取（管理员在配置中心增删后自动生效）
+  const { options: levelOptions } = useCaseEnumConfig('CASE_LEVEL');
+  const levelSelectOptions = useMemo(
+    () => toSelectOptions(levelOptions),
+    [levelOptions],
+  );
+
   const { colors, borderRadius } = useCaseHubTheme();
 
   const handleSearch = useCallback(() => {
@@ -85,7 +100,7 @@ const SearchFields: FC<SearchFieldsProps> = ({ tags, onSearch, onReset }) => {
           placeholder="选择等级"
           mode="single"
           allowClear
-          options={CASE_LEVEL_OPTION}
+          options={levelSelectOptions}
           fieldProps={{
             variant: 'filled',
             style: { borderRadius: borderRadius.md },
@@ -127,7 +142,7 @@ const SearchFields: FC<SearchFieldsProps> = ({ tags, onSearch, onReset }) => {
           placeholder="选择类型"
           mode="single"
           allowClear
-          options={CASE_TYPE_OPTION}
+          options={typeSelectOptions}
           fieldProps={{
             variant: 'filled',
             style: { borderRadius: borderRadius.md },

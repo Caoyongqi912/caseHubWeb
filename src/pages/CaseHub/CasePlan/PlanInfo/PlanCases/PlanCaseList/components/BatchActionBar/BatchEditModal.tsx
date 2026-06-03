@@ -1,11 +1,9 @@
 import { updateAssociatePlanCases } from '@/api/case/caseplan';
+import { toSelectOptions } from '@/pages/CaseHub/hooks/caseEnumOption';
+import { useCaseEnumConfig } from '@/pages/CaseHub/hooks/useCaseEnumConfig';
 import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import { Modal, Radio, Select } from 'antd';
-import { FC, useCallback, useState } from 'react';
-import {
-  CASE_STATUS_OPTIONS,
-  REVIEW_STATUS_OPTIONS,
-} from '../constants/caseStatus';
+import { FC, useCallback, useMemo, useState } from 'react';
 
 export interface BatchEditModalProps {
   open: boolean;
@@ -17,7 +15,7 @@ export interface BatchEditModalProps {
 
 /**
  * 批量修改用例弹窗
- * 支持修改用例状态和评审状态
+ * 支持修改用例状态和评审状态（均从后端动态枚举获取）
  */
 const BatchEditModal: FC<BatchEditModalProps> = ({
   open,
@@ -27,12 +25,30 @@ const BatchEditModal: FC<BatchEditModalProps> = ({
   onSuccess,
 }) => {
   const { colors, spacing, token } = useCaseHubTheme();
-  const [isReview, setIsReview] = useState<number | undefined>(undefined);
-  const [caseStatus, setCaseStatus] = useState<number | undefined>(undefined);
+  /**
+   * 从 Context 动态获取用例状态 / 评审状态选项
+   */
+  const { options: caseOptions } = useCaseEnumConfig('CASE_STATUS');
+  const { options: reviewOptions } = useCaseEnumConfig('REVIEW_STATUS');
+
+  /** 用例状态选项（Select 下拉） */
+  const caseStatusOptions = useMemo(
+    () => toSelectOptions(caseOptions),
+    [caseOptions],
+  );
+
+  /** 评审状态选项（Radio.Group） */
+  const reviewStatusRadioOptions = useMemo(
+    () => toSelectOptions(reviewOptions),
+    [reviewOptions],
+  );
+
+  const [isReview, setIsReview] = useState<string | undefined>(undefined);
+  const [caseStatus, setCaseStatus] = useState<string | undefined>(undefined);
   const [submitting, setSubmitting] = useState(false);
 
-  /** 修改用例状态 */
-  const handleStatusChange = useCallback((value: number) => {
+  /** 修改用例状态（value 为 string 枚举值） */
+  const handleStatusChange = useCallback((value: string) => {
     setCaseStatus(value);
   }, []);
 
@@ -50,11 +66,11 @@ const BatchEditModal: FC<BatchEditModalProps> = ({
 
     setSubmitting(true);
     try {
+      // 状态字段已为 string 类型（与后端枚举 value 对齐），直接传给 API
       const { code } = await updateAssociatePlanCases({
         plan_id: Number(currentPlanId),
         case_id_list: selectedCaseIds,
         is_review: isReview,
-        case_status: caseStatus,
       });
 
       if (code === 0) {
@@ -114,7 +130,7 @@ const BatchEditModal: FC<BatchEditModalProps> = ({
             value={isReview}
             onChange={(e) => setIsReview(e.target.value)}
           >
-            {REVIEW_STATUS_OPTIONS.map((option) => (
+            {reviewStatusRadioOptions.map((option) => (
               <Radio key={option.value} value={option.value}>
                 {option.label}
               </Radio>
@@ -139,7 +155,7 @@ const BatchEditModal: FC<BatchEditModalProps> = ({
             allowClear
             value={caseStatus}
             onChange={handleStatusChange}
-            options={CASE_STATUS_OPTIONS}
+            options={caseStatusOptions}
           />
         </div>
       </div>

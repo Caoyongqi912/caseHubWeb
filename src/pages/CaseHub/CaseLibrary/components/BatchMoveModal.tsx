@@ -1,6 +1,5 @@
 import { IModuleEnum } from '@/api';
 import { useBatchMove } from '@/pages/CaseHub/CaseLibrary/components/hooks';
-import { CaseHubConfig } from '@/pages/CaseHub/config/constants';
 import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import { ModuleEnum } from '@/utils/config';
 import { fetchModulesEnum } from '@/utils/somefunc';
@@ -31,8 +30,6 @@ const BatchMoveModal: FC<BatchMoveModalProps> = ({
   const [selectProjectId, setSelectProjectId] = useState<number>();
   const [moduleEnum, setModuleEnum] = useState<IModuleEnum[]>([]);
   const { colors, token } = useCaseHubTheme();
-  const { CASE_LEVEL_OPTION, CASE_TYPE_OPTION } = CaseHubConfig;
-
   const projects = initialState?.projects || [];
   const { moveCases, loading } = useBatchMove({ onSuccess });
 

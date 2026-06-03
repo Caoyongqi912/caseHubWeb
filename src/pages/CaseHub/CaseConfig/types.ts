@@ -17,10 +17,9 @@ export interface ICaseEnumConfig {
   label: string;
   /**
    * 枚举值
-   * 业务侧约定使用 number（与现有 CASE_STATUS_OPTIONS 保持一致），
    * 保留 string 兼容后续需要字符串键的场景
    */
-  value: number | string;
+  value: string;
   /** 主题色（用于 Tag / 状态点等展示），遵循 antd 预设或自定义 hex */
   color?: string;
   /** 描述说明，悬停 / 详情中展示 */
@@ -48,4 +47,6 @@ export enum CaseConfigKeyEnum {
   REVIEW_STATUS = 'REVIEW_STATUS',
   /** 用例等级（如 P0 / P1 / P2） */
   CASE_LEVEL = 'CASE_LEVEL',
+  /** 用例类型（如 回归 / 冒烟 / 功能等） */
+  CASE_TYPE = 'CASE_TYPE',
 }

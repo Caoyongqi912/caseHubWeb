@@ -29,19 +29,19 @@ export interface ITestCase {
   case_type: number;
   case_tag?: string;
   case_setup?: string;
-  case_status?: number;
+  case_status?: string;
   case_bugs?: string[] | [] | undefined;
   case_mark?: string | undefined;
   is_common?: boolean;
-  is_review?: boolean;
+  is_review?: string;
   requirement_id?: number | string;
   case_sub_steps?: CaseSubStep[];
   creatorName: string;
   creatorId: number;
   project_id?: number;
   module_id?: number;
-  first_status?: number;
-  second_status?: number;
+  first_status?: string;
+  second_status?: string;
 }
 
 export interface CaseSubStep {
@@ -51,9 +51,9 @@ export interface CaseSubStep {
   order?: number;
   expected_result: string | null;
   actual_result?: string | null;
-  status?: number;
-  first_status?: number;
-  second_status?: number;
+  status?: string;
+  first_status?: string;
+  second_status?: string;
   bug_url?: string | null;
 }
 
@@ -71,7 +71,7 @@ export interface CaseSearchForm {
   case_type?: 1 | 2;
   case_tag?: string;
   case_status?: 0 | 1 | 2;
-  is_review?: boolean;
+  is_review?: number;
   is_common?: boolean;
 }
 

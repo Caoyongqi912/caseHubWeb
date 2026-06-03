@@ -8,8 +8,11 @@ import MyDrawer from '@/components/MyDrawer';
 import UserSelect from '@/components/Table/UserSelect';
 import TestCaseDetail from '@/pages/CaseHub/CaseLibrary/TestCaseDetail';
 import DynamicInfo from '@/pages/CaseHub/components/DynamicInfo';
-import { CaseHubConfig } from '@/pages/CaseHub/config/constants';
-import { caseLevelColors, useCaseHubTheme } from '@/pages/CaseHub/styles';
+import { toValueEnum } from '@/pages/CaseHub/hooks/caseEnumOption';
+import { useCaseEnumConfig } from '@/pages/CaseHub/hooks/useCaseEnumConfig';
+import { useCaseLevelColorMap } from '@/pages/CaseHub/hooks/useCaseLevelColor';
+
+import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import { ITestCase } from '@/pages/CaseHub/types';
 import { ModuleEnum } from '@/utils/config';
 import { pageData } from '@/utils/somefunc';
@@ -52,9 +55,22 @@ interface Props {
 }
 
 const CaseDataTable: FC<Props> = (props) => {
+  // 用例类型从后端枚举配置拉取（管理员在配置中心增删后自动生效）
+  const { options: typeOptions } = useCaseEnumConfig('CASE_TYPE');
+  const typeValueEnum = useMemo(() => toValueEnum(typeOptions), [typeOptions]);
+
   const { perKey, currentProjectId, currentModuleId } = props;
-  const { CASE_LEVEL_ENUM, CASE_TYPE_ENUM } = CaseHubConfig;
+
+  // 用例等级从后端枚举配置拉取（管理员在配置中心增删后自动生效）
+  const { options: levelOptions } = useCaseEnumConfig('CASE_LEVEL');
+  const levelValueEnum = useMemo(
+    () => toValueEnum(levelOptions),
+    [levelOptions],
+  );
+
   const { token, colors, borderRadius } = useCaseHubTheme();
+  const levelColorMap = useCaseLevelColorMap();
+
   const actionRef = useRef<ActionType>();
   const [currentCaseId, setCurrentCaseId] = useState<number>();
   const [currentCase, setCurrentCase] = useState<ITestCase>();
@@ -157,16 +173,16 @@ const CaseDataTable: FC<Props> = (props) => {
         title: '用例等级',
         dataIndex: 'case_level',
         valueType: 'select',
-        valueEnum: CASE_LEVEL_ENUM,
+        valueEnum: levelValueEnum,
         width: '10%',
         render: (_, record: ITestCase) => {
           if (!record.case_level) {
             return <Text type="secondary">-</Text>;
           }
           const levelText =
-            CASE_LEVEL_ENUM[record.case_level]?.text || record.case_level;
+            levelValueEnum[record.case_level]?.text || record.case_level;
           const levelColors =
-            caseLevelColors[record.case_level] || caseLevelColors['P3'];
+            levelColorMap.get(record.case_level) || levelColorMap.get('P3')!;
           return (
             <Tag
               style={{
@@ -186,19 +202,21 @@ const CaseDataTable: FC<Props> = (props) => {
         title: '用例类型',
         dataIndex: 'case_type',
         valueType: 'select',
-        valueEnum: CASE_TYPE_ENUM,
+        valueEnum: typeValueEnum,
         width: '10%',
         render: (_, record: ITestCase) => (
           <Text
             type="secondary"
             ellipsis={{
               tooltip: record.case_type
-                ? CASE_TYPE_ENUM[record.case_type]
+                ? typeValueEnum[record.case_type]?.text || record.case_type
                 : '-',
             }}
             style={{ fontWeight: 500 }}
           >
-            {record.case_type ? CASE_TYPE_ENUM[record.case_type] : '-'}
+            {record.case_type
+              ? typeValueEnum[record.case_type]?.text || record.case_type
+              : '-'}
           </Text>
         ),
       },
@@ -244,7 +262,7 @@ const CaseDataTable: FC<Props> = (props) => {
         },
       },
     ],
-    [CASE_LEVEL_ENUM, caseLevelColors, colors, borderRadius, token],
+    [levelValueEnum, levelColorMap, colors, borderRadius, token],
   );
 
   const TableOptions = (record: ITestCase) => {

@@ -2,6 +2,11 @@ export { useChoiceSettingAreaStyles } from './ChoiceSettingAreaStyles';
 export { useRequirementCaseCardStyles } from './RequirementCaseCardStyles';
 export { default, useCaseHubTheme } from './useCaseHubTheme';
 
+/**
+ * @deprecated 用例等级颜色已迁至后端配置中心（ICaseEnumConfig.color）
+ * 请改用 useCaseLevelColorMap() 获取
+ * 该常量仅作为 P0-P3 兜底保留，admin 未配置时仍可用
+ */
 export const caseLevelColors: Record<
   string,
   { bg: string; border: string; text: string }

@@ -37,6 +37,20 @@ export const CASE_CONFIG_CATEGORIES: ICaseConfigCategory[] = [
     description: '配置测试用例评审状态枚举，控制用例评审流程中的可用状态。',
     icon: 'AuditOutlined',
   },
+  {
+    key: CaseConfigKeyEnum.CASE_LEVEL,
+    label: '用例等级',
+    description:
+      '配置测试用例等级枚举（典型如 P0 / P1 / P2）。等级同时作为枚举的 value 与 label，便于用例库与计划模块按等级筛选、汇总。',
+    icon: 'TrophyOutlined',
+  },
+  {
+    key: CaseConfigKeyEnum.CASE_TYPE,
+    label: '用例类型',
+    description:
+      '配置测试用例类型枚举（如 回归 / 冒烟 / 功能 / 性能 等），用于用例库分类、计划编排与多维筛选。',
+    icon: 'TagsOutlined',
+  },
 ];
 
 /**

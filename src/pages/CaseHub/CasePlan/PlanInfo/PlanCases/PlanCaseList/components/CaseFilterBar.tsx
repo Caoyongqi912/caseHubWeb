@@ -9,6 +9,8 @@
  */
 
 import UserSelect from '@/components/Table/UserSelect';
+import { toSelectOptions } from '@/pages/CaseHub/hooks/caseEnumOption';
+import { useCaseEnumConfig } from '@/pages/CaseHub/hooks/useCaseEnumConfig';
 import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import {
   EllipsisOutlined,
@@ -45,20 +47,22 @@ interface CaseFilterBarProps {
 
 /**
  * 执行状态筛选选项
- * 一轮 / 二轮共用同一份枚举，值与 CASE_STATUS_CONFIG.code 对齐
- * 0=未开始 / 1=通过 / 2=失败（3=阻塞 / 4=跳过不在筛选范围内，避免筛选项过载）
+ * 从 useCaseEnumConfig 动态获取，一轮 / 二轮共用同一份枚举
+ * 当 Context 数据为空时降级为兜底默认值
  */
-const STATUS_OPTIONS: { value: number; label: string }[] = [
-  { value: 0, label: '待执行' },
-  { value: 1, label: '通过' },
-  { value: 2, label: '失败' },
-];
+const useStatusOptions = () => {
+  const { options: caseOptions } = useCaseEnumConfig('CASE_STATUS');
+  return useMemo(() => toSelectOptions(caseOptions), [caseOptions]);
+};
 
-/** 评审状态筛选选项 */
-const REVIEW_OPTIONS: { value: boolean; label: string }[] = [
-  { value: true, label: '已评审' },
-  { value: false, label: '未评审' },
-];
+/**
+ * 评审状态筛选选项（从 Context 动态获取）
+ * 返回 { value: string, label: string } 格式，value 与后端枚举值对齐（string 类型）
+ */
+const useReviewOptions = () => {
+  const { options: reviewOptions } = useCaseEnumConfig('REVIEW_STATUS');
+  return useMemo(() => toSelectOptions(reviewOptions), [reviewOptions]);
+};
 
 /**
  * 主题 token 透传给小组件，避免在小组件内重复 useCaseHubTheme
@@ -142,13 +146,18 @@ const CaseFilterBar: FC<CaseFilterBarProps> = ({
   resultCount,
 }) => {
   const { colors, spacing, borderRadius, animations } = useCaseHubTheme();
+  /**
+   * 从 Context 动态获取执行状态 / 评审状态筛选选项
+   */
+  const statusOptions = useStatusOptions();
+  const reviewFilterOptions = useReviewOptions();
   const [keyword, setKeyword] = useState(filters?.keyword || '');
   const [filterOpen, setFilterOpen] = useState(false);
-  const [tempFirstStatus, setTempFirstStatus] = useState<number | undefined>();
+  const [tempFirstStatus, setTempFirstStatus] = useState<string | undefined>();
   const [tempSecondStatus, setTempSecondStatus] = useState<
-    number | undefined
+    string | undefined
   >();
-  const [tempReview, setTempReview] = useState<boolean | undefined>();
+  const [tempReview, setTempReview] = useState<string | undefined>();
   /** UserSelect 多选值形态：{ label, value: number }[] */
   const [tempCreators, setTempCreators] = useState<
     { label: string; value: number }[]
@@ -226,6 +235,7 @@ const CaseFilterBar: FC<CaseFilterBarProps> = ({
    */
   useEffect(() => {
     if (!filterOpen) return;
+    // filters 中的状态值已为 string 类型（与后端枚举 value 对齐），直接赋值给临时状态
     setTempFirstStatus(filters?.firstStatus);
     setTempSecondStatus(filters?.secondStatus);
     setTempReview(filters?.isReview);
@@ -261,6 +271,7 @@ const CaseFilterBar: FC<CaseFilterBarProps> = ({
   const handleSearch = useCallback(
     (value: string) => {
       setKeyword(value);
+      // 筛选值直接透传，tempFirstStatus/tempSecondStatus/tempReview 已为 string 类型
       debouncedSearch({
         keyword: value,
         firstStatus: tempFirstStatus,
@@ -360,36 +371,38 @@ const CaseFilterBar: FC<CaseFilterBarProps> = ({
     }> = [];
 
     if (filters?.firstStatus !== undefined) {
-      const config = STATUS_OPTIONS.find(
-        (s) => s.value === filters.firstStatus,
-      );
+      // filters.firstStatus 已为 string 类型，与 options.value 直接比较
+      const config = statusOptions.find((s) => s.value === filters.firstStatus);
       chips.push({
         key: 'firstStatus',
         label: '一轮',
-        value: config?.label ?? String(filters.firstStatus),
+        value: config?.label ?? filters.firstStatus,
         onRemove: () =>
           onFilterChange?.({ ...filters, firstStatus: undefined }),
       });
     }
 
     if (filters?.secondStatus !== undefined) {
-      const config = STATUS_OPTIONS.find(
+      const config = statusOptions.find(
         (s) => s.value === filters.secondStatus,
       );
       chips.push({
         key: 'secondStatus',
         label: '二轮',
-        value: config?.label ?? String(filters.secondStatus),
+        value: config?.label ?? filters.secondStatus,
         onRemove: () =>
           onFilterChange?.({ ...filters, secondStatus: undefined }),
       });
     }
 
     if (filters?.isReview !== undefined) {
+      const reviewLabel = reviewFilterOptions.find(
+        (opt) => opt.value === filters.isReview,
+      )?.label;
       chips.push({
         key: 'isReview',
         label: '评审',
-        value: filters.isReview ? '已评审' : '未评审',
+        value: reviewLabel ?? filters.isReview,
         onRemove: () => onFilterChange?.({ ...filters, isReview: undefined }),
       });
     }
@@ -475,7 +488,7 @@ const CaseFilterBar: FC<CaseFilterBarProps> = ({
                       value={tempFirstStatus}
                       onChange={setTempFirstStatus}
                       style={{ width: '100%' }}
-                      options={STATUS_OPTIONS}
+                      options={statusOptions}
                     />
                   </div>
                   <div>
@@ -486,7 +499,7 @@ const CaseFilterBar: FC<CaseFilterBarProps> = ({
                       value={tempSecondStatus}
                       onChange={setTempSecondStatus}
                       style={{ width: '100%' }}
-                      options={STATUS_OPTIONS}
+                      options={statusOptions}
                     />
                   </div>
                 </div>
@@ -499,7 +512,7 @@ const CaseFilterBar: FC<CaseFilterBarProps> = ({
                   value={tempReview}
                   onChange={setTempReview}
                   style={{ width: '100%' }}
-                  options={REVIEW_OPTIONS}
+                  options={reviewFilterOptions}
                 />
               </FilterGroup>
 

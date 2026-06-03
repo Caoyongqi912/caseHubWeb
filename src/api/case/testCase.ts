@@ -139,7 +139,7 @@ export const deleteBatchTestCase = async (
  * @param {
     requirement_id: number;
     case_id: number;
-    is_review?:boolean;
+    is_review?:number;
     case_status?:number
   }
  * @param options
@@ -148,7 +148,7 @@ export const updateRequirementCase = async (
   caseInfo: {
     requirement_id: number;
     case_id: number;
-    is_review?: boolean;
+    is_review?: number;
     case_status?: number;
     case_type?: number;
     case_level?: string;
@@ -213,7 +213,7 @@ export const commitImportCase = async (data: {
   requirement_id?: string;
   plan_id?: string;
   case_status?: number;
-  is_review?: boolean;
+  is_review?: number;
 }) => {
   return request<{ imported_count: number }>('/api/hub/cases/upload/commit', {
     method: 'POST',
@@ -468,7 +468,7 @@ export const setAllTestCaseStatus = async (
 export const setAllTestCaseReview = async (
   info: {
     requirement_id: number;
-    is_review: boolean;
+    is_review: number;
     case_ids: number[];
   },
   options?: IObjGet,

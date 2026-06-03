@@ -10,6 +10,8 @@ import {
   AuditOutlined,
   ExperimentOutlined,
   SettingOutlined,
+  TagsOutlined,
+  TrophyOutlined,
 } from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
 import { Card, Segmented, Space, Tag, Typography } from 'antd';
@@ -38,6 +40,8 @@ const RENDER_MAP: Record<
 > = {
   [CaseConfigKeyEnum.CASE_STATUS]: CaseStatusConfig,
   [CaseConfigKeyEnum.REVIEW_STATUS]: CaseStatusConfig,
+  [CaseConfigKeyEnum.CASE_LEVEL]: CaseStatusConfig,
+  [CaseConfigKeyEnum.CASE_TYPE]: CaseStatusConfig,
 };
 
 /**
@@ -74,6 +78,8 @@ const renderTabContent = (category: ICaseConfigCategory) => {
 const ICON_MAP: Record<string, React.ReactNode> = {
   ExperimentOutlined: <ExperimentOutlined />,
   AuditOutlined: <AuditOutlined />,
+  TrophyOutlined: <TrophyOutlined />,
+  TagsOutlined: <TagsOutlined />,
 };
 
 /**
@@ -184,7 +190,11 @@ const CaseConfigPage: FC = () => {
           <Tag style={styles.categoryTag}>CASE_STATUS</Tag>
           用例状态、
           <Tag style={styles.categoryTag}>REVIEW_STATUS</Tag>
-          评审状态等枚举的增删改查。配置变更会同步至后端，供其他业务模块读取使用。
+          评审状态、
+          <Tag style={styles.categoryTag}>CASE_LEVEL</Tag>
+          用例等级、
+          <Tag style={styles.categoryTag}>CASE_TYPE</Tag>
+          用例类型等枚举的增删改查。配置变更会同步至后端，供其他业务模块读取使用。
         </Paragraph>
       </div>
 

@@ -1,3 +1,4 @@
+import { useCaseEnumConfig } from '@/pages/CaseHub/hooks/useCaseEnumConfig';
 import { DownOutlined, MoreOutlined, UpOutlined } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
 import {
@@ -21,12 +22,7 @@ import TestCaseDetail from '@/pages/CaseHub/CaseLibrary/TestCaseDetail';
 import { ITestCase } from '@/pages/CaseHub/types';
 
 import { createMoreMenuItems } from './moreMenu';
-import {
-  CASE_STATUS_CONFIG,
-  CASE_STATUS_ICONS,
-  createStatusSelectItems,
-  StatusConfig,
-} from './statusConfig';
+import { StatusConfig, useDynamicStatusConfig } from './statusConfig';
 import StepTable from './StepTable';
 
 const { Text } = Typography;
@@ -37,11 +33,11 @@ interface CaseItemProps {
   planId?: string;
   moduleId?: number | null;
   onSelectedChange?: (id: number | undefined, selected: boolean) => void;
-  onReviewChange?: (caseId: number, isReview: boolean) => void;
+  onReviewChange?: (caseId: number, isReview: string) => void;
   /** 一轮测试状态切换回调（用于驱动父组件 caseList 更新与 StepTable 级联） */
-  onFirstStatusChange?: (caseId: number, status: number) => void;
+  onFirstStatusChange?: (caseId: number, status: string) => void;
   /** 二轮测试状态切换回调 */
-  onSecondStatusChange?: (caseId: number, status: number) => void;
+  onSecondStatusChange?: (caseId: number, status: string) => void;
   /** 卡片折叠状态变更回调（用于通知父级虚拟列表重新计算行高） */
   onCollapsedChange?: (caseId: number | undefined, collapsed: boolean) => void;
   onRefresh?: () => void;
@@ -70,9 +66,10 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
   } = props;
 
   const caseId = testCase.id;
-  const firstStatus = testCase.first_status ?? 0;
-  const secondStatus = testCase.second_status ?? 0;
-  const isReview = testCase.is_review ?? false;
+  // ITestCase 的 first_status / second_status / is_review 已为 string 类型，直接使用
+  const firstStatus = testCase.first_status ?? '';
+  const secondStatus = testCase.second_status ?? '';
+  const isReview = testCase.is_review ?? '';
 
   const [switchingReview, setSwitchingReview] = useState(false);
   const [switchingFirstStatus, setSwitchingFirstStatus] = useState(false);
@@ -81,6 +78,20 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
   const [removeLoading, setRemoveLoading] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [hasEdited, setHasEdited] = useState(false);
+
+  /**
+   * 从 Context 获取动态状态配置
+   * caseStatusConfig: 状态值(string) → { label, color } 映射（用于 Tag 展示、消息提示）
+   * statusSelectItems: 下拉菜单项（用于 Dropdown 选择器，key 为 string）
+   * reviewSelectItems: 评审状态下拉菜单项
+   */
+  const { caseStatusConfig, statusSelectItems, reviewSelectItems } =
+    useDynamicStatusConfig();
+  const { options: reviewOptions } = useCaseEnumConfig('REVIEW_STATUS');
+  const reviewOptionMap = useMemo(
+    () => new Map(reviewOptions.map((o) => [o.value, o])),
+    [reviewOptions],
+  );
 
   /**
    * 卡片折叠状态
@@ -123,8 +134,8 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
     onRefresh,
   };
 
-  /** 状态选择下拉菜单项（主状态/一轮/二轮复用同一份枚举配置） */
-  const statusSelectItems = useMemo(() => createStatusSelectItems(), []);
+  /** 状态选择下拉菜单项（主状态/一轮/二轮复用同一份枚举配置，从 Context 动态获取） */
+  // statusSelectItems 已通过 useDynamicStatusConfig() 获取，无需重复创建
 
   /**
    * 复制当前用例
@@ -197,13 +208,16 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
 
   /**
    * 统一的状态更新处理函数
-   * @param updates - 更新内容，支持 first_status / second_status / is_review
+   * 内部接收 string 类型的枚举值（与后端枚举 value 类型对齐）
+   * - API 调用：直接传递 string 值（后端接口已支持 string 类型）
+   * - 父组件回调：转为 number（ITestCase 状态字段仍为 number）
+   * @param updates - 更新内容，value 为 string 枚举值
    */
   const handleStatusUpdate = useCallback(
     async (updates: {
-      first_status?: number;
-      second_status?: number;
-      is_review?: number;
+      first_status?: string;
+      second_status?: string;
+      is_review?: string;
     }) => {
       if (!caseId || !planId) return;
 
@@ -216,6 +230,7 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
       }
 
       try {
+        // API 直接接收 string 枚举值（后端已适配 string 类型）
         const { code } = await updateAssociatePlanCases({
           plan_id: Number(planId),
           case_id_list: [caseId],
@@ -224,19 +239,12 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
 
         if (code === 0) {
           if (updates.is_review !== undefined) {
-            message.success(
-              updates.is_review ? '已标记为已评审' : '已取消评审',
-            );
-            // 直接读 prop，不走 callbacksRef（避免 useEffect 时序问题）
-            onReviewChange?.(caseId, !!updates.is_review);
+            // 回调参数已统一为 string 类型（与后端枚举 value 对齐）
+            onReviewChange?.(caseId, updates.is_review);
           } else if (updates.first_status !== undefined) {
-            const config = CASE_STATUS_CONFIG[updates.first_status];
-            message.success(`一轮测试已切换为${config?.label ?? '未知'}`);
             // 同步驱动父组件 caseList 更新，进而触发 StepTable 的 firstStatus 级联
             onFirstStatusChange?.(caseId, updates.first_status);
           } else if (updates.second_status !== undefined) {
-            const config = CASE_STATUS_CONFIG[updates.second_status];
-            message.success(`二轮测试已切换为${config?.label ?? '未知'}`);
             // 同步驱动父组件 caseList 更新，进而触发 StepTable 的 secondStatus 级联
             onSecondStatusChange?.(caseId, updates.second_status);
           }
@@ -251,59 +259,63 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
         setSwitchingReview(false);
       }
     },
-    [caseId, planId],
+    [caseId, planId, reviewOptionMap, caseStatusConfig],
   );
 
-  /** 切换评审状态 */
-  const handleReviewToggle = useCallback(() => {
-    if (switchingReview) return;
-    handleStatusUpdate({ is_review: isReview ? 0 : 1 });
-  }, [switchingReview, isReview, handleStatusUpdate]);
+  /** 选择评审状态（value 为 string 枚举值） */
+  const handleReviewSelect = useCallback(
+    (newStatus: string) => {
+      if (switchingReview) return;
+      handleStatusUpdate({ is_review: newStatus });
+    },
+    [switchingReview, handleStatusUpdate],
+  );
 
-  /** 选择一轮测试状态 */
+  /** 选择一轮测试状态（value 为 string 枚举值） */
   const handleFirstStatusSelect = useCallback(
-    (newStatus: number) => {
+    (newStatus: string) => {
       if (switchingFirstStatus) return;
       handleStatusUpdate({ first_status: newStatus });
     },
     [switchingFirstStatus, handleStatusUpdate],
   );
 
-  /** 选择二轮测试状态 */
+  /** 选择二轮测试状态（value 为 string 枚举值） */
   const handleSecondStatusSelect = useCallback(
-    (newStatus: number) => {
+    (newStatus: string) => {
       if (switchingSecondStatus) return;
       handleStatusUpdate({ second_status: newStatus });
     },
     [switchingSecondStatus, handleStatusUpdate],
   );
 
-  const currentFirstStatusConfig =
-    CASE_STATUS_CONFIG[firstStatus] || CASE_STATUS_CONFIG[0];
-  const currentSecondStatusConfig =
-    CASE_STATUS_CONFIG[secondStatus] || CASE_STATUS_CONFIG[0];
+  // 使用 string key 查找配置（枚举 value 为 string 类型）
+  const currentFirstStatusConfig = caseStatusConfig[firstStatus] ||
+    caseStatusConfig['0'] || { label: '未知', color: 'default' };
+  const currentSecondStatusConfig = caseStatusConfig[secondStatus] ||
+    caseStatusConfig['0'] || { label: '未知', color: 'default' };
 
   /**
    * 渲染状态选择 Tag/Dropdown
    * 复用同一份状态枚举配置，通过 prefix 区分"一轮 / 二轮"
-   * @param status 当前状态值
+   * 使用颜色圆点 + label 展示，不再使用静态图标（枚举 value 为动态 string）
    * @param config 状态配置（color + label）
    * @param switching 是否正在切换中（loading 态）
-   * @param onSelect 选中状态的回调
+   * @param onSelect 选中状态的回调（参数为 string 枚举值）
    * @param prefix 可选的轮次前缀，如 "一轮" / "二轮"
    */
   const renderStatusTag = (
-    status: number,
     config: StatusConfig,
     switching: boolean,
-    onSelect: (newStatus: number) => void,
+    onSelect: (newStatus: string) => void,
     prefix?: string,
   ) => (
     <Dropdown
       trigger={['click']}
       menu={{
         items: statusSelectItems,
-        onClick: ({ key }) => onSelect(Number(key)),
+        // menu.key 已是 string，无需 Number() 转换
+        onClick: ({ key }) => onSelect(key),
       }}
       disabled={switching}
     >
@@ -318,7 +330,6 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
           gap: 4,
         }}
       >
-        {CASE_STATUS_ICONS[status] || CASE_STATUS_ICONS[0]}
         {prefix && (
           <>
             <span style={{ opacity: 0.7 }}>{prefix}</span>
@@ -345,16 +356,32 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
             onSelectedChange?.(caseId, e.target.checked);
           }}
         />
-        <Tag
-          color={isReview ? 'success' : 'default'}
-          style={{ cursor: switchingReview ? 'wait' : 'pointer' }}
-          onClick={(e) => {
-            e.stopPropagation();
-            handleReviewToggle();
+        <Dropdown
+          trigger={['click']}
+          menu={{
+            items: reviewSelectItems,
+            // menu.key 已是 string，无需 Number() 转换
+            onClick: ({ key }) => handleReviewSelect(key),
           }}
+          disabled={switchingReview}
         >
-          {switchingReview ? '切换中...' : isReview ? '已评审' : '待评审'}
-        </Tag>
+          <Tag
+            color={reviewOptionMap.get(isReview)?.color || 'default'}
+            style={{
+              cursor: switchingReview ? 'wait' : 'pointer',
+              opacity: switchingReview ? 0.5 : 1,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {switchingReview
+              ? '切换中...'
+              : reviewOptionMap.get(isReview)?.label || '待评审'}
+            <DownOutlined style={{ fontSize: 10, opacity: 0.6 }} />
+          </Tag>
+        </Dropdown>
         <Text
           strong
           style={{ cursor: 'pointer' }}
@@ -372,7 +399,7 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
       caseId,
       isReview,
       switchingReview,
-      handleReviewToggle,
+      handleReviewSelect,
       testCase.case_name,
       onSelectedChange,
     ],
@@ -394,14 +421,12 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
           style={{ transition: 'transform 0.2s' }}
         />
         {renderStatusTag(
-          firstStatus,
           currentFirstStatusConfig,
           switchingFirstStatus,
           handleFirstStatusSelect,
           '一轮',
         )}
         {renderStatusTag(
-          secondStatus,
           currentSecondStatusConfig,
           switchingSecondStatus,
           handleSecondStatusSelect,

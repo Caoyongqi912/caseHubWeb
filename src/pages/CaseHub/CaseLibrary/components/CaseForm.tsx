@@ -1,5 +1,7 @@
 import { saveTestCase } from '@/api/case/testCase';
-import { CaseHubConfig } from '@/pages/CaseHub/config/constants';
+import { toSelectOptions } from '@/pages/CaseHub/hooks/caseEnumOption';
+import { useCaseEnumConfig } from '@/pages/CaseHub/hooks/useCaseEnumConfig';
+
 import { CheckCircleOutlined, SaveOutlined } from '@ant-design/icons';
 import {
   ProCard,
@@ -9,7 +11,7 @@ import {
   ProFormTextArea,
 } from '@ant-design/pro-components';
 import { Button, Form, message, theme } from 'antd';
-import { FC, useCallback, useState } from 'react';
+import { FC, useCallback, useMemo, useState } from 'react';
 import CaseSteps, { TestCaseStep } from './CaseStepsForm';
 
 const { useToken } = theme;
@@ -32,9 +34,22 @@ const CaseForm: FC<Props> = ({
   module_id,
   is_common = true,
 }) => {
+  // 用例类型从后端枚举配置拉取（管理员在配置中心增删后自动生效）
+  const { options: typeOptions } = useCaseEnumConfig('CASE_TYPE');
+  const typeSelectOptions = useMemo(
+    () => toSelectOptions(typeOptions),
+    [typeOptions],
+  );
+
   const { token } = useToken();
   const [form] = Form.useForm();
-  const { CASE_LEVEL_OPTION, CASE_TYPE_OPTION } = CaseHubConfig;
+
+  // 用例等级从后端枚举配置拉取（管理员在配置中心增删后自动生效）
+  const { options: levelOptions } = useCaseEnumConfig('CASE_LEVEL');
+  const levelSelectOptions = useMemo(
+    () => toSelectOptions(levelOptions),
+    [levelOptions],
+  );
 
   const [steps, setSteps] = useState<TestCaseStep[]>([]);
   const [loading, setLoading] = useState(false);
@@ -141,7 +156,7 @@ const CaseForm: FC<Props> = ({
             label="用例级别"
             name="case_level"
             width={'md'}
-            options={CASE_LEVEL_OPTION}
+            options={levelSelectOptions}
             fieldProps={{ variant: 'filled' }}
             style={{ flex: 1 }}
           />
@@ -149,7 +164,7 @@ const CaseForm: FC<Props> = ({
           <ProFormSelect
             label="用例类型"
             name="case_type"
-            options={CASE_TYPE_OPTION}
+            options={typeSelectOptions}
             fieldProps={{ variant: 'filled' }}
             style={{ flex: 1 }}
             width={'md'}

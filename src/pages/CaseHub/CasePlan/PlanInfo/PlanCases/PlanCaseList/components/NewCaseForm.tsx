@@ -1,7 +1,9 @@
 import CaseSteps, {
   TestCaseStep,
 } from '@/pages/CaseHub/CaseLibrary/components/CaseStepsForm';
-import { CaseHubConfig } from '@/pages/CaseHub/config/constants';
+import { toSelectOptions } from '@/pages/CaseHub/hooks/caseEnumOption';
+import { useCaseEnumConfig } from '@/pages/CaseHub/hooks/useCaseEnumConfig';
+
 import { CheckCircleOutlined } from '@ant-design/icons';
 import {
   ProCard,
@@ -11,7 +13,7 @@ import {
   ProFormTextArea,
 } from '@ant-design/pro-components';
 import { Button, Form, theme } from 'antd';
-import { FC, useCallback, useState } from 'react';
+import { FC, useCallback, useMemo, useState } from 'react';
 
 const { useToken } = theme;
 
@@ -24,9 +26,22 @@ interface Props {
  * 支持填写用例基本信息、步骤、前置条件等
  */
 const NewCaseForm: FC<Props> = ({ onSubmit }) => {
+  // 用例类型从后端枚举配置拉取（管理员在配置中心增删后自动生效）
+  const { options: typeOptions } = useCaseEnumConfig('CASE_TYPE');
+  const typeSelectOptions = useMemo(
+    () => toSelectOptions(typeOptions),
+    [typeOptions],
+  );
+
   const { token } = useToken();
   const [form] = Form.useForm();
-  const { CASE_LEVEL_OPTION, CASE_TYPE_OPTION } = CaseHubConfig;
+
+  // 用例等级从后端枚举配置拉取（管理员在配置中心增删后自动生效）
+  const { options: levelOptions } = useCaseEnumConfig('CASE_LEVEL');
+  const levelSelectOptions = useMemo(
+    () => toSelectOptions(levelOptions),
+    [levelOptions],
+  );
 
   const [steps, setSteps] = useState<TestCaseStep[]>([]);
   const [loading, setLoading] = useState(false);
@@ -85,7 +100,7 @@ const NewCaseForm: FC<Props> = ({ onSubmit }) => {
             label="用例级别"
             name="case_level"
             width={'md'}
-            options={CASE_LEVEL_OPTION}
+            options={levelSelectOptions}
             fieldProps={{ variant: 'filled' }}
             style={{ flex: 1 }}
           />
@@ -93,7 +108,7 @@ const NewCaseForm: FC<Props> = ({ onSubmit }) => {
           <ProFormSelect
             label="用例类型"
             name="case_type"
-            options={CASE_TYPE_OPTION}
+            options={typeSelectOptions}
             fieldProps={{ variant: 'filled' }}
             style={{ flex: 1 }}
             width={'md'}

@@ -8,7 +8,8 @@ import {
   updateTestCaseStep,
 } from '@/api/case/testCase';
 import DynamicInfo from '@/pages/CaseHub/components/DynamicInfo';
-import { CaseHubConfig } from '@/pages/CaseHub/config/constants';
+import { toSelectOptions } from '@/pages/CaseHub/hooks/caseEnumOption';
+import { useCaseEnumConfig } from '@/pages/CaseHub/hooks/useCaseEnumConfig';
 import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import { CaseSubStep, ITestCase } from '@/pages/CaseHub/types';
 import { HolderOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons';
@@ -19,7 +20,7 @@ import {
   ProFormTextArea,
 } from '@ant-design/pro-components';
 import { Button, Form, Space, Spin, Tag, Typography } from 'antd';
-import { FC, useCallback, useEffect, useRef, useState } from 'react';
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import StepItem from '../../components/CaseSubSteps/StepItem';
 import { useTestCaseDetailStyles } from './styles';
 
@@ -45,6 +46,13 @@ interface Props {
  * - 当 showDynamic 为 true 时，支持 Tab 切换查看操作动态
  */
 const TestCaseDetail: FC<Props> = ({ planId, testcase, callback }: Props) => {
+  // 用例类型从后端枚举配置拉取（管理员在配置中心增删后自动生效）
+  const { options: typeOptions } = useCaseEnumConfig('CASE_TYPE');
+  const typeSelectOptions = useMemo(
+    () => toSelectOptions(typeOptions),
+    [typeOptions],
+  );
+
   const [form] = Form.useForm();
   const { token, colors, spacing } = useCaseHubTheme();
   const styles = useTestCaseDetailStyles();
@@ -57,7 +65,12 @@ const TestCaseDetail: FC<Props> = ({ planId, testcase, callback }: Props) => {
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
 
-  const { CASE_LEVEL_OPTION, CASE_TYPE_OPTION } = CaseHubConfig;
+  // 用例等级从后端枚举配置拉取
+  const { options: levelOptions } = useCaseEnumConfig('CASE_LEVEL');
+  const levelSelectOptions = useMemo(
+    () => toSelectOptions(levelOptions),
+    [levelOptions],
+  );
 
   const stepsRef = useRef<CaseSubStep[]>(steps);
   const draggedIdRef = useRef<string | null>(null);
@@ -399,14 +412,14 @@ const TestCaseDetail: FC<Props> = ({ planId, testcase, callback }: Props) => {
                 <ProFormSelect
                   name="case_level"
                   placeholder="请选择用例等级"
-                  options={CASE_LEVEL_OPTION}
+                  options={levelSelectOptions}
                   fieldProps={{ variant: 'filled' }}
                   width={'md'}
                 />
                 <ProFormSelect
                   name="case_type"
                   placeholder="请选择用例类型"
-                  options={CASE_TYPE_OPTION}
+                  options={typeSelectOptions}
                   fieldProps={{ variant: 'filled' }}
                   width={'md'}
                 />

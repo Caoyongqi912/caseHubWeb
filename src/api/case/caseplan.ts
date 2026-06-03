@@ -157,7 +157,7 @@ const buildPlanCasesKey = (data: {
   plan_id: number;
   plan_module_id?: number;
   case_level?: number;
-  is_review?: boolean;
+  is_review?: string;
 }): string => {
   const normalized: Record<string, unknown> = {};
   for (const k of Object.keys(data).sort()) {
@@ -182,7 +182,7 @@ export const queryPlanCases = async (data: {
   plan_id: number;
   plan_module_id?: number;
   case_level?: number;
-  is_review?: boolean;
+  is_review?: string;
 }) => {
   const key = buildPlanCasesKey(data);
   const pending = pendingPlanCasesRequests.get(key);
@@ -235,12 +235,11 @@ export const removeAssociatePlanCases = async (data: {
 export const updateAssociatePlanCases = async (data: {
   plan_id: number;
   case_id_list: number[];
-  is_review?: number;
-  case_status?: number;
+  is_review?: string;
   /** 一轮测试状态（与 case_status 复用同一枚举：0=未开始/1=通过/2=失败/3=阻塞/4=跳过） */
-  first_status?: number;
+  first_status?: string;
   /** 二轮测试状态（枚举值同 first_status） */
-  second_status?: number;
+  second_status?: string;
 }) => {
   return request<IResponse<number>>('/api/hub/plan/cases/update', {
     method: 'POST',
@@ -271,7 +270,7 @@ export const copyPlanCases = async (data: {
   plan_id: number;
   case_id_list: number[];
   plan_case_module_id?: number;
-  is_review?: number;
+  is_review?: string;
 }) => {
   return request<IResponse<number>>('/api/hub/plan/cases/copy', {
     method: 'POST',
@@ -312,11 +311,10 @@ export const copyOnePlanCase = async (data: {
 export const updateCaseStepResult = async (data: {
   plan_id: number;
   step_id: number;
-  status?: number;
   /** 一轮测试状态 */
-  first_status?: number;
+  first_status?: string;
   /** 二轮测试状态 */
-  second_status?: number;
+  second_status?: string;
   actual_result?: string;
   bug_url?: string;
 }) => {
@@ -336,7 +334,7 @@ export const commitPlanImportCase = async (data: {
   plan_id?: string;
   plan_module_id?: number;
   case_status?: number;
-  is_review?: boolean;
+  is_review?: number;
 }) => {
   return request<{ imported_count: number }>('/api/hub/plan/upload/commit', {
     method: 'POST',

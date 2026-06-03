@@ -140,6 +140,9 @@ export const CONFIG: IObjGet = {
       text: 'P0',
     },
   },
+  /**
+   * @deprecated 用例等级已迁至后端配置中心，见 pages/CaseHub/hooks/useCaseEnumConfig.ts
+   */
   CASE_LEVEL_ENUM: {
     P1: {
       text: 'P1',

@@ -29,6 +29,7 @@ import CaseItem from './components/CaseItem';
 import NewCaseForm from './components/NewCaseForm';
 import PlanCaseImportModal from './components/PlanCaseImportModal';
 import { useCaseFilter } from './hooks/useCaseFilter';
+
 /**
  * 基于列表数据计算选中状态
  * 用于在已知列表数据时计算 isAllSelected 和 isIndeterminate
@@ -88,11 +89,11 @@ interface CaseRowData {
   planId?: string;
   moduleId?: number | null;
   onSelectedChange: (id: number | undefined, selected: boolean) => void;
-  onReviewChange: (caseId: number, isReview: boolean) => void;
+  onReviewChange: (caseId: number, isReview: string) => void;
   /** 一轮测试状态变更回调（同步更新左侧模块树计数） */
-  onFirstStatusChange: (caseId: number, status: number) => void;
+  onFirstStatusChange: (caseId: number, status: string) => void;
   /** 二轮测试状态变更回调 */
-  onSecondStatusChange: (caseId: number, status: number) => void;
+  onSecondStatusChange: (caseId: number, status: string) => void;
   /** 卡片折叠状态变更回调（用于虚拟列表动态调整行高） */
   onCollapsedChange: (caseId: number | undefined, collapsed: boolean) => void;
   onRefresh: () => void;
@@ -262,14 +263,10 @@ const Index: FC<PlanCaseListProps> = ({
     }
   }, [planId, moduleId, filters]);
 
-  /**
-   * 当 planId 或 moduleId 变化时，重新加载数据
-   * 注意：filters 变化不会触发重新加载，保持筛选状态
-   */
   useEffect(() => {
     setCaseList([]);
     fetchPlanData();
-  }, [planId, moduleId]);
+  }, [planId, moduleId, fetchPlanData]);
 
   /**
    * 刷新列表
@@ -361,9 +358,10 @@ const Index: FC<PlanCaseListProps> = ({
 
   /**
    * 单个用例评审状态切换
+   * isReview 已为 string 类型（与后端枚举 value 对齐），直接赋值给 ITestCase.is_review
    */
   const handleReviewChange = useCallback(
-    (caseId: number, isReview: boolean) => {
+    (caseId: number, isReview: string) => {
       setCaseList((prev) =>
         prev.map((tc) =>
           tc.id === caseId ? { ...tc, is_review: isReview } : tc,
@@ -379,7 +377,7 @@ const Index: FC<PlanCaseListProps> = ({
    * 仅更新对应字段，保持其它状态不变；同步触发 onModulesRefresh 以更新左侧模块树计数
    */
   const handleFirstStatusChange = useCallback(
-    (caseId: number, status: number) => {
+    (caseId: number, status: string) => {
       setCaseList((prev) =>
         prev.map((tc) =>
           tc.id === caseId ? { ...tc, first_status: status } : tc,
@@ -395,7 +393,7 @@ const Index: FC<PlanCaseListProps> = ({
    * 逻辑同 handleFirstStatusChange
    */
   const handleSecondStatusChange = useCallback(
-    (caseId: number, status: number) => {
+    (caseId: number, status: string) => {
       setCaseList((prev) =>
         prev.map((tc) =>
           tc.id === caseId ? { ...tc, second_status: status } : tc,

@@ -1,8 +1,9 @@
 import { copyPlanCases } from '@/api/case/caseplan';
+import { toSelectOptions } from '@/pages/CaseHub/hooks/caseEnumOption';
+import { useCaseEnumConfig } from '@/pages/CaseHub/hooks/useCaseEnumConfig';
 import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import { Modal, Select } from 'antd';
-import { FC, useCallback, useState } from 'react';
-import { CASE_STATUS_OPTIONS_FOR_COPY } from '../constants/caseStatus';
+import { FC, useCallback, useMemo, useState } from 'react';
 import { usePlanModuleSelection } from './hooks/usePlanModuleSelection';
 import PlanModuleSelectForm from './PlanModuleSelectForm';
 
@@ -26,6 +27,14 @@ const BatchCopyModal: FC<BatchCopyModalProps> = ({
   onSuccess,
 }) => {
   const { colors, token } = useCaseHubTheme();
+  /**
+   * 从 Context 动态获取评审状态选项（复制场景使用评审状态）
+   */
+  const { options: reviewOptions } = useCaseEnumConfig('REVIEW_STATUS');
+  const reviewStatusOptionsForCopy = useMemo(
+    () => toSelectOptions(reviewOptions),
+    [reviewOptions],
+  );
   const {
     selectedPlanId,
     selectedModuleId,
@@ -37,11 +46,11 @@ const BatchCopyModal: FC<BatchCopyModalProps> = ({
     handleModuleChange,
   } = usePlanModuleSelection({ open, currentPlanId, onClose: onCancel });
 
-  const [isReview, setIsReview] = useState<number>(0);
+  const [isReview, setIsReview] = useState<string>('0');
 
   /** 关闭弹窗并重置状态 */
   const handleModalClose = useCallback(() => {
-    setIsReview(0);
+    setIsReview('0');
     setSelectedPlanId(undefined);
     setSelectedModuleId(undefined);
     onCancel();
@@ -121,7 +130,7 @@ const BatchCopyModal: FC<BatchCopyModalProps> = ({
             style={{ width: '100%' }}
             value={isReview}
             onChange={setIsReview}
-            options={CASE_STATUS_OPTIONS_FOR_COPY}
+            options={reviewStatusOptionsForCopy}
           />
         </div>
       </div>
