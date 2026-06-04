@@ -1,11 +1,8 @@
-import { IModuleEnum } from '@/api';
 import {
   cancelImportCase,
   commitImportCase,
   uploadPreviewCase,
 } from '@/api/case/testCase';
-import { ModuleEnum } from '@/utils/config';
-import { fetchModulesEnum } from '@/utils/somefunc';
 import {
   CheckCircleOutlined,
   DeleteOutlined,
@@ -16,12 +13,11 @@ import {
   ModalForm,
   ProForm,
   ProFormSelect,
-  ProFormTreeSelect,
   ProFormUploadDragger,
 } from '@ant-design/pro-components';
 import { useModel } from '@umijs/max';
 import { Button, Form, message, Progress, theme } from 'antd';
-import { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import { FC, useCallback, useMemo, useState } from 'react';
 
 interface Props {
   onSuccess: () => void;
@@ -57,18 +53,19 @@ const UploadCaseModal: FC<Props> = ({ onSuccess }) => {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const { initialState } = useModel('@@initialState');
   const [selectProjectId, setSelectProjectId] = useState<number>();
-  const [moduleEnum, setModuleEnum] = useState<IModuleEnum[]>([]);
   const projects = initialState?.projects || [];
-  useEffect(() => {
-    if (selectProjectId) {
-      fetchModulesEnum(
-        selectProjectId,
-        ModuleEnum.CASE,
-        setModuleEnum,
-        true,
-      ).then();
-    }
-  }, [selectProjectId]);
+
+  // const [moduleEnum, setModuleEnum] = useState<IModuleEnum[]>([]);
+  // useEffect(() => {
+  //   if (selectProjectId) {
+  //     fetchModulesEnum(
+  //       selectProjectId,
+  //       ModuleEnum.CASE,
+  //       setModuleEnum,
+  //       true,
+  //     ).then();
+  //   }
+  // }, [selectProjectId]);
 
   const isDark = token.colorBgContainer === '#141414';
 
@@ -241,7 +238,7 @@ const UploadCaseModal: FC<Props> = ({ onSuccess }) => {
       const response = (await commitImportCase({
         file_md5: validateResult.file_md5,
         project_id: values.project_id,
-        module_id: values.module_id,
+        // module_id: values.module_id,
         is_common: true,
       })) as any;
 
@@ -312,7 +309,7 @@ const UploadCaseModal: FC<Props> = ({ onSuccess }) => {
             onChange: (value) => setSelectProjectId(value as number),
           }}
         />
-        <ProFormTreeSelect
+        {/* <ProFormTreeSelect
           required
           name="module_id"
           label="所属模块"
@@ -324,7 +321,7 @@ const UploadCaseModal: FC<Props> = ({ onSuccess }) => {
             fieldNames: { label: 'title', value: 'value' },
             filterTreeNode: true,
           }}
-        />
+        /> */}
       </ProForm.Group>
 
       {!uploadFile ? (

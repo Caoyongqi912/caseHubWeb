@@ -15,8 +15,6 @@ export interface ICaseConfigCategory {
   description: string;
   /** Tab 图标（antd icon name） */
   icon: string;
-  /** 是否为预留 / 即将上线的占位项，true 时禁用交互 */
-  comingSoon?: boolean;
 }
 
 /**

@@ -50,3 +50,22 @@ export enum CaseConfigKeyEnum {
   /** 用例类型（如 回归 / 冒烟 / 功能等） */
   CASE_TYPE = 'CASE_TYPE',
 }
+
+/**
+ * 计划目录模板节点
+ * 与 IPlanModule 字段保持一致，仅去除 plan_id、case_nums 等运行时字段
+ * 用于在配置中心维护一个全局的「默认目录结构模板」，
+ * 新建测试计划时会把这份树形结构复制为计划的初始目录
+ */
+export interface IPlanModuleTemplate {
+  id: number;
+  uid?: string;
+  /** 父级目录 id，根节点为 null */
+  parent_id?: number | null;
+  /** 目录名称 */
+  title: string;
+  /** 同级排序，升序 */
+  order: number;
+  /** 子节点 */
+  children?: IPlanModuleTemplate[];
+}

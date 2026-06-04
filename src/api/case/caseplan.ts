@@ -207,6 +207,10 @@ export const associatePlanCases = async (data: {
   plan_id: number;
   case_ids: number[];
   plan_module_id?: number;
+  /** 源项目模块 ID 列表：传了就走后端"按源目录复制/匹配计划分组"逻辑 */
+  module_ids?: number[];
+  /** 是否合并相同用例分组（与同名计划目录合并） */
+  merge_same_group?: boolean;
 }) => {
   return request<IResponse<any>>('/api/hub/plan/case/associate', {
     method: 'POST',

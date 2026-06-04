@@ -5,7 +5,6 @@ import {
   reorderPlanCases,
 } from '@/api/case/caseplan';
 import MyDrawer from '@/components/MyDrawer';
-import ChoiceCaseTable from '@/pages/CaseHub/Requirement/components/ChoiceCaseTable';
 import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import { ICasePlan, ITestCase } from '@/pages/CaseHub/types';
 import { LinkOutlined, PlusOutlined } from '@ant-design/icons';
@@ -22,6 +21,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import ModuleCaseSelector from './components/ModuleCaseSelector';
 // @ts-ignore
 import { VariableSizeList } from 'react-window';
 import { usePlanCaseListStyles } from '../styles';
@@ -306,19 +306,34 @@ const Index: FC<PlanCaseListProps> = ({
 
   /**
    * 关联用例到当前计划
+   * @param caseIds 选中的用例 ID 列表
+   * @param options.moduleIds 源项目模块 ID 列表（用于后端按目录复制/匹配计划分组）
+   * @param options.mergeSameGroup 是否合并相同用例分组
    */
-  const handleAssociateCases = async (caseIds: number[]) => {
-    const { code } = await associatePlanCases({
+  const handleAssociateCases = async (
+    caseIds: number[],
+    options?: { moduleIds?: number[]; mergeSameGroup?: boolean },
+  ) => {
+    if (caseIds.length === 0) {
+      message.warning('请至少选择一个用例');
+      return;
+    }
+    const { code, msg } = await associatePlanCases({
       plan_id: Number(planId),
       case_ids: caseIds,
+      // 兜底目标分组（用户在计划页左侧选中的 plan_module）
       plan_module_id: moduleId ?? undefined,
+      // 源项目模块 ID 列表：传了就走后端"按目录复制"逻辑
+      module_ids: options?.moduleIds?.length ? options.moduleIds : undefined,
+      // 是否合并相同用例分组（与同名计划目录合并）
+      merge_same_group: options?.mergeSameGroup ?? false,
     });
     if (code === 0) {
       message.success('关联成功');
       setOpenChoiceCaseDrawer(false);
       handleRefresh();
     } else {
-      message.error('关联失败');
+      message.error(msg || '关联失败');
     }
   };
 
@@ -883,12 +898,14 @@ const Index: FC<PlanCaseListProps> = ({
         name={'规划用例'}
         open={openChoiceCaseDrawer}
         setOpen={setOpenChoiceCaseDrawer}
-        width={'60%'}
+        width={'70%'}
       >
-        <ChoiceCaseTable
-          onCaseSelect={handleAssociateCases}
-          hideAddButton={false}
+        <ModuleCaseSelector
+          planId={planId}
           projectId={planInfo?.project_id}
+          projectName={planInfo?.plan_name}
+          onConfirm={handleAssociateCases}
+          onCancel={() => setOpenChoiceCaseDrawer(false)}
         />
       </MyDrawer>
 

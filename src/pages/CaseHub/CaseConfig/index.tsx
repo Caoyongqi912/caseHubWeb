@@ -7,6 +7,7 @@
 
 import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import {
+  ApartmentOutlined,
   AuditOutlined,
   ExperimentOutlined,
   SettingOutlined,
@@ -29,6 +30,9 @@ const { Paragraph } = Typography;
 /**
  * 已实现的 Tab 渲染器映射
  * 后续新增配置类型时在此追加即可
+ *
+ * 注意：PLAN_MODULE 前端组件已就绪（PlanModuleConfig），等待后端接口联调后
+ * 再从 RENDER_MAP 启用，避免在接口未就绪时暴露给用户
  */
 const RENDER_MAP: Record<
   string,
@@ -80,6 +84,8 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   AuditOutlined: <AuditOutlined />,
   TrophyOutlined: <TrophyOutlined />,
   TagsOutlined: <TagsOutlined />,
+  // 计划目录模板图标：组件保留在 ./PlanModuleConfig/，入口暂为 comingSoon
+  ApartmentOutlined: <ApartmentOutlined />,
 };
 
 /**
@@ -225,26 +231,9 @@ const CaseConfigPage: FC = () => {
                 <Space size={6} style={{ padding: '0 4px' }}>
                   {ICON_MAP[c.icon]}
                   <span>{c.label}</span>
-                  {c.comingSoon && (
-                    <Tag
-                      style={{
-                        margin: 0,
-                        fontSize: 10,
-                        padding: '0 6px',
-                        lineHeight: '16px',
-                        borderRadius: 4,
-                        background: token.colorWarningBg,
-                        color: token.colorWarning,
-                        border: `1px solid ${token.colorWarningBorder}`,
-                      }}
-                    >
-                      即将上线
-                    </Tag>
-                  )}
                 </Space>
               ),
               value: c.key,
-              disabled: c.comingSoon,
             }))}
           />
           {activeCategory && (
