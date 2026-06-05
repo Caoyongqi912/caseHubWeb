@@ -30,7 +30,6 @@ import { FC, useMemo } from 'react';
 import { usePlanRequirementStyles } from './styles';
 
 interface Props {
-  planId?: number;
   requirements: IRequirement[];
   loading?: boolean;
   onUnlink: (record: IRequirement) => void;

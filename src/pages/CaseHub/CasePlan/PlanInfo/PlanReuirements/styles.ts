@@ -126,9 +126,6 @@ export const usePlanRequirementStyles = () => {
       canvas: isDark
         ? 'linear-gradient(180deg, #1a1a1a 0%, #141414 100%)'
         : 'linear-gradient(180deg, #fafafa 0%, #f3f3f3 100%)',
-      paperNoise: isDark
-        ? `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.03 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")`
-        : `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.1  0 0 0 0 0.1  0 0 0 0 0.1  0 0 0 0.04 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")`,
       // 卡片背景用 token，自动随主题切换
       card: token.colorBgContainer,
       // 卡片边框用 token 派生

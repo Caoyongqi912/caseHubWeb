@@ -13,11 +13,10 @@ import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import { ICasePlan, IRequirement } from '@/pages/CaseHub/types';
 import {
   AppstoreOutlined,
-  LinkOutlined,
   PlusOutlined,
   SearchOutlined,
 } from '@ant-design/icons';
-import { Input, message, Popconfirm } from 'antd';
+import { Button, Input, message } from 'antd';
 import { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import ChoiceRequirementTable from './ChoiceRequirementTable';
 import PlanRequirementList from './PlanRequirementList';
@@ -141,18 +140,6 @@ const PlanReuirements: FC<Props> = ({ planId }) => {
     setDetailOpen(true);
   }, []);
 
-  /**
-   * 关联按钮渐变：纯黑 / 纯白 二值对比
-   * - 亮色：纯黑 #0a0a0a -> 深灰 #1f1f1f
-   * - 暗色：纯白 #ffffff -> 浅灰 #e8e8e8
-   */
-  const linkButtonGradient = useMemo(() => {
-    const { accent } = styles.palette;
-    return `linear-gradient(135deg, ${accent.primary} 0%, ${accent.primaryHover} 100%)`;
-  }, [styles.palette]);
-  /** 关联按钮文字色：亮色用米白，暗色用深棕以保证对比 */
-  const linkButtonTextColor = styles.isDark ? '#0a0a0a' : '#ffffff';
-
   // 标题区「编辑感」样式
   const headerStyle = useMemo(
     () => ({
@@ -241,19 +228,7 @@ const PlanReuirements: FC<Props> = ({ planId }) => {
             <AppstoreOutlined />
             <span>Plan · Requirements</span>
           </div>
-          <h2
-            style={{
-              fontFamily: styles.fonts.display,
-              fontSize: 28,
-              fontWeight: 500,
-              color: styles.palette.ink[900],
-              margin: 0,
-              letterSpacing: '-0.015em',
-              fontStyle: 'italic',
-            }}
-          >
-            关联需求
-          </h2>
+
           <div
             style={{
               fontFamily: styles.fonts.body,
@@ -299,58 +274,24 @@ const PlanReuirements: FC<Props> = ({ planId }) => {
               fontFamily: styles.fonts.body,
             }}
           />
-          <Popconfirm
-            title={
-              <span style={{ fontFamily: styles.fonts.display, fontSize: 15 }}>
-                关联已有需求？
-              </span>
-            }
-            description={
-              <span style={{ fontFamily: styles.fonts.body, fontSize: 13 }}>
-                从当前项目下未关联到此计划的需求中选取。
-              </span>
-            }
-            okText="打开选择器"
-            cancelText="取消"
-            onConfirm={() => {
+          <Button
+            onClick={() => {
               setSelectedRowKeys([]);
               setChoiceOpen(true);
             }}
-            icon={
-              <LinkOutlined style={{ color: styles.palette.accent.primary }} />
-            }
+            type="primary"
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-1px)';
+              e.currentTarget.style.boxShadow = styles.shadows.cardHover;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = styles.shadows.card;
+            }}
           >
-            <button
-              type="button"
-              style={{
-                background: linkButtonGradient,
-                color: linkButtonTextColor,
-                border: 'none',
-                padding: '8px 18px',
-                borderRadius: borderRadius.md,
-                fontFamily: styles.fonts.body,
-                fontSize: 13,
-                fontWeight: 500,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                boxShadow: styles.shadows.card,
-                transition: `transform ${styles.motion.base}, box-shadow ${styles.motion.base}`,
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-1px)';
-                e.currentTarget.style.boxShadow = styles.shadows.cardHover;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = styles.shadows.card;
-              }}
-            >
-              <PlusOutlined />
-              关联需求
-            </button>
-          </Popconfirm>
+            <PlusOutlined />
+            关联需求
+          </Button>
         </div>
       </header>
 
@@ -364,7 +305,6 @@ const PlanReuirements: FC<Props> = ({ planId }) => {
         }}
       >
         <PlanRequirementList
-          planId={planId ? Number(planId) : undefined}
           requirements={filtered}
           loading={loading}
           onUnlink={handleUnlink}
