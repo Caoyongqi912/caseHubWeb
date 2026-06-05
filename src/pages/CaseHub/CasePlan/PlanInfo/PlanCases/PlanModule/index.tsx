@@ -20,9 +20,17 @@ import {
 } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
 import type { MenuProps } from 'antd';
-import { Dropdown, message, Modal, theme, Tree } from 'antd';
+import { Dropdown, message, Modal, theme, Tooltip, Tree } from 'antd';
 import type { AntTreeNodeProps, DataNode, TreeProps } from 'antd/es/tree';
-import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  FC,
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import ModuleEditModal from './ModuleEditModal';
 
 const { useToken } = theme;
@@ -227,6 +235,9 @@ const Index: FC<PlanModuleProps> = ({
         gap: spacing.xs,
         padding: `${spacing.xs}px 0`,
         minHeight: 24,
+        // flex 子项默认 min-width: auto(=内容宽度),会导致 flex:1 + ellipsis 失效,
+        // 长目录名突破 Splitter 边界被截断。显式置 0 让省略号正常生效
+        minWidth: 0,
       },
       dragHandle: {
         fontSize: typography.fontSize.sm,
@@ -236,14 +247,7 @@ const Index: FC<PlanModuleProps> = ({
         opacity: 0.5,
         ...styleHelpers.transition(['opacity']),
       },
-      titleText: {
-        flex: 1,
-        fontSize: typography.fontSize.base,
-        color: token.colorText,
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap',
-      },
+      // titleText 样式已迁移到 ModuleName 组件内部(便于跟随 name 变化重渲染)
       rightArea: {
         display: 'flex' as const,
         alignItems: 'center' as const,
@@ -336,7 +340,7 @@ const Index: FC<PlanModuleProps> = ({
             onMouseLeave={() => setHoveredKey(null)}
           >
             <HolderOutlined style={nodeStyles.dragHandle} />
-            <span style={nodeStyles.titleText}>{node.data.title}</span>
+            <ModuleName name={node.data.title} />
             <span
               style={{
                 ...nodeStyles.rightArea,
@@ -438,6 +442,9 @@ const Index: FC<PlanModuleProps> = ({
       blockNode: true,
       showLine: false,
       defaultExpandAll: true,
+      // 默认 24px 缩进在 5+ 级目录 + 20% 宽侧栏里会撑爆,
+      // 减到 14px 给标题让出更多水平空间
+      indent: 14,
     }),
     [expandedKeys, activeKey, handleTreeSelect, handleDragEnd],
   );
@@ -465,7 +472,8 @@ const Index: FC<PlanModuleProps> = ({
           body: {
             flex: 1,
             overflow: 'auto',
-            padding: '12px',
+            // padding 减小给树让出横向空间(原 12px 在 20% 宽下占比过大)
+            padding: '8px 6px',
           },
         }}
       >
@@ -485,5 +493,47 @@ const Index: FC<PlanModuleProps> = ({
     </div>
   );
 };
+
+/**
+ * 目录名称渲染：超长省略 + Tooltip
+ * 单独抽组件是为了让 useMemo(MAX_MODULE_NAME_LEN) 跟随 name 变化,
+ * 而不是把字符串处理写在 titleRender 内每次重建
+ */
+const ModuleName: FC<{ name: string }> = memo(({ name }) => {
+  const MAX_MODULE_NAME_LEN = 16;
+  const truncated =
+    name.length > MAX_MODULE_NAME_LEN
+      ? `${name.slice(0, MAX_MODULE_NAME_LEN)}…`
+      : name;
+  const needTooltip = name.length > MAX_MODULE_NAME_LEN;
+  return needTooltip ? (
+    <Tooltip title={name} mouseEnterDelay={0.3}>
+      <span
+        style={{
+          flex: 1,
+          fontSize: 14,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {truncated}
+      </span>
+    </Tooltip>
+  ) : (
+    <span
+      style={{
+        flex: 1,
+        fontSize: 14,
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {truncated}
+    </span>
+  );
+});
+ModuleName.displayName = 'ModuleName';
 
 export default Index;

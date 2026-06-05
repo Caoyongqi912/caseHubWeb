@@ -99,8 +99,6 @@ interface CaseRowData {
   onSecondStatusChange: (caseId: number, status: string) => void;
   /** 卡片折叠状态变更回调（用于虚拟列表动态调整行高） */
   onCollapsedChange: (caseId: number | undefined, collapsed: boolean) => void;
-  /** 在指定用例之后插入新用例 */
-  onInsertAfter?: (afterCaseId: number) => void;
   /** 是否启用拖拽排序 */
   isSortable: boolean;
   onRefresh: () => void;
@@ -148,7 +146,6 @@ const CaseRow: React.FC<{
           onFirstStatusChange={data?.onFirstStatusChange ?? (() => {})}
           onSecondStatusChange={data?.onSecondStatusChange ?? (() => {})}
           onCollapsedChange={data?.onCollapsedChange ?? (() => {})}
-          onInsertAfter={data?.onInsertAfter}
           isSortable={data?.isSortable ?? false}
           onRefresh={data?.onRefresh ?? (() => {})}
           collapsed={
@@ -198,15 +195,10 @@ const Index: FC<PlanCaseListProps> = ({
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [importModalVisible, setImportModalVisible] = useState(false);
   /**
-   * 多选拖拽状态：被拖动的 case_id。
-   * 用于在视觉上给"被选中的同伴"加透明/边框提示。
-   * null = 处于单选拖拽或无拖拽。
+   * 记录"在哪个 case 之后批量导入"的锚点（null = 追加到末尾）。
+   * 之前"下方插入用例"功能也复用此 state,已下线,只服务于批量导入。
    */
-  const [multiDragActiveId, setMultiDragActiveId] = useState<number | null>(
-    null,
-  );
-  /** 记录要在哪个 case 之后插入（null 表示追加到末尾） */
-  const [insertAfterCaseId, setInsertAfterCaseId] = useState<number | null>(
+  const [importAfterCaseId, setImportAfterCaseId] = useState<number | null>(
     null,
   );
 
@@ -497,25 +489,19 @@ const Index: FC<PlanCaseListProps> = ({
   );
 
   /**
-   * collapsedCaseIds 变化后，通知虚拟列表从索引 0 起重新测量所有行高
-   * 统一处理「单个卡片折叠」和「一键折叠/展开」两种场景的高度同步
+   * 折叠状态变更后，通知虚拟列表重新计算行高
+   *
+   * 关键：第二个参数传 false 而非 true，避免强制读 DOM 高度。
+   * 100+ 行时强制重测 DOM 是滚动卡顿的主要来源；
+   * 我们的高度公式是确定的（基于 collapsedCaseIds + case_sub_steps 长度），
+   * 不需要重新读 DOM 就能算出新高度。
    */
   useEffect(() => {
-    // 使用 requestAnimationFrame 确保 DOM 已提交新布局后再重测
     const rafId = requestAnimationFrame(() => {
-      virtualListRef.current?.resetAfterIndex(0, true);
+      virtualListRef.current?.resetAfterIndex(0, false);
     });
     return () => cancelAnimationFrame(rafId);
   }, [collapsedCaseIds]);
-
-  /**
-   * 在指定用例之后插入新用例
-   * 设置插入位置标记，打开新建表单抽屉
-   */
-  const handleInsertAfter = useCallback((afterCaseId: number) => {
-    setInsertAfterCaseId(afterCaseId);
-    setDrawerVisible(true);
-  }, []);
 
   /**
    * 在指定用例之后批量上传导入
@@ -523,7 +509,7 @@ const Index: FC<PlanCaseListProps> = ({
    * 导入完成后通过 onUploadFinish 触发 reorder 到目标位置
    */
   const handleInsertAfterImport = useCallback((afterCaseId: number) => {
-    setInsertAfterCaseId(afterCaseId);
+    setImportAfterCaseId(afterCaseId);
     setImportModalVisible(true);
   }, []);
 
@@ -532,9 +518,9 @@ const Index: FC<PlanCaseListProps> = ({
    * 如果有指定插入位置（insertAfterCaseId），刷新后自动将新导入的用例移到目标位置
    */
   const handleImportFinish = useCallback(async () => {
-    const targetInsertId = insertAfterCaseId;
+    const targetInsertId = importAfterCaseId;
     // 先清空标记，避免后续刷新重复触发
-    setInsertAfterCaseId(null);
+    setImportAfterCaseId(null);
     // 刷新列表获取最新数据（包含新导入的用例）
     handleRefresh();
 
@@ -570,7 +556,7 @@ const Index: FC<PlanCaseListProps> = ({
         }
       }, 800);
     }
-  }, [insertAfterCaseId, handleRefresh, planId, moduleId]);
+  }, [importAfterCaseId, handleRefresh, planId, moduleId]);
 
   /**
    * 拖拽排序处理（单选 / 多选统一入口）
@@ -632,7 +618,6 @@ const Index: FC<PlanCaseListProps> = ({
         ...cleanList.slice(anchorIdx + 1),
       ];
       setCaseList(newList);
-      setMultiDragActiveId(isBlockDrag ? activeId : null);
 
       // 5) 构造 items：链式锚点
       const items = movedIds.map((cid, i) => ({
@@ -660,8 +645,6 @@ const Index: FC<PlanCaseListProps> = ({
       } catch {
         message.error('排序失败，已回滚');
         setCaseList(prevList);
-      } finally {
-        setMultiDragActiveId(null);
       }
     },
     [caseList, selectedCaseIds, planId],
@@ -683,48 +666,8 @@ const Index: FC<PlanCaseListProps> = ({
     );
 
     if (code === 0) {
-      // 如果有指定插入位置，记录下来，刷新后需要将新用例移到正确位置
-      const targetInsertAfterId = insertAfterCaseId;
-      setInsertAfterCaseId(null);
       setDrawerVisible(false);
-      // 先刷新列表获取最新数据（包含新插入的用例）
       handleRefresh();
-
-      // 如果指定了插入位置，等刷新后将新用例排序到目标位置
-      if (targetInsertAfterId !== null) {
-        // 延迟执行：等待 fetchPlanData 完成后获取新列表
-        setTimeout(async () => {
-          try {
-            const { data: freshList } = await queryPlanCases({
-              plan_id: Number(planId),
-              plan_module_id: moduleId ?? undefined,
-            });
-            if (!freshList || !Array.isArray(freshList)) return;
-
-            // 找到新插入的用例（通常是最后一个）和目标位置
-            const newCaseId = freshList[freshList.length - 1]?.id;
-            const targetIndex = freshList.findIndex(
-              (tc) => tc.id === targetInsertAfterId,
-            );
-            if (newCaseId && targetIndex >= 0) {
-              // 构建目标顺序：新用例放到 targetIndex + 1 的位置
-              const reordered = [...freshList];
-              const newIdx = reordered.findIndex((tc) => tc.id === newCaseId);
-              if (newCaseId && targetIndex >= 0) {
-                // 锚点 API：新用例插到 targetInsertAfterId 之后即可
-                await reorderPlanCases({
-                  plan_id: Number(planId),
-                  case_id: newCaseId,
-                  after_id: targetInsertAfterId,
-                });
-                handleRefresh();
-              }
-            }
-          } catch {
-            // 排序失败不影响插入成功的结果
-          }
-        }, 500);
-      }
     } else {
       message.error(msg || '保存失败');
     }
@@ -748,30 +691,48 @@ const Index: FC<PlanCaseListProps> = ({
   const COLLAPSED_HEIGHT = 52;
 
   /**
-   * 估算某条用例的渲染高度
-   * 折叠时只返回头部高度（COLLAPSED_HEIGHT），
-   * 展开时返回基线 + 步骤数 × 行高
-   *
-   * 注意：collapsedCaseIds 变化时会触发 resetAfterIndex(0)，
-   * 让 VariableSizeList 重新测量所有行高，无需在此处做增量更新。
+   * 行高查表：key=caseId, value=估算高度
+   * 通过 useMemo 在 filteredList / collapsedCaseIds 变化时一次性算好，
+   * 让 itemSize 回调本身保持纯函数 + 稳定依赖（不读 filteredList 引用），
+   * 避免任何 setState 重建 itemSize 引用从而触发 VariableSizeList 全表重测。
+   */
+  const heightByCaseId = useMemo(() => {
+    const map = new Map<number, number>();
+    for (const tc of filteredList) {
+      if (tc.id === undefined) continue;
+      if (collapsedCaseIds.has(tc.id)) {
+        map.set(tc.id, COLLAPSED_HEIGHT);
+      } else {
+        const stepCount = tc.case_sub_steps?.length || 0;
+        map.set(tc.id, EXPANDED_BASE + stepCount * STEP_ROW_HEIGHT);
+      }
+    }
+    return map;
+  }, [filteredList, collapsedCaseIds]);
+
+  /**
+   * 估算某条用例的渲染高度（纯函数 + 稳定引用）
+   * 依赖仅 heightByCaseId：filteredList 内容或 collapsedCaseIds 变化才会重建；
+   * 其它 state（如 selectedCaseIds）变化不会重建，避免 VariableSizeList 全表重测。
    */
   const itemSize = useCallback(
     (index: number) => {
       const tc = filteredList[index];
       if (!tc || tc.id === undefined) return EXPANDED_BASE;
-      if (collapsedCaseIds.has(tc.id)) return COLLAPSED_HEIGHT;
-      const stepCount = tc.case_sub_steps?.length || 0;
-      return EXPANDED_BASE + stepCount * STEP_ROW_HEIGHT;
+      return heightByCaseId.get(tc.id) ?? EXPANDED_BASE;
     },
-    [filteredList, collapsedCaseIds],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [filteredList, heightByCaseId],
   );
 
   /**
    * 列表数据变化时让虚拟列表重新测量
-   * resetAfterIndex 让从 0 起的所有项重新计算偏移
+   * 第二个参数 false：仅重算后续 offset，不强制重新读 DOM 高度。
+   * 我们的高度公式是确定的（基于 collapsedCaseIds + case_sub_steps 长度），
+   * 强制重测在 100+ 行时是主要卡顿来源。
    */
   useEffect(() => {
-    virtualListRef.current?.resetAfterIndex(0, true);
+    virtualListRef.current?.resetAfterIndex(0, false);
   }, [filteredList]);
 
   /**
@@ -791,13 +752,13 @@ const Index: FC<PlanCaseListProps> = ({
       onFirstStatusChange: handleFirstStatusChange,
       onSecondStatusChange: handleSecondStatusChange,
       onCollapsedChange: handleCollapsedChange,
-      onInsertAfter: handleInsertAfter,
       isSortable: true,
-      multiDragActiveId,
+      /**
+       * peer 判定：选中 ≥2 且当前 case 在选中集合内
+       * 选中即可见（不需拖动），给用户"块已就绪"的即时反馈
+       */
       isBlockDragPeer: (caseId: number) =>
-        multiDragActiveId !== null &&
-        selectedCaseIds.has(caseId) &&
-        caseId !== multiDragActiveId,
+        selectedCaseIds.size > 1 && selectedCaseIds.has(caseId),
       onRefresh: handleRefresh,
       collapsedCaseIds: collapsedCaseIds ?? new Set<number>(),
     }),
@@ -811,10 +772,8 @@ const Index: FC<PlanCaseListProps> = ({
       handleFirstStatusChange,
       handleSecondStatusChange,
       handleCollapsedChange,
-      handleInsertAfter,
       handleRefresh,
       collapsedCaseIds,
-      multiDragActiveId,
     ],
   );
 
@@ -982,7 +941,6 @@ const Index: FC<PlanCaseListProps> = ({
           planId={planId}
           onBatchSuccess={handleBatchMoveSuccess}
           onExit={handleExitSelection}
-          onInsertAfter={handleInsertAfter}
           onInsertAfterImport={handleInsertAfterImport}
         />
       )}

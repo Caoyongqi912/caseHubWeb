@@ -1,28 +1,12 @@
-import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import { PageContainer } from '@ant-design/pro-components';
 import { useParams } from '@umijs/max';
 import { Tabs } from 'antd';
 import PlanCases from './PlanCases';
 import PlanOverview from './PlanOverview';
+import PlanReuirements from './PlanReuirements';
 
 const Index = () => {
   const { planId } = useParams<{ planId: string }>();
-  const { token } = useCaseHubTheme();
-
-  /** 需求模块占位 */
-  const renderRequirementPlaceholder = () => (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: '100%',
-        color: token.colorTextTertiary,
-      }}
-    >
-      需求模块开发中...
-    </div>
-  );
 
   const PlanItems = [
     {
@@ -34,7 +18,7 @@ const Index = () => {
     {
       key: 'requirement',
       label: '需求',
-      children: renderRequirementPlaceholder(),
+      children: <PlanReuirements planId={planId} />,
     },
     {
       key: 'overview',

@@ -1,5 +1,10 @@
 import { IObjGet, IPage, IResponse } from '@/api';
-import { ICasePlan, IPlanModule, ITestCase } from '@/pages/CaseHub/types';
+import {
+  ICasePlan,
+  IPlanModule,
+  IRequirement,
+  ITestCase,
+} from '@/pages/CaseHub/types';
 import { request } from '@@/plugin-request';
 
 /**
@@ -68,6 +73,58 @@ export const getPlanInfo = async (plan_id: number) => {
     method: 'GET',
     params: { plan_id },
   });
+};
+
+/**
+ * 分页查询计划下已关联的需求
+ * @param searchParams - { plan_id, current, pageSize, ... } plan_id 必填
+ */
+export const pagePlanRequirements = async (searchParams: any) => {
+  return request<IResponse<IPage<IRequirement>>>(
+    '/api/hub/plan/requirements/page',
+    {
+      method: 'POST',
+      data: searchParams,
+    },
+  );
+};
+
+/**
+ * 批量关联需求到计划
+ * 后端对应: POST /api/hub/plan/associateRequirements
+ * @param data - { plan_id, requirement_ids }
+ * @returns { count } 实际新增的关联记录数
+ */
+export const linkPlanRequirements = async (data: {
+  plan_id: number;
+  requirement_ids: number[];
+}) => {
+  return request<IResponse<{ count: number }>>(
+    '/api/hub/plan/associateRequirements',
+    {
+      method: 'POST',
+      data,
+    },
+  );
+};
+
+/**
+ * 批量解除计划与需求的关联
+ * 后端对应: POST /api/hub/plan/disassociateRequirements
+ * @param data - { plan_id, requirement_ids }
+ * @returns { count } 实际删除的关联记录数
+ */
+export const unlinkPlanRequirements = async (data: {
+  plan_id: number;
+  requirement_ids: number[];
+}) => {
+  return request<IResponse<{ count: number }>>(
+    '/api/hub/plan/disassociateRequirements',
+    {
+      method: 'POST',
+      data,
+    },
+  );
 };
 
 /**
@@ -379,6 +436,22 @@ export const copyOnePlanCase = async (data: {
   plan_module_id: number;
 }) => {
   return request<IResponse<number>>('/api/hub/plan/cases/copy_one', {
+    method: 'POST',
+    data,
+  });
+};
+
+/**
+ * 彻底删除计划下的用例（解除关联 + 数据库物理删除用例本体及子步骤）
+ *
+ * 注意：物理删除后该用例将从 test_case / case_sub_step / plan_case_association
+ * 全部相关表中抹除，不可恢复。仅用于计划内"清理无用用例"场景。
+ */
+export const deletePlanCasePermanently = async (data: {
+  plan_id: number;
+  case_ids: number[];
+}) => {
+  return request<IResponse<number>>('/api/hub/plan/cases/delete_permanent', {
     method: 'POST',
     data,
   });

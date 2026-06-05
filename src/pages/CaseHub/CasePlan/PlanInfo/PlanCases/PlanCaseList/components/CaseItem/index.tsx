@@ -13,8 +13,10 @@ import {
   Checkbox,
   Dropdown,
   message,
+  Modal,
   Space,
   Tag,
+  Tooltip,
   Typography,
 } from 'antd';
 import React, {
@@ -27,6 +29,7 @@ import React, {
 
 import {
   copyOnePlanCase,
+  deletePlanCasePermanently,
   removeAssociatePlanCases,
   updateAssociatePlanCases,
 } from '@/api/case/caseplan';
@@ -53,8 +56,6 @@ interface CaseItemProps {
   onSecondStatusChange?: (caseId: number, status: string) => void;
   /** 卡片折叠状态变更回调（用于通知父级虚拟列表重新计算行高） */
   onCollapsedChange?: (caseId: number | undefined, collapsed: boolean) => void;
-  /** 在此用例之后插入新用例 */
-  onInsertAfter?: (afterCaseId: number) => void;
   /** 是否启用拖拽排序 */
   isSortable?: boolean;
   /** 受控折叠状态（由父组件 collapsedCaseIds 驱动，一键折叠时使用） */
@@ -86,7 +87,6 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
     onFirstStatusChange,
     onSecondStatusChange,
     onCollapsedChange,
-    onInsertAfter,
     isSortable = false,
     collapsed: externalCollapsed,
     onRefresh,
@@ -162,6 +162,19 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
   );
 
   /**
+   * 用例名称最大显示字符数
+   * 超过此长度则截断 + 省略号，hover Tooltip 展示完整名称
+   * 用字符数而非 CSS 宽度省略，避免中英文混排时宽度不一致
+   */
+  const MAX_NAME_LEN = 40;
+  const caseName = testCase.case_name ?? '';
+  const truncatedName =
+    caseName.length > MAX_NAME_LEN
+      ? `${caseName.slice(0, MAX_NAME_LEN)}…`
+      : caseName;
+  const needNameTooltip = caseName.length > MAX_NAME_LEN;
+
+  /**
    * 卡片折叠状态
    * - false（默认）：展开，显示 StepTable
    * - true：折叠，仅保留标题 + 状态选择器 + 折叠按钮
@@ -171,18 +184,25 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
    * 2. 折叠时 cardExtra（3 个状态 Tag + 更多按钮）依然渲染，用户可继续切换状态
    * 3. 通过手动添加的 chevron 图标按钮触发折叠，图标方向随状态旋转
    * 4. body 区域使用 display:none + 条件渲染双重保障，确保彻底隐藏
+   *
+   * 关键：使用 lazy initializer 读取 externalCollapsed，避免「先以展开态 mount
+   * → 渲染 StepTable → useEffect 同步外部折叠态 → setCollapsed(true) → 卸载
+   * StepTable」造成的子步骤先闪出再消失。
    */
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState<boolean>(
+    () => externalCollapsed ?? false,
+  );
 
   /**
-   * 受控模式：当父组件传入 collapsed prop（一键折叠场景）时，
-   * 同步内部状态，确保 StepTable 正确隐藏/显示
+   * 受控模式：当父组件传入 collapsed prop 变化时（一键折叠/展开场景），
+   * 同步内部状态，确保 StepTable 正确隐藏/显示。
+   * 仅对 prop 变化做响应，mount 阶段不重复 set（初始值已对齐）。
    */
   useEffect(() => {
     if (externalCollapsed !== undefined && externalCollapsed !== collapsed) {
       setCollapsed(externalCollapsed);
     }
-  }, [externalCollapsed]);
+  }, [externalCollapsed, collapsed]);
 
   /**
    * 处理折叠状态变更：同步更新本地状态 + 通知父级虚拟列表重新计算行高
@@ -246,7 +266,7 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
   }, [planId, caseId, moduleId, copyLoading]);
 
   /**
-   * 移除当前用例
+   * 移除当前用例（仅解除关联，用例本体保留在用例库）
    */
   const handleRemoveCase = useCallback(async () => {
     if (!planId || !caseId) {
@@ -274,15 +294,51 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
     }
   }, [planId, caseId, removeLoading]);
 
+  /**
+   * 彻底删除当前用例（解除关联 + 数据库物理删除用例本体及子步骤）
+   * 二次确认后才执行，避免误操作
+   */
+  const handleDeleteCase = useCallback(() => {
+    if (!planId || !caseId) {
+      message.warning('缺少必要的参数，无法删除用例');
+      return;
+    }
+    Modal.confirm({
+      title: '彻底删除用例',
+      content:
+        '将解除与当前计划的关联，并从数据库物理删除该用例及其所有子步骤。' +
+        '该操作不可恢复，是否继续？',
+      okText: '彻底删除',
+      okButtonProps: { danger: true },
+      cancelText: '取消',
+      onOk: async () => {
+        try {
+          const { code } = await deletePlanCasePermanently({
+            plan_id: Number(planId),
+            case_ids: [caseId],
+          });
+          if (code === 0) {
+            message.success('彻底删除成功');
+            callbacksRef.current.onRefresh?.();
+          } else {
+            message.error('删除失败');
+          }
+        } catch {
+          message.error('删除失败，请重试');
+        }
+      },
+    });
+  }, [planId, caseId]);
+
   /** 更多操作下拉菜单项 */
   const moreMenuItems = useMemo(
     () =>
       createMoreMenuItems({
         onCopyCase: handleCopyCase,
         onRemoveCase: handleRemoveCase,
-        onInsertAfter: onInsertAfter ? () => onInsertAfter(caseId!) : undefined,
+        onDeleteCase: handleDeleteCase,
       }),
-    [handleCopyCase, handleRemoveCase, onInsertAfter, caseId],
+    [handleCopyCase, handleRemoveCase, handleDeleteCase],
   );
 
   /**
@@ -477,16 +533,31 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
             <DownOutlined style={{ fontSize: 10, opacity: 0.6 }} />
           </Tag>
         </Dropdown>
-        <Text
-          strong
-          style={{ cursor: 'pointer' }}
-          onClick={(e) => {
-            e.stopPropagation();
-            setIsDetailOpen(true);
-          }}
-        >
-          {testCase.case_name}
-        </Text>
+        {needNameTooltip ? (
+          <Tooltip title={caseName} mouseEnterDelay={0.3}>
+            <Text
+              strong
+              style={{ cursor: 'pointer' }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsDetailOpen(true);
+              }}
+            >
+              {truncatedName}
+            </Text>
+          </Tooltip>
+        ) : (
+          <Text
+            strong
+            style={{ cursor: 'pointer' }}
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsDetailOpen(true);
+            }}
+          >
+            {truncatedName}
+          </Text>
+        )}
       </Space>
     ),
     [
@@ -498,6 +569,9 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
       testCase.case_name,
       onSelectedChange,
       isSortable,
+      truncatedName,
+      needNameTooltip,
+      caseName,
     ],
   );
 
