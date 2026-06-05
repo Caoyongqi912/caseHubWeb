@@ -60,6 +60,11 @@ interface CaseItemProps {
   /** 受控折叠状态（由父组件 collapsedCaseIds 驱动，一键折叠时使用） */
   collapsed?: boolean;
   onRefresh?: () => void;
+  /**
+   * 多选拖拽时，标识当前行是否是被选中的同伴（非 activeId）。
+   * 用于添加视觉提示，让用户清楚看到整块会一起被拖走。
+   */
+  isBlockDragPeer?: boolean;
 }
 
 /**
@@ -85,6 +90,7 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
     isSortable = false,
     collapsed: externalCollapsed,
     onRefresh,
+    isBlockDragPeer = false,
   } = props;
 
   const caseId = testCase.id;
@@ -117,6 +123,19 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
         opacity: isDragging ? 0.85 : 1,
         zIndex: isDragging ? 1000 : 'auto',
         boxShadow: isDragging ? '0 8px 24px rgba(0, 0, 0, 0.15)' : undefined,
+      }
+    : {};
+
+  /**
+   * 多选拖拽时，被选中的同伴（非 active）行的视觉提示
+   * 让用户清楚看到整块会一起被拖走
+   */
+  const blockPeerStyle: React.CSSProperties = isBlockDragPeer
+    ? {
+        opacity: 0.55,
+        outline: '2px dashed #1677ff',
+        outlineOffset: '-2px',
+        background: 'rgba(22, 119, 255, 0.04)',
       }
     : {};
 
@@ -534,7 +553,10 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
   );
 
   return (
-    <div ref={isSortable ? setNodeRef : undefined} style={sortableStyle}>
+    <div
+      ref={isSortable ? setNodeRef : undefined}
+      style={{ ...sortableStyle, ...blockPeerStyle }}
+    >
       <ProCard
         title={cardTitle}
         variant="outlined"

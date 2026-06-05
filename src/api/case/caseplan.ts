@@ -294,15 +294,76 @@ export const insertPlanCases = async (data: ITestCase) => {
 };
 
 /**
- * 重排序计划下的用例
- * @param data - 包含 plan_id、plan_module_id、按目标顺序排列的 case_ids 数组
+ * 重排序计划下的单个用例
+ *
+ * 相比旧版（传全量 case_ids 列表），本接口只传"被移动 case + 锚点"，
+ * 传输量与列表规模无关，适合 100+ 用例的大列表。
+ *
+ * @example
+ * // 拖拽 A 到 B 之前
+ * reorderPlanCases({ plan_id, case_id: A, before_id: B });
+ *
+ * @example
+ * // 拖拽 A 到 module 末尾
+ * reorderPlanCases({ plan_id, case_id: A });
+ *
+ * @example
+ * // 跨 module 移动
+ * reorderPlanCases({ plan_id, case_id: A, target_module_id: M, after_id: X });
  */
 export const reorderPlanCases = async (data: {
   plan_id: number;
-  plan_module_id?: number;
-  case_ids: number[];
+  case_id: number;
+  before_id?: number;
+  after_id?: number;
+  target_module_id?: number;
 }) => {
-  return request<IResponse<null>>('/api/hub/plan/cases/reorder', {
+  return request<IResponse<number>>('/api/hub/plan/cases/reorder', {
+    method: 'POST',
+    data,
+  });
+};
+
+/** 批量重排序单条意图（无 plan_id，由父级指定） */
+export interface IReorderPlanCaseItem {
+  case_id: number;
+  before_id?: number;
+  after_id?: number;
+  target_module_id?: number;
+}
+
+/**
+ * 批量重排序计划下的用例
+ *
+ * 适合多选拖拽：一次提交 N 条意图，服务端在同一事务内顺序应用。
+ * 全部成功才提交，任一失败整体回滚。
+ *
+ * @example
+ * // 多选拖拽：把 [A, B, C] 整体放到 X 之后（按目标顺序链式锚点）
+ * reorderPlanCasesBulk({
+ *   plan_id,
+ *   items: [
+ *     { case_id: A, after_id: X },
+ *     { case_id: B, after_id: A },
+ *     { case_id: C, after_id: B },
+ *   ],
+ * });
+ *
+ * @example
+ * // 把多个 case 从 A 组一次性迁到 B 组
+ * reorderPlanCasesBulk({
+ *   plan_id,
+ *   items: [
+ *     { case_id: X, target_module_id: M_B },
+ *     { case_id: Y, target_module_id: M_B },
+ *   ],
+ * });
+ */
+export const reorderPlanCasesBulk = async (data: {
+  plan_id: number;
+  items: IReorderPlanCaseItem[];
+}) => {
+  return request<IResponse<number[]>>('/api/hub/plan/cases/reorder/bulk', {
     method: 'POST',
     data,
   });

@@ -3,13 +3,13 @@ import {
   insertPlanCases,
   queryPlanCases,
   reorderPlanCases,
+  reorderPlanCasesBulk,
 } from '@/api/case/caseplan';
 import MyDrawer from '@/components/MyDrawer';
 import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import { ICasePlan, ITestCase } from '@/pages/CaseHub/types';
 import { LinkOutlined, PlusOutlined } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
-import { arrayMove } from '@dnd-kit/sortable';
 import { Button, Checkbox, Empty, message, Space, Spin } from 'antd';
 import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 import {
@@ -197,6 +197,14 @@ const Index: FC<PlanCaseListProps> = ({
   );
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [importModalVisible, setImportModalVisible] = useState(false);
+  /**
+   * 多选拖拽状态：被拖动的 case_id。
+   * 用于在视觉上给"被选中的同伴"加透明/边框提示。
+   * null = 处于单选拖拽或无拖拽。
+   */
+  const [multiDragActiveId, setMultiDragActiveId] = useState<number | null>(
+    null,
+  );
   /** 记录要在哪个 case 之后插入（null 表示追加到末尾） */
   const [insertAfterCaseId, setInsertAfterCaseId] = useState<number | null>(
     null,
@@ -394,21 +402,17 @@ const Index: FC<PlanCaseListProps> = ({
    * 单个用例评审状态切换
    * isReview 已为 string 类型（与后端枚举 value 对齐），直接赋值给 ITestCase.is_review
    */
-  const handleReviewChange = useCallback(
-    (caseId: number, isReview: string) => {
-      setCaseList((prev) =>
-        prev.map((tc) =>
-          tc.id === caseId ? { ...tc, is_review: isReview } : tc,
-        ),
-      );
-      onModulesRefresh?.();
-    },
-    [onModulesRefresh],
-  );
+  const handleReviewChange = useCallback((caseId: number, isReview: string) => {
+    setCaseList((prev) =>
+      prev.map((tc) =>
+        tc.id === caseId ? { ...tc, is_review: isReview } : tc,
+      ),
+    );
+  }, []);
 
   /**
    * 单个用例一轮测试状态切换
-   * 仅更新对应字段，保持其它状态不变；同步触发 onModulesRefresh 以更新左侧模块树计数
+   * 仅更新对应字段，保持其它状态不变；
    */
   const handleFirstStatusChange = useCallback(
     (caseId: number, status: string) => {
@@ -417,9 +421,8 @@ const Index: FC<PlanCaseListProps> = ({
           tc.id === caseId ? { ...tc, first_status: status } : tc,
         ),
       );
-      onModulesRefresh?.();
     },
-    [onModulesRefresh],
+    [],
   );
 
   /**
@@ -433,9 +436,8 @@ const Index: FC<PlanCaseListProps> = ({
           tc.id === caseId ? { ...tc, second_status: status } : tc,
         ),
       );
-      onModulesRefresh?.();
     },
-    [onModulesRefresh],
+    [],
   );
 
   /**
@@ -552,17 +554,16 @@ const Index: FC<PlanCaseListProps> = ({
             (tc) => tc.id === targetInsertId,
           );
           if (targetIndex >= 0 && targetIndex < freshList.length - 1) {
-            // 假设新导入的用例在末尾，将其移到 targetIndex + 1 的位置
-            const reordered = [...freshList];
-            const lastIdx = reordered.length - 1;
-            const [importedCase] = reordered.splice(lastIdx, 1);
-            reordered.splice(targetIndex + 1, 0, importedCase);
-            await reorderPlanCases({
-              plan_id: Number(planId),
-              plan_module_id: moduleId ?? undefined,
-              case_ids: reordered.map((c) => c.id!).filter(Boolean),
-            });
-            handleRefresh();
+            // 新导入的用例通常在列表末尾，用锚点 API 把它移到目标之后
+            const importedCase = freshList[freshList.length - 1];
+            if (importedCase?.id) {
+              await reorderPlanCases({
+                plan_id: Number(planId),
+                case_id: importedCase.id,
+                after_id: targetInsertId,
+              });
+              handleRefresh();
+            }
           }
         } catch {
           // 排序失败不影响导入成功的结果
@@ -572,38 +573,98 @@ const Index: FC<PlanCaseListProps> = ({
   }, [insertAfterCaseId, handleRefresh, planId, moduleId]);
 
   /**
-   * 拖拽排序处理
-   * 乐观更新列表顺序，异步调用 API 持久化
-   * 失败时回滚到原始顺序
+   * 拖拽排序处理（单选 / 多选统一入口）
+   *
+   * 设计要点
+   * --------
+   * - 多选检测：当 ``selectedCaseIds.size > 1`` 且 activeId 属于选中集合时，
+   *   触发"块拖拽"语义：整块作为整体移动到 over 之后，块内顺序保持
+   * - 乐观更新：本地立即重排，UI 不阻塞；失败时回滚到原顺序
+   * - 传输最小化：
+   *     - 单条：走单条接口，传 (case_id, after_id, before_id)
+   *     - 多选：走 bulk 接口，链式锚点：
+   *         block[0].after_id = overId
+   *         block[i].after_id = block[i-1]   (i > 0)
+   *       块内顺序 = 当前 caseList 顺序
+   *
+   * @param activeId 被拖拽的用例ID
+   * @param overId 目标位置的用例ID（dnd-kit 提供的 drop target）
    */
   const handleCaseReorder = useCallback(
     async (activeId: number, overId: number) => {
-      // 在 filteredList 中找到位置（filteredList 与 caseList 保持同序）
-      const oldIndex = filteredList.findIndex((tc) => tc.id === activeId);
-      const newIndex = filteredList.findIndex((tc) => tc.id === overId);
-      if (oldIndex === -1 || newIndex === -1) return;
+      if (activeId === overId) return;
 
-      // 乐观更新：立即调整 caseList 顺序
-      const prevList = [...caseList];
-      const moved = arrayMove(prevList, oldIndex, newIndex);
-      setCaseList(moved);
+      // 1) 检测是否多选块拖拽
+      const isBlockDrag =
+        selectedCaseIds.size > 1 && selectedCaseIds.has(activeId);
+
+      // 2) 计算要移动的 case_id 列表（按 caseList 当前顺序）
+      const movedIds: number[] = isBlockDrag
+        ? caseList
+            .map((tc) => tc.id)
+            .filter(
+              (id): id is number => id !== undefined && selectedCaseIds.has(id),
+            )
+        : [activeId];
+
+      // 3) drop target 必须在 caseList 中，且不应是被移动的 case 之一
+      if (!movedIds.includes(overId)) {
+        // 正常路径
+      } else {
+        // overId 在 moved 里 = drop 到了块内某个 case 上，相当于无操作
+        return;
+      }
+
+      // 4) 乐观更新：取块 → 从原列表删除 → 插入到 over 之后
+      const prevList = caseList;
+      const block = caseList.filter(
+        (tc) => tc.id !== undefined && movedIds.includes(tc.id),
+      );
+      const cleanList = caseList.filter(
+        (tc) => tc.id === undefined || !movedIds.includes(tc.id),
+      );
+      const anchorIdx = cleanList.findIndex((tc) => tc.id === overId);
+      if (anchorIdx === -1) return;
+      // 插入到 over 之后
+      const newList = [
+        ...cleanList.slice(0, anchorIdx + 1),
+        ...block,
+        ...cleanList.slice(anchorIdx + 1),
+      ];
+      setCaseList(newList);
+      setMultiDragActiveId(isBlockDrag ? activeId : null);
+
+      // 5) 构造 items：链式锚点
+      const items = movedIds.map((cid, i) => ({
+        case_id: cid,
+        after_id: i === 0 ? overId : movedIds[i - 1],
+      }));
 
       try {
-        const { code } = await reorderPlanCases({
-          plan_id: Number(planId),
-          plan_module_id: moduleId ?? undefined,
-          case_ids: moved.map((c) => c.id!).filter(Boolean),
-        });
-        if (code !== 0) {
-          throw new Error('排序失败');
+        if (movedIds.length === 1) {
+          // 单条：单条接口
+          const { code } = await reorderPlanCases({
+            plan_id: Number(planId),
+            case_id: activeId,
+            after_id: overId,
+          });
+          if (code !== 0) throw new Error('reorder failed');
+        } else {
+          // 块：bulk 接口
+          const { code } = await reorderPlanCasesBulk({
+            plan_id: Number(planId),
+            items,
+          });
+          if (code !== 0) throw new Error('bulk reorder failed');
         }
       } catch {
         message.error('排序失败，已回滚');
-        // 回滚到原始顺序
         setCaseList(prevList);
+      } finally {
+        setMultiDragActiveId(null);
       }
     },
-    [filteredList, caseList, planId, moduleId],
+    [caseList, selectedCaseIds, planId],
   );
 
   /**
@@ -649,13 +710,12 @@ const Index: FC<PlanCaseListProps> = ({
               // 构建目标顺序：新用例放到 targetIndex + 1 的位置
               const reordered = [...freshList];
               const newIdx = reordered.findIndex((tc) => tc.id === newCaseId);
-              if (newIdx !== -1 && newIdx !== targetIndex + 1) {
-                const [newCase] = reordered.splice(newIdx, 1);
-                reordered.splice(targetIndex + 1, 0, newCase);
+              if (newCaseId && targetIndex >= 0) {
+                // 锚点 API：新用例插到 targetInsertAfterId 之后即可
                 await reorderPlanCases({
                   plan_id: Number(planId),
-                  plan_module_id: moduleId ?? undefined,
-                  case_ids: reordered.map((c) => c.id!).filter(Boolean),
+                  case_id: newCaseId,
+                  after_id: targetInsertAfterId,
                 });
                 handleRefresh();
               }
@@ -733,6 +793,11 @@ const Index: FC<PlanCaseListProps> = ({
       onCollapsedChange: handleCollapsedChange,
       onInsertAfter: handleInsertAfter,
       isSortable: true,
+      multiDragActiveId,
+      isBlockDragPeer: (caseId: number) =>
+        multiDragActiveId !== null &&
+        selectedCaseIds.has(caseId) &&
+        caseId !== multiDragActiveId,
       onRefresh: handleRefresh,
       collapsedCaseIds: collapsedCaseIds ?? new Set<number>(),
     }),
@@ -749,6 +814,7 @@ const Index: FC<PlanCaseListProps> = ({
       handleInsertAfter,
       handleRefresh,
       collapsedCaseIds,
+      multiDragActiveId,
     ],
   );
 
