@@ -20,7 +20,17 @@ import { Button, Form, message, Progress, theme } from 'antd';
 import { FC, useCallback, useMemo, useState } from 'react';
 
 interface Props {
+  /**
+   * 提交导入成功后触发：刷新右侧用例表格
+   * 由调用方（CaseDataTable）提供，内部只负责触发时机
+   */
   onSuccess: () => void;
+  /**
+   * 提交导入成功后触发：刷新左侧模块目录树（可选）
+   * 目录树位于独立组件树中，通过父级回调联动刷新；
+   * 不传则只刷新表格（兼容历史用法）
+   */
+  onModuleRefresh?: () => void;
 }
 
 interface ErrorDetail {
@@ -41,7 +51,7 @@ interface ValidateResult {
   errors: ErrorRow[];
 }
 
-const UploadCaseModal: FC<Props> = ({ onSuccess }) => {
+const UploadCaseModal: FC<Props> = ({ onSuccess, onModuleRefresh }) => {
   const { token } = theme.useToken();
   const [uploadForm] = Form.useForm();
   const [uploadFile, setUploadFile] = useState<File | null>(null);
@@ -227,6 +237,27 @@ const UploadCaseModal: FC<Props> = ({ onSuccess }) => {
     setUploadError(null);
   };
 
+  /**
+   * 安全调用刷新回调
+   * 单个回调抛错不应影响整体流程，仅在控制台记录错误
+   * @param fn - 刷新回调，可能为 undefined
+   * @param label - 回调用途描述，用于错误日志
+   */
+  const safeInvoke = (fn: (() => void) | undefined, label: string) => {
+    if (!fn) return;
+    try {
+      fn();
+    } catch (err) {
+      console.error(`[UploadCaseModal] ${label}回调执行失败:`, err);
+    }
+  };
+
+  /**
+   * 提交导入
+   * 成功后联动刷新：右侧表格 + 左侧模块目录树
+   * 注意：两个刷新回调相互独立，任一失败不应阻塞另一回调的执行，
+   *       用 try/catch 包裹单个回调避免单个刷新异常导致整体回滚
+   */
   const handleConfirmImport = async (values: any) => {
     if (!validateResult?.file_md5) {
       return false;
@@ -249,7 +280,12 @@ const UploadCaseModal: FC<Props> = ({ onSuccess }) => {
 
       const importedCount = response.data?.imported_count || 0;
       message.success(`成功导入数据 ${importedCount} 条`);
-      onSuccess();
+
+      // 1) 刷新右侧用例表格（必传）
+      safeInvoke(onSuccess, '表格刷新');
+      // 2) 刷新左侧模块目录树（可选，目录树在独立组件树中）
+      safeInvoke(onModuleRefresh, '模块目录树刷新');
+
       resetAllState();
       return true;
     } catch (error: any) {

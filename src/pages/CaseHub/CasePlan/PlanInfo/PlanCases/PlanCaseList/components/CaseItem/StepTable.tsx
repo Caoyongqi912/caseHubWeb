@@ -488,7 +488,6 @@ const StepTable: React.FC<StepTableProps> = ({
       options={false}
       columns={stepColumns}
       recordCreatorProps={false}
-      scroll={{ x: 'max-content' }}
       editable={{
         type: 'multiple',
         editableKeys,

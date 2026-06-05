@@ -64,16 +64,38 @@ interface ModuleCaseSelectorProps {
 
 /**
  * 收集整棵树下所有模块 key（用于"全选"）
+ * 同时返回 key -> IModule 的索引，便于后续 O(1) 查找
  */
-const collectDescendantKeys = (modules: IModule[]): number[] => {
+const collectDescendantKeys = (
+  modules: IModule[],
+): { keys: number[]; byKey: Map<number, IModule> } => {
   const keys: number[] = [];
+  const byKey = new Map<number, IModule>();
   const walk = (list: IModule[]) => {
     list.forEach((m) => {
       keys.push(m.key);
+      byKey.set(m.key, m);
       if (m.children && m.children.length) walk(m.children);
     });
   };
   walk(modules);
+  return { keys, byKey };
+};
+
+/**
+ * 收集一个节点的所有后代 key（含自身）
+ */
+const collectNodeDescendants = (node: IModule): number[] => {
+  const keys: number[] = [node.key];
+  const walk = (n: IModule) => {
+    if (n.children && n.children.length) {
+      n.children.forEach((c) => {
+        keys.push(c.key);
+        walk(c);
+      });
+    }
+  };
+  walk(node);
   return keys;
 };
 
@@ -289,25 +311,59 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
   }, [moduleKeyword, filteredTreeData]);
 
   /* -------------------- 树操作 -------------------- */
-  const allModuleKeys = useMemo<React.Key[]>(
-    // 保留原始类型（IModule.key 为 number），避免与 Tree 的 key 类型不匹配
-    () => collectDescendantKeys(modules),
-    [modules],
-  );
-  // 防御性：useMemo 在 hot-reload / 极端情况下可能拿到 undefined，统一兜底
-  const safeAllModuleKeys = allModuleKeys ?? [];
-  const safeCheckedModuleKeys = checkedModuleKeys ?? [];
+  // 整棵模块树的扁平 key 列表 + key -> IModule 索引
+  const { allModuleKeys, moduleByKey } = useMemo(() => {
+    const out = collectDescendantKeys(modules ?? []);
+    return { allModuleKeys: out.keys, moduleByKey: out.byKey };
+  }, [modules]);
+  // 防御性兜底
+  const safeAllModuleKeys: React.Key[] = Array.isArray(allModuleKeys)
+    ? allModuleKeys
+    : [];
+  const safeCheckedModuleKeys: React.Key[] = Array.isArray(checkedModuleKeys)
+    ? checkedModuleKeys
+    : [];
+
+  /**
+   * 把"已勾选 key 集合"展开成"被覆盖的叶子 key 集合"
+   * - 选中某内部节点 -> 该节点所有后代叶子视为覆盖
+   * - 选中叶子 -> 自身视为覆盖
+   * 这样右侧 case 列表的 module_ids 永远是叶子 id，符合后端 page_by_module 的语义
+   */
+  const coveredLeafKeys = useMemo<Set<number>>(() => {
+    const out = new Set<number>();
+    if (!moduleByKey) return out;
+    safeCheckedModuleKeys.forEach((k) => {
+      const node = moduleByKey.get(Number(k));
+      if (!node) return;
+      collectNodeDescendants(node).forEach((ck) => out.add(ck));
+    });
+    return out;
+  }, [safeCheckedModuleKeys, moduleByKey]);
+
+  // 是否"全选"：所有叶子都被覆盖即可
+  const allLeafKeys = useMemo<number[]>(() => {
+    const out: number[] = [];
+    const walk = (list: IModule[]) => {
+      list.forEach((m) => {
+        const isLeaf = !m.children || m.children.length === 0;
+        if (isLeaf) out.push(m.key);
+        else walk(m.children);
+      });
+    };
+    walk(modules ?? []);
+    return out;
+  }, [modules]);
 
   const isAllModuleSelected =
-    safeAllModuleKeys.length > 0 &&
-    safeCheckedModuleKeys.length === safeAllModuleKeys.length;
+    allLeafKeys.length > 0 && allLeafKeys.every((k) => coveredLeafKeys.has(k));
 
   const isModuleIndeterminate =
-    safeCheckedModuleKeys.length > 0 &&
-    safeCheckedModuleKeys.length < safeAllModuleKeys.length;
+    coveredLeafKeys.size > 0 && coveredLeafKeys.size < allLeafKeys.length;
 
   const handleSelectAllModules = (e: CheckboxChangeEvent) => {
     if (e.target.checked) {
+      // 全选 = 把所有内部+叶子都勾上（视觉一致）
       setCheckedModuleKeys(safeAllModuleKeys);
     } else {
       setCheckedModuleKeys([]);
@@ -315,21 +371,33 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
   };
 
   /**
-   * rc-tree 的 onCheck 第一个参数在不同模式下形态不同：
-   * - checkStrictly: true  -> { checked: Key[], halfChecked: Key[] }
-   * - checkStrictly: false（默认）-> Key[]（已合并父子关系的扁平 checked 数组）
-   * 这里统一归一成"已勾选 key 列表"
+   * 树勾选回调。
+   * - checkStrictly: false（默认）时，rc-tree 的 onCheck 第一个参数形态：
+   *     - 偶发：Key[]（扁平已勾选列表）
+   *     - 主流：{ checked: Key[], halfChecked: Key[] }
+   * - 这里统一归一成"已勾选 key 列表"存到 state
+   * - 右侧 case 列表的 module_ids 由 coveredLeafKeys 派生（自动把勾选的内部节点展开为叶子）
    */
   const handleModuleCheck = (
-    checked: React.Key[] | { checked: React.Key[]; halfChecked: React.Key[] },
+    info:
+      | React.Key[]
+      | { checked: React.Key[]; halfChecked: React.Key[] }
+      | undefined
+      | null,
   ) => {
-    if (Array.isArray(checked)) {
-      setCheckedModuleKeys(checked);
-    } else if (checked && typeof checked === 'object') {
-      setCheckedModuleKeys(checked.checked ?? []);
-    } else {
+    if (!info) {
       setCheckedModuleKeys([]);
+      return;
     }
+    if (Array.isArray(info)) {
+      setCheckedModuleKeys(info);
+      return;
+    }
+    if (typeof info === 'object' && Array.isArray(info.checked)) {
+      setCheckedModuleKeys(info.checked);
+      return;
+    }
+    setCheckedModuleKeys([]);
   };
 
   // 选中模块变更时刷新表格
@@ -346,12 +414,11 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
    * - 选中 1 个模块：传 module_id（保留旧接口兼容）
    * - 选中 ≥2 个模块：传 module_ids（后端展开每个模块的子节点后求并集）
    */
+  // 使用"被覆盖的叶子 key"作为筛选条件（后端 page_by_module 会再展开子节点，行为兼容）
+  const leafIds = useMemo(() => Array.from(coveredLeafKeys), [coveredLeafKeys]);
+
   const fetchPageData = useCallback(
     async (params: any, sort: any) => {
-      const ids = safeCheckedModuleKeys
-        .map((k) => Number(k))
-        .filter((n) => Number.isFinite(n));
-
       const baseParams = {
         ...params,
         case_name: params?.case_name || caseKeyword || undefined,
@@ -365,27 +432,28 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
 
       // 避免和 module_id 同时传（后端会同时收到导致困惑）
       let values: Record<string, unknown>;
-      if (ids.length === 0) {
+      if (leafIds.length === 0) {
         values = baseParams;
-      } else if (ids.length === 1) {
-        values = { ...baseParams, module_id: ids[0] };
+      } else if (leafIds.length === 1) {
+        values = { ...baseParams, module_id: leafIds[0] };
       } else {
-        values = { ...baseParams, module_ids: ids };
+        values = { ...baseParams, module_ids: leafIds };
       }
 
       const { code, data } = await pageTestCase(values);
       return pageData(code, data);
     },
-    [safeCheckedModuleKeys, projectId, caseKeyword, filterLevel, filterType],
+    [leafIds, projectId, caseKeyword, filterLevel, filterType],
   );
 
-  // 搜索关键字 / 筛选条件变化时重新拉取（带防抖）
+  // 搜索关键字 / 筛选条件变化时重新拉取（带短防抖）
   // 注意：ProTable 的 request 引用变化不会自动触发 reload，
   // 必须在外部状态变化后显式调用 actionRef.current?.reloadAndRest
+  // 不能直接同步 reload，会和"勾选模块时"的 reload 抢跑导致请求参数错位
   useEffect(() => {
     const timer = setTimeout(() => {
       actionRef.current?.reloadAndRest?.();
-    }, 200);
+    }, 80);
     return () => clearTimeout(timer);
   }, [caseKeyword, filterLevel, filterType]);
 
@@ -540,11 +608,9 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
     }
     setConfirming(true);
     try {
-      // 把左侧选中的源模块 ID 一起抛出去
-      // （后端按这些 moduleIds 在 plan_module 中 find-or-create 计划分组）
-      const moduleIds = safeCheckedModuleKeys
-        .map((k) => Number(k))
-        .filter((n) => Number.isFinite(n));
+      // 把左侧选中的"被覆盖的叶子"源模块 ID 抛给后端
+      // （后端会沿 parent 链上溯，在 plan_module 中逐层 find-or-create）
+      const moduleIds = Array.from(coveredLeafKeys);
       await onConfirm(Array.from(selectedCaseIds), {
         moduleIds,
         mergeSameGroup,
@@ -746,7 +812,7 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
               </Checkbox>
             </div>
             <span style={styles.paneCount()}>
-              {safeCheckedModuleKeys.length}/{safeAllModuleKeys.length}
+              {coveredLeafKeys.size}/{allLeafKeys.length}
             </span>
           </div>
           <div style={styles.paneBody()}>
@@ -765,7 +831,7 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
                   blockNode
                   showLine={{ showLeafIcon: false }}
                   expandedKeys={expandedKeys}
-                  checkedKeys={checkedModuleKeys}
+                  checkedKeys={safeCheckedModuleKeys}
                   onExpand={(keys) => setExpandedKeys(keys)}
                   onCheck={handleModuleCheck as any}
                   treeData={filteredTreeData}
@@ -788,7 +854,7 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
                 <span style={{ fontWeight: 600 }}>全选</span>
               </Checkbox>
               <span style={{ color: colors.textTertiary, fontSize: 12 }}>
-                {safeCheckedModuleKeys.length > 0
+                {coveredLeafKeys.size > 0
                   ? '已选模块内的用例'
                   : '请在左侧选择分组'}
               </span>

@@ -22,7 +22,6 @@ import {
   DeliveredProcedureOutlined,
   DownloadOutlined,
   SmallDashOutlined,
-  SoundOutlined,
 } from '@ant-design/icons';
 import {
   ActionType,
@@ -52,6 +51,12 @@ interface Props {
   currentProjectId?: number;
   currentModuleId?: number;
   perKey: string;
+  /**
+   * 上传/导入成功后联动刷新左侧模块目录树的回调
+   * 由父级提供（通常递增 moduleReloadKey），用于通知 ModuleTree 重新拉取目录
+   * 表格自身的刷新由 onSuccess（UploadCaseModal）内部触发，不依赖此回调
+   */
+  onModuleRefresh?: () => void;
 }
 
 const CaseDataTable: FC<Props> = (props) => {
@@ -59,7 +64,7 @@ const CaseDataTable: FC<Props> = (props) => {
   const { options: typeOptions } = useCaseEnumConfig('CASE_TYPE');
   const typeValueEnum = useMemo(() => toValueEnum(typeOptions), [typeOptions]);
 
-  const { perKey, currentProjectId, currentModuleId } = props;
+  const { perKey, currentProjectId, currentModuleId, onModuleRefresh } = props;
 
   // 用例等级从后端枚举配置拉取（管理员在配置中心增删后自动生效）
   const { options: levelOptions } = useCaseEnumConfig('CASE_LEVEL');
@@ -129,26 +134,6 @@ const CaseDataTable: FC<Props> = (props) => {
   );
   const column: ProColumns<ITestCase>[] = useMemo(
     () => [
-      {
-        title: 'ID',
-        dataIndex: 'uid',
-        fixed: 'left',
-        copyable: true,
-        width: '6%',
-        render: (_, record) => (
-          <Tag
-            style={{
-              background: colors.primaryBg,
-              borderColor: colors.primary,
-              color: colors.primary,
-              borderRadius: borderRadius.md,
-              fontWeight: 500,
-            }}
-          >
-            {record.uid}
-          </Tag>
-        ),
-      },
       {
         title: '用例名称',
         dataIndex: 'case_name',
@@ -261,6 +246,18 @@ const CaseDataTable: FC<Props> = (props) => {
               >
                 详情
               </Link>
+              <Link
+                style={{
+                  color: colors.primary,
+                  cursor: 'pointer',
+                }}
+                onClick={() => {
+                  setCurrentCaseId(record.id);
+                  setShowDynamic(true);
+                }}
+              >
+                动态
+              </Link>
               {TableOptions(record)}
             </Space>
           );
@@ -287,24 +284,7 @@ const CaseDataTable: FC<Props> = (props) => {
         icon: <CopyOutlined />,
         key: '0',
       },
-      {
-        label: (
-          <Link
-            style={{
-              color: colors.primary,
-              cursor: 'pointer',
-            }}
-            onClick={() => {
-              setCurrentCaseId(record.id);
-              setShowDynamic(true);
-            }}
-          >
-            动态
-          </Link>
-        ),
-        icon: <SoundOutlined />,
-        key: '1',
-      },
+
       {
         key: '3',
         label: '移动至',
@@ -404,7 +384,10 @@ const CaseDataTable: FC<Props> = (props) => {
       用例模版
     </Button>,
 
-    <UploadCaseModal onSuccess={() => actionRef.current?.reload()} />,
+    <UploadCaseModal
+      onSuccess={() => actionRef.current?.reload()}
+      onModuleRefresh={onModuleRefresh}
+    />,
 
     <Button key="add" type="primary" onClick={() => setOpenNewCaseDrawer(true)}>
       添加用例
