@@ -1,37 +1,480 @@
+/**
+ * CasePlan · 测试计划列表
+ *
+ * 视觉:Refined Ledger —— 表格 cell 用 №、印章、发丝线、阶段点、
+ * 时间堆叠、文本下划线操作,主标题与计划名用 antd 默认字体;数字与编号
+ * 用 antd 等宽字体。所有色值经 antd token 解析,跟随主题切换。
+ */
+
 import { deleteCasePlan, pageCasePlan } from '@/api/case/caseplan';
 import UserSelect from '@/components/Table/UserSelect';
-import { useCaseHubTheme } from '@/pages/CaseHub/styles';
+import { useCaseHubTheme } from '@/pages/CaseHub/styles/useCaseHubTheme';
 import { ICasePlan } from '@/pages/CaseHub/types';
 import { pageData } from '@/utils/somefunc';
-import {
-  DeleteOutlined,
-  EditOutlined,
-  PlusOutlined,
-  ProjectOutlined,
-} from '@ant-design/icons';
-import {
-  ActionType,
-  PageContainer,
-  ProCard,
-  ProColumns,
-  ProTable,
-} from '@ant-design/pro-components';
+import { PlusOutlined } from '@ant-design/icons';
+import { ActionType, ProColumns, ProTable } from '@ant-design/pro-components';
 import { useModel, useNavigate } from '@umijs/max';
-import {
-  Button,
-  Form,
-  message,
-  Modal,
-  Progress,
-  Select,
-  Space,
-  Tag,
-} from 'antd';
+import { Button, Form, message, Modal, Select } from 'antd';
 import dayjs from 'dayjs';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import CasePlanForm from './components/CasePlanForm';
+import {
+  PHASE_DOT,
+  PHASE_OPTIONS,
+  resolveColor,
+  STATUS_OPTIONS,
+  STATUS_SEAL,
+} from './styles';
 
 const UserSelectMultiple = () => <UserSelect multiple />;
+
+// ═════════════════════════════════════════════════════════════════
+//  Cell renderers
+// ═════════════════════════════════════════════════════════════════
+
+/** № 编号列 —— 等宽数字 + Tertiary 灰 */
+const IndexCell: React.FC<{ index: number; token: any }> = ({
+  index,
+  token,
+}) => (
+  <span
+    style={{
+      fontFamily: token.fontFamilyCode,
+      fontSize: 11,
+      color: token.colorTextTertiary,
+      fontVariantNumeric: 'tabular-nums',
+      letterSpacing: '0.06em',
+    }}
+  >
+    № {String(index).padStart(3, '0')}
+  </span>
+);
+
+/** 计划名 —— 主标题 + 描述副标题(如有),hover 出现主色下划线 */
+const PlanNameCell: React.FC<{
+  record: ICasePlan;
+  onOpen: () => void;
+  token: any;
+}> = ({ record, onOpen, token }) => {
+  const [hover, setHover] = useState(false);
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+      <span
+        onClick={onOpen}
+        onMouseEnter={() => setHover(true)}
+        onMouseLeave={() => setHover(false)}
+        style={{
+          fontSize: 15,
+          fontWeight: 500,
+          color: hover ? token.colorPrimary : token.colorText,
+          cursor: 'pointer',
+          letterSpacing: '0.005em',
+          lineHeight: 1.3,
+          textDecoration: hover ? 'underline' : 'none',
+          textUnderlineOffset: 5,
+          textDecorationColor: token.colorPrimary,
+          textDecorationThickness: 1,
+          transition: 'color 200ms ease',
+        }}
+      >
+        {record.plan_name}
+      </span>
+      {record.plan_description ? (
+        <span
+          style={{
+            fontSize: 11,
+            color: token.colorTextTertiary,
+            lineHeight: 1.4,
+            maxWidth: 300,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            fontStyle: 'italic',
+          }}
+        >
+          {record.plan_description}
+        </span>
+      ) : null}
+      {record.charge_name && (
+        <span
+          style={{
+            fontSize: 10,
+            color: token.colorTextTertiary,
+            lineHeight: 1.4,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+          }}
+        >
+          <span
+            style={{
+              fontSize: 9,
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              color: token.colorTextTertiary,
+              opacity: 0.7,
+            }}
+          >
+            Owner
+          </span>
+          <span style={{ color: token.colorTextSecondary }}>
+            {record.charge_name}
+          </span>
+        </span>
+      )}
+    </div>
+  );
+};
+
+const ChargeCell: React.FC<{ name?: string; token: any }> = ({
+  name,
+  token,
+}) => {
+  const initial = (name || '?').trim()[0]?.toUpperCase() || '?';
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+      <span
+        style={{
+          width: 22,
+          height: 22,
+          borderRadius: '50%',
+          background: token.colorFillTertiary,
+          color: token.colorTextSecondary,
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: 10,
+          fontWeight: 600,
+          border: `1px solid ${token.colorBorderSecondary}`,
+          fontFamily: token.fontFamilyCode,
+        }}
+      >
+        {initial}
+      </span>
+      <span style={{ fontSize: 12, color: token.colorText }}>
+        {name || <span style={{ color: token.colorTextTertiary }}>—</span>}
+      </span>
+    </span>
+  );
+};
+
+/** 完成率 —— 发丝线 + 端点 pip,600ms 缓动 */
+const HairlineProgress: React.FC<{ value: number; token: any }> = ({
+  value,
+  token,
+}) => {
+  const v = Math.max(0, Math.min(100, value || 0));
+  const isDone = v >= 100;
+  const color = isDone ? token.colorSuccess : token.colorPrimary;
+  return (
+    <div
+      style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 140 }}
+    >
+      <div
+        style={{
+          position: 'relative',
+          flex: 1,
+          height: 1,
+          background: token.colorBorder,
+        }}
+      >
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: `${v}%`,
+            background: color,
+            transition: 'width 600ms cubic-bezier(0.22, 1, 0.36, 1)',
+          }}
+        />
+        <div
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: `${v}%`,
+            transform: 'translate(-50%, -50%)',
+            width: 7,
+            height: 7,
+            borderRadius: '50%',
+            background: color,
+            boxShadow: `0 0 0 3px ${token.colorBgContainer}`,
+            transition: 'left 600ms cubic-bezier(0.22, 1, 0.36, 1)',
+          }}
+        />
+      </div>
+      <span
+        style={{
+          fontFamily: token.fontFamilyCode,
+          fontSize: 12,
+          fontVariantNumeric: 'tabular-nums',
+          color: isDone ? token.colorSuccess : token.colorTextSecondary,
+          letterSpacing: '0.02em',
+          minWidth: 36,
+          textAlign: 'right',
+        }}
+      >
+        {v}%
+      </span>
+    </div>
+  );
+};
+
+/** 状态印章 —— 圆角药丸 + 细线边框 + 圆点指示 + 大写小字 */
+const StatusSeal: React.FC<{ status?: string; token: any }> = ({
+  status,
+  token,
+}) => {
+  const cfg = STATUS_SEAL[status || ''] || {
+    colorKey: 'colorTextTertiary',
+    label: '—',
+  };
+  const color = resolveColor(token, cfg.colorKey);
+  return (
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 6,
+        padding: '2px 8px 2px 6px',
+        border: `1px solid ${color}66`,
+        borderRadius: 999,
+        color,
+        fontSize: 10,
+        letterSpacing: '0.14em',
+        textTransform: 'uppercase',
+        fontWeight: 600,
+        background: `${color}0a`,
+        transition: 'all 200ms ease',
+      }}
+    >
+      <span
+        style={{
+          width: 5,
+          height: 5,
+          borderRadius: '50%',
+          background: color,
+        }}
+      />
+      {status || '—'}
+    </span>
+  );
+};
+
+/** 执行阶段 —— 小色点 + 名称 */
+const PhaseDot: React.FC<{ phase?: string; token: any }> = ({
+  phase,
+  token,
+}) => {
+  const color = resolveColor(
+    token,
+    PHASE_DOT[phase || ''] || 'colorTextTertiary',
+  );
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+      <span
+        style={{
+          width: 6,
+          height: 6,
+          borderRadius: '50%',
+          background: color,
+          boxShadow: `0 0 0 2px ${color}22`,
+        }}
+      />
+      <span style={{ fontSize: 12, color: token.colorText }}>
+        {phase || '—'}
+      </span>
+    </span>
+  );
+};
+
+/** 计划时间 —— 左侧细线 + 上下两段 */
+const TimeCell: React.FC<{
+  start?: string;
+  end?: string;
+  token: any;
+}> = ({ start, end, token }) => (
+  <div
+    style={{
+      display: 'flex',
+      alignItems: 'stretch',
+      gap: 8,
+      fontSize: 12,
+      lineHeight: 1.5,
+    }}
+  >
+    <div
+      style={{
+        width: 1,
+        background: token.colorBorderSecondary,
+        marginTop: 2,
+        marginBottom: 2,
+      }}
+    />
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+      <span style={{ color: token.colorText }}>{start || '—'}</span>
+      <span style={{ color: token.colorTextTertiary, fontSize: 11 }}>
+        至 {end || '—'}
+      </span>
+    </div>
+  </div>
+);
+
+/** 文本动作 —— 文字下划线 hover,无按钮边框 */
+const ActionLink: React.FC<{
+  onClick: () => void;
+  color: string;
+  token: any;
+  children: React.ReactNode;
+}> = ({ onClick, color, token, children }) => {
+  const [hover, setHover] = useState(false);
+  return (
+    <span
+      onClick={onClick}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{
+        cursor: 'pointer',
+        color: hover ? color : token.colorTextSecondary,
+        textDecoration: hover ? 'underline' : 'none',
+        textUnderlineOffset: 4,
+        textDecorationColor: color,
+        textDecorationThickness: 1,
+        transition: 'color 180ms ease',
+        fontSize: 12,
+      }}
+    >
+      {children}
+    </span>
+  );
+};
+
+// ═════════════════════════════════════════════════════════════════
+//  Page Header —— 克制版,只保留功能信息
+// ═════════════════════════════════════════════════════════════════
+
+const PageHeader: React.FC<{
+  total: number;
+  projectList: { label: string; value: number }[];
+  selectedProjectId?: number;
+  onProjectChange: (v: number) => void;
+  onAdd: () => void;
+  token: any;
+}> = ({
+  total,
+  projectList,
+  selectedProjectId,
+  onProjectChange,
+  onAdd,
+  token,
+}) => (
+  <div
+    style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 24,
+      flexWrap: 'wrap',
+      padding: '18px 40px 16px',
+      borderBottom: `1px solid ${token.colorBorderSecondary}`,
+      background: token.colorBgContainer,
+    }}
+  >
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'baseline',
+        gap: 18,
+        flexWrap: 'wrap',
+      }}
+    >
+      <h1
+        style={{
+          fontSize: 26,
+          fontWeight: 500,
+          color: token.colorText,
+          lineHeight: 1.1,
+          margin: 0,
+          letterSpacing: '-0.005em',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        测试计划
+      </h1>
+      <span
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 6,
+          fontSize: 12,
+          color: token.colorTextSecondary,
+        }}
+      >
+        <span
+          style={{
+            width: 5,
+            height: 5,
+            borderRadius: '50%',
+            background: token.colorPrimary,
+          }}
+        />
+        共
+        <span
+          style={{
+            fontFamily: token.fontFamilyCode,
+            fontVariantNumeric: 'tabular-nums',
+            color: token.colorText,
+            fontWeight: 600,
+          }}
+        >
+          {String(total).padStart(3, '0')}
+        </span>
+        条
+      </span>
+      <span
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 8,
+          paddingLeft: 18,
+          marginLeft: 4,
+          borderLeft: `1px solid ${token.colorBorderSecondary}`,
+        }}
+      >
+        <Select
+          variant="borderless"
+          value={selectedProjectId}
+          onChange={onProjectChange}
+          options={projectList}
+          style={{ minWidth: 180 }}
+          fieldNames={{ label: 'label', value: 'value' }}
+          size="middle"
+        />
+      </span>
+    </div>
+    <Button
+      type="primary"
+      icon={<PlusOutlined />}
+      onClick={onAdd}
+      style={{
+        height: 32,
+        padding: '0 16px',
+        fontSize: 13,
+        letterSpacing: '0.02em',
+        borderRadius: 2,
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 6,
+        fontWeight: 500,
+      }}
+    >
+      新建计划
+    </Button>
+  </div>
+);
+
+// ═════════════════════════════════════════════════════════════════
+//  Main Page
+// ═════════════════════════════════════════════════════════════════
 
 const Index = () => {
   const actionRef = useRef<ActionType>();
@@ -45,8 +488,9 @@ const Index = () => {
   const [openModal, setOpenModal] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const [currentRecord, setCurrentRecord] = useState<ICasePlan | null>(null);
+  const [totalCount, setTotalCount] = useState(0);
 
-  const { token, colors, spacing } = useCaseHubTheme();
+  const { token } = useCaseHubTheme();
 
   useEffect(() => {
     if (projectList.length > 0 && selectedProjectId === undefined) {
@@ -54,16 +498,26 @@ const Index = () => {
     }
   }, [projectList, selectedProjectId]);
 
+  const lastRequestedProjectId = useRef<number | undefined>();
+
   const queryRecord = useCallback(
     async (params: any, sort: any) => {
       if (selectedProjectId === undefined) {
         return { data: [], success: true, total: 0 };
       }
+      lastRequestedProjectId.current = selectedProjectId;
       const { code, data } = await pageCasePlan({
         ...params,
         sort,
         project_id: selectedProjectId,
       });
+      if (
+        code === 0 &&
+        data?.pageInfo?.total !== undefined &&
+        lastRequestedProjectId.current === selectedProjectId
+      ) {
+        setTotalCount(data.pageInfo.total);
+      }
       return pageData(code, data);
     },
     [selectedProjectId],
@@ -144,11 +598,13 @@ const Index = () => {
         title: '计划名称',
         dataIndex: 'plan_name',
         fixed: 'left',
-        width: '18%',
+        width: 260,
         render: (_, r) => (
-          <a onClick={() => navigate(`/cases/casePlan/planInfo/${r.id}`)}>
-            {r.plan_name}
-          </a>
+          <PlanNameCell
+            record={r}
+            onOpen={() => navigate(`/cases/casePlan/planInfo/${r.id}`)}
+            token={token}
+          />
         ),
       },
       {
@@ -162,96 +618,88 @@ const Index = () => {
         title: '负责人',
         dataIndex: 'charge_name',
         search: false,
-        width: '10%',
-        render: (_, r) => r.charge_name || '-',
+        width: 150,
+        hideInTable: true,
+        render: (_, r) => <ChargeCell name={r.charge_name} token={token} />,
       },
       {
         title: '完成率',
         dataIndex: 'completion_rate',
-        search: true,
-        width: '12%',
-        render: (_, r) => {
-          const rate = r.completion_rate || 0;
-          return (
-            <Space size={8}>
-              <Progress
-                percent={rate}
-                size="small"
-                strokeColor={
-                  rate === 100 ? token.colorSuccess : token.colorPrimary
-                }
-                railColor={token.colorFillSecondary}
-                format={() => ''}
-                style={{ width: 80, marginBottom: 0 }}
-              />
-              <span style={{ color: token.colorTextSecondary, fontSize: 12 }}>
-                {rate}%
-              </span>
-            </Space>
-          );
-        },
+        hideInSearch: true,
+        width: 210,
+        render: (_, r) => (
+          <HairlineProgress value={r.completion_rate || 0} token={token} />
+        ),
       },
       {
         title: '状态',
         dataIndex: 'plan_status',
-        width: '9%',
-        render: (_, r) => (
-          <Tag color={r.plan_status === '已完成' ? 'success' : 'default'}>
-            {r.plan_status || '-'}
-          </Tag>
-        ),
+        width: 140,
+        valueType: 'select',
+        valueEnum: STATUS_OPTIONS,
+        render: (_, r) => <StatusSeal status={r.plan_status} token={token} />,
       },
       {
         title: '执行阶段',
         dataIndex: 'plan_phase',
-        render: (_, r) => <Tag>{r.plan_phase || '-'}</Tag>,
+        width: 110,
+        valueType: 'select',
+        valueEnum: PHASE_OPTIONS,
+        render: (_, r) => <PhaseDot phase={r.plan_phase} token={token} />,
       },
       {
         title: '计划时间',
         dataIndex: 'plan_start_time',
-        width: '12%',
+        width: 200,
+        hideInSearch: true,
         render: (_, r) => (
-          <Space orientation="vertical" size={0}>
-            <span>{r.plan_start_time || '-'}</span>
-            <span style={{ color: token.colorTextTertiary, fontSize: 12 }}>
-              至 {r.plan_end_time || '-'}
-            </span>
-          </Space>
+          <TimeCell
+            start={r.plan_start_time}
+            end={r.plan_end_time}
+            token={token}
+          />
         ),
       },
       {
         title: '备注',
         dataIndex: 'plan_mark',
         ellipsis: true,
-        search: true,
-        width: '10%',
-        render: (_, r) => r.plan_mark || '-',
+        hideInSearch: true,
+        width: 180,
+        render: (_, r) => (
+          <span
+            style={{
+              color: token.colorTextTertiary,
+              fontSize: 12,
+              fontStyle: r.plan_mark ? 'italic' : 'normal',
+            }}
+          >
+            {r.plan_mark || '—'}
+          </span>
+        ),
       },
       {
         title: '操作',
         valueType: 'option',
         fixed: 'right',
-        width: '10%',
+        width: 120,
         render: (_, r) => (
-          <Space>
-            <Button
-              type="text"
-              size="small"
-              icon={<EditOutlined />}
+          <span style={{ display: 'inline-flex', gap: 16 }}>
+            <ActionLink
+              color={token.colorPrimary}
+              token={token}
               onClick={() => openFormModal(r)}
             >
               编辑
-            </Button>
-            <Button
-              type="text"
-              size="small"
-              danger
-              icon={<DeleteOutlined />}
+            </ActionLink>
+            <ActionLink
+              color={token.colorError}
+              token={token}
               onClick={() => handleDelete(r)}
             >
               删除
-            </Button>
-          </Space>
+            </ActionLink>
+          </span>
         ),
       },
     ],
@@ -261,13 +709,7 @@ const Index = () => {
   const handleAdd = useCallback(() => openFormModal(), [openFormModal]);
 
   return (
-    <PageContainer
-      title={false}
-      header={{
-        breadcrumb: {
-          routes: [],
-        },
-      }}
+    <div
       style={{
         display: 'flex',
         flexDirection: 'column',
@@ -275,6 +717,88 @@ const Index = () => {
         overflow: 'hidden',
       }}
     >
+      <style>{`
+        .case-plan-table .ant-table-tbody > tr {
+          transition: background 200ms ease;
+        }
+        .case-plan-table .ant-table-tbody > tr:hover > td {
+          background: ${token.colorFillQuaternary} !important;
+        }
+        .case-plan-table .ant-table-tbody > tr:hover > td:first-child {
+          box-shadow: inset 3px 0 0 0 ${token.colorPrimary};
+        }
+        .case-plan-table .ant-table-thead > tr > th {
+          background: transparent !important;
+          font-family: ${token.fontFamilyCode};
+          font-size: 10px !important;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+          color: ${token.colorTextTertiary} !important;
+          font-weight: 600 !important;
+          border-bottom: 1px solid ${token.colorBorder} !important;
+        }
+        .case-plan-table .ant-table-thead > tr > th::before {
+          display: none !important;
+        }
+        .case-plan-table .ant-table-tbody > tr > td {
+          border-bottom: 1px solid ${token.colorBorderSecondary} !important;
+          padding-top: 12px !important;
+          padding-bottom: 12px !important;
+        }
+        .case-plan-table .ant-table-cell-fix-left,
+        .case-plan-table .ant-table-cell-fix-right {
+          background: ${token.colorBgContainer} !important;
+          z-index: 5 !important;
+        }
+        /* 固定列(左)最右一个 cell 的硬切分阴影 —— 始终可见,让固定列视觉上真正“浮”在滚动列之上 */
+        .case-plan-table .ant-table-cell-fix-left-last {
+          box-shadow:
+            6px 0 8px -4px rgba(0, 0, 0, 0.12),
+            1px 0 0 0 ${token.colorBorderSecondary} !important;
+        }
+        /* 固定列(右)最左一个 cell 的硬切分阴影 */
+        .case-plan-table .ant-table-cell-fix-right-first {
+          box-shadow:
+            -6px 0 8px -4px rgba(0, 0, 0, 0.12),
+            -1px 0 0 0 ${token.colorBorderSecondary} !important;
+        }
+        /* hover 时阴影略加深,强化分层感 */
+        .case-plan-table .ant-table-tbody > tr:hover > .ant-table-cell-fix-left-last {
+          box-shadow:
+            6px 0 10px -4px rgba(0, 0, 0, 0.16),
+            1px 0 0 0 ${token.colorBorderSecondary} !important;
+        }
+        .case-plan-table .ant-table-tbody > tr:hover > .ant-table-cell-fix-right-first {
+          box-shadow:
+            -6px 0 10px -4px rgba(0, 0, 0, 0.16),
+            -1px 0 0 0 ${token.colorBorderSecondary} !important;
+        }
+        .case-plan-table .ant-table-tbody > tr:hover .ant-table-cell-fix-left,
+        .case-plan-table .ant-table-tbody > tr:hover .ant-table-cell-fix-right {
+          background: ${token.colorFillQuaternary} !important;
+        }
+        .case-plan-table .ant-pagination {
+          font-family: ${token.fontFamilyCode};
+        }
+        .case-plan-table .ant-table {
+          background: transparent;
+        }
+        .case-plan-table .ant-table-placeholder:hover > td {
+          background: transparent !important;
+        }
+        /* 收紧搜索栏:去掉卡片外框,跟头部融为一体 */
+        .case-plan-table .ant-pro-query-filter {
+          padding: 12px 40px !important;
+          border-bottom: 1px solid ${token.colorBorderSecondary} !important;
+          background: ${token.colorBgContainer} !important;
+        }
+        .case-plan-table .ant-pro-query-filter .ant-pro-query-filter-search {
+          margin-right: 8px !important;
+        }
+        .case-plan-table .ant-pro-query-filter .ant-form-item {
+          margin-bottom: 0 !important;
+        }
+      `}</style>
       <CasePlanForm
         record={currentRecord}
         isEdit={isEdit}
@@ -283,99 +807,53 @@ const Index = () => {
         onOpenChange={handleOpenChange}
         onReload={() => actionRef.current?.reload()}
       />
+      <PageHeader
+        total={totalCount}
+        projectList={projectList}
+        selectedProjectId={selectedProjectId}
+        onProjectChange={setSelectedProjectId}
+        onAdd={handleAdd}
+        token={token}
+      />
       <div
         style={{
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
+          flex: 1,
+          minHeight: 0,
+          padding: '0 40px 24px',
+          background: token.colorBgContainer,
         }}
       >
-        <ProCard
-          title={
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: spacing.md,
-              }}
-            >
-              <ProjectOutlined
-                style={{
-                  fontSize: 18,
-                  color: colors.primary,
-                }}
-              />
-              <span
-                style={{
-                  fontSize: 14,
-                  fontWeight: 500,
-                  color: colors.text,
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                所属项目
-              </span>
-              <Select
-                showSearch
-                placeholder="请选择项目"
-                value={selectedProjectId}
-                onChange={setSelectedProjectId}
-                options={projectList}
-                style={{ minWidth: 240 }}
-                fieldNames={{ label: 'label', value: 'value' }}
-              />
-            </div>
-          }
-          headerBordered
-          variant="outlined"
-          style={{
-            flex: 1,
-            height: 0,
-            display: 'flex',
-            flexDirection: 'column',
+        <ProTable<ICasePlan>
+          className="case-plan-table"
+          columnsState={{
+            persistenceKey: 'case_plan',
+            persistenceType: 'localStorage',
           }}
-          styles={{
-            body: {
-              padding: '12px',
-              height: '100%',
-            },
+          actionRef={actionRef}
+          columns={columns}
+          rowKey="uid"
+          scroll={{
+            x: 1400,
+            y: 'calc(100vh - 320px)',
           }}
-        >
-          <ProTable
-            columnsState={{
-              persistenceKey: 'case_plan',
-              persistenceType: 'localStorage',
-            }}
-            actionRef={actionRef}
-            columns={columns}
-            rowKey="uid"
-            style={{ height: '100%' }}
-            scroll={{
-              x: 1200,
-              y: 'calc(100vh - 420px)',
-            }}
-            request={queryRecord}
-            pagination={{
-              showQuickJumper: true,
-              defaultPageSize: 10,
-              showSizeChanger: true,
-              pageSizeOptions: ['10', '20', '50', '100'],
-            }}
-            toolBarRender={() => [
-              <Button
-                key="add"
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={handleAdd}
-              >
-                新增计划
-              </Button>,
-            ]}
-          />
-        </ProCard>
+          request={queryRecord}
+          pagination={{
+            showQuickJumper: true,
+            defaultPageSize: 10,
+            showSizeChanger: true,
+            pageSizeOptions: ['10', '20', '50', '100'],
+          }}
+          search={{
+            filterType: 'light',
+            labelWidth: 'auto',
+            defaultCollapsed: false,
+            span: 6,
+          }}
+          dateFormatter="string"
+          headerTitle={false}
+        />
       </div>
-    </PageContainer>
+    </div>
   );
 };
 

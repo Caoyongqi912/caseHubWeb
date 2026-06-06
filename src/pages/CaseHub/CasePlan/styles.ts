@@ -1,216 +1,54 @@
-import { useCaseHubTheme } from '@/pages/CaseHub/styles/useCaseHubTheme';
-import type { CSSProperties } from 'react';
+/**
+ * CasePlan · 排版与状态字典
+ *
+ * 设计取向:Editorial Ledger —— 所有色值经 antd theme token 解析,
+ * 跟随 light/realDark 主题自动切换;本文件不持有任何硬编码颜色。
+ */
 
-const STATUS_TAG_STYLES: Record<string, { color: string; bg: string }> = {
-  进行中: { color: 'var(--ant-color-info)', bg: 'var(--ant-color-info-bg)' },
-  已完成: {
-    color: 'var(--ant-color-success)',
-    bg: 'var(--ant-color-success-bg)',
-  },
-  已暂停: {
-    color: 'var(--ant-color-warning)',
-    bg: 'var(--ant-color-warning-bg)',
-  },
-  已取消: { color: 'var(--ant-color-error)', bg: 'var(--ant-color-error-bg)' },
+/** 状态印章:颜色键对应 antd theme token */
+export const STATUS_SEAL: Record<string, { colorKey: string; label: string }> =
+  {
+    进行中: { colorKey: 'colorPrimary', label: 'In Progress' },
+    已完成: { colorKey: 'colorSuccess', label: 'Completed' },
+    已暂停: { colorKey: 'colorWarning', label: 'Paused' },
+    已取消: { colorKey: 'colorError', label: 'Canceled' },
+  };
+
+/** 执行阶段:颜色键对应 antd 调色板 token */
+export const PHASE_DOT: Record<string, string> = {
+  规划: 'colorPrimary',
+  设计: 'magenta',
+  执行: 'cyan',
+  验收: 'orange',
 };
 
-const PHASE_TAG_COLORS: Record<string, string> = {
-  规划: '#722ed1',
-  设计: '#eb2f96',
-  执行: '#13c2c2',
-  验收: '#fa8c16',
+/** 解析颜色键 → 实际色值;未识别键降级为 colorTextTertiary */
+export const resolveColor = (token: any, key: string): string => {
+  if (key === 'magenta') return token.colorMagenta || '#eb2f96';
+  if (key === 'cyan') return token.colorCyan || '#13c2c2';
+  if (key === 'orange') return token.colorOrange || '#fa8c16';
+  return token[key] || token.colorTextTertiary;
 };
 
-export const useCasePlanStyles = () => {
-  const { token, colors, spacing } = useCaseHubTheme();
-
-  const pageContainer: CSSProperties = {
-    display: 'flex',
-    flexDirection: 'column',
-    height: '100vh',
-    overflow: 'hidden',
-  };
-
-  const mainLayout: CSSProperties = {
-    display: 'flex',
-    flex: 1,
-    minHeight: 0,
-    overflow: 'hidden',
-  };
-
-  const leftPanel: CSSProperties = {
-    width: 260,
-    flexShrink: 0,
-    borderRight: `1px solid ${colors.border}`,
-    background: colors.bgContainer,
-    overflow: 'hidden',
-    display: 'flex',
-    flexDirection: 'column',
-  };
-
-  const leftPanelHeader: CSSProperties = {
-    padding: `${spacing.md}px ${spacing.lg}px`,
-    borderBottom: `1px solid ${colors.borderSecondary}`,
-  };
-
-  const leftPanelTitle: CSSProperties = {
-    fontSize: 14,
-    fontWeight: 600,
-    color: colors.text,
-    margin: 0,
-  };
-
-  const leftPanelContent: CSSProperties = {
-    flex: 1,
-    overflowY: 'auto',
-    padding: spacing.sm,
-  };
-
-  const rightPanel: CSSProperties = {
-    flex: 1,
-    minWidth: 0,
-    overflow: 'hidden',
-    display: 'flex',
-    flexDirection: 'column',
-    background: colors.bgLayout,
-  };
-
-  const rightPanelHeader: CSSProperties = {
-    padding: `${spacing.sm}px ${spacing.lg}px`,
-    borderBottom: `1px solid ${colors.borderSecondary}`,
-    background: colors.bgContainer,
-  };
-
-  const rightPanelContent: CSSProperties = {
-    flex: 1,
-    overflow: 'hidden',
-  };
-
-  const formModal: CSSProperties = {
-    padding: 0,
-  };
-
-  const formSection: CSSProperties = {
-    marginBottom: 20,
-  };
-
-  const sectionLabel: CSSProperties = {
-    marginBottom: 8,
-    color: token.colorTextSecondary,
-    fontSize: 12,
-    display: 'flex',
-    alignItems: 'center',
-    gap: 6,
-  };
-
-  const statusTag = (status: string): CSSProperties => {
-    const style = STATUS_TAG_STYLES[status];
-    return {
-      color: style?.color || token.colorTextTertiary,
-      background: style?.bg || 'transparent',
-      border: 'none',
-      fontWeight: 500,
-    };
-  };
-
-  const phaseTag = (phase: string): CSSProperties => ({
-    color: PHASE_TAG_COLORS[phase] || token.colorTextTertiary,
-    borderColor: PHASE_TAG_COLORS[phase] || token.colorTextTertiary,
-    background: 'transparent',
-  });
-
-  const planNameCell = (): CSSProperties => ({
-    fontWeight: 500,
-    color: colors.text,
-  });
-
-  const chargeNameCell = (): CSSProperties => ({
-    display: 'flex',
-    alignItems: 'center',
-    gap: 4,
-    color: colors.text,
-  });
-
-  const chargeNameIcon = (): CSSProperties => ({
-    color: colors.textSecondary,
-  });
-
-  const completionRateCell = (): CSSProperties => ({
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-  });
-
-  const completionRateText = (): CSSProperties => ({
-    color: colors.textSecondary,
-    fontSize: 12,
-  });
-
-  const planTimeCell = (): CSSProperties => ({
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 2,
-  });
-
-  const planTimeMain = (): CSSProperties => ({
-    color: colors.text,
-    fontSize: 12,
-    display: 'flex',
-    alignItems: 'center',
-    gap: 4,
-  });
-
-  const planTimeIcon = (): CSSProperties => ({
-    marginRight: 4,
-    color: colors.textSecondary,
-  });
-
-  const planTimeSub = (): CSSProperties => ({
-    color: colors.textTertiary,
-    fontSize: 12,
-  });
-
-  const markCell = (): CSSProperties => ({
-    color: colors.textTertiary,
-  });
-
-  const actionCell = (): CSSProperties => ({
-    display: 'flex',
-    gap: 8,
-  });
-
-  const editButton = (): CSSProperties => ({
-    color: colors.primary,
-  });
-
-  return {
-    pageContainer,
-    mainLayout,
-    leftPanel,
-    leftPanelHeader,
-    leftPanelTitle,
-    leftPanelContent,
-    rightPanel,
-    rightPanelHeader,
-    rightPanelContent,
-    formModal,
-    formSection,
-    sectionLabel,
-    statusTag,
-    phaseTag,
-    planNameCell,
-    chargeNameCell,
-    chargeNameIcon,
-    completionRateCell,
-    completionRateText,
-    planTimeCell,
-    planTimeMain,
-    planTimeIcon,
-    planTimeSub,
-    markCell,
-    actionCell,
-    editButton,
-  };
+/** 状态下拉选项(用于搜索) */
+export const STATUS_OPTIONS = {
+  进行中: { text: '进行中' },
+  已完成: { text: '已完成' },
+  已暂停: { text: '已暂停' },
+  已取消: { text: '已取消' },
 };
 
-export default useCasePlanStyles;
+/** 执行阶段下拉选项(用于搜索) */
+export const PHASE_OPTIONS = {
+  规划: { text: '规划' },
+  设计: { text: '设计' },
+  执行: { text: '执行' },
+  验收: { text: '验收' },
+};
+export default {
+  STATUS_SEAL,
+  STATUS_OPTIONS,
+  PHASE_DOT,
+  PHASE_OPTIONS,
+  resolveColor,
+};

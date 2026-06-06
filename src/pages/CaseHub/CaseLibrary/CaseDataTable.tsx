@@ -357,6 +357,7 @@ const CaseDataTable: FC<Props> = (props) => {
   const rowSelection = {
     selectedRowKeys,
     columnWidth: '3%',
+    fixed: 'left' as const,
     onChange: (keys: React.Key[], rows: ITestCase[]) => {
       setSelectedRowKeys(keys);
       setSelectedRows(rows);
