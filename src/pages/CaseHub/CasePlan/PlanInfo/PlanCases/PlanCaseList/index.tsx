@@ -951,6 +951,12 @@ const Index: FC<PlanCaseListProps> = ({
         planId={planId || ''}
         planModules={planModules}
         onUploadFinish={handleImportFinish}
+        /**
+         * 导入完成后刷新左侧计划目录树.
+         * Excel "所属分组" 列会在 plan_module 表创建缺失节点,
+         * 不刷新会导致新建的目录不显示, 用户感知不到.
+         */
+        onModuleRefresh={onModulesRefresh}
       />
     </>
   );

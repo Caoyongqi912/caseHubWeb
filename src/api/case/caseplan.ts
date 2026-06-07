@@ -478,21 +478,36 @@ export const updateCaseStepResult = async (data: {
 };
 
 /**
- * 确认导入用例（Step 2）
- * POST /hub/cases/upload/commit
- * @param data - { file_md5, project_id, module_id, is_common?, requirement_id?, plan_id?, case_status?, is_review? }
+ * 确认导入计划用例（Step 2）
+ * POST /hub/plan/upload/commit
+ *
+ * @param data
+ *   - file_md5: 上传预览返回的文件指纹
+ *   - plan_id: 目标计划 ID
+ *   - plan_module_id: 默认计划分组 (Excel 「所属分组」 缺失时兜底)
+ *   - first_status / second_status: 一/二轮测试状态,
+ *     取值 "0" 未开始 / "1" 通过 / "2" 失败 / "3" 阻塞 / "4" 跳过
+ *   - is_review: 评审状态
+ *   - skip_duplicate: True 时跳过 plan 内已关联的同名用例
+ *
+ * @returns imported_count 与 skipped_count (后端语义)
  */
 export const commitPlanImportCase = async (data: {
   file_md5: string;
   plan_id?: string;
   plan_module_id?: number;
-  case_status?: number;
-  is_review?: number;
+  first_status?: '0' | '1' | '2' | '3' | '4';
+  second_status?: '0' | '1' | '2' | '3' | '4';
+  is_review?: string;
+  skip_duplicate?: boolean;
 }) => {
-  return request<{ imported_count: number }>('/api/hub/plan/upload/commit', {
-    method: 'POST',
-    data: data,
-  });
+  return request<{ imported_count: number; skipped_count: number }>(
+    '/api/hub/plan/upload/commit',
+    {
+      method: 'POST',
+      data: data,
+    },
+  );
 };
 /**
  * 单轮测试统计（一轮 / 二轮），用于模块目录节点的 per-round Progress 展示

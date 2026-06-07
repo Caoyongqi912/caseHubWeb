@@ -2,19 +2,26 @@
  * 计划用例批量导入弹窗组件
  */
 import { commitPlanImportCase } from '@/api/case/caseplan';
-import { cancelImportCase, uploadPreviewCase } from '@/api/case/testCase';
+import {
+  cancelImportCase,
+  downloadCaseExcel,
+  uploadPreviewCase,
+} from '@/api/case/testCase';
 import { toSelectOptions } from '@/pages/CaseHub/hooks/caseEnumOption';
 import { useCaseEnumConfig } from '@/pages/CaseHub/hooks/useCaseEnumConfig';
 import type { IPlanModule } from '@/pages/CaseHub/types';
 import {
   CheckCircleOutlined,
   DeleteOutlined,
+  DownloadOutlined,
   InboxOutlined,
+  InfoCircleOutlined,
 } from '@ant-design/icons';
 import {
   ModalForm,
   ProCard,
   ProForm,
+  ProFormCheckbox,
   ProFormSelect,
   ProFormTreeSelect,
   ProFormUploadDragger,
@@ -27,7 +34,14 @@ interface PlanCaseImportModalProps {
   onOpenChange: (open: boolean) => void;
   planId: string;
   planModules: IPlanModule[];
+  /** 导入完成后触发: 刷新用例列表 */
   onUploadFinish: () => void;
+  /**
+   * 导入完成后触发: 刷新左侧计划目录树 (可选)
+   * Excel "所属分组" 列会被解析为 plan_module 路径, 缺失节点会自动创建,
+   * 因此需要刷新目录树以展示新创建的目录.
+   */
+  onModuleRefresh?: () => void;
 }
 
 interface ErrorRow {
@@ -44,9 +58,13 @@ interface ValidateResult {
 }
 
 interface FormValues {
-  case_status: string;
+  first_status?: '0' | '1' | '2' | '3' | '4';
+  second_status?: '0' | '1' | '2' | '3' | '4';
   is_review: string;
+  /** 默认计划目录 (Excel 「所属分组」 缺失时兜底) */
   module_id?: number;
+  /** 是否跳过 plan 内已关联的同名用例 (默认 true) */
+  skip_duplicate?: boolean;
   file?: File;
 }
 
@@ -271,6 +289,7 @@ const PlanCaseImportModal: FC<PlanCaseImportModalProps> = ({
   planId,
   planModules,
   onUploadFinish,
+  onModuleRefresh,
 }) => {
   const { token } = theme.useToken();
   const [form] = Form.useForm<FormValues>();
@@ -289,6 +308,26 @@ const PlanCaseImportModal: FC<PlanCaseImportModalProps> = ({
    * 用于导入表单中的评审状态 Select
    */
   const { options: reviewOptions } = useCaseEnumConfig('REVIEW_STATUS');
+  // 一轮 / 二轮状态选项 (与 BatchEditModal 保持一致, 复用 CASE_STATUS 枚举)
+  const { options: caseOptions } = useCaseEnumConfig('CASE_STATUS');
+  /** 一轮 / 二轮状态共用一份 Select 选项 (来自同一 CASE_STATUS 枚举)
+   *  默认空选项, 避免后端拉不到数据时表单变成"无选项可选".
+   *  内置一份与后端默认值一致的兑底, 拉取成功后会被覆盖.
+   */
+  const roundStatusFormOptions = useMemo(() => {
+    const opts = toSelectOptions(caseOptions);
+    if (opts.length > 0) return opts;
+    // 兑底: 与后端 PlanCaseAssociation.first_status/second_status 含义一致
+    // "0"=未开始 "1"=通过 "2"=失败 "3"=阻塞 "4"=跳过
+    return [
+      { value: '0', label: '未开始' },
+      { value: '1', label: '通过' },
+      { value: '2', label: '失败' },
+      { value: '3', label: '阻塞' },
+      { value: '4', label: '跳过' },
+    ];
+  }, [caseOptions]);
+
   /** 评审状态选项（转换为 FormSelect 所需格式） */
   const reviewStatusFormOptions = useMemo(() => {
     const opts = toSelectOptions(reviewOptions);
@@ -323,6 +362,25 @@ const PlanCaseImportModal: FC<PlanCaseImportModalProps> = ({
       })),
     [planModules],
   );
+
+  /** 下载用例导入模板 (与 CaseDataTable 共用同一模板) */
+  const handleDownloadTemplate = useCallback(async () => {
+    try {
+      const { blob, filename } = await downloadCaseExcel({
+        responseType: 'blob',
+      });
+      const objectURL = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = objectURL;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(objectURL);
+    } catch (error) {
+      message.error('下载模板失败');
+    }
+  }, []);
 
   const resetAllState = useCallback(() => {
     form.resetFields();
@@ -406,8 +464,11 @@ const PlanCaseImportModal: FC<PlanCaseImportModalProps> = ({
           file_md5: validateResult.file_md5,
           plan_module_id: values.module_id,
           plan_id: planId,
-          case_status: values.case_status,
+          first_status: values.first_status,
+          second_status: values.second_status,
           is_review: values.is_review,
+          // 复选框未选时 ProForm 给的是 undefined, 与后端默认值 False 等价
+          skip_duplicate: values.skip_duplicate !== false,
         })) as any;
 
         if (!response || response.code !== 0) {
@@ -415,10 +476,17 @@ const PlanCaseImportModal: FC<PlanCaseImportModalProps> = ({
           return false;
         }
 
-        message.success(
-          `成功导入数据 ${response.data?.imported_count || 0} 条`,
-        );
+        const imported = response.data?.imported_count || 0;
+        const skipped = response.data?.skipped_count || 0;
+        if (skipped > 0) {
+          message.success(`成功导入 ${imported} 条, 跳过同名 ${skipped} 条`);
+        } else {
+          message.success(`成功导入数据 ${imported} 条`);
+        }
+        // 1) 刷新用例列表 (必传)
         onUploadFinish();
+        // 2) 刷新计划目录树 (可选, group_path 会自动创建缺失的 plan_module)
+        safeInvokeRefresh();
         resetAllState();
         return true;
       } catch (err: any) {
@@ -429,8 +497,22 @@ const PlanCaseImportModal: FC<PlanCaseImportModalProps> = ({
         setConfirming(false);
       }
     },
-    [validateResult, planId, onUploadFinish, resetAllState],
+    [validateResult, planId, onUploadFinish, resetAllState, safeInvokeRefresh],
   );
+
+  /**
+   * 安全调用模块目录刷新回调
+   * - 缺失/抛错均不影响主流程 (导入已成功)
+   * - 单独的 try/catch 防止一个回调失败污染其它回调
+   */
+  const safeInvokeRefresh = useCallback(() => {
+    if (!onModuleRefresh) return;
+    try {
+      onModuleRefresh();
+    } catch (err) {
+      console.error('[PlanCaseImportModal] 模块目录树刷新失败:', err);
+    }
+  }, [onModuleRefresh]);
 
   const formatErrors = (errors: ErrorRow[]) =>
     errors.map(
@@ -452,9 +534,13 @@ const PlanCaseImportModal: FC<PlanCaseImportModalProps> = ({
 
   const hasValid = validateResult && validateResult.valid_count > 0;
   const hasInvalid = validateResult && validateResult.invalid_count > 0;
+  // allInvalid: 所有用例都无效 (valid_count === 0 且 total_count > 0)
+  // 旧实现是 `invalid_count === 0 && total_count > 0`, 含义是"没有无效用例",
+  // 与命名/渲染条件相反, 全有效时反而误报"所有用例均无效".
   const allInvalid =
     validateResult &&
-    validateResult.invalid_count === 0 &&
+    validateResult.invalid_count > 0 &&
+    validateResult.valid_count === 0 &&
     validateResult.total_count > 0;
 
   return (
@@ -479,16 +565,21 @@ const PlanCaseImportModal: FC<PlanCaseImportModalProps> = ({
       <ProCard>
         <ProForm.Group>
           <StatusSelect
-            name="case_status"
-            label="用例状态"
-            required
-            message="请选择用例状态"
-            options={[
-              { value: 0, label: '待执行' },
-              { value: 1, label: '通过' },
-              { value: 2, label: '失败' },
-            ]}
+            name="first_status"
+            label="一轮状态"
+            required={false}
+            message="请选择一轮状态"
+            options={roundStatusFormOptions}
           />
+          <StatusSelect
+            name="second_status"
+            label="二轮状态"
+            required={false}
+            message="请选择二轮状态"
+            options={roundStatusFormOptions}
+          />
+        </ProForm.Group>
+        <ProForm.Group>
           <StatusSelect
             name="is_review"
             label="评审状态"
@@ -498,11 +589,25 @@ const PlanCaseImportModal: FC<PlanCaseImportModalProps> = ({
           />
         </ProForm.Group>
 
+        <ProFormCheckbox
+          name="skip_duplicate"
+          label="跳过同名用例"
+          tooltip={[
+            '开启后: 与"本计划已关联"的同名 case 比对, 命中即跳过(不写入关联), 计入"跳过同名 N 条".',
+            'Excel 内部多行同名 case_name 不会被自动去重, 会作为 N 条不同 case 全部入库(id 不同), 视为复制粘贴.',
+            '并发场景(同一 plan 同一时间多次上传)不保证去重, 视为后台工具的"尽力而为"去重.',
+          ].join('\n')}
+          initialValue={true}
+        >
+          跳过已关联的同名用例 (推荐开启, 避免重复)
+        </ProFormCheckbox>
+
         <ProFormTreeSelect
           name="module_id"
-          label="计划目录"
+          label="默认目录"
           width="md"
-          placeholder="请选择计划目录（可选）"
+          placeholder="Excel 中无「所属分组」时, 落到该目录下"
+          tooltip="Excel 每行的「所属分组」列(如「前端/登录/表单」)会按路径自动创建并落到对应计划目录; 该字段仅作为缺省兜底"
           fieldProps={{
             variant: 'filled',
             treeData,
@@ -510,6 +615,55 @@ const PlanCaseImportModal: FC<PlanCaseImportModalProps> = ({
             filterTreeNode: true,
           }}
         />
+
+        <div
+          style={{
+            marginTop: -8,
+            marginBottom: 12,
+            padding: '8px 12px',
+            background: styles.cardBg,
+            border: `1px solid ${styles.cardBorder}`,
+            borderRadius: 6,
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: 6,
+            fontSize: 12,
+            color: styles.textSecondary,
+            lineHeight: 1.6,
+          }}
+        >
+          <InfoCircleOutlined
+            style={{ color: token.colorPrimary, marginTop: 2 }}
+          />
+          <span>
+            Excel 模板与「用例库」共用, 其中的「所属分组」列(如
+            <code
+              style={{
+                padding: '0 4px',
+                margin: '0 2px',
+                background: styles.iconBg,
+                borderRadius: 3,
+                fontFamily: token.fontFamilyCode,
+                fontSize: 11,
+                color: styles.textPrimary,
+              }}
+            >
+              前端 / 登录 / 表单
+            </code>
+            ) 会被逐级解析为计划目录, 缺失节点会自动创建,
+            用例落到对应叶子目录下.
+            <a
+              onClick={handleDownloadTemplate}
+              style={{
+                marginLeft: 8,
+                color: token.colorPrimary,
+                textDecoration: 'none',
+              }}
+            >
+              <DownloadOutlined /> 下载导入模板
+            </a>
+          </span>
+        </div>
 
         {!file ? (
           <ProFormUploadDragger
