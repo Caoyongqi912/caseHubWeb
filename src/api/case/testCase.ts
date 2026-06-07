@@ -514,13 +514,15 @@ export const moveTestCase2Common = async (
 };
 
 /**
- * moveTestCase2Common
+ * 获取脑图详情
+ * 优先按 plan_id 查询；只传 requirement_id 时按需求维度查（兼容老入口）
  * @param info
  * @param options
  */
 export const getTestCaseMind = async (
   info: {
-    requirement_id: string;
+    plan_id?: number | string;
+    requirement_id?: string;
   },
   options?: IObjGet,
 ) => {
@@ -532,15 +534,17 @@ export const getTestCaseMind = async (
 };
 
 /**
- * moveTestCase2Common
+ * 新增脑图
+ * plan_id（计划脑图，新流程主入口）和 requirement_id（需求脑图，兼容老入口）二选一
  * @param info
  * @param options
  */
 export const insertTestCaseMind = async (
   info: {
-    requirement_id: string;
+    plan_id?: number;
+    requirement_id?: string;
     mind_node: any;
-    module_id: string;
+    module_id?: string;
     project_id: string;
   },
   options?: IObjGet,
@@ -553,7 +557,7 @@ export const insertTestCaseMind = async (
 };
 
 /**
- * updateTestCaseMind
+ * 更新脑图
  * @param info
  * @param options
  */
@@ -561,6 +565,7 @@ export const updateTestCaseMind = async (
   info: {
     id: number;
     mind_node?: any;
+    plan_id?: number;
     module_id?: string;
     project_id?: string;
   },

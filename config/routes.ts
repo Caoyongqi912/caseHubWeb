@@ -115,12 +115,6 @@ export default [
         hideInMenu: true,
         component: '@/pages/CaseHub/Requirement/RequirementCases',
       },
-      {
-        path: '/cases/caseHub/requirementMindMap/reqId=:reqId&projectId=:projectId&moduleId=:moduleId',
-        name: 'CaseHubMind',
-        hideInMenu: true,
-        component: '@/pages/CaseHub/MindMap',
-      },
     ],
   },
   {

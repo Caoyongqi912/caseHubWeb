@@ -224,16 +224,6 @@ const RequirementTable: FC<SelfProps> = ({
               >
                 用例
               </Link>
-              <Link
-                style={{ color: colors.primary }}
-                onClick={() => {
-                  window.open(
-                    `/cases/caseHub/requirementMindMap/reqId=${record.id}&projectId=${currentProjectId}&moduleId=${currentModuleId}`,
-                  );
-                }}
-              >
-                Mind
-              </Link>
 
               <Popconfirm
                 title="确定要删除吗？"
