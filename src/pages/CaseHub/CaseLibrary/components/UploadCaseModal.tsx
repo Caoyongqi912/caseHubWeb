@@ -1,23 +1,36 @@
 import {
   cancelImportCase,
   commitImportCase,
+  downloadCaseExcel,
   uploadPreviewCase,
 } from '@/api/case/testCase';
 import {
   CheckCircleOutlined,
   DeleteOutlined,
+  DownloadOutlined,
   InboxOutlined,
   UploadOutlined,
 } from '@ant-design/icons';
+import { ModalForm, ProFormRadio } from '@ant-design/pro-components';
 import {
-  ModalForm,
-  ProForm,
-  ProFormSelect,
-  ProFormUploadDragger,
-} from '@ant-design/pro-components';
-import { useModel } from '@umijs/max';
-import { Button, Form, message, Progress, theme } from 'antd';
+  Alert,
+  Button,
+  Card,
+  Col,
+  Divider,
+  Form,
+  message,
+  Progress,
+  Row,
+  Space,
+  Statistic,
+  Typography,
+  Upload,
+} from 'antd';
 import { FC, useCallback, useMemo, useState } from 'react';
+
+const { Dragger } = Upload;
+const { Text, Title } = Typography;
 
 interface Props {
   /**
@@ -31,6 +44,15 @@ interface Props {
    * 不传则只刷新表格（兼容历史用法）
    */
   onModuleRefresh?: () => void;
+  /**
+   * 当前项目 ID (必填). 由父组件 (CaseDataTable) 透传,
+   * 跟"用例库"页面当前选中的项目保持一致.
+   * 同时用于:
+   * - 预览阶段"用例库分组"硬门禁校验
+   * - commit 入库时的 project_id
+   * 父组件在没拿到 currentProjectId 时, 不会渲染本组件 / 不会渲染上传按钮.
+   */
+  currentProjectId: number;
 }
 
 interface ErrorDetail {
@@ -51,59 +73,41 @@ interface ValidateResult {
   errors: ErrorRow[];
 }
 
-const UploadCaseModal: FC<Props> = ({ onSuccess, onModuleRefresh }) => {
-  const { token } = theme.useToken();
+/** 相同用例处理: skip = 跳过 (默认 create). 透传后端 on_duplicate. */
+type DuplicateMode = 'skip' | 'create';
+
+const DUPLICATE_OPTIONS: {
+  value: DuplicateMode;
+  label: string;
+  hint: string;
+}[] = [
+  {
+    value: 'skip',
+    label: '跳过该用例',
+    hint: '当 (分组, 标题) 与已有用例一致时整行跳过，计入 skipped_count。',
+  },
+  {
+    value: 'create',
+    label: '创建新的用例',
+    hint: '不检查重复，全部写入，标题可以重复。',
+  },
+];
+
+const UploadCaseModal: FC<Props> = ({
+  onSuccess,
+  onModuleRefresh,
+  currentProjectId,
+}) => {
   const [uploadForm] = Form.useForm();
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [validateResult, setValidateResult] = useState<ValidateResult | null>(
     null,
   );
   const [uploadError, setUploadError] = useState<string | null>(null);
-  const { initialState } = useModel('@@initialState');
-  const [selectProjectId, setSelectProjectId] = useState<number>();
-  const projects = initialState?.projects || [];
-
-  // const [moduleEnum, setModuleEnum] = useState<IModuleEnum[]>([]);
-  // useEffect(() => {
-  //   if (selectProjectId) {
-  //     fetchModulesEnum(
-  //       selectProjectId,
-  //       ModuleEnum.CASE,
-  //       setModuleEnum,
-  //       true,
-  //     ).then();
-  //   }
-  // }, [selectProjectId]);
-
-  const isDark = token.colorBgContainer === '#141414';
-
-  const styles = useMemo(
-    () => ({
-      cardBg: isDark ? '#1f1f1f' : '#ffffff',
-      cardBorder: isDark ? '#303030' : '#e2e8f0',
-      cardShadow: isDark
-        ? '0 1px 3px rgba(0,0,0,0.4)'
-        : '0 1px 3px rgba(0,0,0,0.08)',
-      containerBg: isDark
-        ? 'linear-gradient(135deg, #141414 0%, #1a1a1a 100%)'
-        : 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
-      textPrimary: isDark ? '#e2e8f0' : '#334155',
-      textSecondary: isDark ? '#8b949e' : '#64748b',
-      errorText: isDark ? '#ff7875' : '#7f1d1d',
-      errorBg: isDark ? '#2a1a1a' : '#ffffff',
-      errorBorder: isDark ? '#4a2020' : '#fee2e2',
-      errorDashBorder: isDark ? '#4a2020' : '#fecaca',
-      tipColor: '#f59e0b',
-      iconBg: isDark ? '#262626' : '#f0f0f0',
-      uploadAreaBg: isDark ? '#1f1f1f' : '#fafafa',
-      uploadAreaBorder: isDark ? '#303030' : '#d9d9d9',
-      successBg: isDark ? '#1a2e1a' : '#f0fdf4',
-      successBorder: isDark ? '#2d4a2d' : '#bbf7d0',
-    }),
-    [isDark],
-  );
+  const [open, setOpen] = useState(false);
 
   const passRate = useMemo(() => {
     if (!validateResult || validateResult.total_count === 0) return 0;
@@ -112,53 +116,11 @@ const UploadCaseModal: FC<Props> = ({ onSuccess, onModuleRefresh }) => {
     );
   }, [validateResult]);
 
-  const passRateColor = useMemo(() => {
-    if (passRate >= 80) return { start: '#10b981', end: '#059669' };
-    if (passRate >= 50) return { start: '#f59e0b', end: '#d97706' };
-    return { start: '#ef4444', end: '#dc2626' };
-  }, [passRate]);
-
-  const statCardStyle = useMemo(
-    () => ({
-      padding: '12px 20px',
-      background: styles.cardBg,
-      borderRadius: 10,
-      boxShadow: styles.cardShadow,
-      border: `1px solid ${styles.cardBorder}`,
-      minWidth: 100,
-    }),
-    [styles],
-  );
-
-  const StatCard = ({
-    label,
-    value,
-    icon,
-  }: {
-    label: string;
-    value: number;
-    icon: React.ReactNode;
-  }) => (
-    <div style={statCardStyle}>
-      <div
-        style={{ fontSize: 12, color: styles.textSecondary, marginBottom: 4 }}
-      >
-        {label}
-      </div>
-      <div
-        style={{
-          fontSize: 24,
-          fontWeight: 700,
-          color: styles.textPrimary,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 6,
-        }}
-      >
-        {icon}
-        {value}
-      </div>
-    </div>
+  const duplicateMode: DuplicateMode =
+    uploadForm.getFieldValue('on_duplicate') ?? 'create';
+  const activeHint = useMemo(
+    () => DUPLICATE_OPTIONS.find((opt) => opt.value === duplicateMode)?.hint,
+    [duplicateMode],
   );
 
   const resetAllState = useCallback(() => {
@@ -171,8 +133,9 @@ const UploadCaseModal: FC<Props> = ({ onSuccess, onModuleRefresh }) => {
   }, [uploadForm]);
 
   const handleModalOpenChange = useCallback(
-    (open: boolean) => {
-      if (!open) {
+    (nextOpen: boolean) => {
+      setOpen(nextOpen);
+      if (!nextOpen) {
         resetAllState();
       }
     },
@@ -194,7 +157,13 @@ const UploadCaseModal: FC<Props> = ({ onSuccess, onModuleRefresh }) => {
     setUploading(true);
 
     try {
-      const response = (await uploadPreviewCase(file)) as any;
+      if (!currentProjectId) {
+        setUploadError('当前项目未就绪, 请稍后再试');
+        setValidateResult(null);
+        setUploading(false);
+        return;
+      }
+      const response = (await uploadPreviewCase(file, currentProjectId)) as any;
 
       if (!response) {
         setUploadError('服务器未返回数据，请重试');
@@ -238,6 +207,32 @@ const UploadCaseModal: FC<Props> = ({ onSuccess, onModuleRefresh }) => {
   };
 
   /**
+   * 下载用例模板 (.xlsx).
+   * 与 CaseDataTable 工具栏原本的"用例模版"行为完全一致, 现已迁入弹窗内.
+   */
+  const handleDownloadTemplate = useCallback(async () => {
+    setDownloading(true);
+    try {
+      const { blob, filename } = await downloadCaseExcel({
+        responseType: 'blob',
+      });
+      const objectURL = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = objectURL;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(objectURL);
+    } catch (error) {
+      console.error('下载模板失败:', error);
+      message.error('下载模板失败');
+    } finally {
+      setDownloading(false);
+    }
+  }, []);
+
+  /**
    * 安全调用刷新回调
    * 单个回调抛错不应影响整体流程，仅在控制台记录错误
    * @param fn - 刷新回调，可能为 undefined
@@ -258,7 +253,7 @@ const UploadCaseModal: FC<Props> = ({ onSuccess, onModuleRefresh }) => {
    * 注意：两个刷新回调相互独立，任一失败不应阻塞另一回调的执行，
    *       用 try/catch 包裹单个回调避免单个刷新异常导致整体回滚
    */
-  const handleConfirmImport = async (values: any) => {
+  const handleConfirmImport = async () => {
     if (!validateResult?.file_md5) {
       return false;
     }
@@ -266,11 +261,18 @@ const UploadCaseModal: FC<Props> = ({ onSuccess, onModuleRefresh }) => {
     setConfirming(true);
 
     try {
+      if (!currentProjectId) {
+        setUploadError('当前项目未就绪, 无法入库');
+        return false;
+      }
+      const onDuplicate: DuplicateMode =
+        uploadForm.getFieldValue('on_duplicate') === 'skip' ? 'skip' : 'create';
+
       const response = (await commitImportCase({
         file_md5: validateResult.file_md5,
-        project_id: values.project_id,
-        // module_id: values.module_id,
+        project_id: currentProjectId,
         is_common: true,
+        on_duplicate: onDuplicate,
       })) as any;
 
       if (!response || response.code !== 0) {
@@ -279,11 +281,14 @@ const UploadCaseModal: FC<Props> = ({ onSuccess, onModuleRefresh }) => {
       }
 
       const importedCount = response.data?.imported_count || 0;
-      message.success(`成功导入数据 ${importedCount} 条`);
+      const skippedCount = response.data?.skipped_count || 0;
+      const successMsg =
+        skippedCount > 0
+          ? `成功导入 ${importedCount} 条, 跳过重复 ${skippedCount} 条`
+          : `成功导入数据 ${importedCount} 条`;
+      message.success(successMsg);
 
-      // 1) 刷新右侧用例表格（必传）
       safeInvoke(onSuccess, '表格刷新');
-      // 2) 刷新左侧模块目录树（可选，目录树在独立组件树中）
       safeInvoke(onModuleRefresh, '模块目录树刷新');
 
       resetAllState();
@@ -297,414 +302,337 @@ const UploadCaseModal: FC<Props> = ({ onSuccess, onModuleRefresh }) => {
     }
   };
 
-  const formatErrorDetails = (errors: ErrorRow[]): string[] => {
-    return errors.map((error) => {
+  const formatErrorDetails = (errors: ErrorRow[]): string[] =>
+    errors.map((error) => {
       const msgs = error.errors.map((e) => e.message).join('；');
       return `第 ${error.row} 行：${msgs}`;
     });
-  };
 
   return (
-    <ModalForm
-      form={uploadForm}
-      trigger={
-        <Button type="primary">
-          <UploadOutlined />
-          上传
+    <>
+      <Button type="primary" onClick={() => setOpen(true)}>
+        <UploadOutlined />
+        上传
+      </Button>
+      <ModalForm
+        form={uploadForm}
+        title="上传用例"
+        open={open}
+        layout="vertical"
+        onFinish={handleConfirmImport}
+        onOpenChange={handleModalOpenChange}
+        initialValues={{ on_duplicate: 'create' }}
+        modalProps={{ width: 640 }}
+        submitter={{
+          searchConfig: {
+            submitText: confirming ? '导入中…' : '确认导入',
+            resetText: '取消',
+          },
+          submitButtonProps: {
+            disabled:
+              !validateResult?.file_md5 || validateResult.valid_count === 0,
+            loading: confirming,
+          },
+          resetButtonProps: {
+            onClick: () => handleModalOpenChange(false),
+          },
+        }}
+      >
+        <Space vertical size="small" style={{ display: 'flex' }}>
+          <Title level={5} style={{ margin: 0 }}>
+            下载模板
+          </Title>
+          <Text type="secondary">
+            请先下载标准模板，按模板格式填写后再上传。
+          </Text>
+        </Space>
+
+        <Button
+          loading={downloading}
+          onClick={handleDownloadTemplate}
+          icon={<DownloadOutlined />}
+          style={{ marginTop: 12 }}
+        >
+          下载用例导入模板 (.xlsx)
         </Button>
-      }
-      title="上传用例"
-      layout="horizontal"
-      onFinish={handleConfirmImport}
-      onOpenChange={handleModalOpenChange}
-      submitter={{
-        searchConfig: {
-          submitText: '确认导入',
-          resetText: '取消',
-        },
-        submitButtonProps: {
-          disabled:
-            !validateResult?.file_md5 || validateResult.valid_count === 0,
-          loading: confirming,
-        },
-        resetButtonProps: {
-          onClick: () => handleModalOpenChange(false),
-        },
-      }}
-    >
-      <ProForm.Group>
-        <ProFormSelect
-          label="所属项目"
-          options={projects}
-          name="project_id"
-          width="md"
-          required
-          rules={[{ required: true, message: '请选择项目' }]}
+
+        <Divider />
+
+        <Space vertical size="small" style={{ display: 'flex' }}>
+          <Title level={5} style={{ margin: 0 }}>
+            相同用例处理
+          </Title>
+          <Text type="secondary">
+            当导入文件中包含与导入位置相同用例（分组 +
+            标题完全一致）时，选择执行方式。
+          </Text>
+        </Space>
+
+        <ProFormRadio.Group
+          name="on_duplicate"
+          options={DUPLICATE_OPTIONS.map((opt) => ({
+            value: opt.value,
+            label: opt.label,
+          }))}
+          radioType="button"
           fieldProps={{
-            variant: 'filled',
-            onChange: (value) => setSelectProjectId(value as number),
+            buttonStyle: 'solid',
+            size: 'middle',
           }}
         />
-        {/* <ProFormTreeSelect
-          required
-          name="module_id"
-          label="所属模块"
-          width="md"
-          rules={[{ required: true, message: '所属模块必选' }]}
-          fieldProps={{
-            variant: 'filled',
-            treeData: moduleEnum,
-            fieldNames: { label: 'title', value: 'value' },
-            filterTreeNode: true,
-          }}
-        /> */}
-      </ProForm.Group>
 
-      {!uploadFile ? (
-        <ProFormUploadDragger
-          title={false}
-          max={1}
-          description="点击或拖拽 Excel 文件到此区域上传"
-          width="md"
-          name="file"
-          fieldProps={{
-            accept: '.xlsx,.xls',
-            beforeUpload: (file) => {
+        <Text type="secondary" style={{ fontSize: 12 }}>
+          {activeHint}
+        </Text>
+
+        <Divider />
+
+        <Space vertical size="small" style={{ display: 'flex' }}>
+          <Title level={5} style={{ margin: 0 }}>
+            上传 Excel 稿件
+          </Title>
+          <Text type="secondary">
+            支持 <Text code>.xlsx</Text> / <Text code>.xls</Text>{' '}
+            格式；文件将先进入校验队列，校验通过后方可入库。
+          </Text>
+        </Space>
+
+        {!uploadFile ? (
+          <Dragger
+            accept=".xlsx,.xls"
+            beforeUpload={(file) => {
               handleFileChange([{ originFileObj: file }]);
               return false;
-            },
-            showUploadList: false,
-          }}
-        />
-      ) : (
-        <div
-          style={{
-            marginBottom: 16,
-            padding: 16,
-            borderRadius: 8,
-            border: `1px dashed ${styles.uploadAreaBorder}`,
-            background: styles.uploadAreaBg,
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
             }}
+            showUploadList={false}
+            style={{ marginTop: 16, marginBottom: 8 }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div
-                style={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: 8,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: styles.iconBg,
-                }}
-              >
-                <InboxOutlined
-                  style={{ fontSize: 24, color: token.colorPrimary }}
-                />
-              </div>
-              <div>
-                <div
-                  style={{
-                    fontWeight: 500,
-                    marginBottom: 4,
-                    color: styles.textPrimary,
-                  }}
-                >
-                  {uploadFile.name}
-                </div>
-                <div style={{ fontSize: 12, color: styles.textSecondary }}>
-                  {(uploadFile.size / 1024).toFixed(1)} KB
-                </div>
-              </div>
-            </div>
-
-            {uploading ? (
-              <Button type="text" disabled>
-                上传中...
-              </Button>
-            ) : (
-              <Button
-                type="text"
-                danger
-                icon={<DeleteOutlined />}
-                onClick={handleRemoveFile}
-              >
-                移除
-              </Button>
-            )}
-          </div>
-
-          {uploading && (
-            <div style={{ marginTop: 16 }}>
-              <Progress percent={50} status="active" size="small" />
-              <div
-                style={{
-                  fontSize: 12,
-                  color: styles.textSecondary,
-                  marginTop: 8,
-                  textAlign: 'center',
-                }}
-              >
-                正在校验文件，请稍候...
-              </div>
-            </div>
-          )}
-
-          {uploadError && !uploading && (
+            <p className="ant-upload-drag-icon">
+              <InboxOutlined style={{ fontSize: 48, color: '#1677ff' }} />
+            </p>
+            <p className="ant-upload-text">点击或拖拽 Excel 文件到此区域上传</p>
+            <p className="ant-upload-hint">单次仅支持上传一个文件</p>
+          </Dragger>
+        ) : (
+          <Card
+            style={{ marginTop: 16, marginBottom: 8 }}
+            styles={{ body: { padding: 16 } }}
+          >
             <div
               style={{
-                marginTop: 12,
-                padding: '8px 12px',
-                borderRadius: 6,
-                fontSize: 13,
-                color: styles.errorText,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
               }}
             >
-              {uploadError}
-            </div>
-          )}
-        </div>
-      )}
+              <Space size="middle">
+                <div
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: 6,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: '#f0f5ff',
+                  }}
+                >
+                  <InboxOutlined style={{ fontSize: 20, color: '#1677ff' }} />
+                </div>
+                <div>
+                  <div style={{ fontWeight: 500 }}>{uploadFile.name}</div>
+                  <Text type="secondary" style={{ fontSize: 12 }}>
+                    {(uploadFile.size / 1024).toFixed(1)} KB
+                  </Text>
+                </div>
+              </Space>
 
-      {validateResult && !uploading && (
-        <div
-          style={{
-            marginBottom: 16,
-            padding: 20,
-            borderRadius: 12,
-            background: styles.containerBg,
-            border: `1px solid ${styles.cardBorder}`,
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'flex-start',
-              justifyContent: 'space-between',
-              marginBottom: 16,
-            }}
-          >
-            <div style={{ display: 'flex', gap: 16 }}>
-              <StatCard
-                label="总行数"
-                value={validateResult.total_count}
-                icon={
-                  <CheckCircleOutlined
-                    style={{ color: token.colorPrimary, fontSize: 16 }}
-                  />
-                }
-              />
-              <StatCard
-                label="有效用例"
-                value={validateResult.valid_count}
-                icon={<span style={{ color: '#10b981', fontSize: 16 }}>✓</span>}
-              />
-              {validateResult.invalid_count > 0 && (
-                <StatCard
-                  label="无效用例"
-                  value={validateResult.invalid_count}
-                  icon={
-                    <span style={{ color: '#ef4444', fontSize: 16 }}>✗</span>
-                  }
-                />
+              {uploading ? (
+                <Button type="text" disabled>
+                  校验中…
+                </Button>
+              ) : (
+                <Button
+                  type="text"
+                  danger
+                  icon={<DeleteOutlined />}
+                  onClick={handleRemoveFile}
+                >
+                  移除
+                </Button>
               )}
             </div>
 
-            <div
-              style={{
-                padding: '12px 24px',
-                background: `linear-gradient(135deg, ${passRateColor.start} 0%, ${passRateColor.end} 100%)`,
-                borderRadius: 10,
-                color: 'white',
-                textAlign: 'center',
-                boxShadow: isDark
-                  ? '0 4px 12px rgba(0,0,0,0.5)'
-                  : '0 4px 12px rgba(0,0,0,0.15)',
-              }}
-            >
-              <div style={{ fontSize: 11, opacity: 0.9, marginBottom: 2 }}>
-                通过率
+            {uploading && (
+              <div style={{ marginTop: 16 }}>
+                <Progress percent={50} status="active" size="small" />
+                <Text
+                  type="secondary"
+                  style={{
+                    display: 'block',
+                    marginTop: 8,
+                    textAlign: 'center',
+                  }}
+                >
+                  正在校验文件…
+                </Text>
               </div>
-              <div style={{ fontSize: 28, fontWeight: 700 }}>{passRate}%</div>
-            </div>
-          </div>
+            )}
 
-          <div style={{ marginBottom: 16 }}>
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                marginBottom: 6,
-                fontSize: 12,
-                color: styles.textSecondary,
-              }}
-            >
-              <span>校验进度</span>
-              <span style={{ fontWeight: 600, color: styles.textPrimary }}>
-                校验完成 {validateResult.total_count} 条
-              </span>
-            </div>
-            <Progress
-              percent={100}
-              showInfo={false}
-              strokeColor={{
-                '0%': token.colorPrimary,
-                '100%': token.colorPrimary,
-              }}
-              trailColor={styles.cardBorder}
-              size="default"
-              status="success"
-            />
-          </div>
+            {uploadError && !uploading && (
+              <Alert
+                title={uploadError}
+                type="error"
+                showIcon
+                style={{ marginTop: 12 }}
+              />
+            )}
+          </Card>
+        )}
 
-          {validateResult.errors.length > 0 && (
-            <div
-              style={{
-                marginTop: 16,
-                background: styles.errorBg,
-                borderRadius: 8,
-                padding: 12,
-                border: `1px solid ${styles.errorBorder}`,
-              }}
-            >
-              <div
-                style={{
-                  fontSize: 13,
-                  marginBottom: 8,
-                  color: styles.errorText,
-                  fontWeight: 500,
-                }}
-              >
-                ⚠ 错误详情（仅展示前 10 条）
-              </div>
-              <div
-                style={{
-                  maxHeight: 150,
-                  overflowY: 'auto',
-                  fontSize: 12,
-                  wordBreak: 'break-word',
-                }}
-              >
-                {formatErrorDetails(validateResult.errors.slice(0, 10)).map(
-                  (err, index) => (
-                    <div
-                      key={index}
-                      style={{
-                        padding: '4px 0',
-                        color: styles.errorText,
-                        borderBottom:
-                          index < 9
-                            ? `1px dashed ${styles.errorDashBorder}`
-                            : 'none',
-                      }}
-                    >
-                      {err}
-                    </div>
-                  ),
+        {validateResult && !uploading && (
+          <>
+            <Space vertical size="small" style={{ display: 'flex' }}>
+              <Title level={5} style={{ margin: 0 }}>
+                校验结果
+              </Title>
+            </Space>
+
+            <Card variant="outlined" style={{ marginTop: 12 }}>
+              <Row gutter={24} align="middle">
+                <Col>
+                  <Statistic
+                    title="总行数"
+                    value={validateResult.total_count}
+                  />
+                </Col>
+                <Col>
+                  <Statistic
+                    title="有效"
+                    value={validateResult.valid_count}
+                    styles={{ value: { color: '#52c41a' } }}
+                  />
+                </Col>
+                {validateResult.invalid_count > 0 && (
+                  <Col>
+                    <Statistic
+                      title="无效"
+                      value={validateResult.invalid_count}
+                      styles={{ value: { color: '#ff4d4f' } }}
+                    />
+                  </Col>
                 )}
-                {validateResult.errors.length > 10 && (
-                  <div
-                    style={{
-                      color: styles.errorText,
-                      marginTop: 8,
-                      fontStyle: 'italic',
+                <Col style={{ marginLeft: 'auto', textAlign: 'center' }}>
+                  <Statistic
+                    title="通过率"
+                    value={passRate}
+                    suffix="%"
+                    styles={{
+                      value: { color: passRate >= 80 ? '#52c41a' : '#ff4d4f' },
                     }}
-                  >
-                    ... 还有 {validateResult.errors.length - 10} 条错误未展示
+                  />
+                </Col>
+              </Row>
+
+              <div style={{ marginTop: 12 }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    marginBottom: 4,
+                  }}
+                >
+                  <Text type="secondary">校验完成</Text>
+                  <Text strong>
+                    {validateResult.valid_count} / {validateResult.total_count}
+                  </Text>
+                </div>
+                <Progress
+                  percent={100}
+                  showInfo={false}
+                  status="success"
+                  size="small"
+                />
+              </div>
+            </Card>
+
+            {validateResult.errors.length > 0 && (
+              <Alert
+                title="错误详情（前 10 条）"
+                description={
+                  <div style={{ maxHeight: 150, overflowY: 'auto' }}>
+                    {formatErrorDetails(validateResult.errors.slice(0, 10)).map(
+                      (err, index) => (
+                        <div
+                          key={index}
+                          style={{
+                            padding: '4px 0',
+                            borderBottom:
+                              index < 9 ? '1px dashed #f0f0f0' : 'none',
+                          }}
+                        >
+                          {err}
+                        </div>
+                      ),
+                    )}
+                    {validateResult.errors.length > 10 && (
+                      <Text
+                        type="secondary"
+                        style={{ display: 'block', marginTop: 8 }}
+                      >
+                        … 还有 {validateResult.errors.length - 10} 条错误未展示
+                      </Text>
+                    )}
                   </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {validateResult.invalid_count === 0 && (
-            <div
-              style={{
-                marginTop: 12,
-                padding: 12,
-                borderRadius: 6,
-                fontSize: 13,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                color: '#059669',
-                background: styles.successBg,
-                border: `1px solid ${styles.successBorder}`,
-              }}
-            >
-              <CheckCircleOutlined />
-              所有用例校验通过，可以导入
-            </div>
-          )}
-
-          {validateResult.invalid_count > 0 &&
-            validateResult.valid_count === 0 && (
-              <div
-                style={{
-                  marginTop: 12,
-                  padding: 12,
-                  borderRadius: 6,
-                  fontSize: 13,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  color: styles.errorText,
-                  background: styles.errorBg,
-                  border: `1px solid ${styles.errorBorder}`,
-                }}
-              >
-                <span style={{ fontSize: 16 }}>⚠</span>
-                所有用例均无效，请检查文件格式或数据内容后重新上传
-              </div>
+                }
+                type="error"
+                showIcon
+                style={{ marginTop: 16 }}
+              />
             )}
 
-          {validateResult.invalid_count > 0 &&
-            validateResult.valid_count > 0 && (
-              <div
-                style={{
-                  marginTop: 12,
-                  padding: 12,
-                  borderRadius: 6,
-                  fontSize: 13,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  color: styles.textPrimary,
-                  background: styles.cardBg,
-                  border: `1px solid ${styles.cardBorder}`,
-                }}
-              >
-                <CheckCircleOutlined style={{ color: passRateColor.start }} />
-                将导入 {validateResult.valid_count} 条有效用例，
-                {validateResult.invalid_count} 条无效用例将被跳过
-              </div>
+            {validateResult.invalid_count === 0 && (
+              <Alert
+                title="所有用例校验通过，可以导入。"
+                type="success"
+                showIcon
+                icon={<CheckCircleOutlined />}
+                style={{ marginTop: 16 }}
+              />
             )}
 
-          {validateResult.invalid_count > 0 &&
-            validateResult.valid_count > 0 && (
-              <div
-                style={{
-                  marginTop: 12,
-                  fontSize: 12,
-                  color: styles.tipColor,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                }}
-              >
-                💡 提示：可点击上方「移除」按钮删除文件后重新上传
-              </div>
-            )}
-        </div>
-      )}
-    </ModalForm>
+            {validateResult.invalid_count > 0 &&
+              validateResult.valid_count === 0 && (
+                <Alert
+                  title="所有用例均无效，请检查文件格式或数据内容后重新上传。"
+                  type="error"
+                  showIcon
+                  style={{ marginTop: 16 }}
+                />
+              )}
+
+            {validateResult.invalid_count > 0 &&
+              validateResult.valid_count > 0 && (
+                <Alert
+                  title={
+                    <span>
+                      将导入 <Text strong>{validateResult.valid_count}</Text>{' '}
+                      条有效用例，
+                      <Text type="danger">
+                        {validateResult.invalid_count}
+                      </Text>{' '}
+                      条无效用例将被跳过
+                    </span>
+                  }
+                  type="warning"
+                  showIcon
+                  style={{ marginTop: 16 }}
+                />
+              )}
+          </>
+        )}
+      </ModalForm>
+    </>
   );
 };
 

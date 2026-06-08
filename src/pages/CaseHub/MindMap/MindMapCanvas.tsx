@@ -21,11 +21,10 @@ import {
   insertTestCaseMind,
   updateTestCaseMind,
 } from '@/api/case/testCase';
-import { App } from 'antd';
+import { message } from 'antd';
 import MindElixir, { Options } from 'mind-elixir';
 import type { NodeObj } from 'mind-elixir/dist/types/types';
 import { Operation } from 'mind-elixir/dist/types/utils/pubsub';
-import { zh_CN } from 'mind-elixir/i18n';
 import 'mind-elixir/style.css';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useMindMapStyles } from './styles';
@@ -53,7 +52,6 @@ const MindMapCanvas: React.FC<MindMapCanvasProps> = ({
   requirementId,
   projectId,
 }) => {
-  const { message } = App.useApp();
   const styles = useMindMapStyles();
   const containerRef = useRef<HTMLDivElement>(null);
   const styleTagRef = useRef<HTMLStyleElement | null>(null);
@@ -147,9 +145,6 @@ const MindMapCanvas: React.FC<MindMapCanvasProps> = ({
       compact: true,
       overflowHidden: false,
       mouseSelectionButton: 2,
-      contextMenu: {
-        locale: zh_CN,
-      },
       theme: {
         name: 'antd-mindmap',
         type: styles.isDark ? 'dark' : 'light',
@@ -177,7 +172,7 @@ const MindMapCanvas: React.FC<MindMapCanvasProps> = ({
     try {
       const rootEl = mindInstance.root?.querySelector('me-tpc');
       if (rootEl) {
-        mindInstance.selectNode(rootEl, true);
+        mindInstance.selectNode(rootEl as any, true);
       }
     } catch (e) {
       console.warn('[MindMap] 自动选中根节点失败', e);
@@ -255,7 +250,7 @@ const MindMapCanvas: React.FC<MindMapCanvasProps> = ({
   const scheduleSave = useCallback(() => {
     if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
     debounceTimerRef.current = setTimeout(() => {
-      saveMap();
+      saveMapRef.current();
     }, SAVE_DEBOUNCE_MS);
   }, []);
 
@@ -273,6 +268,12 @@ const MindMapCanvas: React.FC<MindMapCanvasProps> = ({
       message.error('缺少计划或需求信息');
       return;
     }
+    // 关键:用户正在编辑节点时(input-box 存在),nodeObj.topic 还没提交,
+    // 此时 getData() 会拿到默认的 "New Node"。
+    // 跳过本次保存,等 finishEdit 事件触发下一次防抖保存。
+    if (document.getElementById('input-box')) {
+      return;
+    }
 
     try {
       const value = mindRef.current.getData();
@@ -282,13 +283,14 @@ const MindMapCanvas: React.FC<MindMapCanvasProps> = ({
       };
 
       if (currentMindId) {
-        const { code, data } = await updateTestCaseMind({
+        const { code } = await updateTestCaseMind({
           ...basePayload,
           id: currentMindId,
           plan_id: isPlanMode ? planId : undefined,
         });
         if (code === 0) {
-          setMindData(data.mind_node);
+          // 不再 setMindData:后端把 mind_node 原样存为 JSON,
+          // 本地 mind 实例已经持有最新数据,重建会吹掉正在编辑的 input。
           message.success('已保存');
         }
       } else {
@@ -297,7 +299,7 @@ const MindMapCanvas: React.FC<MindMapCanvasProps> = ({
           : { ...basePayload, requirement_id: requirementId };
         const { code, data } = await insertTestCaseMind(payload);
         if (code === 0) {
-          setMindData(data.mind_node);
+          // 首次插入:只需记录 id,mind 实例本身不需要重建。
           setCurrentMindId(data.id);
           message.success('已保存');
         }
@@ -307,6 +309,11 @@ const MindMapCanvas: React.FC<MindMapCanvasProps> = ({
       message.error('保存失败');
     }
   }, [projectId, isPlanMode, planId, requirementId, currentMindId]);
+
+  // saveMap 依赖 currentMindId,首次保存后该值会变;
+  // scheduleSave 用空依赖闭包了旧 saveMap,所以走 ref 永远拿最新的。
+  const saveMapRef = useRef(saveMap);
+  saveMapRef.current = saveMap;
 
   /** 5. 事件:任意操作都触发防抖保存(不联动任何后端表) */
   const operationHandle = useCallback(

@@ -83,14 +83,14 @@ export default [
     name: '测试用例',
     icon: 'BuildOutlined',
     routes: [
-      {
-        path: '/cases/requirement',
-        name: '需求',
-        component: '@/pages/CaseHub/Requirement',
-      },
+      // {
+      //   path: '/cases/requirement',
+      //   name: '需求',
+      //   component: '@/pages/CaseHub/Requirement',
+      // },
       {
         path: '/cases/caseHub',
-        name: '测试用例',
+        name: '用例库',
         component: '@/pages/CaseHub/CaseLibrary',
       },
       {

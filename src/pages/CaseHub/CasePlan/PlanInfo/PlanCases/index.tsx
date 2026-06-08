@@ -1,4 +1,4 @@
-import { getPlanModules } from '@/api/case/caseplan';
+import { getPlanInfo, getPlanModules } from '@/api/case/caseplan';
 import { ICasePlan, IPlanModule } from '@/pages/CaseHub/types';
 import { ProCard } from '@ant-design/pro-components';
 import { Splitter } from 'antd';
@@ -11,9 +11,16 @@ interface Props {
   planInfo?: ICasePlan;
 }
 
-const Index: FC<Props> = ({ planId, planInfo }) => {
+const Index: FC<Props> = ({ planId, planInfo: planInfoProp }) => {
   const [planModules, setPlanModules] = useState<IPlanModule[]>([]);
   const [selectedModuleId, setSelectedModuleId] = useState<number | null>(null);
+  /**
+   * 自管理 planInfo: 父组件 (PlanInfo/index.tsx) 没传 planInfo 下来, 这里自己 load.
+   * planInfo.project_id 会被 PlanCaseList -> PlanCaseImportModal 透传,
+   * 用于预览阶段"用例库分组"硬门禁校验. 没拿到 planInfo 时, 上传/导入按钮
+   * 在 PlanCaseList 里直接隐藏, 避免把无效 project_id 传给后端.
+   */
+  const [planInfo, setPlanInfo] = useState<ICasePlan | undefined>(planInfoProp);
 
   const handleModuleSelect = useCallback((moduleId: number | null) => {
     setSelectedModuleId(moduleId);
@@ -29,6 +36,38 @@ const Index: FC<Props> = ({ planId, planInfo }) => {
   useEffect(() => {
     fetchPlanModules();
   }, [fetchPlanModules]);
+
+  /**
+   * 加载 plan 详情, 拿 project_id.
+   * props 上的 planInfo 优先 (父组件可能已经拿好), 否则自己 fetch.
+   * planId 变化时重新拉.
+   */
+  useEffect(() => {
+    if (planInfoProp) {
+      setPlanInfo(planInfoProp);
+      return;
+    }
+    if (!planId) {
+      setPlanInfo(undefined);
+      return;
+    }
+    let cancelled = false;
+    getPlanInfo(Number(planId))
+      .then(({ code, data }) => {
+        if (cancelled) return;
+        if (code === 0 && data) {
+          setPlanInfo(data);
+        } else {
+          setPlanInfo(undefined);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setPlanInfo(undefined);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [planId, planInfoProp]);
 
   return (
     <ProCard

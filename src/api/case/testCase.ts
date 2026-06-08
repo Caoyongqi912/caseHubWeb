@@ -136,13 +136,7 @@ export const deleteBatchTestCase = async (
 
 /**
  * updateRequirementCase
- * @param {
-    requirement_id: number;
-    case_id: number;
-    is_review?:number;
-    case_status?:number
-  }
- * @param options
+ * @param caseInfo - 更新信息
  */
 export const updateRequirementCase = async (
   caseInfo: {
@@ -165,11 +159,17 @@ export const updateRequirementCase = async (
 /**
  * 上传预览用例（Step 1）
  * POST /hub/cases/upload
+ *
  * @param file - Excel 文件
+ * @param projectId - 目标项目 ID (必填).
+ *   用于后端预览阶段"用例库分组"硬门禁校验: Excel "所属分组" 列必须
+ *   已存在于该项目下的 module 树, 否则会作为行级错误返回.
+ *   计划上传场景下传 plan.project_id, 需求上传场景下传 req.project_id.
  */
-export const uploadPreviewCase = async (file: File) => {
+export const uploadPreviewCase = async (file: File, projectId: number) => {
   const formData = new FormData();
   formData.append('file', file);
+  formData.append('project_id', String(projectId));
 
   return request<{
     file_md5: string;
@@ -203,7 +203,16 @@ export const uploadTestCase = async (data: FormData, options?: IObjGet) => {
 /**
  * 确认导入用例（Step 2）
  * POST /hub/cases/upload/commit
- * @param data - { file_md5, project_id, module_id, is_common?, requirement_id?, plan_id?, case_status?, is_review? }
+ * @param data
+ *   - file_md5: 上传预览返回的文件指纹
+ *   - project_id: 目标项目 ID
+ *   - module_id: 默认模块 ID (Excel "所属分组" 缺失时兜底)
+ *   - is_common: 是否公共用例 (默认 true)
+ *   - requirement_id: 需求 ID (导入到需求下时传)
+ *   - plan_id: 计划 ID (导入到计划下时传)
+ *   - on_duplicate: 相同用例处理
+ *     - "skip":   (module_id, case_name) 与已有 case 一致时整行跳过 (计入 skipped_count)
+ *     - "create": 不检查, 全部写入 (默认)
  */
 export const commitImportCase = async (data: {
   file_md5: string;
@@ -214,11 +223,15 @@ export const commitImportCase = async (data: {
   plan_id?: string;
   case_status?: number;
   is_review?: number;
+  on_duplicate?: 'skip' | 'create';
 }) => {
-  return request<{ imported_count: number }>('/api/hub/cases/upload/commit', {
-    method: 'POST',
-    data: data,
-  });
+  return request<{ imported_count: number; skipped_count: number }>(
+    '/api/hub/cases/upload/commit',
+    {
+      method: 'POST',
+      data: data,
+    },
+  );
 };
 
 /**
@@ -545,7 +558,7 @@ export const insertTestCaseMind = async (
     requirement_id?: string;
     mind_node: any;
     module_id?: string;
-    project_id: string;
+    project_id: number;
   },
   options?: IObjGet,
 ) => {
@@ -565,9 +578,9 @@ export const updateTestCaseMind = async (
   info: {
     id: number;
     mind_node?: any;
-    plan_id?: number;
+    plan_id?: number | string;
     module_id?: string;
-    project_id?: string;
+    project_id?: number;
   },
   options?: IObjGet,
 ) => {

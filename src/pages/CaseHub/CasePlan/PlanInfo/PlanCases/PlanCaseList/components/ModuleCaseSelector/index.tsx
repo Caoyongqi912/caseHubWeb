@@ -172,6 +172,9 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
   useEffect(() => {
     if (projectIdProp !== undefined) {
       setResolvedProjectId(projectIdProp);
+      // 父组件已传 projectId,无需反查 planInfo,直接标记已加载,
+      // 否则下方 [planInfoLoaded] 守着的 loadModules() 永远不触发
+      setPlanInfoLoaded(true);
     } else if (planId) {
       getPlanInfo(Number(planId)).then(({ code, data }) => {
         if (code === 0 && data) {
@@ -371,12 +374,11 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
   };
 
   /**
-   * 树勾选回调。
-   * - checkStrictly: false（默认）时，rc-tree 的 onCheck 第一个参数形态：
-   *     - 偶发：Key[]（扁平已勾选列表）
-   *     - 主流：{ checked: Key[], halfChecked: Key[] }
-   * - 这里统一归一成"已勾选 key 列表"存到 state
-   * - 右侧 case 列表的 module_ids 由 coveredLeafKeys 派生（自动把勾选的内部节点展开为叶子）
+   * 树勾选回调（checkStrictly 模式）。
+   * - 勾选/取消子节点不会联动父节点/兄弟节点
+   * - 自动向上传播：当某个父节点的所有直接子节点都被勾选时，自动勾选该父节点
+   * - 取消子节点时，之前因"全子节点勾选"而自动勾选的父节点会自动取消
+   * - 右侧 case 列表的 module_ids 仍由 coveredLeafKeys 派生
    */
   const handleModuleCheck = (
     info:
@@ -389,15 +391,59 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
       setCheckedModuleKeys([]);
       return;
     }
+
+    let userChecked: React.Key[];
     if (Array.isArray(info)) {
-      setCheckedModuleKeys(info);
+      userChecked = info;
+    } else if (typeof info === 'object' && Array.isArray(info.checked)) {
+      userChecked = info.checked;
+    } else {
+      setCheckedModuleKeys([]);
       return;
     }
-    if (typeof info === 'object' && Array.isArray(info.checked)) {
-      setCheckedModuleKeys(info.checked);
-      return;
+
+    // 向上自动勾选：若父节点的所有直接子节点都在勾选集合中，则自动勾选父节点
+    const finalChecked = new Set<React.Key>(userChecked);
+
+    const getDepth = (key: number): number => {
+      let depth = 0;
+      let node = moduleByKey.get(key);
+      while (node?.parent_id) {
+        depth++;
+        node = moduleByKey.get(node.parent_id);
+      }
+      return depth;
+    };
+
+    // 按深度从大到小排序，先处理叶子节点，再逐层向上传播
+    const sortedKeys = Array.from(finalChecked).sort(
+      (a, b) => getDepth(Number(b)) - getDepth(Number(a)),
+    );
+
+    for (const key of sortedKeys) {
+      let currentKey: number | undefined = moduleByKey.get(
+        Number(key),
+      )?.parent_id;
+      while (currentKey !== undefined) {
+        const parent = moduleByKey.get(currentKey);
+        if (!parent || !parent.children || parent.children.length === 0) break;
+
+        const allChildrenChecked = parent.children.every((child) =>
+          finalChecked.has(child.key),
+        );
+
+        if (allChildrenChecked) {
+          if (!finalChecked.has(parent.key)) {
+            finalChecked.add(parent.key);
+          }
+          currentKey = parent.parent_id;
+        } else {
+          break;
+        }
+      }
     }
-    setCheckedModuleKeys([]);
+
+    setCheckedModuleKeys(Array.from(finalChecked));
   };
 
   // 选中模块变更时刷新表格
@@ -608,9 +654,8 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
     }
     setConfirming(true);
     try {
-      // 把左侧选中的"被覆盖的叶子"源模块 ID 抛给后端
-      // （后端会沿 parent 链上溯，在 plan_module 中逐层 find-or-create）
-      const moduleIds = Array.from(coveredLeafKeys);
+      // 只传用户实际勾选的模块 ID，不自动展开后代
+      const moduleIds = safeCheckedModuleKeys.map((k) => Number(k));
       await onConfirm(Array.from(selectedCaseIds), {
         moduleIds,
         mergeSameGroup,
@@ -828,6 +873,7 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
               <div style={styles.treeWrap()}>
                 <Tree
                   checkable
+                  checkStrictly
                   blockNode
                   showLine={{ showLeafIcon: false }}
                   expandedKeys={expandedKeys}

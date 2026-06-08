@@ -28,9 +28,17 @@ interface StepData {
 interface StepTableProps {
   steps: CaseSubStep[];
   planId?: string;
-  /** 父用例一轮测试状态（可选），变化时级联更新所有步骤 first_status */
+  /**
+   * 父用例一轮测试状态（可选）
+   * 仅在首次渲染、子步骤自身无值时用于兜底填充，
+   * 父用例状态后续变化【不再】级联到子步骤
+   */
   firstStatus?: string;
-  /** 父用例二轮测试状态（可选），变化时级联更新所有步骤 second_status */
+  /**
+   * 父用例二轮测试状态（可选）
+   * 仅在首次渲染、子步骤自身无值时用于兜底填充，
+   * 父用例状态后续变化【不再】级联到子步骤
+   */
   secondStatus?: string;
 }
 
@@ -70,14 +78,16 @@ const StepTable: React.FC<StepTableProps> = ({
   }, [planId]);
 
   /**
-   * 当外部 steps 变化时更新内部状态
-   * 使用函数式更新避免依赖 steps
+   * 当外部 steps 变化时初始化内部状态
    *
    * 初始化补全：如果步骤数据中 first_status / second_status 缺失，
    * 但父组件传入了对应的 status 值，则用父级状态填充（保证初始渲染有数据）
+   *
+   * 注意：仅依赖 steps，firstStatus / secondStatus 的后续变化不再触发本 effect，
+   * 避免父级一轮/二轮状态切换时覆盖用户已编辑的子步骤状态。
+   * 二轮状态的同步由下方单独的 useEffect 负责。
    */
   useEffect(() => {
-    // 父 case 的状态值（string 类型，undefined 表示未传入）
     const parentFirst = firstStatus ?? '';
     const parentSecond = secondStatus ?? '';
 
@@ -88,16 +98,27 @@ const StepTable: React.FC<StepTableProps> = ({
       second_status: step.second_status ?? parentSecond,
     }));
     setDataSource(initializedSteps);
-  }, [steps, firstStatus, secondStatus]);
+  }, [steps]);
 
   /**
-   * 跟踪上一次参与级联更新的状态值
-   * 使用 ref 而非 state：
-   * - 仅作为读取源判断"是否变化"，无需订阅变更
-   * - 避免在级联过程中触发额外重渲染
+   * 二轮测试状态同步：父用例二轮状态变化时，级联更新所有子步骤的二轮状态
+   * 一轮状态变化不触发此同步（由业务需求决定）
+   *
+   * 注意：EditableProTable 在 multiple 编辑模式下内部 form 不会随 value prop 自动刷新，
+   * 必须通过 editorFormRef.setRowData 逐行同步内部编辑态，否则 UI 不会实时更新。
    */
-  const lastCascadeFirstStatusRef = useRef<string | undefined>(undefined);
-  const lastCascadeSecondStatusRef = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (secondStatus === undefined) return;
+    const next = dataSourceRef.current.map((step) => ({
+      ...step,
+      second_status: secondStatus,
+    }));
+    setDataSource(next);
+    // 同步 EditableProTable 内部 form，否则 multiple 编辑模式下表格 UI 不刷新
+    next.forEach((row, index) => {
+      editorFormRef.current?.setRowData?.(index, row);
+    });
+  }, [secondStatus]);
 
   /**
    * 步骤状态选项配置
@@ -117,31 +138,46 @@ const StepTable: React.FC<StepTableProps> = ({
    * 更新步骤数据并同步到后端（已做 1s 防抖）
    * debounce 实例保持稳定，通过 ref 读取最新数据
    *
+   * @param updatedRow 要更新的行数据
+   * @param options.skipFirstSecond 为 true 时不传递 first_status / second_status
+   *                               （用于"复制预期到实际结果"等只改 actual_result 的场景）
+   *
    * 注意：updatedRow 必须存在才发起请求，避免 fallback 到错误行数据
    */
   const emitDataChange = useMemo(
     () =>
-      debounce(async (updatedRow?: CaseSubStep) => {
-        // 无有效行数据时直接返回，不发送请求（防止误更新其他步骤）
-        if (!updatedRow) return;
+      debounce(
+        async (
+          updatedRow?: CaseSubStep,
+          options?: { skipFirstSecond?: boolean },
+        ) => {
+          // 无有效行数据时直接返回，不发送请求（防止误更新其他步骤）
+          if (!updatedRow) return;
 
-        const stepData: StepData = {
-          step_id: updatedRow.id,
-          plan_id: Number(planIdRef.current),
-          status: String(updatedRow.status ?? 0),
-          // CaseSubStep.first_status / second_status 已为 string 类型，直接使用
-          first_status: updatedRow.first_status,
-          second_status: updatedRow.second_status,
-          actual_result: updatedRow.actual_result ?? '',
-          bug_url: updatedRow.bug_url ?? '',
-        };
-        try {
-          await updateCaseStepResult(stepData);
-        } catch (e) {
-          // 防抖请求失败时静默处理，避免重复提示（用户可能已离开该步骤）
-          console.error('updateCaseStepResult error:', e);
-        }
-      }, 1000),
+          const stepData: StepData = {
+            step_id: updatedRow.id,
+            plan_id: Number(planIdRef.current),
+            status: String(updatedRow.status ?? 0),
+            actual_result: updatedRow.actual_result ?? '',
+            bug_url: updatedRow.bug_url ?? '',
+          };
+
+          // 仅在非 skip 模式下才传递一二轮状态
+          // （复制预期到实际结果时不应覆盖子步骤已有的一二轮状态）
+          if (!options?.skipFirstSecond) {
+            stepData.first_status = updatedRow.first_status;
+            stepData.second_status = updatedRow.second_status;
+          }
+
+          try {
+            await updateCaseStepResult(stepData);
+          } catch (e) {
+            // 防抖请求失败时静默处理，避免重复提示（用户可能已离开该步骤）
+            console.error('updateCaseStepResult error:', e);
+          }
+        },
+        1000,
+      ),
     [],
   );
 
@@ -151,70 +187,6 @@ const StepTable: React.FC<StepTableProps> = ({
       emitDataChange.cancel();
     };
   }, [emitDataChange]);
-
-  /**
-   * 将父用例级联状态应用到全部步骤（本地 + 编辑表单）
-   * 仅做本地状态与 ProTable 行数据同步，不直接发请求；
-   * 防抖请求由调用方通过 emitBatchStatusChange 触发
-   * @param field 状态字段名
-   * @param value 新状态值
-   */
-  const applyCascadeToSteps = useCallback(
-    (field: 'first_status' | 'second_status', value: string) => {
-      const current = dataSourceRef.current;
-      if (current.length === 0) return;
-
-      // 本地状态：批量覆盖所有步骤的指定字段
-      const updatedSteps = current.map((step) => ({
-        ...step,
-        [field]: value,
-      }));
-      setDataSource(updatedSteps);
-
-      // 同步更新可编辑表单中的行数据，保证 ProTable 渲染一致
-      updatedSteps.forEach((row, index) => {
-        editorFormRef.current?.setRowData?.(index, row);
-      });
-    },
-    [],
-  );
-
-  /**
-   * 监听父用例一轮测试状态变更，级联更新所有步骤 first_status
-   * - 仅在 firstStatus 实际变化时触发
-   * - 跳过初次挂载（lastCascadeFirstStatusRef.current 为 undefined）以避免覆盖已有数据
-   * - 仅更新本地 dataSource 与编辑表单行数据（视觉即时反馈）
-   * - 不发起步骤级请求：后端在 case 层统一处理批量状态更新
-   */
-  useEffect(() => {
-    if (firstStatus === undefined) return;
-    if (lastCascadeFirstStatusRef.current === firstStatus) return;
-
-    if (lastCascadeFirstStatusRef.current === undefined) {
-      lastCascadeFirstStatusRef.current = firstStatus;
-      return;
-    }
-
-    lastCascadeFirstStatusRef.current = firstStatus;
-    applyCascadeToSteps('first_status', firstStatus);
-  }, [firstStatus, applyCascadeToSteps]);
-
-  /**
-   * 监听父用例二轮测试状态变更，级联更新所有步骤 second_status
-   * 逻辑同 firstStatus 级联，仅做本地赋值，不请求后端
-   */
-  useEffect(() => {
-    if (secondStatus === undefined) return;
-    if (lastCascadeSecondStatusRef.current === secondStatus) return;
-
-    if (lastCascadeSecondStatusRef.current === undefined) {
-      lastCascadeSecondStatusRef.current = secondStatus;
-      return;
-    }
-
-    lastCascadeSecondStatusRef.current = secondStatus;
-    applyCascadeToSteps('second_status', secondStatus);
-  }, [secondStatus, applyCascadeToSteps]);
 
   /**
    * 将预期结果复制到实际结果，并标记为通过状态
@@ -247,9 +219,8 @@ const StepTable: React.FC<StepTableProps> = ({
         prev.map((item) => (item.id === row.id ? newRow : item)),
       );
 
-      // 通过 emitDataChange 异步同步后端，避免与 debounce 重复触发接口
-      emitDataChange(newRow);
-      message.success('已复制预期结果到实际结果');
+      // 复制预期到实际结果：只传 actual_result + 必要字段，不覆盖一二轮状态
+      emitDataChange(newRow, { skipFirstSecond: true });
     },
     [emitDataChange],
   );

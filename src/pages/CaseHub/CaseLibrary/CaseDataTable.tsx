@@ -1,6 +1,5 @@
 import {
   copyTestCase,
-  downloadCaseExcel,
   pageTestCase,
   removeTestCase,
 } from '@/api/case/testCase';
@@ -20,7 +19,6 @@ import {
   CopyOutlined,
   DeleteOutlined,
   DeliveredProcedureOutlined,
-  DownloadOutlined,
   SmallDashOutlined,
 } from '@ant-design/icons';
 import {
@@ -98,24 +96,6 @@ const CaseDataTable: FC<Props> = (props) => {
       setSelectedRows([]);
     }
   }, [currentModuleId]);
-
-  const download = async () => {
-    try {
-      const { blob, filename } = await downloadCaseExcel({
-        responseType: 'blob',
-      });
-      const objectURL = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = objectURL;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(objectURL);
-    } catch (error) {
-      message.error('下载失败');
-    }
-  };
 
   /** 分页查询用例数据 */
   const fetchPageData = useCallback(
@@ -376,19 +356,16 @@ const CaseDataTable: FC<Props> = (props) => {
   }, []);
 
   const toolBarRender = [
-    <Button
-      key="download"
-      onClick={download}
-      type="text"
-      icon={<DownloadOutlined style={{ color: colors.primary }} />}
-    >
-      用例模版
-    </Button>,
-
-    <UploadCaseModal
-      onSuccess={() => actionRef.current?.reload()}
-      onModuleRefresh={onModuleRefresh}
-    />,
+    // 没拿到 currentProjectId 时不渲染上传按钮:
+    // 后端 /hub/cases/upload 预览阶段 project_id 必填, 没值直接 422, 提前挡住.
+    currentProjectId ? (
+      <UploadCaseModal
+        key="upload-case"
+        onSuccess={() => actionRef.current?.reload()}
+        onModuleRefresh={onModuleRefresh}
+        currentProjectId={currentProjectId}
+      />
+    ) : null,
 
     <Button key="add" type="primary" onClick={() => setOpenNewCaseDrawer(true)}>
       添加用例
@@ -473,11 +450,11 @@ const CaseDataTable: FC<Props> = (props) => {
           }}
           scroll={{
             x: 1500,
-            y: 'calc(100vh - 350px)',
+            y: 'calc(100vh - 300px)',
           }}
           pagination={{
             showQuickJumper: true,
-            defaultPageSize: 10,
+            defaultPageSize: 50,
             showSizeChanger: true,
             pageSizeOptions: ['10', '20', '50', '100'],
           }}

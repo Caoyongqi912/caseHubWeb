@@ -167,7 +167,6 @@ const CaseRow: React.FC<{
 interface PlanCaseListProps {
   planId?: string;
   moduleId?: number | null;
-  planModules: import('@/pages/CaseHub/types').IPlanModule[];
   planInfo?: ICasePlan;
   onModulesRefresh?: () => void;
 }
@@ -179,7 +178,7 @@ interface PlanCaseListProps {
 const Index: FC<PlanCaseListProps> = ({
   planId,
   moduleId,
-  planModules,
+
   planInfo,
   onModulesRefresh,
 }) => {
@@ -839,7 +838,13 @@ const Index: FC<PlanCaseListProps> = ({
               onFilterChange={handleFilterChange}
               onRefresh={handleRefresh}
               onBatchExport={handleBatchExport}
-              onBatchImport={handleBatchImport}
+              /**
+               * 计划项目上下文 (planInfo.project_id) 未加载完时不传 onBatchImport,
+               * CaseFilterBar 内部据此隐藏"批量导入"菜单项, 避免后端 422.
+               */
+              onBatchImport={
+                planInfo?.project_id ? handleBatchImport : undefined
+              }
               onCollapseAllChange={handleCollapseAllChange}
               hasActiveFilter={hasActiveFilter}
               filters={filters}
@@ -949,7 +954,11 @@ const Index: FC<PlanCaseListProps> = ({
         open={importModalVisible}
         onOpenChange={setImportModalVisible}
         planId={planId || ''}
-        planModules={planModules}
+        /**
+         * 把 plan 所属项目的 id 传给预览组件, 启用"用例库分组"硬门禁.
+         * plan 本身已经绑定了 project, 这里直接读 planInfo.
+         */
+        projectId={planInfo?.project_id ?? 0}
         onUploadFinish={handleImportFinish}
         /**
          * 导入完成后刷新左侧计划目录树.

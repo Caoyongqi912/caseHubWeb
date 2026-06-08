@@ -220,7 +220,19 @@ const UploadModal: FC<UploadModalProps> = ({
     setUploading(true);
 
     try {
-      const response = (await uploadPreviewCase(file)) as any;
+      // 预览阶段需要 project_id 启用"用例库分组"硬门禁校验.
+      // 需求上传共用 /hub/cases/upload endpoint, 传 req 所属项目 id.
+      // uploadProps.projectId 是 string 类型, 需转 number.
+      const previewProjectId = uploadProps?.projectId
+        ? Number(uploadProps.projectId)
+        : undefined;
+      if (!previewProjectId) {
+        setUploadError('需求未关联项目, 无法预览');
+        setValidateResult(null);
+        setUploading(false);
+        return;
+      }
+      const response = (await uploadPreviewCase(file, previewProjectId)) as any;
 
       if (!response) {
         setUploadError('服务器未返回数据，请重试');

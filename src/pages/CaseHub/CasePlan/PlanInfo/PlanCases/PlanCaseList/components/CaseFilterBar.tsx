@@ -13,22 +13,16 @@ import { toSelectOptions } from '@/pages/CaseHub/hooks/caseEnumOption';
 import { useCaseEnumConfig } from '@/pages/CaseHub/hooks/useCaseEnumConfig';
 import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import {
+  CompressOutlined,
   EllipsisOutlined,
+  ExpandOutlined,
   FilterOutlined,
   LoadingOutlined,
   ReloadOutlined,
   SearchOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
-import {
-  Button,
-  Dropdown,
-  Input,
-  Popover,
-  Segmented,
-  Select,
-  Space,
-} from 'antd';
+import { Button, Dropdown, Input, Popover, Select, Space, Tooltip } from 'antd';
 import debounce from 'lodash/debounce';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type {
@@ -174,6 +168,8 @@ const CaseFilterBar: FC<CaseFilterBarProps> = ({
     { label: string; value: number }[]
   >([]);
   const [isSearching, setIsSearching] = useState(false);
+  /** 全部折叠状态（用于展开/折叠一键切换按钮） */
+  const [allCollapsed, setAllCollapsed] = useState(false);
 
   /**
    * 跟踪"搜索中"反馈计时器
@@ -197,10 +193,17 @@ const CaseFilterBar: FC<CaseFilterBarProps> = ({
     }, 300);
   }, []);
 
-  const dropdownItems: MenuProps['items'] = [
-    { key: 'export', label: '批量导出', onClick: onBatchExport },
-    { key: 'import', label: '批量导入', onClick: onBatchImport },
-  ];
+  // 计划项目上下文 (planInfo.project_id) 未就绪时, 父组件不传 onBatchImport,
+  // 这里就不再渲染"批量导入"菜单项, 避免点开后端 422.
+  const dropdownItems: MenuProps['items'] = useMemo(() => {
+    const items: MenuProps['items'] = [
+      { key: 'export', label: '批量导出', onClick: onBatchExport },
+    ];
+    if (onBatchImport) {
+      items.push({ key: 'import', label: '批量导入', onClick: onBatchImport });
+    }
+    return items;
+  }, [onBatchExport, onBatchImport]);
 
   /**
    * 防抖搜索回调
@@ -573,27 +576,20 @@ const CaseFilterBar: FC<CaseFilterBarProps> = ({
         </Popover>
 
         {onCollapseAllChange && (
-          <Segmented
-            size="small"
-            options={[
-              { label: '展开全部', value: 'expand' },
-              { label: '折叠全部', value: 'collapse' },
-            ]}
-            onChange={(val) => onCollapseAllChange(val === 'collapse')}
-          />
+          <Tooltip title={allCollapsed ? '展开所有用例' : '折叠所有用例'}>
+            <Button
+              icon={allCollapsed ? <ExpandOutlined /> : <CompressOutlined />}
+              onClick={() => {
+                const next = !allCollapsed;
+                setAllCollapsed(next);
+                onCollapseAllChange(next);
+              }}
+            />
+          </Tooltip>
         )}
 
         <Dropdown menu={{ items: dropdownItems }} trigger={['click']}>
-          <EllipsisOutlined
-            style={{
-              fontSize: 18,
-              cursor: 'pointer',
-              color: colors.textSecondary,
-              padding: `${spacing.xs}px`,
-              borderRadius: borderRadius.sm,
-              transition: `all ${animations.fast} ${animations.easeInOut}`,
-            }}
-          />
+          <Button icon={<EllipsisOutlined />} />
         </Dropdown>
       </Space>
     </div>
