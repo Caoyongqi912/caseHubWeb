@@ -178,7 +178,6 @@ interface PlanCaseListProps {
 const Index: FC<PlanCaseListProps> = ({
   planId,
   moduleId,
-
   planInfo,
   onModulesRefresh,
 }) => {

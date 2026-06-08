@@ -102,7 +102,6 @@ const Index: FC<Props> = ({ planId, planInfo: planInfoProp }) => {
           <PlanCaseList
             planId={planId}
             moduleId={selectedModuleId}
-            planModules={planModules}
             planInfo={planInfo}
             onModulesRefresh={fetchPlanModules}
           />
