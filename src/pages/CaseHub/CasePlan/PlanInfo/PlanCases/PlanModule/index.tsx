@@ -81,49 +81,40 @@ const Index: FC<PlanModuleProps> = ({
   const [activeKey, setActiveKey] = useState<React.Key | null>(null);
   const [hoveredKey, setHoveredKey] = useState<number | null>(null);
   const [modalState, setModalState] = useState<ModalState>(createModalState());
-  const [treeData, setTreeData] = useState<TreeDataNode[]>([]);
   const isInitializedRef = useRef(false);
 
   const isRootNode = (module: IPlanModule) =>
     module.parent_id === null && module.order === ROOT_ORDER;
 
-  /** 共享 icon 渲染 */
-  const renderFolderIcon = useCallback(
-    (props: AntTreeNodeProps) =>
-      props.expanded ? <FolderOpenOutlined /> : <FolderOutlined />,
-    [],
-  );
-
-  const convertToTreeData = useCallback(
-    (modules: IPlanModule[]): TreeDataNode[] =>
+  /** 从 planModules 派生 TreeData（不需要 state） */
+  const treeData = useMemo<TreeDataNode[]>(() => {
+    if (!planModules?.length) return [];
+    const build = (modules: IPlanModule[]): TreeDataNode[] =>
       modules.map((module) => ({
         key: module.id,
         data: module,
         isRoot: isRootNode(module),
-        icon: renderFolderIcon,
-        children: module.children
-          ? convertToTreeData(module.children)
-          : undefined,
-      })),
-    [renderFolderIcon],
-  );
+        icon: (props: AntTreeNodeProps) =>
+          props.expanded ? <FolderOpenOutlined /> : <FolderOutlined />,
+        children: module.children ? build(module.children) : undefined,
+      }));
+    return build(planModules);
+  }, [planModules]);
 
   /** 首次加载时初始化展开 / 选中根节点 */
   useEffect(() => {
     if (!planModules?.length) {
-      setTreeData([]);
       setActiveKey(null);
       isInitializedRef.current = false;
       return;
     }
-    setTreeData(convertToTreeData(planModules));
     if (isInitializedRef.current) return;
     const rootId = planModules[0]?.id;
     setExpandedKeys(rootId ? [rootId] : []);
     setActiveKey(rootId ?? null);
     onSelect?.(rootId ?? null);
     isInitializedRef.current = true;
-  }, [planModules, convertToTreeData, onSelect]);
+  }, [planModules, onSelect]);
 
   // ===== 写操作(仅 admin) =====
 
@@ -364,7 +355,6 @@ const Index: FC<PlanModuleProps> = ({
       onDragEnd: isAdmin ? (handleDragEnd as any) : undefined,
       blockNode: true,
       showLine: false,
-      defaultExpandAll: true,
       indent: 10,
     }),
     [expandedKeys, activeKey, handleTreeSelect, isAdmin, handleDragEnd],
@@ -416,20 +406,14 @@ const Index: FC<PlanModuleProps> = ({
           />
         )}
         <style>{`
-          /* 选中行:背景填满整宽 + 圆角(去掉 margin 让数字列与非选中行 x 位置对齐) */
           .${TREE_CLASS} .ant-tree-treenode-selected {
             background: var(--plan-module-selected-bg, #e6f4ff);
             border-radius: 4px;
           }
-          /* 取消未选中态的 hover 浅灰背景(用户反馈不要"突出"效果) */
           .${TREE_CLASS} .ant-tree-node-content-wrapper {
             min-height: 22px;
             line-height: 22px;
             overflow: hidden;
-            background: transparent !important;
-          }
-          .${TREE_CLASS} .ant-tree-node-content-wrapper:hover,
-          .${TREE_CLASS} .ant-tree-node-selected {
             background: transparent !important;
           }
         `}</style>
