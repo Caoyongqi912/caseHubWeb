@@ -1,4 +1,6 @@
 import { getPlanInfo } from '@/api/case/caseplan';
+import { resolveStatusColor } from '@/pages/CaseHub/CasePlan/statusColor';
+import { useCaseEnumConfig } from '@/pages/CaseHub/hooks/useCaseEnumConfig';
 import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import { ICasePlan } from '@/pages/CaseHub/types';
 import {
@@ -14,18 +16,9 @@ interface PlanOverviewProps {
 }
 
 /**
- * 根据状态获取对应颜色
- * 提到模块作用域，避免每次渲染重建对象
+ * 颜色解析：根据配置中心定义的 status -> color 解析为实际色值
+ * 状态列表为空时降级到 FALLBACK（与列表页保持一致）
  */
-const getStatusColor = (status: string | undefined, token: any) => {
-  const statusMap: Record<string, string> = {
-    进行中: token.colorInfo,
-    已完成: token.colorSuccess,
-    已暂停: token.colorWarning,
-    已取消: token.colorError,
-  };
-  return statusMap[status || ''] || token.colorTextTertiary;
-};
 
 /**
  * 计划概览组件
@@ -56,7 +49,14 @@ const PlanOverview: React.FC<PlanOverviewProps> = ({ planId }) => {
     return <Skeleton active paragraph={{ rows: 6 }} />;
   }
 
-  const statusColor = getStatusColor(planInfo?.plan_status, token);
+  // 计划状态枚举（来自配置中心 PLAN_STATUS） —— 配置为空时颜色降级为文本色
+  const { options: planStatusOptions } = useCaseEnumConfig('PLAN_STATUS');
+  const statusColorMap: Record<string, string> = {};
+  for (const s of planStatusOptions) {
+    statusColorMap[s.value] = resolveStatusColor(token, s.color);
+  }
+  const statusColor =
+    statusColorMap[planInfo?.plan_status || ''] || token.colorTextTertiary;
 
   return (
     <Descriptions bordered column={2} size="small">
@@ -73,10 +73,7 @@ const PlanOverview: React.FC<PlanOverviewProps> = ({ planId }) => {
         <Tag
           style={{
             color: statusColor,
-            background:
-              planInfo?.plan_status === '已完成'
-                ? token.colorSuccessBg
-                : 'transparent',
+            background: 'transparent',
             border: `1px solid ${statusColor}`,
           }}
         >

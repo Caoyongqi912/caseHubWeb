@@ -88,6 +88,7 @@ export interface ICasePlan {
 
   charge_id?: number;
   charge_name?: string;
+  charge_avatar?: string;
   plan_start_time?: string;
   plan_end_time?: string;
 }

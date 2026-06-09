@@ -1,5 +1,8 @@
 /**
  * CasePlanForm - 测试计划表单弹窗
+ *
+ * 字段：所属项目、计划名称、状态、执行阶段、负责人、计划时间
+ * 状态/阶段枚举取自配置中心（PLAN_STATUS / PLAN_PHASE）。
  */
 
 import { searchUser } from '@/api/base';
@@ -24,7 +27,7 @@ import {
 import { FormInstance, message } from 'antd';
 import type { Rule } from 'antd/es/form';
 import dayjs from 'dayjs';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 
 interface Props {
   record: ICasePlan | null;
@@ -33,6 +36,8 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onReload: () => void;
+  /** 新增时默认选中的项目 ID */
+  projectId?: number;
 }
 
 const formatDate = (value: string | dayjs.Dayjs | undefined) =>
@@ -45,8 +50,17 @@ const CasePlanForm: React.FC<Props> = ({
   open,
   onOpenChange,
   onReload,
+  projectId,
 }) => {
   const { token } = useCaseHubTheme();
+
+  // 新增模式下，自动带入当前选中的项目
+  useEffect(() => {
+    if (open && !isEdit && projectId) {
+      form.setFieldValue('project_id', projectId);
+    }
+  }, [open, isEdit, projectId, form]);
+
   const textSecondary = token.colorTextSecondary;
   const { initialState } = useModel('@@initialState');
   const projects = initialState?.projects || [];
@@ -111,6 +125,7 @@ const CasePlanForm: React.FC<Props> = ({
       onFinish={handleFinish}
     >
       <div style={{ padding: '0 8px' }}>
+        {/* 基本信息 */}
         <div style={{ marginBottom: 20 }}>
           <div style={{ marginBottom: 8, color: textSecondary, fontSize: 12 }}>
             <ProjectOutlined style={{ marginRight: 6 }} />
@@ -140,13 +155,12 @@ const CasePlanForm: React.FC<Props> = ({
           </div>
         </div>
 
+        {/* 负责人 */}
         <div style={{ marginBottom: 20 }}>
-          <div style={{ marginBottom: 8, color: textSecondary, fontSize: 12 }}>
-            <UserOutlined style={{ marginRight: 6 }} />
-            负责人
-          </div>
           <ProFormSelect
+            required={true}
             showSearch
+            label="负责人"
             name="charge_id"
             placeholder="请搜索并选择负责人"
             request={queryUser}
@@ -156,12 +170,15 @@ const CasePlanForm: React.FC<Props> = ({
               variant: 'filled',
               optionFilterProp: 'label',
               labelInValue: true,
+              prefix: <UserOutlined />,
               onChange: handleChargeChange,
             }}
+            rules={[{ required: true, message: '请选择负责人' }]}
           />
           <ProFormText name="charge_name" hidden />
         </div>
 
+        {/* 计划时间 */}
         <div>
           <div style={{ marginBottom: 8, color: textSecondary, fontSize: 12 }}>
             <CalendarOutlined style={{ marginRight: 6 }} />
@@ -170,6 +187,7 @@ const CasePlanForm: React.FC<Props> = ({
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <ProFormDatePicker
               width="md"
+              noStyle={true}
               name="plan_start_time"
               placeholder="开始日期"
               fieldProps={{
@@ -187,6 +205,7 @@ const CasePlanForm: React.FC<Props> = ({
               name="plan_end_time"
               placeholder="结束日期"
               format="YYYY-MM-DD"
+              noStyle={true}
               rules={[
                 {
                   validator: (_: unknown, value: dayjs.Dayjs) => {

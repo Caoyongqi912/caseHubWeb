@@ -10,12 +10,13 @@ import {
   ApartmentOutlined,
   AuditOutlined,
   ExperimentOutlined,
+  FlagOutlined,
+  RocketOutlined,
   SettingOutlined,
   TagsOutlined,
   TrophyOutlined,
 } from '@ant-design/icons';
-import { PageContainer } from '@ant-design/pro-components';
-import { Card, Segmented, Space, Tag, Typography } from 'antd';
+import { Card, Segmented, Space, Typography } from 'antd';
 import { FC, useMemo, useState } from 'react';
 import CaseStatusConfig from './CaseStatusConfig';
 import {
@@ -46,6 +47,8 @@ const RENDER_MAP: Record<
   [CaseConfigKeyEnum.REVIEW_STATUS]: CaseStatusConfig,
   [CaseConfigKeyEnum.CASE_LEVEL]: CaseStatusConfig,
   [CaseConfigKeyEnum.CASE_TYPE]: CaseStatusConfig,
+  [CaseConfigKeyEnum.PLAN_STATUS]: CaseStatusConfig,
+  [CaseConfigKeyEnum.PLAN_PHASE]: CaseStatusConfig,
 };
 
 /**
@@ -86,6 +89,8 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   TagsOutlined: <TagsOutlined />,
   // 计划目录模板图标：组件保留在 ./PlanModuleConfig/，入口暂为 comingSoon
   ApartmentOutlined: <ApartmentOutlined />,
+  FlagOutlined: <FlagOutlined />,
+  RocketOutlined: <RocketOutlined />,
 };
 
 /**
@@ -171,20 +176,7 @@ const CaseConfigPage: FC = () => {
   );
 
   return (
-    <PageContainer
-      title={false}
-      header={{
-        breadcrumb: {
-          routes: [],
-        },
-      }}
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        height: 'calc(100vh - 20px)',
-        overflow: 'hidden',
-      }}
-    >
+    <>
       <div style={styles.hero}>
         <div style={styles.heroDecor} />
         <h1 style={styles.heroTitle}>
@@ -192,15 +184,7 @@ const CaseConfigPage: FC = () => {
           用例配置中心
         </h1>
         <Paragraph style={styles.heroDesc}>
-          统一管理测试用例相关的枚举配置。当前支持
-          <Tag style={styles.categoryTag}>CASE_STATUS</Tag>
-          用例状态、
-          <Tag style={styles.categoryTag}>REVIEW_STATUS</Tag>
-          评审状态、
-          <Tag style={styles.categoryTag}>CASE_LEVEL</Tag>
-          用例等级、
-          <Tag style={styles.categoryTag}>CASE_TYPE</Tag>
-          用例类型等枚举的增删改查。配置变更会同步至后端，供其他业务模块读取使用。
+          统一管理测试用例相关的枚举配置。
         </Paragraph>
       </div>
 
@@ -254,7 +238,7 @@ const CaseConfigPage: FC = () => {
       >
         {activeCategory ? renderTabContent(activeCategory) : null}
       </div>
-    </PageContainer>
+    </>
   );
 };
 

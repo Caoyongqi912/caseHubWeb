@@ -90,6 +90,30 @@ const VALUE_FIELD_DEFS: Record<string, ValueFieldDef> = {
     ],
     toFormValue: (v) => v,
   },
+  [CaseConfigKeyEnum.PLAN_STATUS]: {
+    type: 'text',
+    label: '值（状态标识）',
+    placeholder: '请输入状态标识，如 进行中 / 已完成',
+    tooltip:
+      '计划状态场景下 value 与 label 默认一致；如需用枚举值与 label 分离，可自定义 value',
+    rules: [
+      { required: true, message: '状态标识必填' },
+      { max: 32, message: '状态标识长度不能超过 32' },
+    ],
+    toFormValue: (v) => v,
+  },
+  [CaseConfigKeyEnum.PLAN_PHASE]: {
+    type: 'text',
+    label: '值（阶段标识）',
+    placeholder: '请输入阶段标识，如 规划 / 设计 / 执行 / 验收',
+    tooltip:
+      '计划阶段场景下 value 与 label 默认一致；如需用枚举值与 label 分离，可自定义 value',
+    rules: [
+      { required: true, message: '阶段标识必填' },
+      { max: 32, message: '阶段标识长度不能超过 32' },
+    ],
+    toFormValue: (v) => v,
+  },
 };
 
 /**
@@ -249,17 +273,7 @@ const CaseStatusConfig: FC<CaseStatusConfigProps> = ({
         lineHeight: 1.6,
         margin: 0,
       },
-      valueTag: {
-        fontFamily: '"SF Mono", "Fira Code", "JetBrains Mono", monospace',
-        fontSize: 12,
-        fontWeight: 600,
-        padding: '4px 10px',
-        borderRadius: borderRadius.md,
-        background: `linear-gradient(135deg, ${token.colorPrimaryBg} 0%, ${token.colorPrimaryBorder} 100%)`,
-        color: token.colorPrimary,
-        border: `1px solid ${token.colorPrimaryBorder}`,
-        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1)',
-      },
+
       sortTag: {
         fontFamily: '"SF Mono", "Fira Code", "JetBrains Mono", monospace',
         fontSize: 12,
@@ -356,23 +370,19 @@ const CaseStatusConfig: FC<CaseStatusConfigProps> = ({
         title: '名称',
         dataIndex: 'label',
         fixed: 'left',
-        width: 180,
+        width: '20%',
         render: (_, record) => renderStatusTag(record.label, record.color),
       },
       {
         title: '值',
         dataIndex: 'value',
-        width: 110,
-        render: (_, record) => (
-          <Text code style={styles.valueTag}>
-            {String(record.value)}
-          </Text>
-        ),
+        width: '20%',
+        render: (_, record) => <Tag>{record.value}</Tag>,
       },
       {
         title: '颜色',
         dataIndex: 'color',
-        width: 160,
+        width: '20%',
         render: (_, record) => {
           if (!record.color) {
             return <Text type="secondary">-</Text>;
@@ -393,7 +403,7 @@ const CaseStatusConfig: FC<CaseStatusConfigProps> = ({
       {
         title: '描述',
         dataIndex: 'description',
-        width: 260,
+        width: '20%',
         render: (_, record) => (
           <Paragraph
             ellipsis={{ rows: 2, expandable: true, symbol: '展开' }}
@@ -410,7 +420,7 @@ const CaseStatusConfig: FC<CaseStatusConfigProps> = ({
       {
         title: '排序',
         dataIndex: 'sort',
-        width: 80,
+        width: '10%',
         render: (_, record) =>
           record.sort === undefined || record.sort === null ? (
             <Text type="secondary">-</Text>
@@ -742,6 +752,7 @@ const CaseStatusConfig: FC<CaseStatusConfigProps> = ({
         request={pageConfig}
         rowKey="uid"
         headerTitle={null}
+        scroll={{ y: window.innerHeight - 400 }}
         search={{
           labelWidth: 'auto',
           showHiddenNum: true,

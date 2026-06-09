@@ -3,12 +3,10 @@ export interface IObjGet {
 }
 
 interface IPageInfo {
-  code: number;
   limit: number;
   page: number;
   pages: number;
   total: number;
-  msg: string;
 }
 
 interface IBaseField {

@@ -49,6 +49,10 @@ export enum CaseConfigKeyEnum {
   CASE_LEVEL = 'CASE_LEVEL',
   /** 用例类型（如 回归 / 冒烟 / 功能等） */
   CASE_TYPE = 'CASE_TYPE',
+  /** 测试计划状态（如 进行中 / 已完成 / 已暂停 / 已取消 等，可由用户在配置中心自定义） */
+  PLAN_STATUS = 'PLAN_STATUS',
+  /** 测试计划执行阶段（如 规划 / 设计 / 执行 / 验收 等，可由用户在配置中心自定义） */
+  PLAN_PHASE = 'PLAN_PHASE',
 }
 
 /**

@@ -49,6 +49,20 @@ export const CASE_CONFIG_CATEGORIES: ICaseConfigCategory[] = [
       '配置测试用例类型枚举（如 回归 / 冒烟 / 功能 / 性能 等），用于用例库分类、计划编排与多维筛选。',
     icon: 'TagsOutlined',
   },
+  {
+    key: CaseConfigKeyEnum.PLAN_STATUS,
+    label: '计划状态',
+    description:
+      '配置测试计划状态枚举（如 进行中 / 已完成 / 已暂停 / 已取消 等），用于测试计划列表的状态展示、印章着色、快捷过滤及统计分组。',
+    icon: 'FlagOutlined',
+  },
+  {
+    key: CaseConfigKeyEnum.PLAN_PHASE,
+    label: '计划阶段',
+    description:
+      '配置测试计划执行阶段枚举（如 规划 / 设计 / 执行 / 验收 等），用于测试计划列表的阶段展示、阶段色点着色及搜索筛选。',
+    icon: 'RocketOutlined',
+  },
 ];
 
 /**

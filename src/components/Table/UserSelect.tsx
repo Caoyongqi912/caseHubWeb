@@ -6,6 +6,8 @@ import { FC, useCallback, useMemo, useRef, useState } from 'react';
 export interface UserSelectProps {
   multiple?: boolean;
   value?: { label: string; value: number } | { label: string; value: number }[];
+  variant?: 'filled' | 'outlined' | 'borderless' | 'underlined' | undefined;
+
   onChange?: (
     value:
       | { label: string; value: number }
@@ -22,6 +24,7 @@ interface UserOption {
 const UserSelect: FC<UserSelectProps> = ({
   multiple = false,
   value,
+  variant = 'outlined',
   onChange,
 }) => {
   const [fetching, setFetching] = useState(false);
@@ -66,27 +69,18 @@ const UserSelect: FC<UserSelectProps> = ({
     [onChange],
   );
 
-  async function fetchUserList(username: string): Promise<UserOption[]> {
-    console.log('fetching user', username);
-    return searchUser({ username }).then((res) => {
-      const results = Array.isArray(res) ? res : [];
-      return results.map((user) => ({
-        label: user.name,
-        value: user.id,
-        avatar: user.avatar,
-      }));
-    });
-  }
   return (
     <Select
-      showSearch
-      onSearch={(val) => debounceFetcher(val)}
+      showSearch={{
+        filterOption: false,
+        onSearch: (val) => debounceFetcher(val),
+      }}
+      variant={variant}
       mode={multiple ? 'multiple' : undefined}
       value={value}
       onChange={handleChange}
       placeholder="搜索用户..."
       notFoundContent={fetching ? <Spin size="small" /> : '暂无结果'}
-      filterOption={false}
       allowClear
       style={{ width: '100%' }}
       options={options}
