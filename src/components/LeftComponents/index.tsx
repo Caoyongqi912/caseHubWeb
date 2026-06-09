@@ -1,11 +1,9 @@
 import { IProject } from '@/api';
 import { queryProject } from '@/api/base';
-import { useGlassStyles } from '@/components/Glass';
 import EmptyProject from '@/components/LeftComponents/EmptyProject';
 import ModuleTree from '@/components/LeftComponents/ModuleTree';
 import ProjectSelect from '@/components/LeftComponents/ProjectSelect';
-import { ProCard } from '@ant-design/pro-components';
-import { Space } from 'antd';
+import { theme } from 'antd';
 import { FC, useEffect, useState } from 'react';
 
 interface SelfProps {
@@ -22,6 +20,8 @@ interface SelfProps {
   reloadKey?: number;
 }
 
+const { useToken } = theme;
+
 const Index: FC<SelfProps> = (props) => {
   const {
     currentProjectId,
@@ -30,7 +30,7 @@ const Index: FC<SelfProps> = (props) => {
     onModuleChange,
     reloadKey,
   } = props;
-  const styles = useGlassStyles();
+  const { token } = useToken();
   const [projects, setProjects] = useState<IProject[]>([]);
 
   useEffect(() => {
@@ -47,27 +47,27 @@ const Index: FC<SelfProps> = (props) => {
   }, []);
 
   return (
-    <ProCard
+    <div
       style={{
         height: '100%',
-        borderRadius: '12px',
-        background: styles.colors.glass,
-        backdropFilter: 'blur(16px)',
-        border: `1px solid ${styles.colors.glassBorder}`,
-        overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
-      }}
-      styles={{
-        body: {
-          padding: 12,
-          flex: 1,
-          overflow: 'auto',
-        },
+        background: token.colorBgContainer,
+        borderRight: `1px solid ${token.colorBorderSecondary}`,
+        overflow: 'hidden',
       }}
     >
       {projects.length > 0 ? (
-        <Space orientation="vertical" size={12} style={{ width: '100%' }}>
+        <div
+          style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 16,
+            padding: '16px 12px',
+            overflow: 'auto',
+          }}
+        >
           <ProjectSelect
             projects={projects}
             currentProjectId={currentProjectId}
@@ -77,14 +77,13 @@ const Index: FC<SelfProps> = (props) => {
             moduleType={moduleType}
             onModuleChange={onModuleChange}
             currentProjectId={currentProjectId}
-            // 透传刷新触发器：reloadKey 变化时 ModuleTree 重新拉取目录
             reloadKey={reloadKey}
           />
-        </Space>
+        </div>
       ) : (
         <EmptyProject />
       )}
-    </ProCard>
+    </div>
   );
 };
 
