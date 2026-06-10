@@ -180,6 +180,12 @@ export const uploadPreviewCase = async (file: File, projectId: number) => {
       row: number;
       errors: Array<{ field: string; message: string }>;
     }>;
+    /**
+     * 是否可提交入库. 后端在文件存在错误时不会写 Redis 预览缓存,
+     * 此时 can_commit=false, 前端必须禁用 commit 按钮,
+     * 强制用户修正 Excel 后整批重传. 兼容老后端: 字段缺失视为 true.
+     */
+    can_commit?: boolean;
   }>('/api/hub/cases/upload', {
     method: 'POST',
     data: formData,

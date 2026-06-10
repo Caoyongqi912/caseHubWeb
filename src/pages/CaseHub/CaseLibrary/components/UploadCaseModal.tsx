@@ -71,6 +71,11 @@ interface ValidateResult {
   valid_count: number;
   invalid_count: number;
   errors: ErrorRow[];
+  /**
+   * 后端在 result.errors 非空时为 false, 此时 Redis 无预览缓存,
+   * commit 必失败. 兼容老后端: 字段缺失视为 true.
+   */
+  can_commit: boolean;
 }
 
 /** 相同用例处理: skip = 跳过 (默认 create). 透传后端 on_duplicate. */
@@ -177,6 +182,7 @@ const UploadCaseModal: FC<Props> = ({
           valid_count: response.data?.valid_count || 0,
           invalid_count: response.data?.invalid_count || 0,
           errors: response.data?.errors || [],
+          can_commit: response.data?.can_commit ?? true,
         });
         setUploadError(null);
       } else {
@@ -329,8 +335,7 @@ const UploadCaseModal: FC<Props> = ({
             resetText: '取消',
           },
           submitButtonProps: {
-            disabled:
-              !validateResult?.file_md5 || validateResult.valid_count === 0,
+            disabled: !validateResult?.file_md5 || !validateResult.can_commit,
             loading: confirming,
           },
           resetButtonProps: {
@@ -555,6 +560,16 @@ const UploadCaseModal: FC<Props> = ({
                 />
               </div>
             </Card>
+
+            {!validateResult.can_commit && (
+              <Alert
+                title="文件包含错误，无法继续入库"
+                description="预览阶段未通过校验，后端未写入 Redis 预览缓存。请按下方错误详情修正 Excel 后重新上传。"
+                type="warning"
+                showIcon
+                style={{ marginTop: 16 }}
+              />
+            )}
 
             {validateResult.errors.length > 0 && (
               <Alert
