@@ -127,6 +127,7 @@ const ModuleTree: FC<IProps> = ({
   const [selectedKeys, setSelectedKeys] = useState<React.Key[]>([]);
   const [autoExpandParent, setAutoExpandParent] = useState(true);
   const [searchValue, setSearchValue] = useState('');
+  const [hoveredKey, setHoveredKey] = useState<React.Key | null>(null);
 
   // -------- 拉取数据 --------
   useEffect(() => {
@@ -248,7 +249,7 @@ const ModuleTree: FC<IProps> = ({
     const nodeKey = String(node.key);
     const isUngrouped = isUngroupedModule(nodeKey);
     const isSelected = selectedKeys.includes(node.key);
-    const isHovered = currentModule?.key === node.key;
+    const isHovered = hoveredKey === node.key;
     const isLeaf = !node.children;
 
     return (
@@ -272,6 +273,8 @@ const ModuleTree: FC<IProps> = ({
           cursor: 'pointer',
         }}
         onClick={() => setCurrentModule(node)}
+        onMouseEnter={() => setHoveredKey(node.key)}
+        onMouseLeave={() => setHoveredKey(null)}
       >
         {/* 选中态：左侧 3px 纯色条 */}
         {isSelected && (
@@ -537,6 +540,7 @@ const ModuleTree: FC<IProps> = ({
           {/* 搜索框 */}
           <Search
             placeholder="搜索模块…"
+            variant="filled"
             allowClear
             value={searchValue}
             onChange={(e) => {
@@ -566,7 +570,7 @@ const ModuleTree: FC<IProps> = ({
               minHeight: 0,
               overflowY: 'auto',
               borderRadius: 8,
-              border: `1px solid ${token.colorBorderSecondary}`,
+              // border: `1px solid ${token.colorBorderSecondary}`,
               background: token.colorBgContainer,
             }}
           >
@@ -627,25 +631,6 @@ const ModuleTree: FC<IProps> = ({
           />
         )
       )}
-
-      <style>{`
-        .module-tree-node:hover .module-tree-row-actions {
-          opacity: 1 !important;
-        }
-        .ant-tree .ant-tree-node-content-wrapper {
-          width: 100%;
-          overflow: hidden;
-        }
-        .ant-tree .ant-tree-node-content-wrapper:hover {
-          background: transparent !important;
-        }
-        .ant-tree .ant-tree-node-selected {
-          background: transparent !important;
-        }
-        .module-tree-iconbtn:hover {
-          background: ${token.colorBgTextHover} !important;
-        }
-      `}</style>
     </>
   );
 };
