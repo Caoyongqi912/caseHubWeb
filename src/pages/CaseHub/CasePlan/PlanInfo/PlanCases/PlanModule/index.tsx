@@ -13,9 +13,17 @@ import {
   FolderOutlined,
   PlusOutlined,
 } from '@ant-design/icons';
-import { ProCard } from '@ant-design/pro-components';
 import type { MenuProps } from 'antd';
-import { Dropdown, message, Modal, theme, Tooltip, Tree } from 'antd';
+import {
+  Button,
+  Dropdown,
+  Empty,
+  message,
+  Modal,
+  theme,
+  Tooltip,
+  Tree,
+} from 'antd';
 import type { AntTreeNodeProps, DataNode, TreeProps } from 'antd/es/tree';
 import {
   FC,
@@ -44,7 +52,6 @@ interface TreeDataNode extends DataNode {
 }
 
 const ROOT_ORDER = 0;
-const TREE_CLASS = 'plan-module-tree';
 
 type ModalMode = 'add' | 'edit';
 
@@ -86,7 +93,7 @@ const Index: FC<PlanModuleProps> = ({
   const isRootNode = (module: IPlanModule) =>
     module.parent_id === null && module.order === ROOT_ORDER;
 
-  /** 从 planModules 派生 TreeData（不需要 state） */
+  /** 从 planModules 派生 TreeData */
   const treeData = useMemo<TreeDataNode[]>(() => {
     if (!planModules?.length) return [];
     const build = (modules: IPlanModule[]): TreeDataNode[] =>
@@ -100,6 +107,23 @@ const Index: FC<PlanModuleProps> = ({
       }));
     return build(planModules);
   }, [planModules]);
+
+  /** 统计：模块数 + 用例数 */
+  const stats = useMemo(() => {
+    let moduleCount = 0;
+    let caseCount = 0;
+    const walk = (nodes: TreeDataNode[]) => {
+      nodes.forEach((node) => {
+        if (!node.isRoot) {
+          moduleCount++;
+          caseCount += node.data.case_nums ?? 0;
+        }
+        if (node.children) walk(node.children as TreeDataNode[]);
+      });
+    };
+    walk(treeData);
+    return { moduleCount, caseCount };
+  }, [treeData]);
 
   /** 首次加载时初始化展开 / 选中根节点 */
   useEffect(() => {
@@ -266,20 +290,51 @@ const Index: FC<PlanModuleProps> = ({
       const isHovered = hoveredKey === node.key;
       const caseCount = node.data.case_nums ?? 0;
 
-      // hover 切换:admin + hovered 渲染 +,否则渲染数字(0 也展示,弱化)
-      const showAddButton = isAdmin && isHovered;
+      const showAddButton = isAdmin && isHovered && !node.isRoot;
+
       const content = (
         <div
           style={{
+            position: 'relative',
             display: 'flex',
             alignItems: 'center',
+            justifyContent: 'space-between',
+            width: '100%',
             minWidth: 0,
-            color: isActive ? token.colorPrimary : undefined,
+            padding: '4px 8px',
+            borderRadius: 6,
+            background: isActive
+              ? token.colorPrimaryBg
+              : isHovered
+              ? token.colorBgTextHover
+              : 'transparent',
+            transition: 'background 0.15s ease',
+            cursor: 'pointer',
           }}
           onMouseEnter={() => setHoveredKey(node.key)}
           onMouseLeave={() => setHoveredKey(null)}
         >
-          <ModuleName name={node.data.title} isActive={isActive} />
+          {/* 选中态：左侧 3px 纯色条 */}
+          {isActive && (
+            <span
+              style={{
+                position: 'absolute',
+                left: 0,
+                top: 6,
+                bottom: 6,
+                width: 3,
+                borderRadius: 2,
+                background: token.colorPrimary,
+              }}
+            />
+          )}
+
+          <ModuleName
+            name={node.data.title}
+            isActive={isActive}
+            style={{ paddingLeft: isActive ? 6 : 0 }}
+          />
+
           {showAddButton ? (
             <PlusOutlined
               style={{
@@ -301,12 +356,23 @@ const Index: FC<PlanModuleProps> = ({
               style={{
                 marginLeft: 'auto',
                 paddingLeft: 8,
-                fontSize: 12,
-                color: token.colorTextTertiary,
+                fontSize: 11,
+                fontWeight: 600,
+                color:
+                  caseCount === 0
+                    ? token.colorTextQuaternary
+                    : token.colorTextTertiary,
                 lineHeight: '22px',
                 flexShrink: 0,
-                opacity: caseCount === 0 ? 0.45 : 1,
-                fontWeight: isActive ? 600 : undefined,
+                fontVariantNumeric: 'tabular-nums',
+                minWidth: 18,
+                height: 16,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: 4,
+                background:
+                  caseCount === 0 ? 'transparent' : `${token.colorPrimary}14`,
               }}
             >
               {caseCount}
@@ -315,12 +381,11 @@ const Index: FC<PlanModuleProps> = ({
         </div>
       );
 
-      if (!isAdmin) return content;
+      if (!isAdmin || node.isRoot) return content;
       return (
         <Dropdown
           menu={{ items: buildMenuItems(node) }}
           trigger={['contextMenu']}
-          disabled={node.isRoot}
         >
           {content}
         </Dropdown>
@@ -330,7 +395,10 @@ const Index: FC<PlanModuleProps> = ({
       activeKey,
       hoveredKey,
       token.colorPrimary,
+      token.colorPrimaryBg,
+      token.colorBgTextHover,
       token.colorTextTertiary,
+      token.colorTextQuaternary,
       isAdmin,
       openAddModal,
       buildMenuItems,
@@ -369,55 +437,94 @@ const Index: FC<PlanModuleProps> = ({
         overflow: 'hidden',
       }}
     >
-      <ProCard
-        title="计划目录"
-        headerBordered
-        variant="outlined"
+      {/* 头部 */}
+      <div
         style={{
-          flex: 1,
-          height: '100%',
+          padding: '16px 12px 10px',
           display: 'flex',
           flexDirection: 'column',
-        }}
-        styles={{
-          // body 注入:flex 布局 + 横向 padding 0 + 把 selected bg 作为 CSS 变量下沉
-          // (用 styles.body 而非 bodyStyle,后者在 antd v5 ProCard 上会泄漏到 DOM 触发 warning)
-          body: {
-            flex: 1,
-            overflow: 'auto',
-            padding: 0,
-            ['--plan-module-selected-bg' as any]: token.colorPrimaryBg,
-          },
+          gap: 8,
         }}
       >
-        <Tree
-          {...treeProps}
-          treeData={treeData}
-          titleRender={(nodeData) => renderNodeTitle(nodeData as TreeDataNode)}
-          className={TREE_CLASS}
-        />
-        {isAdmin && (
-          <ModuleEditModal
-            title={modalState.mode === 'add' ? '新增目录' : '编辑目录'}
-            open={modalState.visible}
-            onFinish={handleModalFinish}
-            onCancel={resetModal}
-            initialValues={{ title: modalState.initialTitle }}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 8,
+          }}
+        >
+          <span
+            style={{
+              fontSize: 15,
+              fontWeight: 600,
+              letterSpacing: 0.2,
+              color: token.colorText,
+            }}
+          >
+            计划目录
+          </span>
+          {isAdmin && (
+            <Tooltip title="新建根目录">
+              <Button
+                type="primary"
+                size="small"
+                icon={<PlusOutlined />}
+                onClick={() => {
+                  const root = treeData[0];
+                  if (root) openAddModal(root.key as number);
+                }}
+              >
+                新建
+              </Button>
+            </Tooltip>
+          )}
+        </div>
+        <span
+          style={{
+            fontSize: 12,
+            color: token.colorTextTertiary,
+            fontWeight: 500,
+          }}
+        >
+          共 {stats.moduleCount} 个目录 · {stats.caseCount} 个用例
+        </span>
+      </div>
+
+      {/* 树列表 */}
+      <div
+        style={{
+          flex: 1,
+          overflow: 'auto',
+          padding: '0 8px 12px',
+        }}
+      >
+        {treeData.length > 0 ? (
+          <Tree
+            {...treeProps}
+            treeData={treeData}
+            titleRender={(nodeData) =>
+              renderNodeTitle(nodeData as TreeDataNode)
+            }
+          />
+        ) : (
+          <Empty
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+            description="暂无目录"
+            style={{ marginTop: 40 }}
           />
         )}
-        <style>{`
-          .${TREE_CLASS} .ant-tree-treenode-selected {
-            background: var(--plan-module-selected-bg, #e6f4ff);
-            border-radius: 4px;
-          }
-          .${TREE_CLASS} .ant-tree-node-content-wrapper {
-            min-height: 22px;
-            line-height: 22px;
-            overflow: hidden;
-            background: transparent !important;
-          }
-        `}</style>
-      </ProCard>
+      </div>
+
+      {isAdmin && (
+        <ModuleEditModal
+          title={modalState.mode === 'add' ? '新增目录' : '编辑目录'}
+          open={modalState.visible}
+          onFinish={handleModalFinish}
+          onCancel={resetModal}
+          initialValues={{ title: modalState.initialTitle }}
+        />
+      )}
     </div>
   );
 };
@@ -425,29 +532,31 @@ const Index: FC<PlanModuleProps> = ({
 /**
  * 目录名称:超长省略 + Tooltip
  */
-const ModuleName: FC<{ name: string; isActive?: boolean }> = memo(
-  ({ name, isActive = false }) => {
-    const MAX_LEN = 16;
-    const truncated =
-      name.length > MAX_LEN ? `${name.slice(0, MAX_LEN)}…` : name;
-    const needTooltip = name.length > MAX_LEN;
-    const textStyle: React.CSSProperties = {
-      flex: 1,
-      fontSize: 14,
-      fontWeight: isActive ? 600 : 400,
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      whiteSpace: 'nowrap',
-    };
-    return needTooltip ? (
-      <Tooltip title={name} mouseEnterDelay={0.3}>
-        <span style={textStyle}>{truncated}</span>
-      </Tooltip>
-    ) : (
+const ModuleName: FC<{
+  name: string;
+  isActive?: boolean;
+  style?: React.CSSProperties;
+}> = memo(({ name, isActive = false, style }) => {
+  const MAX_LEN = 16;
+  const truncated = name.length > MAX_LEN ? `${name.slice(0, MAX_LEN)}…` : name;
+  const needTooltip = name.length > MAX_LEN;
+  const textStyle: React.CSSProperties = {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: isActive ? 600 : 400,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+    ...style,
+  };
+  return needTooltip ? (
+    <Tooltip title={name} mouseEnterDelay={0.3}>
       <span style={textStyle}>{truncated}</span>
-    );
-  },
-);
+    </Tooltip>
+  ) : (
+    <span style={textStyle}>{truncated}</span>
+  );
+});
 ModuleName.displayName = 'ModuleName';
 
 export default Index;
