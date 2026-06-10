@@ -14,6 +14,7 @@ import {
 } from '@/components/LeftComponents/func';
 import ModuleModal from '@/components/LeftComponents/ModuleModal';
 import { useAccess } from '@@/exports';
+import { PlusOutlined } from '@ant-design/icons';
 import {
   Button,
   Dropdown,
@@ -473,67 +474,80 @@ const ModuleTree: FC<IProps> = ({
             minHeight: 0,
           }}
         >
-          {/* 头部：标题 + 统计 + 新建按钮 */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 8,
-              paddingBottom: 8,
-              borderBottom: `1px solid ${token.colorBorderSecondary}`,
-            }}
-          >
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                }}
-              >
-                <Text strong style={{ fontSize: 14 }}>
-                  模块目录
-                </Text>
-                <span
-                  style={{
-                    fontSize: 11,
-                    color: token.colorTextTertiary,
-                    fontWeight: 500,
-                  }}
-                >
-                  {totalCount} 模块 · {folderCount} 文件夹
-                </span>
-              </div>
-              {selectedTitle && (
-                <Text
-                  style={{
-                    fontSize: 12,
-                    color: token.colorTextSecondary,
-                    lineHeight: 1.4,
-                  }}
-                >
-                  已选 · {selectedTitle}
-                </Text>
+          {/* 头部：标题 + 按钮 + 统计/已选 */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {/* 标题行 */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 8,
+              }}
+            >
+              <Text strong style={{ fontSize: 15, letterSpacing: 0.2 }}>
+                模块目录
+              </Text>
+              {isAdmin && (
+                <Tooltip title="新建根模块">
+                  <Button
+                    type="primary"
+                    size="small"
+                    icon={<PlusOutlined />}
+                    onClick={() => {
+                      setHandleModule(Handle.AddRoot);
+                      setCurrentModule(null);
+                      setOpen(true);
+                    }}
+                    style={{ flexShrink: 0 }}
+                  >
+                    新建
+                  </Button>
+                </Tooltip>
               )}
             </div>
 
-            {isAdmin && (
-              <Tooltip title="新建根模块" mouseEnterDelay={0.4}>
-                <Button
-                  type="primary"
-                  size="small"
-                  onClick={() => {
-                    setHandleModule(Handle.AddRoot);
-                    setCurrentModule(null);
-                    setOpen(true);
-                  }}
-                  style={{ flexShrink: 0 }}
-                >
-                  新建
-                </Button>
-              </Tooltip>
-            )}
+            {/* 统计/已选行 */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                flexWrap: 'wrap',
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 12,
+                  color: token.colorTextTertiary,
+                  fontWeight: 500,
+                }}
+              >
+                共 {totalCount} 个模块 · {folderCount} 个文件夹
+              </span>
+              {selectedTitle && (
+                <>
+                  <span style={{ color: token.colorBorder }}>·</span>
+                  <span
+                    style={{
+                      fontSize: 12,
+                      color: token.colorPrimary,
+                      fontWeight: 500,
+                      background: token.colorPrimaryBg,
+                      padding: '1px 8px',
+                      borderRadius: 4,
+                      maxWidth: 160,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                    title={selectedTitle}
+                  >
+                    {selectedTitle}
+                  </span>
+                </>
+              )}
+            </div>
           </div>
 
           {/* 搜索框 */}
