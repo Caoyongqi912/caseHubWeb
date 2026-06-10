@@ -440,7 +440,8 @@ const Index: FC<PlanCaseListProps> = ({
   /**
    * 处理卡片折叠状态变更
    * 更新 collapsedCaseIds 集合
-   * 注意：不在此处调用 resetAfterIndex，由 useEffect 统一处理
+   * 注意：不在此处调用 resetAfterIndex，由下方的 useLayoutEffect 统一处理，
+   * 详见折叠状态 effect 处的注释（重测行高的同步/强制策略说明）。
    */
   const handleCollapsedChange = useCallback(
     (caseId: number | undefined, collapsed: boolean) => {
@@ -464,7 +465,7 @@ const Index: FC<PlanCaseListProps> = ({
    * collapsed=false → 清空 collapsedCaseIds
    *
    * 注意：仅更新状态，不在此处调用 resetAfterIndex。
-   * 虚拟列表的重测量由下方的 useEffect 统一处理（rerender-move-effect-to-event），
+   * 虚拟列表的重测量由下方的 useLayoutEffect 统一处理（rerender-move-effect-to-event），
    * 确保 resetAfterIndex 在 collapsedCaseIds 已落盘后才执行，
    * 避免 itemSize 回调读到旧 Set 导致高度计算错误。
    */
@@ -489,16 +490,32 @@ const Index: FC<PlanCaseListProps> = ({
   /**
    * 折叠状态变更后，通知虚拟列表重新计算行高
    *
-   * 关键：第二个参数传 false 而非 true，避免强制读 DOM 高度。
-   * 100+ 行时强制重测 DOM 是滚动卡顿的主要来源；
-   * 我们的高度公式是确定的（基于 collapsedCaseIds + case_sub_steps 长度），
-   * 不需要重新读 DOM 就能算出新高度。
+   * 关键修复：useLayoutEffect + resetAfterIndex(0, true)
+   * --------------------------------------------------------
+   * 历史问题：原来用 useEffect + rAF + resetAfterIndex(0, false) 时，'一键折叠 /
+   * 展开'会出现偶发的'卡片之间巨大空白'，需要轻微滚动才能恢复。
+   *
+   * 根因：react-window 的 resetAfterIndex(index, false) 只把内部 size 缓存标记
+   * 为 stale（lastMeasuredIndex = index - 1）但【不】调用 forceUpdate。
+   * 下次 render 才会用最新 itemSize 回调重测行高。问题是'下次 render'何时来？
+   *   - 折叠/展开时，ProCard body 走 display:none / StepTable 条件卸载，
+   *     DOM 在 commit 阶段同步完成，但 React 此时已经 commit 完毕；
+   *   - useEffect + rAF 跑在 paint 之后，浏览器可能先画一帧'旧高度'快照，
+   *     用户看到的就是大空白；
+   *   - 直到 ResizeObserver / scroll 事件触发新 render，缓存才被重算。
+   *
+   * 修复策略：
+   *   1) useLayoutEffect：在 DOM 更新后、浏览器绘制前同步执行，
+   *      确保'清缓存 + 触发重测'先于用户视觉感知；
+   *   2) resetAfterIndex(0, true)：forceUpdate 强制走一次 render，
+   *      让 react-window 用最新 itemSize 重算所有 item 的 offset。
+   *
+   * 性能说明：true 模式会触发一次 forceUpdate，对 100+ 行的滚动场景是负担，
+   * 但折叠/展开是【低频】操作（一次最多触发两次），可以放心使用。
+   * 滚动场景依旧走 useElementHeight + 容器高度变化触发常规重渲染。
    */
-  useEffect(() => {
-    const rafId = requestAnimationFrame(() => {
-      virtualListRef.current?.resetAfterIndex(0, false);
-    });
-    return () => cancelAnimationFrame(rafId);
+  useLayoutEffect(() => {
+    virtualListRef.current?.resetAfterIndex(0, true);
   }, [collapsedCaseIds]);
 
   /**
@@ -724,13 +741,14 @@ const Index: FC<PlanCaseListProps> = ({
   );
 
   /**
-   * 列表数据变化时让虚拟列表重新测量
-   * 第二个参数 false：仅重算后续 offset，不强制重新读 DOM 高度。
-   * 我们的高度公式是确定的（基于 collapsedCaseIds + case_sub_steps 长度），
-   * 强制重测在 100+ 行时是主要卡顿来源。
+   * 列表数据变化时（筛选 / 刷新）让虚拟列表重新测量
+   *
+   * 同步用 useLayoutEffect + resetAfterIndex(0, true)，与折叠 effect 一致。
+   * 筛选/刷新同样是低频操作，true 模式下的 forceUpdate 成本可接受；
+   * 这样能避免出现'切换筛选后偶现行高错乱'的同类问题。
    */
-  useEffect(() => {
-    virtualListRef.current?.resetAfterIndex(0, false);
+  useLayoutEffect(() => {
+    virtualListRef.current?.resetAfterIndex(0, true);
   }, [filteredList]);
 
   /**

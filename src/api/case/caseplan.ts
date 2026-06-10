@@ -509,54 +509,119 @@ export const commitPlanImportCase = async (data: {
     },
   );
 };
+
 /**
- * 单轮测试统计（一轮 / 二轮），用于模块目录节点的 per-round Progress 展示
- * 对应后端 GET /api/hub/plan/modules/stats 响应中的 first / second 字段
+ * 单轮用例执行统计
+ *
+ * 对应后端 PlanCaseMapper.get_overview 中 first_round / second_round 字段。
+ * 字段与状态枚举：
+ *   - passed     一轮/二轮执行通过数（status = 1）
+ *   - failed     执行失败数（status = 2）
+ *   - not_executed  未执行数（status ≠ 1/2, 含 0/3/4）
+ *   - completion_rate  完成率 = (passed + failed) / case_total, 单位 %
  */
-export interface RoundStats {
+export interface IPlanOverviewRound {
   passed: number;
   failed: number;
-  pending: number;
-  pass_rate: number;
-  execution_rate: number;
+  not_executed: number;
+  completion_rate: number;
 }
 
 /**
- * 模块用例状态分布统计
+ * 计划概览统计
  *
- * 对应后端 GET /api/hub/plan/modules/stats
+ * 对应后端 GET /api/hub/plan/overview
  *
- * 字段说明：
- * - 旧字段（total / passed / failed / ...）保留以兼容历史数据，对应旧版主状态维度
- * - first / second 为一轮 / 二轮测试的 per-round 统计，可选，后端支持后回填
- *   旧版本接口不返回时，前端按 0 降级展示
+ * 字段：
+ *   - case_total         用例总数
+ *   - first_round        一轮执行统计
+ *   - second_round       二轮执行统计
+ *   - bug_total          缺陷总数（按有 bug_url 的关联记录数去重）
+ *   - bug_urls           缺陷链接列表（用于「最近缺陷」面板）
+ *   - requirement_total         关联需求总数
+ *   - requirement_completed     已完成需求数（process == 4）
+ *   - requirement_completion_rate   需求完成率 (%)
  */
-export interface ModuleStats {
-  total: number;
-  passed: number;
-  failed: number;
-  pending: number;
-  blocked: number;
-  skipped: number;
-  pass_rate: number;
-  execution_rate: number;
-  /** 一轮测试统计（可选） */
-  first?: RoundStats;
-  /** 二轮测试统计（可选） */
-  second?: RoundStats;
+/**
+ * 单条缺陷关联：哪个用例的第几个步骤挂的 bug
+ * 对应后端 PlanCaseMapper.get_overview 中 bug_list 数组元素
+ */
+export interface IPlanOverviewBug {
+  /** 关联的用例名（来自 TestCase.case_name） */
+  case_name: string;
+  /** 步骤 id（case_sub_step.id） */
+  step_id: number;
+  /** 步骤顺序（1-based，由 case_sub_step.order 推导） */
+  step_order: number;
+  /** 缺陷链接（http/https URL） */
+  bug_url: string;
+}
+
+export interface IPlanOverview {
+  plan_id: number;
+  case_total: number;
+  first_round: IPlanOverviewRound;
+  second_round: IPlanOverviewRound;
+  bug_total: number;
+  /**
+   * 缺陷关联列表（后端已按 step_result.id desc 去重）
+   * 用途：「最近缺陷」面板展示 「用例名 · 步骤n · 链接」
+   */
+  bug_list: IPlanOverviewBug[];
+  /**
+   * 兼容旧字段：纯 url 列表（去重后），新代码请优先读 bug_list
+   * 保留以免历史引用爆掉
+   */
+  bug_urls: string[];
+  requirement_total: number;
+  requirement_completed: number;
+  requirement_completion_rate: number;
 }
 
 /**
- * 批量获取计划下各模块的用例状态分布
- * 用于替换对每个模块单独调用 queryPlanCases 的 N+1 模式
+ * 计划概览统计
+ * 对应后端 GET /api/hub/plan/overview
  * @param plan_id - 测试计划 ID
  */
-export const getPlanModulesStats = async (plan_id: number) => {
-  return request<IResponse<Record<string, ModuleStats>>>(
-    `/api/hub/plan/modules/stats`,
-    {
-      method: 'GET',
-      params: { plan_id },
-    },
-  );
+export const getPlanOverview = async (plan_id: number) => {
+  return request<IResponse<IPlanOverview>>(`/api/hub/plan/overview`, {
+    method: 'GET',
+    params: { plan_id },
+  });
+};
+
+/**
+ * 计划详细统计
+ *
+ * 对应后端 GET /api/hub/plan/statistics
+ *
+ * 字段：
+ *   - case_by_level        按用例等级（P0/P1/P2/P3）分组的用例数
+ *   - case_by_first_status 一轮按状态标签分组的用例数
+ *   - case_by_second_status 二轮按状态标签分组的用例数
+ *   - daily_trend          每日执行趋势（当前后端返回空，预留给后续接入）
+ */
+export interface IPlanStatistics {
+  plan_id: number;
+  case_by_level: Record<string, number>;
+  case_by_first_status: Record<string, number>;
+  case_by_second_status: Record<string, number>;
+  daily_trend: Array<{
+    date: string;
+    executed: number;
+    passed: number;
+    failed: number;
+  }>;
+}
+
+/**
+ * 计划详细统计
+ * 对应后端 GET /api/hub/plan/statistics
+ * @param plan_id - 测试计划 ID
+ */
+export const getPlanStatistics = async (plan_id: number) => {
+  return request<IResponse<IPlanStatistics>>(`/api/hub/plan/statistics`, {
+    method: 'GET',
+    params: { plan_id },
+  });
 };

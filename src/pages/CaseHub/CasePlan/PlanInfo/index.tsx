@@ -6,7 +6,6 @@ import { history, useSearchParams } from 'umi';
 import PlanCases from './PlanCases';
 import PlanMindMap from './PlanMindMap';
 import PlanOverview from './PlanOverview';
-import PlanReuirements from './PlanReuirements';
 
 /** Tab 键名常量,集中维护便于 URL 同步校验 */
 const TAB_KEYS = {
@@ -65,15 +64,16 @@ const Index = () => {
     },
     {
       key: TAB_KEYS.MIND,
-      label: '脑图',
+      label: '脑图 (Beta)',
       // PlanMindMap 自管理 planInfo / planModules 加载，脑图节点变更后会回调刷新模块树
       children: <PlanMindMap planId={planId} />,
     },
-    {
-      key: TAB_KEYS.REQUIREMENT,
-      label: '需求',
-      children: <PlanReuirements planId={planId} />,
-    },
+    // {
+    //   key: TAB_KEYS.REQUIREMENT, // 需求 Tab 隐藏，暂不展示
+    //   label: '需求',
+    //   hidden: true,
+    //   children: <PlanReuirements planId={planId} />,
+    // },
     {
       key: TAB_KEYS.OVERVIEW,
       label: '概览',

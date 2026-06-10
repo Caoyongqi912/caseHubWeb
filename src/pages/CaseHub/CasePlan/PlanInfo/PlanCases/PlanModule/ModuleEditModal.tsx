@@ -40,7 +40,7 @@ const ModuleEditModal: FC<ModuleEditModalProps> = ({
       title={title}
       open={open}
       onCancel={onCancel}
-      destroyOnClose
+      destroyOnHidden
       okText="保存"
       cancelText="取消"
       onOk={async () => {

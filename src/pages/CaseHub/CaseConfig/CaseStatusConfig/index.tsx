@@ -664,7 +664,7 @@ const CaseStatusConfig: FC<CaseStatusConfigProps> = ({
         width={560}
         layout="vertical"
         modalProps={{
-          destroyOnClose: true,
+          destroyOnHidden: true,
           okText: isEdit ? '保存' : '创建',
           cancelText: '取消',
         }}
