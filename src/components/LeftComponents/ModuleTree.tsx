@@ -264,11 +264,11 @@ const ModuleTree: FC<IProps> = ({
           minWidth: 0,
           padding: '4px 8px',
           borderRadius: 6,
-          background: isSelected
-            ? token.colorPrimaryBg
-            : isHovered
-            ? token.colorBgTextHover
-            : 'transparent',
+          // background: isSelected
+          //   ? token.colorPrimaryBg
+          //   : isHovered
+          //   ? token.colorBgTextHover
+          //   : 'transparent',
           transition: 'background 0.15s ease',
           cursor: 'pointer',
         }}
@@ -337,7 +337,6 @@ const ModuleTree: FC<IProps> = ({
 
           {isAdmin && !isUngrouped && (
             <span
-              className="module-tree-row-actions"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -603,15 +602,20 @@ const ModuleTree: FC<IProps> = ({
                 showLine={{ showLeafIcon: false }}
                 showIcon={false}
                 blockNode
-                draggable={{
-                  icon: false,
-                  nodeDraggable: (node) => !isUngroupedModule(String(node.key)),
-                }}
+                draggable={
+                  isAdmin
+                    ? {
+                        icon: false,
+                        nodeDraggable: (node) =>
+                          !isUngroupedModule(String(node.key)),
+                      }
+                    : false
+                }
                 onExpand={(keys) => {
                   setExpandedKeys(keys);
                   setAutoExpandParent(false);
                 }}
-                onDrop={onDrop}
+                onDrop={isAdmin ? onDrop : undefined}
                 expandedKeys={expandedKeys}
                 autoExpandParent={autoExpandParent}
                 selectedKeys={selectedKeys}
