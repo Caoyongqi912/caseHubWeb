@@ -6,6 +6,7 @@ import {
   removeModule,
   updateModule,
 } from '@/api/base';
+import { useGlassStyles } from '@/components/Glass';
 import EmptyModule from '@/components/LeftComponents/EmptyModule';
 import {
   getLocalStorageModule,
@@ -14,7 +15,7 @@ import {
 } from '@/components/LeftComponents/func';
 import ModuleModal from '@/components/LeftComponents/ModuleModal';
 import { useAccess } from '@@/exports';
-import { PlusOutlined } from '@ant-design/icons';
+import { ProCard } from '@ant-design/pro-components';
 import {
   Button,
   Dropdown,
@@ -22,7 +23,7 @@ import {
   MenuProps,
   message,
   Modal,
-  theme,
+  Space,
   Tooltip,
   Tree,
   TreeProps,
@@ -32,17 +33,19 @@ import React, { FC, useEffect, useMemo, useState } from 'react';
 
 const { Search } = Input;
 const { Text } = Typography;
-const { useToken } = theme;
 
 /* ============================================================
- * 常量
+ * 常量区
  * ============================================================ */
 
+/** 未分组模块的 key 前缀（后端约定的占位模块标识） */
 const UNGROUPED_MODULE_PREFIX = 'ungrouped_module_';
 
+/** 是否为未分组模块（不可编辑、不可拖入） */
 const isUngroupedModule = (key: string | number): boolean =>
   String(key).startsWith(UNGROUPED_MODULE_PREFIX);
 
+/** 模块操作类型枚举 */
 type HandleAction = { title: string; key: number };
 const Handle: Record<string, HandleAction> = {
   AddRoot: { title: '新增模块', key: 1 },
@@ -52,15 +55,32 @@ const Handle: Record<string, HandleAction> = {
 };
 
 /* ============================================================
- * 计数徽标
+ * 组件 Props
+ * ============================================================ */
+
+interface IProps {
+  currentProjectId?: number;
+  moduleType: number;
+  onModuleChange: (moduleId: number | undefined) => void;
+  /**
+   * 外部刷新触发器
+   * 通常由父级传入一个递增的 number，每次变化时重新拉取目录
+   * 用于在跨组件的写操作（用例上传/导入等）完成后联动刷新本目录
+   * 不传则只在 currentProjectId/moduleType 变化时刷新（兼容历史用法）
+   */
+  reloadKey?: number;
+}
+
+/* ============================================================
+ * 计数徽标：纯数字 + tabular-nums，避免位数变化时抖动
  * ============================================================ */
 
 const CountBadge: FC<{ value: number; color: string }> = ({ value, color }) => (
   <span
     style={{
-      minWidth: 18,
-      height: 16,
-      padding: '0 5px',
+      minWidth: 20,
+      height: 18,
+      padding: '0 6px',
       display: 'inline-flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -68,6 +88,8 @@ const CountBadge: FC<{ value: number; color: string }> = ({ value, color }) => (
       fontSize: 11,
       fontWeight: 600,
       fontVariantNumeric: 'tabular-nums',
+      fontFeatureSettings: '"tnum"',
+      letterSpacing: 0.2,
       color,
       background: `${color}14`,
     }}
@@ -77,7 +99,7 @@ const CountBadge: FC<{ value: number; color: string }> = ({ value, color }) => (
 );
 
 /* ============================================================
- * 工具
+ * 工具：递归扁平化树节点
  * ============================================================ */
 
 const flattenModules = (list: IModule[]): IModule[] => {
@@ -93,18 +115,7 @@ const flattenModules = (list: IModule[]): IModule[] => {
 };
 
 /* ============================================================
- * Props
- * ============================================================ */
-
-interface IProps {
-  currentProjectId?: number;
-  moduleType: number;
-  onModuleChange: (moduleId: number | undefined) => void;
-  reloadKey?: number;
-}
-
-/* ============================================================
- * ModuleTree
+ * 主组件：ModuleTree
  * ============================================================ */
 
 const ModuleTree: FC<IProps> = ({
@@ -114,7 +125,7 @@ const ModuleTree: FC<IProps> = ({
   reloadKey,
 }) => {
   const { isAdmin } = useAccess();
-  const { token } = useToken();
+  const { colors } = useGlassStyles();
 
   // -------- 状态 --------
   const [reload, setReload] = useState(0);
@@ -128,9 +139,122 @@ const ModuleTree: FC<IProps> = ({
   const [selectedKeys, setSelectedKeys] = useState<React.Key[]>([]);
   const [autoExpandParent, setAutoExpandParent] = useState(true);
   const [searchValue, setSearchValue] = useState('');
-  const [hoveredKey, setHoveredKey] = useState<React.Key | null>(null);
 
-  // -------- 拉取数据 --------
+  // -------- 主题感知 --------
+  // 派生 isDark：与 useGlassStyles 内部的判定方式保持一致
+  const isDark = useMemo(
+    () => colors.bgContainer === '#141414' || colors.bgLayout === '#000',
+    [colors.bgContainer, colors.bgLayout],
+  );
+
+  const styles = useMemo(
+    () => ({
+      // —— 头部卡 ——
+      headerCard: {
+        position: 'relative' as const,
+        borderRadius: 12,
+        border: `1px solid ${colors.border}`,
+        background: isDark
+          ? `linear-gradient(140deg, ${colors.bgContainer} 0%, ${colors.primary}10 60%, ${colors.bgContainer} 100%)`
+          : `linear-gradient(140deg, ${colors.bgContainer} 0%, ${colors.primary}06 60%, ${colors.bgContainer} 100%)`,
+        overflow: 'hidden' as const,
+      },
+      headerTopRow: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        marginBottom: 12,
+        gap: 8,
+      },
+      titleGroup: {
+        display: 'flex',
+        flexDirection: 'column' as const,
+        gap: 2,
+        minWidth: 0,
+        flex: 1,
+      },
+      titleText: {
+        fontSize: 14,
+        fontWeight: 600,
+        letterSpacing: 0.2,
+        color: colors.text,
+        lineHeight: 1.3,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+      },
+      titleHint: {
+        fontSize: 11,
+        color: colors.textTertiary,
+        fontWeight: 500,
+        letterSpacing: 0.2,
+        lineHeight: 1.4,
+      },
+      newButton: {
+        height: 26,
+        padding: '0 10px',
+        fontSize: 12,
+        fontWeight: 500,
+        borderRadius: 6,
+        background: colors.gradientPrimary,
+        border: 'none',
+        boxShadow: `0 2px 8px ${colors.primaryGlow}`,
+        color: '#fff',
+        flexShrink: 0,
+        transition: 'all 0.18s cubic-bezier(0.4, 0, 0.2, 1)',
+      },
+      // —— 搜索容器（带 1px 渐变描边）——
+      searchWrap: {
+        position: 'relative' as const,
+        borderRadius: 8,
+        padding: 1,
+        background: isDark
+          ? `linear-gradient(135deg, ${colors.border} 0%, ${colors.primary}30 100%)`
+          : `linear-gradient(135deg, ${colors.border} 0%, ${colors.primary}22 100%)`,
+        transition: 'background 0.2s ease',
+      },
+      // —— 树容器 ——
+      treeCard: {
+        borderRadius: 12,
+        border: `1px solid ${colors.border}`,
+        background: colors.bgContainer,
+        position: 'relative' as const,
+      },
+      // —— 底部状态栏 ——
+      footer: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        padding: '7px 12px',
+        borderRadius: 8,
+        background: colors.bgElevated,
+        border: `1px solid ${colors.borderLight}`,
+        fontSize: 11,
+      },
+      footerStat: {
+        display: 'inline-flex',
+        alignItems: 'baseline',
+        gap: 4,
+        color: colors.textSecondary,
+        fontWeight: 500,
+      },
+      footerValue: {
+        fontVariantNumeric: 'tabular-nums',
+        fontFeatureSettings: '"tnum"',
+        fontWeight: 700,
+        color: colors.text,
+        fontSize: 12,
+      },
+      footerDivider: {
+        width: 1,
+        height: 10,
+        background: colors.border,
+      },
+    }),
+    [colors, isDark],
+  );
+
+  // -------- 副作用：拉取模块树 --------
   useEffect(() => {
     if (!currentProjectId) {
       setModules([]);
@@ -155,47 +279,60 @@ const ModuleTree: FC<IProps> = ({
         }
       },
     );
+    // 依赖：项目 id、模块类型、组件内 reload 计数、父级传入的 reloadKey
+    // reloadKey 用于响应跨组件的写操作（如上传/导入用例）触发的目录刷新
   }, [currentProjectId, moduleType, reload, reloadKey]);
 
+  /** 深度判断指定 id 是否存在于树中（用于恢复 localStorage 中的选中项） */
   const checkModuleExists = (list: IModule[], id: number): boolean =>
     list.some(
       (m) => m.key === id || (m.children && checkModuleExists(m.children, id)),
     );
 
-  // -------- 派生数据 --------
+  // -------- 构造 Antd Tree 所需的数据结构 --------
   const treeData = useMemo(() => {
-    const build = (data: IModule[]): any[] =>
+    const buildTree = (data: IModule[]): any[] =>
       data.map((item) => ({
         title: item.title,
         key: item.key,
         count: (item as any).count,
-        children: item.children ? build(item.children) : undefined,
+        children: item.children ? buildTree(item.children) : undefined,
       }));
-    return build(modules);
+    return buildTree(modules);
   }, [modules]);
 
+  // -------- 统计 / 派生数据 --------
   const flatModules = useMemo(() => flattenModules(modules), [modules]);
   const totalCount = modules.length;
   const folderCount = modules.filter((m) => m.children?.length).length;
 
+  // 当前选中的模块标题
   const selectedTitle = useMemo(() => {
     const found = flatModules.find((m) => selectedKeys.includes(m.key));
     return found?.title;
   }, [flatModules, selectedKeys]);
 
+  // 搜索时是否有匹配
   const hasNoSearchResult = useMemo(() => {
     if (!searchValue) return false;
     return !flatModules.some((m) => String(m.title).includes(searchValue));
   }, [searchValue, flatModules]);
 
-  // -------- 业务回调 --------
+  /* ============================================================
+   * 业务回调区
+   * ============================================================ */
 
+  /**
+   * 拖拽排序结束处理
+   * 不允许将节点拖拽到未分组模块上
+   */
   const onDrop: TreeProps['onDrop'] = async (info: any) => {
     const targetKey = info.node.key;
     if (isUngroupedModule(targetKey)) {
       message.warning('无法将模块移动到未分组数据中');
       return;
     }
+
     const { code } = await dropModule({
       id: info.dragNode.key,
       targetId: info.dropToGap ? null : info.node.key,
@@ -203,11 +340,13 @@ const ModuleTree: FC<IProps> = ({
     if (code === 0) setReload((r) => r + 1);
   };
 
+  /** 删除模块（带二次确认） */
   const handleDelete = (node: IModule) => {
     if (isUngroupedModule(node.key)) {
       message.warning('未分组数据模块无法删除');
       return;
     }
+
     Modal.confirm({
       title: '确认删除',
       content: '删除后该模块下的所有内容将无法恢复，确定要继续吗？',
@@ -225,8 +364,14 @@ const ModuleTree: FC<IProps> = ({
     });
   };
 
+  /**
+   * 生成节点下拉菜单
+   * 未分组模块不显示编辑和删除菜单
+   */
   const menuItems = (node: IModule): MenuProps['items'] => {
-    if (isUngroupedModule(String(node.key))) return [];
+    const nodeKey = String(node.key);
+    if (isUngroupedModule(nodeKey)) return [];
+
     return [
       {
         key: 'edit',
@@ -240,17 +385,21 @@ const ModuleTree: FC<IProps> = ({
       { type: 'divider' as const },
       {
         key: 'delete',
-        label: <span style={{ color: token.colorError }}>删除</span>,
+        label: <span style={{ color: colors.error }}>删除</span>,
         onClick: () => handleDelete(node),
       },
     ];
   };
 
+  /**
+   * 自定义树节点渲染
+   * 纯文字驱动：依靠 weight / 颜色 / 计数 / 选中态左侧条 区分节点类型
+   */
   const TreeTitleRender = (node: any) => {
     const nodeKey = String(node.key);
     const isUngrouped = isUngroupedModule(nodeKey);
     const isSelected = selectedKeys.includes(node.key);
-    const isHovered = hoveredKey === node.key;
+    const isHovered = currentModule?.key === node.key;
     const isLeaf = !node.children;
 
     return (
@@ -263,36 +412,39 @@ const ModuleTree: FC<IProps> = ({
           justifyContent: 'space-between',
           width: '100%',
           minWidth: 0,
-          padding: '4px 8px',
+          padding: '4px 8px 4px 10px',
+          margin: '1px 0',
           borderRadius: 6,
-          // background: isSelected
-          //   ? token.colorPrimaryBg
-          //   : isHovered
-          //   ? token.colorBgTextHover
-          //   : 'transparent',
-          transition: 'background 0.15s ease',
+          background: isSelected
+            ? isDark
+              ? `linear-gradient(90deg, ${colors.primary}24 0%, ${colors.primary}0a 100%)`
+              : `linear-gradient(90deg, ${colors.primary}18 0%, ${colors.primary}04 100%)`
+            : isHovered
+            ? isDark
+              ? 'rgba(255,255,255,0.04)'
+              : 'rgba(0,0,0,0.03)'
+            : 'transparent',
+          transition: 'background 0.18s ease',
           cursor: 'pointer',
         }}
         onClick={() => setCurrentModule(node)}
-        onMouseEnter={() => setHoveredKey(node.key)}
-        onMouseLeave={() => setHoveredKey(null)}
       >
-        {/* 选中态：左侧 3px 纯色条 */}
+        {/* 选中态：左侧 2px 渐变激活条 */}
         {isSelected && (
           <span
             style={{
               position: 'absolute',
               left: 0,
-              top: 6,
-              bottom: 6,
-              width: 3,
-              borderRadius: 2,
-              background: token.colorPrimary,
+              top: 5,
+              bottom: 5,
+              width: 2,
+              borderRadius: 1,
+              background: colors.primary,
             }}
           />
         )}
 
-        {/* 标题 */}
+        {/* 左侧：标题 */}
         <Text
           style={{
             fontSize: 13,
@@ -306,23 +458,22 @@ const ModuleTree: FC<IProps> = ({
               : 600,
             fontStyle: isUngrouped ? 'italic' : 'normal',
             color: isUngrouped
-              ? token.colorTextTertiary
+              ? colors.textTertiary
               : isSelected
-              ? token.colorPrimary
-              : token.colorText,
+              ? colors.primary
+              : colors.text,
             flex: 1,
             minWidth: 0,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
-            paddingLeft: isSelected ? 6 : 0,
           }}
           title={String(node.title)}
         >
           {node.title}
         </Text>
 
-        {/* 右侧：徽标 + 操作 */}
+        {/* 右侧：徽标 + 行内操作 */}
         <div
           style={{
             display: 'flex',
@@ -333,15 +484,17 @@ const ModuleTree: FC<IProps> = ({
           }}
         >
           {node.count > 0 && (
-            <CountBadge value={node.count} color={token.colorPrimary} />
+            <CountBadge value={node.count} color={colors.primary} />
           )}
 
           {isAdmin && !isUngrouped && (
             <span
+              className="module-tree-row-actions"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 2,
+                // 平时透明，hover 行才显示（CSS 控制）
                 opacity: isHovered ? 1 : 0,
                 transition: 'opacity 0.15s ease',
               }}
@@ -362,7 +515,7 @@ const ModuleTree: FC<IProps> = ({
                     height: 20,
                     border: 'none',
                     background: 'transparent',
-                    color: token.colorPrimary,
+                    color: colors.primary,
                     fontSize: 14,
                     lineHeight: 1,
                     cursor: 'pointer',
@@ -387,7 +540,7 @@ const ModuleTree: FC<IProps> = ({
                     height: 20,
                     border: 'none',
                     background: 'transparent',
-                    color: token.colorTextSecondary,
+                    color: colors.textSecondary,
                     fontSize: 12,
                     lineHeight: 1,
                     letterSpacing: 1,
@@ -405,6 +558,7 @@ const ModuleTree: FC<IProps> = ({
     );
   };
 
+  /** Modal 提交：根据操作类型分发到对应 API */
   const onModuleFinish = async ({ title }: { title: string }) => {
     if (!currentProjectId) return;
 
@@ -438,6 +592,10 @@ const ModuleTree: FC<IProps> = ({
     }
   };
 
+  /**
+   * 选择节点处理
+   * 未分组模块传递 undefined，其他模块传递对应的 key
+   */
   const onSelect = (_: any, info: any) => {
     const nodeKey = info.node.key;
     setSelectedKeys([nodeKey]);
@@ -465,41 +623,35 @@ const ModuleTree: FC<IProps> = ({
       />
 
       {modules.length > 0 ? (
-        <div
-          style={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 10,
-            minHeight: 0,
-          }}
-        >
-          {/* 头部：标题 + 按钮 + 统计/已选 */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {/* 标题行 */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 8,
-              }}
-            >
-              <Text strong style={{ fontSize: 15, letterSpacing: 0.2 }}>
-                模块目录
-              </Text>
+        <Space orientation="vertical" size={10} style={{ width: '100%' }}>
+          {/* —— 头部：标题 + 计数 + 新建按钮 + 搜索 —— */}
+          <ProCard
+            size="small"
+            style={styles.headerCard}
+            styles={{ body: { padding: 12 } }}
+            hoverable={false}
+          >
+            <div style={styles.headerTopRow}>
+              <div style={styles.titleGroup}>
+                <span style={styles.titleText}>模块目录</span>
+                <span style={styles.titleHint}>
+                  {selectedTitle
+                    ? `已选 · ${selectedTitle}`
+                    : '点击模块查看用例'}
+                </span>
+              </div>
+
               {isAdmin && (
-                <Tooltip title="新建根模块">
+                <Tooltip title="新建根模块" mouseEnterDelay={0.4}>
                   <Button
                     type="primary"
                     size="small"
-                    icon={<PlusOutlined />}
                     onClick={() => {
                       setHandleModule(Handle.AddRoot);
                       setCurrentModule(null);
                       setOpen(true);
                     }}
-                    style={{ flexShrink: 0 }}
+                    style={styles.newButton}
                   >
                     新建
                   </Button>
@@ -507,85 +659,52 @@ const ModuleTree: FC<IProps> = ({
               )}
             </div>
 
-            {/* 统计/已选行 */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                flexWrap: 'wrap',
-              }}
-            >
-              <span
-                style={{
-                  fontSize: 12,
-                  color: token.colorTextTertiary,
-                  fontWeight: 500,
+            {/* 搜索框：渐变外框 */}
+            <div style={styles.searchWrap}>
+              <Search
+                placeholder="搜索模块…"
+                allowClear
+                value={searchValue}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setSearchValue(value);
+                  if (!value) {
+                    setExpandedKeys([]);
+                  } else {
+                    const keys = treeData
+                      .map((item: any) =>
+                        item.title.indexOf(value) > -1
+                          ? getParentKey(item.key, modules)
+                          : null,
+                      )
+                      .filter(Boolean);
+                    setExpandedKeys(keys as React.Key[]);
+                  }
+                  setAutoExpandParent(true);
                 }}
-              >
-                共 {totalCount} 个模块 · {folderCount} 个文件夹
-              </span>
-              {selectedTitle && (
-                <>
-                  <span style={{ color: token.colorBorder }}>·</span>
-                  <span
-                    style={{
-                      fontSize: 12,
-                      color: token.colorPrimary,
-                      fontWeight: 500,
-                      background: token.colorPrimaryBg,
-                      padding: '1px 8px',
-                      borderRadius: 4,
-                      maxWidth: 160,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                    title={selectedTitle}
-                  >
-                    {selectedTitle}
-                  </span>
-                </>
-              )}
+                style={{
+                  width: '100%',
+                  borderRadius: 7,
+                  background: colors.bgContainer,
+                }}
+                size="middle"
+              />
             </div>
-          </div>
+          </ProCard>
 
-          {/* 搜索框 */}
-          <Search
-            placeholder="搜索模块…"
-            variant="filled"
-            allowClear
-            value={searchValue}
-            onChange={(e) => {
-              const value = e.target.value;
-              setSearchValue(value);
-              if (!value) {
-                setExpandedKeys([]);
-              } else {
-                const keys = treeData
-                  .map((item: any) =>
-                    item.title.indexOf(value) > -1
-                      ? getParentKey(item.key, modules)
-                      : null,
-                  )
-                  .filter(Boolean);
-                setExpandedKeys(keys as React.Key[]);
-              }
-              setAutoExpandParent(true);
+          {/* —— 树列表 —— */}
+          <ProCard
+            size="small"
+            styles={{
+              body: {
+                padding: '6px 4px 6px 2px',
+                maxHeight: 'calc(100vh - 420px)',
+                minHeight: 200,
+                overflowY: 'auto',
+              },
             }}
-            size="middle"
-          />
-
-          {/* 树列表 */}
-          <div
-            style={{
-              flex: 1,
-              minHeight: 0,
-              overflowY: 'auto',
-              borderRadius: 8,
-              // border: `1px solid ${token.colorBorderSecondary}`,
-              background: token.colorBgContainer,
-            }}
+            style={styles.treeCard}
+            hoverable={false}
           >
             {hasNoSearchResult ? (
               <div
@@ -596,11 +715,11 @@ const ModuleTree: FC<IProps> = ({
                   justifyContent: 'center',
                   padding: '32px 16px',
                   gap: 6,
-                  color: token.colorTextTertiary,
+                  color: colors.textTertiary,
                 }}
               >
                 <span style={{ fontSize: 12 }}>
-                  没有匹配 "{searchValue}" 的模块
+                  没有匹配 “{searchValue}” 的模块
                 </span>
                 <Button
                   type="link"
@@ -616,30 +735,87 @@ const ModuleTree: FC<IProps> = ({
                 showLine={{ showLeafIcon: false }}
                 showIcon={false}
                 blockNode
-                draggable={
-                  isAdmin
-                    ? {
-                        icon: false,
-                        nodeDraggable: (node) =>
-                          !isUngroupedModule(String(node.key)),
-                      }
-                    : false
-                }
+                draggable={{
+                  icon: false,
+                  nodeDraggable: (node) => !isUngroupedModule(String(node.key)),
+                }}
                 onExpand={(keys) => {
                   setExpandedKeys(keys);
                   setAutoExpandParent(false);
                 }}
-                onDrop={isAdmin ? onDrop : undefined}
+                onDrop={onDrop}
                 expandedKeys={expandedKeys}
                 autoExpandParent={autoExpandParent}
                 selectedKeys={selectedKeys}
                 onSelect={onSelect}
                 treeData={treeData}
                 titleRender={TreeTitleRender}
+                switcherIcon={({ expanded }) => (
+                  // 细线 chevron：SVG 描边 + 旋转动画，替代原 ▾ 字符
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: 14,
+                      height: 14,
+                      color: expanded ? colors.primary : colors.textTertiary,
+                      transition: 'color 0.2s ease, transform 0.2s ease',
+                      transform: expanded ? 'rotate(0deg)' : 'rotate(-90deg)',
+                    }}
+                  >
+                    <svg
+                      width="9"
+                      height="9"
+                      viewBox="0 0 9 9"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M2.5 1.5L6 4.5L2.5 7.5"
+                        stroke="currentColor"
+                        strokeWidth="1.4"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </span>
+                )}
               />
             )}
+          </ProCard>
+
+          {/* —— 底部状态栏（仅文字 + 数字）—— */}
+          <div style={styles.footer}>
+            <span style={styles.footerStat}>
+              <span style={styles.footerValue}>{totalCount}</span>
+              <span>模块</span>
+            </span>
+            <span style={styles.footerDivider} />
+            <span style={styles.footerStat}>
+              <span style={styles.footerValue}>{folderCount}</span>
+              <span>文件夹</span>
+            </span>
+            {selectedTitle && (
+              <>
+                <span style={styles.footerDivider} />
+                <span
+                  style={{
+                    ...styles.footerStat,
+                    color: colors.textTertiary,
+                    minWidth: 0,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                  title={selectedTitle}
+                >
+                  选中 · {selectedTitle}
+                </span>
+              </>
+            )}
           </div>
-        </div>
+        </Space>
       ) : (
         isAdmin && (
           <EmptyModule
@@ -649,6 +825,40 @@ const ModuleTree: FC<IProps> = ({
           />
         )
       )}
+
+      {/* —— 组件级样式：行 hover 显示行内操作；为纯文字按钮加 hover 反馈 —— */}
+      <style>{`
+        .module-tree-node:hover .module-tree-row-actions {
+          opacity: 1 !important;
+        }
+        .ant-tree .ant-tree-node-content-wrapper {
+          width: 100%;
+          overflow: hidden;
+        }
+        .ant-tree .ant-tree-node-content-wrapper:hover {
+          background: transparent !important;
+        }
+        .ant-tree .ant-tree-node-selected {
+          background: transparent !important;
+        }
+        .ant-tree .ant-tree-indent-unit::before {
+          border-color: ${colors.borderLight} !important;
+        }
+        .ant-tree .ant-tree-switcher {
+          width: 20px;
+          height: 26px;
+          line-height: 26px;
+        }
+        .ant-tree .ant-tree-node-content-wrapper {
+          min-height: 26px;
+          line-height: 26px;
+        }
+        .module-tree-iconbtn:hover {
+          background: ${
+            isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'
+          } !important;
+        }
+      `}</style>
     </>
   );
 };
