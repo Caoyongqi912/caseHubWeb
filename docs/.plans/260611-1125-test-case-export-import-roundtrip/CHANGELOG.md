@@ -7,6 +7,99 @@
 
 ---
 
+## PR-4 / PR-5 / PR-6 — FE 接入 (ExportCaseModal + ImportCaseModal 通用化)
+
+**日期**: 2026-06-11
+**仓库**: caseHubWeb
+**状态**: PR-4/5/6 一起落地 (FE 互锁, 没法独立 ship)
+**不影响**: 老的 UploadCaseModal / PlanCaseImportModal 保留兼容 (TODO: 等 E2E 后删)
+**前置依赖**: PR-1/2/3 (BE 链路), 用户调整了 CaseDataTable 的 defaultPageSize
+
+### 改动文件
+
+| 文件 | 类型 | diff 行数 | 说明 |
+|---|---|---|---|
+| `src/api/case/testCase.ts` | 修改 | +129 | 新增 `exportCaseExcel` / `importRoundtripPreview` / `importRoundtripCommit` 三个圆桌 API |
+| `src/pages/CaseHub/components/ExportCaseModal.tsx` | **新增** | 164 | scope 锁定导出弹窗, 自带 trigger 按钮 |
+| `src/pages/CaseHub/components/ImportCaseModal.tsx` | **新增** | 492 | scope 锁定导入弹窗, 展示 scope_check + errors + warnings |
+| `src/pages/CaseHub/CaseLibrary/CaseDataTable.tsx` | 修改 | +37/-5 | 工具栏加 ExportCaseModal + ImportCaseModal (老 UploadCaseModal 保留) |
+| `src/pages/CaseHub/CasePlan/PlanInfo/PlanCases/PlanCaseList/index.tsx` | 修改 | +38 | 工具栏加 ExportCaseModal (plan scope), ImportCaseModal 替换老 PlanCaseImportModal 调用位 |
+
+### 关键符号
+
+- `src/api/case/testCase.ts`
+  - `exportCaseExcel({scope_type, scope_id, project_id, case_ids?, include_steps?})` — GET 圆桌导出, 走 blob, 解析 Content-Disposition 拿文件名
+  - `importRoundtripPreview(file, {scopeType, scopeId, projectId, mode?})` — 圆桌 preview, 走 multipart
+  - `importRoundtripCommit({fileMd5, scopeType, scopeId, projectId})` — 圆桌 commit
+- `src/pages/CaseHub/components/ExportCaseModal.tsx`
+  - Props 联类型: `LibraryProps` (`scopeType: 'library'`) | `PlanProps` (`scopeType: 'plan'`), TS 联合类型编译期保证传对
+  - `totalCount` 来自父组件 ProTable.onLoad 同步的 pageData.total
+  - "仅导出当前选中" 选项只在 `selectedRowKeys.length > 0` 时显示
+  - 0 用例时禁用确认按钮 + 提示 "无需导出"
+- `src/pages/CaseHub/components/ImportCaseModal.tsx`
+  - 上传 → preview → commit 三段式 UI
+  - 顶部 `Alert` 按 scope 切文案: 库/计划
+  - 预览卡片展示 4 个统计 (总/有效/错误/可提交) + scope_check 表格 + warnings/errors 明细
+  - "可提交" 是 false 时不渲染提交按钮, 强制用户修正 Excel 重传
+  - `afterClose` 自动清理 Redis 预览缓存, 不留垃圾
+- `src/pages/CaseHub/CaseLibrary/CaseDataTable.tsx`
+  - `handleTableLoad` 钩子同步 ProTable.total 给 exportTotal state
+  - 工具栏顺序: ImportCaseModal (PR-5 新) → UploadCaseModal (legacy, TODO 删) → ExportCaseModal (PR-4) → 添加用例
+- `src/pages/CaseHub/CasePlan/PlanInfo/PlanCases/PlanCaseList/index.tsx`
+  - `handleBatchExport` 占位消息替换为 ExportCaseModal 自带 trigger
+  - ImportCaseModal 走受控 (无 trigger), 由父组件 modal 按钮触发
+
+### 用户体验要点
+
+- **导出按钮**: scope 锁定, 文案自带 "用例库模块" / "测试计划" 区分
+- **导入按钮**: 三段式, 用户能清晰看到 "解析 → 校验 → 确认" 每一步结果
+- **错误展示**: 最多列 10 行, 超出 "还有 N 行", 不爆屏
+- **缓存清理**: 弹窗关闭/取消时自动 `cancelImportCase` 清理 Redis 30min TTL 缓存
+
+### 保留兼容 (老入口暂不删)
+
+- `src/pages/CaseHub/CaseLibrary/components/UploadCaseModal.tsx` — 老的 9 列格式 + /upload 链路
+- `src/pages/CaseHub/CasePlan/PlanInfo/PlanCases/PlanCaseList/components/PlanCaseImportModal.tsx` — 老的计划导入
+
+原因: 老调用方 (其他业务/历史用户) 还在用 9 列老模板, 强删会断. 等 PR-6 的 E2E 跑通后, 在 PR-7 收尾时删.
+
+### 烟雾测 (无自动化, 手工待办)
+
+```
+[CaseDataTable 工具栏]
+- [ ] 选中 module 后 "导出" 按钮可见, 文案 "用例库模块下的 N 条用例"
+- [ ] 取消 "包含子步骤" → xlsx 每个用例 1 行
+- [ ] 选中 5 条 + 勾 "仅导出当前选中" → xlsx 正好 5 条
+- [ ] 0 用例时 "导出" 按钮 disable, 弹窗内提交按钮 disable
+- [ ] "导入" 弹窗: 上传 PR-1 导出的 xlsx → 展示 scope_check
+- [ ] scope 不一致: 故意改 xlsx _meta scope_id → 弹窗显示 errors
+- [ ] can_commit=false 时不显示 "确认导入" 按钮
+
+[PlanCaseList 工具栏]
+- [ ] 进入计划页, "导出" 按钮可见
+- [ ] "导入" 弹窗: 顶部文案是计划版 (含 "排序" 提示)
+- [ ] 改 Excel 排序列, 提交后 plan_case_association.order 按 Excel 重排
+
+[静态] tsc --noEmit 在 4 个新文件零错 (项目整体有 node_modules 预存 pro-components 类型问题)
+[路由] 老的 UploadCaseModal / PlanCaseImportModal 调用位全保留
+[CaseDataTable] 保留用户改的 defaultPageSize=20
+```
+
+### 部署注意 ⚠️
+
+1. **新文件位置**: `src/pages/CaseHub/components/` 是项目约定位置, 跟 `CaseLevelSelect` / `CaseTypeSelect` 等平级, Umi 会自动识别
+2. **Modal 弹窗销毁**: ImportCaseModal 用 `destroyOnClose: true`, 关闭后组件卸载, 状态自动重置, 多次打开不串
+3. **API 路径**: 三个新 API 都走 `request()` 拦截器, 跟现有 fetch 走同一套鉴权/异常处理
+4. **Blob 下载**: ExportCaseModal 自己用 `URL.createObjectURL + a[download]` 触发, 不引新依赖; 跟老 `downloadCaseExcel` 同套模式
+5. **CaseDataTable.tsx 是 user dirty**: 保留了用户的 defaultPageSize=20 改动, 没回滚
+
+### 不在 PR-4/5/6 范围
+
+- E2E 5 个场景自动化 (→ PR-6 自动化, 当前是手工清单)
+- 删老 UploadCaseModal / PlanCaseImportModal (→ 等 E2E 跑通)
+- README 链接 / 项目文档更新 (→ PR-7)
+
+---
 ## PR-3 — BE `POST /api/hub/cases/import/commit` 端点 (入库, 事务, 乐观锁, 步骤全量覆盖, 排序)
 
 **日期**: 2026-06-11
