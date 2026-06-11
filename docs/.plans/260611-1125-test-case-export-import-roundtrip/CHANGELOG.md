@@ -7,6 +7,24 @@
 
 ---
 
+## ⚠ Reset 记录 (2026-06-11)
+
+**状态**: PR-4/5/6 的 FE 代码 (`d2ee7fb` + 3 个 fixup commit) 已通过 `git reset --hard 45a0f7f` 重置, 不在 HEAD 里.
+**本次提交恢复**: 上面 3 个 docs commit (cc6c3a5 + 8949fc2 + f7b951e) 是**历史实施记录**, 跟当前代码可能对不上.
+**后续**: FE 代码会重做, 重做时按这份 CHANGELOG 的 PR-4/5/6 节重新 ship, 届时本段可以删.
+
+**Be aware**:
+- `docs/.plans/.../PLAN.md` 是 5-PR 拆分, 跟 PR-1~3 + (待重做) PR-4/5/6 一致
+- `docs/.brainstorms/.../SUMMARY.md` 是 brainstorm 阶段的设计摘要, 跟方案设计一致, 仍可参考
+- CHANGELOG 里 PR-4/5/6 节记录的 ExportCaseModal / ImportCaseModal / CaseDataTable 接入方式, 在代码 reset 前**确实落地过**, 3 个 fixup commit 修了跑起来的 3 个 ReferenceError (`selectedCaseIdsArray` 撞名 / `ImportCaseModal` 漏 import / `exportTotal` 漏 useState + onLoad 拿错数据), 这些经验重做时要规避.
+
+**BE 端**:
+- PR-3 (9745bd9) 已 `git reset --hard f2eb602` 退回, 跟 FE reset hard 配对.
+- PR-1 export 端点的 Content-Disposition latin-1 修 (21d9792) 留了, 因为修的是 PR-1 代码本身的 bug.
+- BE 4 个 pre-existing dirty (config.py 密码切换 / mapper/__init__.py asyncio.gather / test_case.py 索引 / testCaseSchema.py file_md5 Optional) 跟着 reset --hard 一起被冲掉了, 需要手动重做.
+
+---
+
 ## PR-4 / PR-5 / PR-6 — FE 接入 (ExportCaseModal + ImportCaseModal 通用化)
 
 **日期**: 2026-06-11
