@@ -7,6 +7,152 @@
 
 ---
 
+## PR-3 — BE `POST /api/hub/cases/import/commit` 端点 (入库, 事务, 乐观锁, 步骤全量覆盖, 排序)
+
+**日期**: 2026-06-11
+**仓库**: case_auto_hub
+**状态**: 已落地, 烟雾测 34/34 通过
+**不影响**: 现有 28 个路由、PR-1 export 链路、PR-2 preview 链路、`/upload` 老链路
+**前置依赖**: PR-1 (导出) + PR-2 (preview + 缓存)
+
+### 改动文件
+
+| 文件 | 类型 | diff 行数 | 说明 |
+|---|---|---|---|
+| `app/service/roundtripCommitService.py` | **新增** | — | `RoundtripCommitService` + `CommitResult`, 10 步 commit 流程编排 |
+| `app/mapper/test_case/testcaseMapper.py` | 修改 | +138 | 新增 `update_with_optimistic_lock` + `insert_with_steps` + `_coerce_case_row` 工具 |
+| `app/mapper/test_case/testCaseStepMapper.py` | 修改 | +73 | 新增 `replace_case_steps` (DELETE + INSERT, FK 级联清 step_result) |
+| `app/controller/test_case/test_case.py` | 修改 | +50 | 新增 `POST /import/commit` 路由, 加 `RoundtripCommitService` import |
+
+### 关键符号
+
+- `app/service/roundtripCommitService.py`
+  - `class CommitResult(dict)` — 响应 dict, 字段: `updated` / `inserted` / `reordered` / `errors`
+  - `class RoundtripCommitService` — 主流程编排
+    - `async def commit() -> CommitResult` — 10 步流程, 整体一个 `TestCaseMapper.transaction()`
+    - 内部: `_split_groups()` / `_check_optimistic_lock()` / `_build_ordered_ids()` / `_build_reorder_items()` / `_resolve_plan_root_module()`
+  - 设计: 单事务锚点 (`TestCaseMapper.transaction()`), 乐观锁失败 / 整批错误 / 写库异常 → 整批回滚, 缓存不写 committed
+- `app/mapper/test_case/testcaseMapper.py`
+  - `_CASE_WRITABLE_FIELDS = (case_name, case_tag, case_setup, case_mark, case_level, case_type)` — 圆桌字段白名单
+  - `def _coerce_case_row(row)` — 解析器 dict -> model 字段, 空白字符统一去, 空串 -> None
+  - `async def update_with_optimistic_lock(session, case_id, fields, expected_update_time, user) -> int` — `UPDATE ... WHERE id=? AND update_time=?`, 0=冲突 1=成功
+  - `async def insert_with_steps(session, case_fields, step_rows, project_id, module_id, user, is_common) -> int` — INSERT case + replace steps, 0 步骤合法
+- `app/mapper/test_case/testCaseStepMapper.py`
+  - `_STEP_WRITABLE_FIELDS = (action, expected_result, order)` — 步骤白名单
+  - `def _coerce_step_row(row)` — 解析器 dict -> 步骤字段
+  - `async def replace_case_steps(case_id, step_rows, user, session) -> int` — 全量覆盖, 0 步骤=全删, FK ON DELETE CASCADE 自动清 `case_sub_step_result`
+- `app/controller/test_case/test_case.py`
+  - `@router.post("/import/commit", description="...")` 路由
+  - 路由函数 `import_commit(file_md5, scope_type, scope_id, project_id, user)` — 4 个 Form 字段
+  - 错误处理: `ValueError` -> `CommonError`; 其他异常走默认
+
+### 端到端契约 (前端 PR-4/5/6 留的接口)
+
+```
+POST /api/hub/cases/import/commit
+  Content-Type: multipart/form-data (或 application/x-www-form-urlencoded)
+  file_md5=<md5>             必填, 来自 /import/preview 响应
+  scope_type=library|plan    必填
+  scope_id=<int>             必填
+  project_id=<int>           必填 (plan 场景下用于解析新 case 默认落库的 module)
+  Authorization: Bearer ...  鉴权
+
+成功响应 (200):
+  {
+    "code": 0,
+    "data": {
+      "updated": 2,        // 已知 case 字段+步骤落库条数
+      "inserted": 1,       // 新增 case 条数
+      "reordered": 3,      // plan 场景: 重排条数; library 场景: 0
+      "errors": []         // 预留, 当前实现下整批回滚, 不会有局部 errors
+    }
+  }
+
+错误 (整批回滚, 不写库):
+  400 CommonError: 
+    - 缓存不存在 / 已提交 / scope 不一致
+    - 乐观锁失败 (data.conflicts 含冲突 case_id + expected/actual update_time)
+    - 项目下没有任何 module (plan 场景新增 case 时)
+```
+
+### 10 步 commit 流程
+
+```
+1) 加载 Redis 预览缓存 (key: upload:case:{user_id}:{file_md5})
+2) 校验: 缓存存在 + 未提交 + scope_type/scope_id 跟 form 一致
+3) 按 (排序, 用例名称) 分组: known_groups (有 case_id) / new_groups (无 case_id)
+   - 同 (sort, name) 多行 = 同一 case 的多步骤
+4) 乐观锁前置检查: 一次 SELECT 拉所有 known case 的 update_time, 跟 Excel 比对
+   - 任一冲突 → 整批回滚, 错误含 conflicts
+5) known: 逐 case → update 字段 (乐观锁) + replace 步骤 (DELETE+INSERT, FK 级联)
+6) new: 逐 case → insert case (is_common=True) + 步骤 (0 步骤合法)
+7) plan 场景: 给 new case 关联到 plan (plan_module_id=None 走根 plan_module)
+8) plan 场景: 1..N 重排, 展开为 N 条 (case_id, before_id, after_id) 调
+   reorder_plan_cases_bulk
+9) 缺失用例: 不动 (圆桌不删)
+10) 标记 Redis committed (写在事务外, 失败不致命)
+```
+
+### 关键设计
+
+- **单事务**: `TestCaseMapper.transaction()` 为锚点, 任何一步抛错都整批回滚, 不会留下半截数据
+- **乐观锁**: `UPDATE ... WHERE id=? AND update_time=?`, affected=0 = 冲突. 比对的是字符串形式的 update_time ("YYYY-MM-DD HH:MM:SS"), 跟 model.map 的 strftime 一致
+- **步骤全量覆盖**: `DELETE + INSERT`, 不调 `handleAddStepLine`. 0 步骤用例 = 全删不补. FK ON DELETE CASCADE 自动清掉 `case_sub_step_result` 关联
+- **排序**: 复用现有 `reorder_plan_cases_bulk`, 用相邻 case_id 做 before/after 锚点 (跟前端拖拽同一套语义). `reordered` 数 = 实际发起的 items 数 (有幂等的, 实际生效由 mapper 内部判定)
+- **不删**: 圆桌的明确设计, 缺失 case 不动, DB 不会少用例
+- **缓存安全**: `mark_committed` 在事务外, 即使失败也不影响数据落库 (会出现"已落库但缓存未标 committed"的窗口, 重复 commit 会因 committed=True 拒绝)
+- **plan 场景新 case 默认 module_id**: 解析项目根 module (parent_id IS NULL + module_type=CASE), 找不到兜底第一个 module, 再找不到抛错让用户先建目录
+- **局部 import**: `_coerce_case_row` 在方法内 import, 避免 module 顶层触发 testcaseMapper 整链 (PR-3 烟雾测需要)
+
+### 烟雾测 (无 DB, 34/34 通过)
+
+```
+[1]  _split_groups: 2 known + 1 new, 排序 (1,case1) (2,case2) (3,new case)  ✓ 6 项
+[2]  _build_ordered_ids: [100, 101, 999]                                   ✓ 1 项
+[3]  _build_reorder_items: 头/中/尾锚都对                                  ✓ 4 项
+[4]  _coerce_case_row: 空白/null/正常 三种入参                            ✓ 5 项
+[5]  编排 happy path (library, mock mapper):
+     updated=2, inserted=1, reordered=0
+     update 调 2 次, insert 1 次, replace_steps 2 次, plan_associate 0 次
+     mark_committed 1 次                                                  ✓ 8 项
+[6]  编排 plan 场景:
+     reordered=3, bulk_reorder 调 1 次
+     case_id 顺序 [100, 101, 999] 对应 items 顺序                          ✓ 4 项
+[7]  乐观锁失败 (1 条冲突):
+     抛错 + update 调 0 次 (整批回滚)                                     ✓ 2 项
+[8]  scope 不一致 (form library vs cache plan):
+     抛错, 错误含 "scope"                                                ✓ 2 项
+[9]  缓存不存在 (get_preview=None): 抛错                                   ✓ 1 项
+[10] 已提交 (committed=True): 抛错                                         ✓ 1 项
+
+[静态] 4 个改动文件 ast.parse 全通过                                      ✓
+[路由] 28 个 @router.* 全保留, 新增 /import/commit 在 /import/preview 之后  ✓
+[向后] 老 /upload 链路不动, 圆桌新链路跟 preview 解耦                      ✓
+```
+
+### 已知限制 (后续 PR 处理)
+
+- **plan 场景新 case 的 module_id**: 当前自动解析项目根 module, 理想是让前端传 plan 关联的源 module_id (更精确, 跨项目时不会跑偏). 等 PR-4/5/6 接 FE 时再加
+- **异步 commit**: 500+ 行 commit 同步跑, 体感可能慢, 二期再上 Celery
+- **冲突重试 UX**: 当前乐观锁失败直接整批回滚让用户重新导出, 后续可加 "我接受覆盖" 选项
+- **commit 日志**: 整批一条 info 日志, 不展开到每条 case. 等真有用户反馈"哪条改了"再加细
+
+### 部署注意 ⚠️
+
+1. **新增 `app/service/roundtripCommitService.py`** — 跟 PR-1/2 同目录, 纯应用代码, 无新依赖
+2. **新 mapper 方法**: 跟现有 mapper 风格一致 (staticmethod + session 参数), 不破坏调用方
+3. **`case_sub_step_result` 级联清**: 步骤全量覆盖 = DELETE 旧步骤 → FK ON DELETE CASCADE 自动清 step_result. **数据库外键必须已配 ON DELETE CASCADE**, 跟现有 model 一致 (model 定义里有 `ondelete="cascade"`). 若历史数据有孤儿 step_result, 需提前清理
+4. **Redis 缓存 key 复用**: 跟 PR-2 同款 `upload:case:{user_id}:{file_md5}`. 老 /upload 缓存 (不带 `committed` 字段) 跟新缓存结构不同, 但 key 前缀相同 — 实际不会冲突, 因为老 /upload 流程不写 `committed`, commit 端读到的会是旧结构导致 JSON parse 失败, 自然走 "缓存不存在" 错误, 用户重新走 preview 即可
+
+### 不在 PR-3 范围 (留给后续 PR)
+
+- 前端 `ImportCaseModal` / `ExportCaseModal` (→ PR-4, PR-5, PR-6)
+- E2E 5 个场景 (→ PR-6)
+- 任何形式的删除 (→ 永久不开放)
+- 异步 commit (→ 二期)
+- 冲突粒度 (→ 二期, 当前整批回滚)
+
+---
 ## PR-2 — BE `POST /api/hub/cases/import/preview` 端点 (解析 + scope 校验)
 
 **日期**: 2026-06-11
