@@ -1,5 +1,6 @@
 import {
   copyTestCase,
+  exportCases,
   pageTestCase,
   removeTestCase,
 } from '@/api/case/testCase';
@@ -19,6 +20,7 @@ import {
   CopyOutlined,
   DeleteOutlined,
   DeliveredProcedureOutlined,
+  DownloadOutlined,
   SmallDashOutlined,
 } from '@ant-design/icons';
 import {
@@ -35,6 +37,7 @@ import {
   Popconfirm,
   Space,
   Tag,
+  Tooltip,
   Typography,
 } from 'antd';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -81,6 +84,7 @@ const CaseDataTable: FC<Props> = (props) => {
   const [showCaseDetail, setShowCaseDetail] = useState<boolean>(false);
   const [openNewCaseDrawer, setOpenNewCaseDrawer] = useState<boolean>(false);
   const [openModal, setOpenModal] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [selectedRows, setSelectedRows] = useState<ITestCase[]>([]);
 
@@ -344,6 +348,31 @@ const CaseDataTable: FC<Props> = (props) => {
     },
   };
 
+  /**
+   * 按当前 module 导出目录全量. 要求 currentModuleId 必填 (没有 module 时按钮 disabled + tooltip).
+   * 多选场景下的"导出所选"在 BatchActionBar 里, 这里只管"导出该目录".
+   */
+  const handleExportByModule = useCallback(async () => {
+    if (!currentModuleId || !currentProjectId) {
+      message.warning('请先选择项目和目录');
+      return;
+    }
+    setExportLoading(true);
+    try {
+      await exportCases({
+        scope_type: 'library',
+        scope_id: currentModuleId,
+        project_id: currentProjectId,
+      });
+      message.success('导出已开始, 留意浏览器下载');
+    } catch (err) {
+      // 全局拦截器已 message.error, 这里吞掉避免 unhandled rejection
+      console.error('exportCases failed:', err);
+    } finally {
+      setExportLoading(false);
+    }
+  }, [currentModuleId, currentProjectId]);
+
   const handleBatchSuccess = useCallback(() => {
     setSelectedRowKeys([]);
     setSelectedRows([]);
@@ -354,6 +383,12 @@ const CaseDataTable: FC<Props> = (props) => {
     setSelectedRowKeys([]);
     setSelectedRows([]);
   }, []);
+
+  // 没选 module 时禁用导出: 后端需要 scope_id 定位范围, 没值要么报错要么全量, 都不合理.
+  const exportDisabled = !currentModuleId;
+  const exportTooltip = exportDisabled
+    ? '请先在左侧选择一个目录'
+    : '导出当前目录下全部用例';
 
   const toolBarRender = [
     // 没拿到 currentProjectId 时不渲染上传按钮:
@@ -366,6 +401,18 @@ const CaseDataTable: FC<Props> = (props) => {
         currentProjectId={currentProjectId}
       />
     ) : null,
+
+    <Tooltip key="export-tip" title={exportTooltip}>
+      <Button
+        key="export-module"
+        icon={<DownloadOutlined />}
+        loading={exportLoading}
+        disabled={exportDisabled}
+        onClick={handleExportByModule}
+      >
+        导出
+      </Button>
+    </Tooltip>,
 
     <Button key="add" type="primary" onClick={() => setOpenNewCaseDrawer(true)}>
       添加用例
@@ -471,6 +518,11 @@ const CaseDataTable: FC<Props> = (props) => {
         <BatchActionBar
           selectedCount={selectedRowKeys.length}
           selectedCaseIds={selectedCaseIds}
+          exportScope={
+            currentProjectId && currentModuleId
+              ? { project_id: currentProjectId, module_id: currentModuleId }
+              : undefined
+          }
           onBatchSuccess={handleBatchSuccess}
           onExit={handleExitBatch}
         />

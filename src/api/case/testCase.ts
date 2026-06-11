@@ -434,6 +434,76 @@ export const updateTestCaseStep = async (
 };
 
 /**
+ * 按 scope 导出用例 Excel (导出-编辑-导回 圆桌入口).
+ *
+ * 后端路由: POST /api/hub/cases/export
+ *   ?scope_type=library|plan
+ *   &scope_id=<module_id 或 plan_id>
+ *   &project_id=<int>
+ *   body: {"case_ids": [100, 101]}   可选; 空=范围内全量
+ *
+ * case_ids 走 body (不是 query) 是因为: 5000 条 ID * 平均 8 位 = 40K 起步,
+ * 拼到 query 容易被反代/网关截断; 改 POST + body 是规范做法.
+ *
+ * 全局拦截器 (requestErrorConfig.isBlob) 看到 responseType: 'blob' 会自动
+ * URL.createObjectURL + 触发下载; 本函数额外按 RFC 5987 / RFC 6266 解
+ * content-disposition 的 filename* (后端返 UTF-8'' + urlencoded), 供调用方
+ * 失败时 fallback 用.
+ *
+ * @param params scope 限定条件; case_ids 留空=范围内全量
+ * @param options - 配置选项 (responseType: 'blob' 由调用方传)
+ * @returns 包含 blob 数据和解析后文件名的对象
+ */
+export const exportCases = async (
+  params: {
+    scope_type: 'library' | 'plan';
+    scope_id: number;
+    project_id: number;
+    case_ids?: number[];
+  },
+  options?: IObjGet,
+) => {
+  // scope 三个必填走 query (语义上是 "定位哪个范围"), case_ids 走 body (是范围内的过滤条件)
+  const { case_ids, ...query } = params;
+  const response = await request<any>('/api/hub/cases/export', {
+    method: 'POST',
+    params: query,
+    data: case_ids?.length ? { case_ids } : undefined,
+    ...(options || { responseType: 'blob' }),
+  });
+
+  // RFC 5987 / RFC 6266: 后端返 `filename*=UTF-8''<urlencoded>`; 兼容老式 `filename=...`
+  const contentDisposition = response?.headers?.['content-disposition'];
+  let filename = `用例导出-${params.scope_type}${params.scope_id}.xlsx`;
+  if (contentDisposition) {
+    const starMatch = contentDisposition.match(/filename\*=([^;]+)/i);
+    if (starMatch) {
+      const raw = starMatch[1].trim().replace(/^['"]|['"]$/g, '');
+      // 形如 UTF-8''%E7%94%A8%E4%BE%8B%E5%AF%BC%E5%87%BA-...xlsx
+      const m = raw.match(/^([^']*)'(.+)$/);
+      if (m) {
+        filename = decodeURIComponent(m[2]);
+      } else {
+        // 退化路径: 没 charset 前缀, 整个 url-decode 一次
+        filename = decodeURIComponent(raw);
+      }
+    } else {
+      const normalMatch = contentDisposition.match(
+        /filename=["']?([^";]+)["']?/i,
+      );
+      if (normalMatch) {
+        filename = decodeURIComponent(normalMatch[1].trim());
+      }
+    }
+  }
+
+  return {
+    blob: response as unknown as Blob,
+    filename,
+  };
+};
+
+/**
  * 下载用例模板 Excel
  * @param options - 配置选项
  * @returns 包含 blob 数据和文件名的对象

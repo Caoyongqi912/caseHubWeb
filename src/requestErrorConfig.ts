@@ -29,9 +29,38 @@ const loginPath = '/userLogin';
 
 const isBlob = async (response: any) => {
   if (response.data instanceof Blob) {
-    // 从响应头获取文件名或使用默认文件名
+    // RFC 5987 / RFC 6266: 优先认 `filename*=UTF-8''<urlencoded>`, 退化认 `filename="..."` 或 `filename=...`
+    // 不认 RFC 5987 会导致 a.download = undefined, 浏览器兜底成 "undefined.xlsx"
     const contentDisposition = response.headers['content-disposition'];
-    const finalFileName = contentDisposition?.match(/filename="?(.+)"?/)?.pop();
+    let finalFileName: string | undefined;
+    if (contentDisposition) {
+      const starMatch = contentDisposition.match(/filename\*=([^;]+)/i);
+      if (starMatch) {
+        const raw = starMatch[1].trim().replace(/^['"]|['"]$/g, '');
+        // 形如 UTF-8''%E7%94%A8%E4%BE%8B...
+        const m = raw.match(/^([^']*)'(.+)$/);
+        if (m) {
+          try {
+            finalFileName = decodeURIComponent(m[2]);
+          } catch {
+            finalFileName = m[2];
+          }
+        } else {
+          try {
+            finalFileName = decodeURIComponent(raw);
+          } catch {
+            finalFileName = raw;
+          }
+        }
+      } else {
+        const normalMatch = contentDisposition.match(
+          /filename=["']?([^";]+)["']?/i,
+        );
+        if (normalMatch) {
+          finalFileName = decodeURIComponent(normalMatch[1].trim());
+        }
+      }
+    }
 
     // 创建下载链接
     const url = window.URL.createObjectURL(response.data);
@@ -52,9 +81,15 @@ const isBlob = async (response: any) => {
 const responseInterceptors = async (response: any) => {
   const data = response.data;
 
-  await isBlob(response);
+  // blob 响应 (文件下载): isBlob 已经在内部触发浏览器下载, 这里**必须**提前 return.
+  // 原因: blob 没有 .code 字段, 下面 if (data.code !== 0) 会因为 undefined !== 0 误判为业务错误,
+  // 走 message.error(data.msg) 弹一个空 message. (用例导出 / 用例模板下载都撞过这个 bug.)
+  if (data instanceof Blob) {
+    await isBlob(response);
+    return response;
+  }
 
-  if (data.code !== 0) {
+  if (data?.code !== 0) {
     console.log('responseInterceptors', data);
     message.error(data.msg);
     if (data.code === 4000) {
