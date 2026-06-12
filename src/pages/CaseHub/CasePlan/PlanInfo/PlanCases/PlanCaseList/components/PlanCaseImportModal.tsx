@@ -10,7 +10,6 @@ import {
 import { toSelectOptions } from '@/pages/CaseHub/hooks/caseEnumOption';
 import { useCaseEnumConfig } from '@/pages/CaseHub/hooks/useCaseEnumConfig';
 import {
-  CheckCircleOutlined,
   DeleteOutlined,
   DownloadOutlined,
   InboxOutlined,
@@ -596,7 +595,7 @@ const PlanCaseImportModal: FC<PlanCaseImportModalProps> = ({
           {!validateResult.can_commit && (
             <Alert
               title="文件包含错误，无法继续入库"
-              description="预览阶段未通过校验，后端未写入 Redis 预览缓存。请按下方错误详情修正 Excel 后重新上传。"
+              description="预览阶段未通过校验。请按下方错误详情修正 Excel 后重新上传。"
               type="warning"
               showIcon
               style={{ marginTop: 16 }}
@@ -643,20 +642,6 @@ const PlanCaseImportModal: FC<PlanCaseImportModalProps> = ({
               title="所有用例均无效，请检查文件格式或数据内容后重新上传。"
               type="error"
               showIcon
-              style={{ marginTop: 16 }}
-            />
-          )}
-
-          {!allInvalid && validateResult.valid_count > 0 && (
-            <Alert
-              title={
-                hasInvalid
-                  ? `将导入 ${validateResult.valid_count} 条有效用例，${validateResult.invalid_count} 条无效用例将被跳过`
-                  : '所有用例校验通过，可以导入。'
-              }
-              type={hasInvalid ? 'warning' : 'success'}
-              showIcon
-              icon={!hasInvalid ? <CheckCircleOutlined /> : undefined}
               style={{ marginTop: 16 }}
             />
           )}

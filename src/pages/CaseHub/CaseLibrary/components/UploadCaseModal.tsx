@@ -1,8 +1,11 @@
 import {
   cancelImportCase,
+  cancelImportCaseM2,
   commitImportCase,
   downloadCaseExcel,
+  importCommitCase,
   uploadPreviewCase,
+  type TemplateType,
 } from '@/api/case/testCase';
 import {
   CheckCircleOutlined,
@@ -24,6 +27,7 @@ import {
   Row,
   Space,
   Statistic,
+  Tag,
   Typography,
   Upload,
 } from 'antd';
@@ -76,6 +80,21 @@ interface ValidateResult {
    * commit 必失败. 兼容老后端: 字段缺失视为 true.
    */
   can_commit: boolean;
+  /**
+   * PR-3: 模板类型. 缺省 / 字段缺失视为 M1 (老后端兼容).
+   * - M1: 老 9 列模板, 走 on_duplicate 老逻辑
+   * - M2: 10 列 + _meta sheet, 走 case_id 同步 (无视 on_duplicate)
+   */
+  template_type?: TemplateType;
+  /**
+   * PR-3: 警告信息 (M2 解析可能产生, 如某行有 case_id 但 DB 查不到).
+   * 不阻塞 commit, 仅展示给用户.
+   */
+  warnings?: Array<{ row?: number; field?: string; message: string }>;
+  /**
+   * PR-3: 预览数据 (前 10 条), M2 路径会带 case_id. 暂不渲染, 留作扩展.
+   */
+  preview_data?: Array<Record<string, any>>;
 }
 
 /** 相同用例处理: skip = 跳过 (默认 create). 透传后端 on_duplicate. */
@@ -120,6 +139,12 @@ const UploadCaseModal: FC<Props> = ({
       (validateResult.valid_count / validateResult.total_count) * 100,
     );
   }, [validateResult]);
+
+  /**
+   * PR-3: M1/M2 分支标志. M2 走 case_id 同步, 隐藏 on_duplicate + 显示提示.
+   * 缺省 M1 (老后端兼容).
+   */
+  const isM2 = validateResult?.template_type === 'M2';
 
   const duplicateMode: DuplicateMode =
     uploadForm.getFieldValue('on_duplicate') ?? 'create';
@@ -183,6 +208,10 @@ const UploadCaseModal: FC<Props> = ({
           invalid_count: response.data?.invalid_count || 0,
           errors: response.data?.errors || [],
           can_commit: response.data?.can_commit ?? true,
+          // PR-3: 模板类型. 缺省视为 M1 (老后端兼容).
+          template_type: response.data?.template_type ?? 'M1',
+          warnings: response.data?.warnings || [],
+          preview_data: response.data?.preview_data || [],
         });
         setUploadError(null);
       } else {
@@ -201,7 +230,13 @@ const UploadCaseModal: FC<Props> = ({
   const handleRemoveFile = async () => {
     if (validateResult?.file_md5) {
       try {
-        await cancelImportCase(validateResult.file_md5);
+        // PR-3: cancel 分支. M1 走 /upload/cancel, M2 走 /import/cancel.
+        // 端点分开, 跟 M1/M2 commit 端点对应, 互不干扰.
+        if (isM2) {
+          await cancelImportCaseM2(validateResult.file_md5);
+        } else {
+          await cancelImportCase(validateResult.file_md5);
+        }
       } catch (error) {
         console.error('清理缓存失败:', error);
       }
@@ -264,27 +299,43 @@ const UploadCaseModal: FC<Props> = ({
         setUploadError('当前项目未就绪, 无法入库');
         return false;
       }
-      const onDuplicate: DuplicateMode =
-        uploadForm.getFieldValue('on_duplicate') === 'skip' ? 'skip' : 'create';
-
-      const response = (await commitImportCase({
-        file_md5: validateResult.file_md5,
-        project_id: currentProjectId,
-        is_common: true,
-        on_duplicate: onDuplicate,
-      })) as any;
-
-      if (!response || response.code !== 0) {
-        setUploadError(response?.msg || '导入失败');
-        return false;
+      // PR-3: M1/M2 commit 分支. M2 走新 /import/commit 端点, 无视 on_duplicate.
+      let response: any;
+      let successMsg: string;
+      if (isM2) {
+        response = (await importCommitCase({
+          file_md5: validateResult.file_md5,
+          project_id: currentProjectId,
+        })) as any;
+        if (!response || response.code !== 0) {
+          setUploadError(response?.msg || 'M2 导入失败');
+          return false;
+        }
+        const inserted = response.data?.inserted ?? 0;
+        const updated = response.data?.updated ?? 0;
+        successMsg = `已修改 ${updated} 条, 新增 ${inserted} 条`;
+      } else {
+        const onDuplicate: DuplicateMode =
+          uploadForm.getFieldValue('on_duplicate') === 'skip'
+            ? 'skip'
+            : 'create';
+        response = (await commitImportCase({
+          file_md5: validateResult.file_md5,
+          project_id: currentProjectId,
+          is_common: true,
+          on_duplicate: onDuplicate,
+        })) as any;
+        if (!response || response.code !== 0) {
+          setUploadError(response?.msg || '导入失败');
+          return false;
+        }
+        const importedCount = response.data?.imported_count || 0;
+        const skippedCount = response.data?.skipped_count || 0;
+        successMsg =
+          skippedCount > 0
+            ? `成功导入 ${importedCount} 条, 跳过重复 ${skippedCount} 条`
+            : `成功导入数据 ${importedCount} 条`;
       }
-
-      const importedCount = response.data?.imported_count || 0;
-      const skippedCount = response.data?.skipped_count || 0;
-      const successMsg =
-        skippedCount > 0
-          ? `成功导入 ${importedCount} 条, 跳过重复 ${skippedCount} 条`
-          : `成功导入数据 ${importedCount} 条`;
       message.success(successMsg);
 
       safeInvoke(onSuccess, '表格刷新');
@@ -356,34 +407,58 @@ const UploadCaseModal: FC<Props> = ({
 
         <Divider />
 
-        <Space vertical size="small" style={{ display: 'flex' }}>
-          <Title level={5} style={{ margin: 0 }}>
-            相同用例处理
-          </Title>
-          <Text type="secondary">
-            当导入文件中包含与导入位置相同用例（分组 +
-            标题完全一致）时，选择执行方式。
-          </Text>
-        </Space>
+        {/* PR-3: M1 显示 on_duplicate 选项; M2 隐藏, 用 M2 Tag + 导回协议提示代替. */}
+        {!isM2 && (
+          <>
+            <Space vertical size="small" style={{ display: 'flex' }}>
+              <Title level={5} style={{ margin: 0 }}>
+                相同用例处理
+              </Title>
+              <Text type="secondary">
+                当导入文件中包含与导入位置相同用例（分组 +
+                标题完全一致）时，选择执行方式。
+              </Text>
+            </Space>
 
-        <ProFormRadio.Group
-          name="on_duplicate"
-          options={DUPLICATE_OPTIONS.map((opt) => ({
-            value: opt.value,
-            label: opt.label,
-          }))}
-          radioType="button"
-          fieldProps={{
-            buttonStyle: 'solid',
-            size: 'middle',
-          }}
-        />
+            <ProFormRadio.Group
+              name="on_duplicate"
+              options={DUPLICATE_OPTIONS.map((opt) => ({
+                value: opt.value,
+                label: opt.label,
+              }))}
+              radioType="button"
+              fieldProps={{
+                buttonStyle: 'solid',
+                size: 'middle',
+              }}
+            />
 
-        <Text type="secondary" style={{ fontSize: 12 }}>
-          {activeHint}
-        </Text>
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              {activeHint}
+            </Text>
 
-        <Divider />
+            <Divider />
+          </>
+        )}
+
+        {isM2 && (
+          <>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Tag color="blue">M2</Tag>
+              <Title level={5} style={{ margin: 0 }}>
+                导回协议
+              </Title>
+            </div>
+            <Alert
+              type="info"
+              showIcon
+              message="按 用例ID 同步, 无视重复检查"
+              description="已导出的文件再次传回时, 系统按 用例ID 命中更新, 未命中的行作为新增入库. 名字冲突不跳过, 删行无操作."
+              style={{ marginTop: 8 }}
+            />
+            <Divider />
+          </>
+        )}
 
         <Space vertical size="small" style={{ display: 'flex' }}>
           <Title level={5} style={{ margin: 0 }}>
@@ -557,7 +632,7 @@ const UploadCaseModal: FC<Props> = ({
             {!validateResult.can_commit && (
               <Alert
                 title="文件包含错误，无法继续入库"
-                description="预览阶段未通过校验，后端未写入 Redis 预览缓存。请按下方错误详情修正 Excel 后重新上传。"
+                description="预览阶段未通过校验。请按下方错误详情修正 Excel 后重新上传。"
                 type="warning"
                 showIcon
                 style={{ marginTop: 16 }}
@@ -599,6 +674,44 @@ const UploadCaseModal: FC<Props> = ({
               />
             )}
 
+            {/* PR-3: M2 warnings 展示. 不阻塞 commit, 仅提示 (e.g. case_id 缺失对应行). */}
+            {isM2 && (validateResult.warnings?.length ?? 0) > 0 && (
+              <Alert
+                type="warning"
+                showIcon
+                style={{ marginTop: 16 }}
+                message={`警告（前 ${Math.min(
+                  10,
+                  validateResult.warnings!.length,
+                )} 条）`}
+                description={
+                  <div style={{ maxHeight: 150, overflowY: 'auto' }}>
+                    {validateResult.warnings!.slice(0, 10).map((w, i) => (
+                      <div
+                        key={i}
+                        style={{
+                          padding: '4px 0',
+                          borderBottom: i < 9 ? '1px dashed #f0f0f0' : 'none',
+                        }}
+                      >
+                        {w.row ? `第 ${w.row} 行: ` : ''}
+                        {w.message}
+                      </div>
+                    ))}
+                    {validateResult.warnings!.length > 10 && (
+                      <Text
+                        type="secondary"
+                        style={{ display: 'block', marginTop: 8 }}
+                      >
+                        … 还有 {validateResult.warnings!.length - 10}{' '}
+                        条警告未展示
+                      </Text>
+                    )}
+                  </div>
+                }
+              />
+            )}
+
             {validateResult.invalid_count === 0 && (
               <Alert
                 title="所有用例校验通过，可以导入。"
@@ -614,25 +727,6 @@ const UploadCaseModal: FC<Props> = ({
                 <Alert
                   title="所有用例均无效，请检查文件格式或数据内容后重新上传。"
                   type="error"
-                  showIcon
-                  style={{ marginTop: 16 }}
-                />
-              )}
-
-            {validateResult.invalid_count > 0 &&
-              validateResult.valid_count > 0 && (
-                <Alert
-                  title={
-                    <span>
-                      将导入 <Text strong>{validateResult.valid_count}</Text>{' '}
-                      条有效用例，
-                      <Text type="danger">
-                        {validateResult.invalid_count}
-                      </Text>{' '}
-                      条无效用例将被跳过
-                    </span>
-                  }
-                  type="warning"
                   showIcon
                   style={{ marginTop: 16 }}
                 />

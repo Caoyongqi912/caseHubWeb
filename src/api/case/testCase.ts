@@ -166,6 +166,13 @@ export const updateRequirementCase = async (
  *   已存在于该项目下的 module 树, 否则会作为行级错误返回.
  *   计划上传场景下传 plan.project_id, 需求上传场景下传 req.project_id.
  */
+/**
+ * PR-3: 模板类型. M1 = 老模板 (下载的空白模版, 9 列), 走 on_duplicate 老逻辑.
+ *        M2 = 导出模板 (PR-1 导出, 10 列 + _meta sheet), 走 case_id 同步.
+ * 老后端不返回该字段, 视为 M1, 走老 UploadCaseModal 路径.
+ */
+export type TemplateType = 'M1' | 'M2';
+
 export const uploadPreviewCase = async (file: File, projectId: number) => {
   const formData = new FormData();
   formData.append('file', file);
@@ -186,10 +193,67 @@ export const uploadPreviewCase = async (file: File, projectId: number) => {
      * 强制用户修正 Excel 后整批重传. 兼容老后端: 字段缺失视为 true.
      */
     can_commit?: boolean;
+    /**
+     * PR-3 新增: 模板类型. 缺省视为 M1 (老后端兼容).
+     * 严格: 不是 M1 也不是 M2 时, response 解构会拿到 undefined,
+     * 调用方应 fallback 到 M1, 走老 UploadCaseModal 路径.
+     */
+    template_type?: TemplateType;
+    /**
+     * PR-3 新增: 警告信息, M2 解析可能产生 (例如某行有 case_id 但 DB 查不到).
+     * 不阻塞 commit, 仅前端提示用. 老后端返空数组.
+     */
+    warnings?: Array<{ row?: number; field?: string; message: string }>;
+    /**
+     * PR-3 新增: 预览数据 (前 10 条), M2 路径会带 case_id. 老 M1 路径也带,
+     * 但字段集跟 M2 一样 (case_name / case_setup / action / expected_result /
+     * case_tag / case_level / case_type / case_mark / group_path + 可选 case_id).
+     * 老后端不返回此字段.
+     */
+    preview_data?: Array<Record<string, any>>;
   }>('/api/hub/cases/upload', {
     method: 'POST',
     data: formData,
     headers: { 'Content-Type': 'multipart/form-data' },
+  });
+};
+
+/**
+ * PR-3 Step 3: M2 协议 commit 端点. 暂未实现, 这里先加签名, Step 3 实现后端后端点.
+ * POST /hub/cases/import/commit
+ *
+ * @param data
+ *   - file_md5: uploadPreviewCase 返回的预览缓存 md5
+ *   - project_id: 目标项目 ID
+ *   - on_duplicate: M2 协议无视此字段 (硬编码走 case_id 同步), 保留只为兼容老 M1 调用方
+ */
+export const importCommitCase = async (data: {
+  file_md5: string;
+  project_id: number;
+  on_duplicate?: 'skip' | 'create';
+}) => {
+  return request<{
+    imported_count: number;
+    updated_count: number;
+    inserted_count: number;
+    skipped_count: number;
+  }>('/api/hub/cases/import/commit', {
+    method: 'POST',
+    data,
+  });
+};
+
+/**
+ * PR-3 Step 3: M2 协议取消预览.
+ * POST /hub/cases/import/cancel
+ *
+ * 命名加 M2 后缀避免跟老 M1 路径的 cancelImportCase (POST /hub/cases/upload/cancel) 撞.
+ * 老 M1 cancel 走 /upload/cancel 端点, 跟 M2 /import/cancel 不同, 命名分开.
+ */
+export const cancelImportCaseM2 = async (fileMd5: string) => {
+  return request('/api/hub/cases/import/cancel', {
+    method: 'POST',
+    data: { file_md5: fileMd5 },
   });
 };
 
