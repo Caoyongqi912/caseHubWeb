@@ -434,7 +434,7 @@ export const updateTestCaseStep = async (
 };
 
 /**
- * 按 scope 导出用例 Excel (导出-编辑-导回 圆桌入口).
+ * 按 scope 导出用例 Excel (导出-编辑-导回 流程入口).
  *
  * 后端路由: POST /api/hub/cases/export
  *   ?scope_type=library|plan
@@ -504,29 +504,16 @@ export const exportCases = async (
 };
 
 /**
- * 下载用例模板 Excel
- * @param options - 配置选项
- * @returns 包含 blob 数据和文件名的对象
+ * 下载用例模版 Excel
+ * 通过 umi-request 发起请求，响应拦截器 (isBlob) 会自动处理 blob 下载，
+ * 调用方无需手动创建 <a> 标签触发下载，否则会导致重复下载
+ * @param options - 配置选项（responseType: 'blob' 触发拦截器自动下载）
  */
 export const downloadCaseExcel = async (options: { responseType: 'blob' }) => {
-  const response = await request<any>('/api/hub/cases/downloadCaseDemo', {
+  await request('/api/hub/cases/downloadCaseDemo', {
     method: 'GET',
     ...(options || {}),
   });
-
-  const contentDisposition = response?.headers?.['content-disposition'];
-  let filename = '用例模板.xlsx';
-  if (contentDisposition) {
-    const match = contentDisposition.match(/filename\*?=['"]?([^;"'\n]+)/i);
-    if (match) {
-      filename = decodeURIComponent(match[1]);
-    }
-  }
-
-  return {
-    blob: response as unknown as Blob,
-    filename,
-  };
 };
 
 /**

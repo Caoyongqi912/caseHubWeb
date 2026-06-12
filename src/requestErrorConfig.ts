@@ -38,7 +38,8 @@ const isBlob = async (response: any) => {
       if (starMatch) {
         const raw = starMatch[1].trim().replace(/^['"]|['"]$/g, '');
         // 形如 UTF-8''%E7%94%A8%E4%BE%8B...
-        const m = raw.match(/^([^']*)'(.+)$/);
+        // RFC 5987 格式: charset''url-encoded-filename，使用 ''(两个单引号)作为分隔符
+        const m = raw.match(/^([^']*)''(.+)$/);
         if (m) {
           try {
             finalFileName = decodeURIComponent(m[2]);
@@ -57,7 +58,9 @@ const isBlob = async (response: any) => {
           /filename=["']?([^";]+)["']?/i,
         );
         if (normalMatch) {
-          finalFileName = decodeURIComponent(normalMatch[1].trim());
+          finalFileName = decodeURIComponent(
+            normalMatch[1].trim().replace(/^['"]|['"]$/g, ''),
+          );
         }
       }
     }
@@ -66,7 +69,7 @@ const isBlob = async (response: any) => {
     const url = window.URL.createObjectURL(response.data);
     const link = document.createElement('a');
     link.href = url;
-    link.download = finalFileName;
+    link.download = finalFileName || '用例模版.xlsx';
     document.body.appendChild(link);
     link.click();
 
@@ -83,7 +86,7 @@ const responseInterceptors = async (response: any) => {
 
   // blob 响应 (文件下载): isBlob 已经在内部触发浏览器下载, 这里**必须**提前 return.
   // 原因: blob 没有 .code 字段, 下面 if (data.code !== 0) 会因为 undefined !== 0 误判为业务错误,
-  // 走 message.error(data.msg) 弹一个空 message. (用例导出 / 用例模板下载都撞过这个 bug.)
+  // 走 message.error(data.msg) 弹一个空 message. (用例导出 / 用例模版下载都撞过这个 bug.)
   if (data instanceof Blob) {
     await isBlob(response);
     return response;
@@ -139,7 +142,35 @@ export const errorConfig: RequestConfig = {
         // Axios 的错误
         // 请求成功发出且服务器也响应了状态码，但状态代码超出了 2xx 的范围
         const data = error.response.data;
-        if (data.msg) {
+        // blob 4xx 错误响应: 调用方传了 responseType:'blob', error.response.data 也是 Blob,
+        // 没法直接 .msg. 把 blob 转 text 解析 BE CommonError 的 {code, msg, data} 拿 msg.
+        // 撞过: 用例导出 (POST /export 400 范围内没用例) / 模板下载 / import preview.
+        if (data instanceof Blob) {
+          try {
+            const text = await data.text();
+            if (!text) {
+              message.error('请求失败, 无响应内容');
+            } else {
+              let parsed: any = null;
+              try {
+                parsed = JSON.parse(text);
+              } catch {
+                /* 不是 JSON, 可能是真下载流 */
+              }
+              if (parsed && parsed.msg) {
+                message.error(parsed.msg);
+              } else {
+                // 兜底: blob 不是 JSON 形态 (xlsx 二进制), 提示请求失败但不强行下载
+                message.error('请求失败, 响应格式异常');
+              }
+            }
+          } catch (e) {
+            console.error('blob 错误响应解析失败:', e);
+            message.error('请求失败, blob 解析异常');
+          }
+          return;
+        }
+        if (data && data.msg) {
           message.error(`${data.msg}`);
         } else {
           message.error('Service Error');

@@ -213,23 +213,16 @@ const UploadCaseModal: FC<Props> = ({
   };
 
   /**
-   * 下载用例模板 (.xlsx).
-   * 与 CaseDataTable 工具栏原本的"用例模版"行为完全一致, 现已迁入弹窗内.
+   * 下载用例模版 (.xlsx).
+   * 响应拦截器 (requestErrorConfig.ts -> isBlob) 会自动处理 blob 下载，
+   * 此处只需调用接口，无需手动创建 <a> 标签（否则会导致重复下载）
    */
   const handleDownloadTemplate = useCallback(async () => {
     setDownloading(true);
     try {
-      const { blob, filename } = await downloadCaseExcel({
+      await downloadCaseExcel({
         responseType: 'blob',
       });
-      const objectURL = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = objectURL;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(objectURL);
     } catch (error) {
       console.error('下载模板失败:', error);
       message.error('下载模板失败');

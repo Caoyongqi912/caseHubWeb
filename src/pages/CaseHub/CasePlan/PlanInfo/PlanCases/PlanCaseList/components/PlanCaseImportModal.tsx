@@ -183,20 +183,15 @@ const PlanCaseImportModal: FC<PlanCaseImportModalProps> = ({
     [onOpenChange, resetAllState],
   );
 
-  /** 下载用例导入模板 (与 CaseDataTable 共用同一模板) */
+  /** 下载用例导入模板 (与 CaseDataTable 共用同一模板)
+   *  响应拦截器 (requestErrorConfig.ts -> isBlob) 会自动处理 blob 下载，
+   *  此处只需调用接口，无需手动创建 <a> 标签（否则会导致重复下载）
+   */
   const handleDownloadTemplate = useCallback(async () => {
     try {
-      const { blob, filename } = await downloadCaseExcel({
+      await downloadCaseExcel({
         responseType: 'blob',
       });
-      const objectURL = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = objectURL;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(objectURL);
     } catch (error) {
       message.error('下载模板失败');
     }
