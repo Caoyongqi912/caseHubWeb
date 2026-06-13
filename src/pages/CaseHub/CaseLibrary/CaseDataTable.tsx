@@ -1,3 +1,5 @@
+import type { IModule } from '@/api.d';
+import { queryTreeModuleByProject } from '@/api/base';
 import {
   copyTestCase,
   exportCases,
@@ -85,6 +87,13 @@ const CaseDataTable: FC<Props> = (props) => {
   const [openNewCaseDrawer, setOpenNewCaseDrawer] = useState<boolean>(false);
   const [openModal, setOpenModal] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
+  // 当前选中目录的名称 (用于导出按钮的 Popconfirm 文案: 确认将 {name} 目录下用例全部导出?)
+  // 通过 queryTreeModuleByProject 反查, 避免改 LeftComponents 的 onModuleChange 签名波及
+  // 9 个其他页面 (Requirement / Scheduler / Httpx / Play 系列). 每次 module 切换多 1 次
+  // tree 查询, tree 数据量小可接受.
+  const [currentModuleName, setCurrentModuleName] = useState<
+    string | undefined
+  >();
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [selectedRows, setSelectedRows] = useState<ITestCase[]>([]);
 
@@ -100,6 +109,41 @@ const CaseDataTable: FC<Props> = (props) => {
       setSelectedRows([]);
     }
   }, [currentModuleId]);
+
+  // 反查当前 module 名称
+  useEffect(() => {
+    if (!currentProjectId || !currentModuleId) {
+      setCurrentModuleName(undefined);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const { code, data } = await queryTreeModuleByProject(
+          currentProjectId,
+          ModuleEnum.CASE,
+        );
+        if (cancelled || code !== 0 || !Array.isArray(data)) return;
+        const findName = (nodes: IModule[]): string | undefined => {
+          for (const n of nodes) {
+            if (n.key === currentModuleId) return n.title;
+            if (n.children) {
+              const r = findName(n.children);
+              if (r) return r;
+            }
+          }
+          return undefined;
+        };
+        setCurrentModuleName(findName(data));
+      } catch {
+        // 反查失败不影响列表, 静默回退
+        if (!cancelled) setCurrentModuleName(undefined);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [currentProjectId, currentModuleId]);
 
   /** 分页查询用例数据 */
   const fetchPageData = useCallback(
@@ -403,15 +447,27 @@ const CaseDataTable: FC<Props> = (props) => {
     ) : null,
 
     <Tooltip key="export-tip" title={exportTooltip}>
-      <Button
-        key="export-module"
-        icon={<DownloadOutlined />}
-        loading={exportLoading}
+      <Popconfirm
+        key="export-confirm"
+        title={
+          currentModuleName
+            ? `确认将 ${currentModuleName} 目录下用例全部导出?`
+            : '确认将当前目录下用例全部导出?'
+        }
+        okText="确认导出"
+        cancelText="取消"
         disabled={exportDisabled}
-        onClick={handleExportByModule}
+        onConfirm={handleExportByModule}
       >
-        导出
-      </Button>
+        <Button
+          key="export-module"
+          icon={<DownloadOutlined />}
+          loading={exportLoading}
+          disabled={exportDisabled}
+        >
+          导出
+        </Button>
+      </Popconfirm>
     </Tooltip>,
 
     <Button key="add" type="primary" onClick={() => setOpenNewCaseDrawer(true)}>
