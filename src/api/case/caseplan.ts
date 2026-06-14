@@ -511,6 +511,35 @@ export const commitPlanImportCase = async (data: {
 };
 
 /**
+ * PR-3: M2 协议下, 计划用例导入 (导回) commit 端点.
+ * POST /hub/plan/import/commit
+ *
+ * 跟 commitPlanImportCase (M1) 区别:
+ * - M1 走 on_duplicate 老逻辑, 无 case_id 概念
+ * - M2 走 case_id 同步, 已知改, 未知增, 跟 library 端 importCommitCase 行为一致
+ * - 入参极简, 不需要 plan_module_id / is_review / first_status / second_status
+ *   这些字段都是 M1 路径专属; M2 plan_module 从 Excel group_path 自动
+ *   find-or-create, PlanCaseAssociation 默认不带 first/second_status
+ *
+ * @returns {inserted, updated, dynamic_count} (后端 M2PlanImportService.commit 语义)
+ */
+export const commitPlanImportCaseM2 = async (data: {
+  file_md5: string;
+  plan_id: string;
+}) => {
+  return request<{
+    inserted: number;
+    updated: number;
+    /** M2 plan 扩展: 跨 plan 上传 / 新 plan 复用已知 case 时, 自动补建的关联数 */
+    auto_associated: number;
+    dynamic_count: number;
+  }>('/api/hub/plan/import/commit', {
+    method: 'POST',
+    data,
+  });
+};
+
+/**
  * 单轮用例执行统计
  *
  * 对应后端 PlanCaseMapper.get_overview 中 first_round / second_round 字段。

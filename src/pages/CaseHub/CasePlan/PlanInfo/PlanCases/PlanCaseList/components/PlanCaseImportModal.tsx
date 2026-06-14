@@ -1,9 +1,13 @@
 /**
  * 计划用例批量导入弹窗组件
  */
-import { commitPlanImportCase } from '@/api/case/caseplan';
+import {
+  commitPlanImportCase,
+  commitPlanImportCaseM2,
+} from '@/api/case/caseplan';
 import {
   cancelImportCase,
+  cancelImportCaseM2,
   downloadCaseExcel,
   uploadPreviewCase,
 } from '@/api/case/testCase';
@@ -32,6 +36,7 @@ import {
   Row,
   Space,
   Statistic,
+  Tag,
   Typography,
   Upload,
 } from 'antd';
@@ -77,6 +82,12 @@ interface ValidateResult {
    * commit 必失败. 兼容老后端: 字段缺失视为 true.
    */
   can_commit: boolean;
+  /**
+   * PR-3: 模板类型. 缺省 / 字段缺失视为 M1 (老后端兼容).
+   * - M1: 老 9 列模板, 走 on_duplicate 老逻辑 (走 /hub/plan/upload/commit)
+   * - M2: 10 列 + _meta sheet, 走 case_id 同步 (走 /hub/plan/import/commit, 无视 on_duplicate)
+   */
+  template_type?: 'M1' | 'M2';
 }
 
 /** 相同用例处理: skip = 跳过 (默认 create). 透传后端 skip_duplicate. */
@@ -227,6 +238,8 @@ const PlanCaseImportModal: FC<PlanCaseImportModalProps> = ({
             invalid_count: response.data.invalid_count || 0,
             errors: response.data.errors || [],
             can_commit: response.data.can_commit ?? true,
+            // PR-3: 模板类型. 缺省视为 M1 (老后端兼容)
+            template_type: response.data.template_type ?? 'M1',
           });
           setUploadError(null);
         } else {
@@ -244,10 +257,20 @@ const PlanCaseImportModal: FC<PlanCaseImportModalProps> = ({
     [projectId],
   );
 
+  // PR-3: M1/M2 分支标志. M2 走 case_id 同步, 走 /hub/plan/import/commit 端点;
+  // M1 走老 on_duplicate 逻辑, 走 /hub/plan/upload/commit 端点. 缺省 M1 (老后端兼容).
+  const isM2 = validateResult?.template_type === 'M2';
+
   const handleRemove = useCallback(async () => {
     if (validateResult?.file_md5) {
       try {
-        await cancelImportCase(validateResult.file_md5);
+        // PR-3: M1/M2 cancel 分支. M2 走新 /import/cancel 端点.
+        // 端点分开, 跟 M1/M2 commit 端点对应, 互不干扰.
+        if (isM2) {
+          await cancelImportCaseM2(validateResult.file_md5);
+        } else {
+          await cancelImportCase(validateResult.file_md5);
+        }
       } catch (err) {
         console.error('清理缓存失败:', err);
       }
@@ -278,26 +301,48 @@ const PlanCaseImportModal: FC<PlanCaseImportModalProps> = ({
 
       setConfirming(true);
       try {
-        const response = (await commitPlanImportCase({
-          file_md5: validateResult.file_md5,
-          plan_id: planId,
-          first_status: values.first_status,
-          second_status: values.second_status,
-          is_review: values.is_review,
-          skip_duplicate: values.on_duplicate === 'skip',
-        })) as any;
-
-        if (!response || response.code !== 0) {
-          setUploadError(response?.msg || '导入失败');
-          return false;
-        }
-
-        const imported = response.data?.imported_count || 0;
-        const skipped = response.data?.skipped_count || 0;
-        if (skipped > 0) {
-          message.success(`成功导入 ${imported} 条, 跳过同名 ${skipped} 条`);
+        // PR-3: M1/M2 commit 分支. M2 走新 /hub/plan/import/commit 端点, 无视 on_duplicate /
+        // first_status / second_status / is_review (M2 协议硬编码走 case_id 同步, 这些字段都是
+        // M1 路径专属). M1 走老 /hub/plan/upload/commit 端点.
+        let response: any;
+        if (isM2) {
+          response = (await commitPlanImportCaseM2({
+            file_md5: validateResult.file_md5,
+            plan_id: planId,
+          })) as any;
+          if (!response || response.code !== 0) {
+            setUploadError(response?.msg || 'M2 导入失败');
+            return false;
+          }
+          const inserted = response.data?.inserted ?? 0;
+          const updated = response.data?.updated ?? 0;
+          // M2 plan 扩展: 跨 plan 上传 / 新 plan 复用已知 case 时自动补建的本 plan 关联数.
+          // 0 时不显示, 避免 "自动关联 0 条" 这种无意义文案.
+          const autoAssoc = response.data?.auto_associated ?? 0;
+          const autoMsg = autoAssoc > 0 ? `, 自动关联 ${autoAssoc} 条` : '';
+          message.success(
+            `已修改 ${updated} 条, 新增 ${inserted} 条${autoMsg}`,
+          );
         } else {
-          message.success(`成功导入数据 ${imported} 条`);
+          response = (await commitPlanImportCase({
+            file_md5: validateResult.file_md5,
+            plan_id: planId,
+            first_status: values.first_status,
+            second_status: values.second_status,
+            is_review: values.is_review,
+            skip_duplicate: values.on_duplicate === 'skip',
+          })) as any;
+          if (!response || response.code !== 0) {
+            setUploadError(response?.msg || '导入失败');
+            return false;
+          }
+          const imported = response.data?.imported_count || 0;
+          const skipped = response.data?.skipped_count || 0;
+          if (skipped > 0) {
+            message.success(`成功导入 ${imported} 条, 跳过同名 ${skipped} 条`);
+          } else {
+            message.success(`成功导入数据 ${imported} 条`);
+          }
         }
 
         onUploadFinish();
@@ -363,71 +408,95 @@ const PlanCaseImportModal: FC<PlanCaseImportModalProps> = ({
 
       <Divider />
 
-      {/* 相同用例处理 */}
-      <Space vertical size="small" style={{ display: 'flex' }}>
-        <Title level={5} style={{ margin: 0 }}>
-          相同用例处理
-        </Title>
-        <Text type="secondary">
-          当导入文件中包含与导入位置相同用例（分组 +
-          标题完全一致）时，选择执行方式。
-        </Text>
-      </Space>
+      {/* PR-3: M1 显示 on_duplicate 选项; M2 隐藏, 用 M2 Tag + 导回协议提示代替. */}
+      {!isM2 && (
+        <>
+          {/* 相同用例处理 */}
+          <Space vertical size="small" style={{ display: 'flex' }}>
+            <Title level={5} style={{ margin: 0 }}>
+              相同用例处理
+            </Title>
+            <Text type="secondary">
+              当导入文件中包含与导入位置相同用例（分组 +
+              标题完全一致）时，选择执行方式。
+            </Text>
+          </Space>
 
-      <ProFormRadio.Group
-        name="on_duplicate"
-        options={DUPLICATE_OPTIONS.map((opt) => ({
-          value: opt.value,
-          label: opt.label,
-        }))}
-        radioType="button"
-        fieldProps={{
-          buttonStyle: 'solid',
-          size: 'middle',
-        }}
-        initialValue="create"
-      />
+          <ProFormRadio.Group
+            name="on_duplicate"
+            options={DUPLICATE_OPTIONS.map((opt) => ({
+              value: opt.value,
+              label: opt.label,
+            }))}
+            radioType="button"
+            fieldProps={{
+              buttonStyle: 'solid',
+              size: 'middle',
+            }}
+            initialValue="create"
+          />
 
-      <Text type="secondary" style={{ fontSize: 12 }}>
-        {activeHint}
-      </Text>
+          <Text type="secondary" style={{ fontSize: 12 }}>
+            {activeHint}
+          </Text>
 
-      <Divider />
+          <Divider />
+        </>
+      )}
 
-      {/* 状态设置 */}
-      <Space vertical size="small" style={{ display: 'flex' }}>
-        <Title level={5} style={{ margin: 0 }}>
-          状态设置
-        </Title>
-        <Text type="secondary">设置导入用例的默认状态（可选）。</Text>
-      </Space>
+      {/* PR-3: M2 提示 + M2 Tag */}
+      {isM2 && (
+        <div style={{ marginTop: 16, marginBottom: 16 }}>
+          <Tag color="blue" style={{ marginRight: 8 }}>
+            M2
+          </Tag>
+          <Text type="secondary" style={{ fontSize: 12 }}>
+            导回协议: 按「用例ID」列同步更新 (已存在则改字段+步骤) / 新增 (无 ID
+            则新增并按「所属分组」复制计划目录). 无视相同用例处理 / 一轮二轮状态
+            / 评审状态 (M2 协议用 case_id 同步, 不走这些字段).
+          </Text>
+        </div>
+      )}
 
-      <ProForm.Group>
-        <ProFormSelect
-          name="first_status"
-          label="一轮状态"
-          options={roundStatusFormOptions}
-          placeholder="请选择"
-          allowClear
-        />
-        <ProFormSelect
-          name="second_status"
-          label="二轮状态"
-          options={roundStatusFormOptions}
-          placeholder="请选择"
-          allowClear
-        />
-      </ProForm.Group>
+      {/* PR-3: M1 显示 状态设置 (一轮/二轮/评审); M2 隐藏 (M2 协议用 case_id 同步) */}
+      {!isM2 && (
+        <>
+          {/* 状态设置 */}
+          <Space vertical size="small" style={{ display: 'flex' }}>
+            <Title level={5} style={{ margin: 0 }}>
+              状态设置
+            </Title>
+            <Text type="secondary">设置导入用例的默认状态（可选）。</Text>
+          </Space>
 
-      <ProFormSelect
-        name="is_review"
-        label="评审状态"
-        options={reviewStatusFormOptions}
-        placeholder="请选择"
-        rules={[{ required: true, message: '请选择评审状态' }]}
-      />
+          <ProForm.Group>
+            <ProFormSelect
+              name="first_status"
+              label="一轮状态"
+              options={roundStatusFormOptions}
+              placeholder="请选择"
+              allowClear
+            />
+            <ProFormSelect
+              name="second_status"
+              label="二轮状态"
+              options={roundStatusFormOptions}
+              placeholder="请选择"
+              allowClear
+            />
+          </ProForm.Group>
 
-      <Divider />
+          <ProFormSelect
+            name="is_review"
+            label="评审状态"
+            options={reviewStatusFormOptions}
+            placeholder="请选择"
+            rules={[{ required: true, message: '请选择评审状态' }]}
+          />
+
+          <Divider />
+        </>
+      )}
 
       {/* 上传区域 */}
       <Space vertical size="small" style={{ display: 'flex' }}>
