@@ -3,12 +3,13 @@ import {
   CloseOutlined,
   CopyOutlined,
   DeleteOutlined,
+  DownloadOutlined,
   EditOutlined,
   PlusOutlined,
   SwapOutlined,
   UploadOutlined,
 } from '@ant-design/icons';
-import { Button, Modal, Space, Tooltip } from 'antd';
+import { Button, Modal, Popconfirm, Space, Tooltip } from 'antd';
 import { FC, useCallback, useState } from 'react';
 import BatchCopyModal from './BatchCopyModal';
 import BatchEditModal from './BatchEditModal';
@@ -23,6 +24,8 @@ export interface BatchActionBarProps {
   selectedCaseIds: number[];
   planId?: string;
   onBatchSuccess?: () => void;
+  /** 多选时：批量导出所选用例 (走 exportCases 的 case_ids 路径, M2 模板) */
+  onBatchExport?: () => void;
   onExit?: () => void;
   /** 单选时：在选中用例之后插入新用例 */
   onInsertAfter?: (afterCaseId: number) => void;
@@ -39,6 +42,7 @@ const BatchActionBar: FC<BatchActionBarProps> = ({
   selectedCaseIds,
   planId,
   onBatchSuccess,
+  onBatchExport,
   onExit,
   onInsertAfter,
   onInsertAfterImport,
@@ -191,6 +195,23 @@ const BatchActionBar: FC<BatchActionBarProps> = ({
                 }}
               />
             </>
+          )}
+          {onBatchExport && (
+            <Tooltip title="导出所选用例" placement="top">
+              <Popconfirm
+                title={`确认导出所选 ${selectedCount} 个用例?`}
+                okText="确认导出"
+                cancelText="取消"
+                onConfirm={() => onBatchExport()}
+              >
+                <Button
+                  icon={<DownloadOutlined />}
+                  type="text"
+                  shape="circle"
+                  size="large"
+                />
+              </Popconfirm>
+            </Tooltip>
           )}
           <Tooltip title="批量移动" placement="top">
             <Button

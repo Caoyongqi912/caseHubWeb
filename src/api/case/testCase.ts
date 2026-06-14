@@ -524,10 +524,17 @@ export const exportCases = async (
     scope_id: number;
     project_id: number;
     case_ids?: number[];
+    /**
+     * plan 下可选: 限制到某个 plan_module 子树 (recursive=True).
+     * library 忽略. 跟 case_ids 互斥 (后端 mapper 内部 case_ids 优先).
+     * 走 query (语义上是 "定位哪个范围", 跟 scope_id 同级).
+     */
+    plan_module_id?: number;
   },
   options?: IObjGet,
 ) => {
-  // scope 三个必填走 query (语义上是 "定位哪个范围"), case_ids 走 body (是范围内的过滤条件)
+  // scope 三个必填 + plan_module_id 走 query (语义上是 "定位哪个范围"),
+  // case_ids 走 body (是范围内的过滤条件)
   const { case_ids, ...query } = params;
   const response = await request<any>('/api/hub/cases/export', {
     method: 'POST',

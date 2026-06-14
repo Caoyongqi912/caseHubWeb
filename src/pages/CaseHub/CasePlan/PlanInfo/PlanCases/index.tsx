@@ -103,6 +103,7 @@ const Index: FC<Props> = ({ planId, planInfo: planInfoProp }) => {
             planId={planId}
             moduleId={selectedModuleId}
             planInfo={planInfo}
+            planModules={planModules}
             onModulesRefresh={fetchPlanModules}
           />
         </Splitter.Panel>
