@@ -23,6 +23,8 @@ import {
   DeleteOutlined,
   DeliveredProcedureOutlined,
   DownloadOutlined,
+  FolderOpenOutlined,
+  PlusOutlined,
   SmallDashOutlined,
 } from '@ant-design/icons';
 import {
@@ -46,6 +48,7 @@ import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import BatchActionBar from './components/BatchActionBar';
 import CaseForm from './components/CaseForm';
 import MoveCaseModal from './components/MoveCaseModal';
+import { useSoftButtonStyle } from './components/toolbarStyles';
 import UploadCaseModal from './components/UploadCaseModal';
 
 const { Text, Link } = Typography;
@@ -109,6 +112,47 @@ const CaseDataTable: FC<Props> = (props) => {
       setSelectedRows([]);
     }
   }, [currentModuleId]);
+
+  // 当前目录下用例总数 (与搜索/筛选无关, 只跟 module 绑定)
+  // 用 limit=1 的 pageTestCase 只取 pageInfo.total, 减少传输
+  const [moduleCaseCount, setModuleCaseCount] = useState<number | null>(null);
+  // 触发器: 上传/删除/移动成功后 +1, 让 effect 重跑拉新总数
+  const [countRefreshTrigger, setCountRefreshTrigger] = useState(0);
+  const refreshCaseCount = useCallback(() => {
+    setCountRefreshTrigger((prev) => prev + 1);
+  }, []);
+  useEffect(() => {
+    if (!currentProjectId || !currentModuleId) {
+      setModuleCaseCount(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const response: any = await pageTestCase({
+          module_id: currentModuleId,
+          module_type: ModuleEnum.CASE,
+          is_common: true,
+          limit: 1,
+          page: 1,
+        });
+        if (cancelled) return;
+        if (response?.code === 0 && response.data?.pageInfo) {
+          setModuleCaseCount(response.data.pageInfo.total);
+        } else {
+          setModuleCaseCount(0);
+        }
+      } catch (e) {
+        if (!cancelled) {
+          console.error('fetch module case count failed:', e);
+          setModuleCaseCount(0);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [currentProjectId, currentModuleId, countRefreshTrigger]);
 
   // 反查当前 module 名称
   useEffect(() => {
@@ -378,6 +422,7 @@ const CaseDataTable: FC<Props> = (props) => {
     });
     if (code === 0) {
       actionRef.current?.reload();
+      refreshCaseCount();
       message.success('删除成功');
     }
   };
@@ -421,7 +466,8 @@ const CaseDataTable: FC<Props> = (props) => {
     setSelectedRowKeys([]);
     setSelectedRows([]);
     actionRef.current?.reload();
-  }, []);
+    refreshCaseCount();
+  }, [refreshCaseCount]);
 
   const handleExitBatch = useCallback(() => {
     setSelectedRowKeys([]);
@@ -434,13 +480,19 @@ const CaseDataTable: FC<Props> = (props) => {
     ? '请先在左侧选择一个目录'
     : '导出当前目录下全部用例';
 
+  // soft 样式: 主色 8% 透明背景 + 主色 30% 透明边框 + 主色文字, 与 primary 主按钮形成层次
+  const softButtonStyle = useSoftButtonStyle();
+
   const toolBarRender = [
     // 没拿到 currentProjectId 时不渲染上传按钮:
     // 后端 /hub/cases/upload 预览阶段 project_id 必填, 没值直接 422, 提前挡住.
     currentProjectId ? (
       <UploadCaseModal
         key="upload-case"
-        onSuccess={() => actionRef.current?.reload()}
+        onSuccess={() => {
+          actionRef.current?.reload();
+          refreshCaseCount();
+        }}
         onModuleRefresh={onModuleRefresh}
         currentProjectId={currentProjectId}
       />
@@ -464,13 +516,19 @@ const CaseDataTable: FC<Props> = (props) => {
           icon={<DownloadOutlined />}
           loading={exportLoading}
           disabled={exportDisabled}
+          style={softButtonStyle}
         >
           导出
         </Button>
       </Popconfirm>
     </Tooltip>,
 
-    <Button key="add" type="primary" onClick={() => setOpenNewCaseDrawer(true)}>
+    <Button
+      key="add"
+      type="primary"
+      icon={<PlusOutlined />}
+      onClick={() => setOpenNewCaseDrawer(true)}
+    >
       添加用例
     </Button>,
   ];
@@ -489,6 +547,7 @@ const CaseDataTable: FC<Props> = (props) => {
         onSuccess={() => {
           setOpenModal(false);
           actionRef.current?.reload();
+          refreshCaseCount();
         }}
         currentCaseId={currentCaseId}
       />
@@ -547,6 +606,29 @@ const CaseDataTable: FC<Props> = (props) => {
         <ProTable
           footer={() => false}
           cardBordered
+          headerTitle={
+            currentModuleId ? (
+              <Space size={6} align="center">
+                <FolderOpenOutlined
+                  style={{ color: colors.textSecondary, fontSize: 14 }}
+                />
+                <Text type="secondary" style={{ fontSize: 13 }}>
+                  当前目录下共
+                  <Text
+                    strong
+                    style={{
+                      color: colors.text,
+                      margin: '0 4px',
+                      fontVariantNumeric: 'tabular-nums',
+                    }}
+                  >
+                    {(moduleCaseCount ?? 0).toLocaleString()}
+                  </Text>
+                  条用例
+                </Text>
+              </Space>
+            ) : null
+          }
           columnsState={{
             persistenceKey: perKey ?? 'pro-table',
             persistenceType: 'localStorage',
@@ -557,7 +639,7 @@ const CaseDataTable: FC<Props> = (props) => {
           }}
           pagination={{
             showQuickJumper: true,
-            defaultPageSize: 50,
+            defaultPageSize: 20,
             showSizeChanger: true,
             pageSizeOptions: ['10', '20', '50', '100'],
           }}

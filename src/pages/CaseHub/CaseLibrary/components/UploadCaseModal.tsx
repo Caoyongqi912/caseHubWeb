@@ -27,11 +27,11 @@ import {
   Row,
   Space,
   Statistic,
-  Tag,
   Typography,
   Upload,
 } from 'antd';
 import { FC, useCallback, useMemo, useState } from 'react';
+import { useSoftButtonStyle } from './toolbarStyles';
 
 const { Dragger } = Upload;
 const { Text, Title } = Typography;
@@ -132,6 +132,9 @@ const UploadCaseModal: FC<Props> = ({
   );
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
+
+  // soft 样式: 与 CaseDataTable 的"导出"按钮统一, 共同构成次要操作组
+  const softButtonStyle = useSoftButtonStyle();
 
   const passRate = useMemo(() => {
     if (!validateResult || validateResult.total_count === 0) return 0;
@@ -360,7 +363,7 @@ const UploadCaseModal: FC<Props> = ({
 
   return (
     <>
-      <Button type="primary" onClick={() => setOpen(true)}>
+      <Button style={softButtonStyle} onClick={() => setOpen(true)}>
         <UploadOutlined />
         上传
       </Button>
@@ -388,14 +391,10 @@ const UploadCaseModal: FC<Props> = ({
         }}
       >
         <Space vertical size="small" style={{ display: 'flex' }}>
-          <Title level={5} style={{ margin: 0 }}>
-            下载模板
-          </Title>
           <Text type="secondary">
             请先下载标准模板，按模板格式填写后再上传。
           </Text>
         </Space>
-
         <Button
           loading={downloading}
           onClick={handleDownloadTemplate}
@@ -407,7 +406,6 @@ const UploadCaseModal: FC<Props> = ({
 
         <Divider />
 
-        {/* PR-3: M1 显示 on_duplicate 选项; M2 隐藏, 用 M2 Tag + 导回协议提示代替. */}
         {!isM2 && (
           <>
             <Space vertical size="small" style={{ display: 'flex' }}>
@@ -436,26 +434,6 @@ const UploadCaseModal: FC<Props> = ({
             <Text type="secondary" style={{ fontSize: 12 }}>
               {activeHint}
             </Text>
-
-            <Divider />
-          </>
-        )}
-
-        {isM2 && (
-          <>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Tag color="blue">M2</Tag>
-              <Title level={5} style={{ margin: 0 }}>
-                导回协议
-              </Title>
-            </div>
-            <Alert
-              type="info"
-              showIcon
-              message="按 用例ID 同步, 无视重复检查"
-              description="已导出的文件再次传回时, 系统按 用例ID 命中更新, 未命中的行作为新增入库. 名字冲突不跳过, 删行无操作."
-              style={{ marginTop: 8 }}
-            />
             <Divider />
           </>
         )}

@@ -1,1 +1,2 @@
-export { useBatchDelete } from './useBatchDelete';
+export { useBatchDeletePermanent } from './useBatchDeletePermanent';
+export { useBatchUnlink } from './useBatchUnlink';

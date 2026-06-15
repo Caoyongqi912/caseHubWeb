@@ -17,6 +17,7 @@ import {
   ProCard,
   ProForm,
   ProFormSelect,
+  ProFormText,
   ProFormTextArea,
 } from '@ant-design/pro-components';
 import { Button, Form, Space, Spin, Tag, Typography } from 'antd';
@@ -222,7 +223,8 @@ const TestCaseDetail: FC<Props> = ({ planId, testcase, callback }: Props) => {
         allValues.case_setup !== testcase.case_setup ||
         allValues.case_name !== testcase.case_name ||
         allValues.case_level !== testcase.case_level ||
-        allValues.case_type !== testcase.case_type;
+        allValues.case_type !== testcase.case_type ||
+        allValues.case_tag !== testcase.case_tag;
 
       if (hasChanges) {
         if (saveTimeoutRef.current) {
@@ -236,6 +238,7 @@ const TestCaseDetail: FC<Props> = ({ planId, testcase, callback }: Props) => {
             case_level: allValues.case_level,
             case_type: allValues.case_type,
             case_mark: allValues.case_mark,
+            case_tag: allValues.case_tag,
             case_setup: allValues.case_setup,
           } as ITestCase);
 
@@ -424,7 +427,22 @@ const TestCaseDetail: FC<Props> = ({ planId, testcase, callback }: Props) => {
                   width={'md'}
                 />
               </ProForm.Group>
-
+              {/* 标签 */}
+              <div style={{ marginBottom: spacing.lg }}>
+                <Space style={{ marginBottom: spacing.sm }}>
+                  <Text strong>标签</Text>
+                  <Text type="secondary" style={{ fontSize: 12 }}>
+                    （可选）
+                  </Text>
+                </Space>
+                <ProFormText
+                  name="case_tag"
+                  placeholder="输入标签信息..."
+                  fieldProps={{
+                    variant: 'filled',
+                  }}
+                />
+              </div>
               {/* 备注 */}
               <div style={{ marginBottom: spacing.lg }}>
                 <Space style={{ marginBottom: spacing.sm }}>

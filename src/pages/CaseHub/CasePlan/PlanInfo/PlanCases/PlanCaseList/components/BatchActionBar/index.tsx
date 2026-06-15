@@ -3,6 +3,7 @@ import {
   CloseOutlined,
   CopyOutlined,
   DeleteOutlined,
+  DisconnectOutlined,
   DownloadOutlined,
   EditOutlined,
   PlusOutlined,
@@ -14,7 +15,7 @@ import { FC, useCallback, useState } from 'react';
 import BatchCopyModal from './BatchCopyModal';
 import BatchEditModal from './BatchEditModal';
 import BatchMoveModal from './BatchMoveModal';
-import { useBatchDelete } from './hooks/useBatchDelete';
+import { useBatchDeletePermanent, useBatchUnlink } from './hooks';
 
 /**
  * 批量操作栏 Props
@@ -35,7 +36,7 @@ export interface BatchActionBarProps {
 
 /**
  * 批量操作栏组件
- * 支持移动、复制、删除、修改已选中的用例
+ * 支持移动、复制、编辑、解除关联、彻底删除已选中的用例
  */
 const BatchActionBar: FC<BatchActionBarProps> = ({
   selectedCount,
@@ -51,14 +52,28 @@ const BatchActionBar: FC<BatchActionBarProps> = ({
   const [moveModalVisible, setMoveModalVisible] = useState(false);
   const [copyModalVisible, setCopyModalVisible] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
-  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [unlinkModalVisible, setUnlinkModalVisible] = useState(false);
+  const [deletePermanentModalVisible, setDeletePermanentModalVisible] =
+    useState(false);
+  // 物理删除二次确认：用户必须勾选"我已知晓不可恢复"才能点确定
+  const [deletePermanentConfirmed, setDeletePermanentConfirmed] =
+    useState(false);
 
-  const { deleteCases, loading: deleteLoading } = useBatchDelete({
+  const { unlinkCases, loading: unlinkLoading } = useBatchUnlink({
     onSuccess: () => {
-      setDeleteModalVisible(false);
+      setUnlinkModalVisible(false);
       onBatchSuccess?.();
     },
   });
+
+  const { deleteCasesPermanently, loading: deletePermanentLoading } =
+    useBatchDeletePermanent({
+      onSuccess: () => {
+        setDeletePermanentModalVisible(false);
+        setDeletePermanentConfirmed(false);
+        onBatchSuccess?.();
+      },
+    });
 
   /** 打开移动弹窗 */
   const handleMove = useCallback(() => setMoveModalVisible(true), []);
@@ -90,18 +105,34 @@ const BatchActionBar: FC<BatchActionBarProps> = ({
     onBatchSuccess?.();
   }, [onBatchSuccess]);
 
-  /** 打开删除确认弹窗 */
-  const handleDeleteClick = useCallback(() => setDeleteModalVisible(true), []);
-  /** 关闭删除确认弹窗 */
-  const handleDeleteCancel = useCallback(
-    () => setDeleteModalVisible(false),
+  /** 打开解除关联确认弹窗 */
+  const handleUnlinkClick = useCallback(() => setUnlinkModalVisible(true), []);
+  /** 关闭解除关联确认弹窗 */
+  const handleUnlinkCancel = useCallback(
+    () => setUnlinkModalVisible(false),
     [],
   );
-  /** 确认删除 */
-  const handleDeleteConfirm = useCallback(() => {
+  /** 确认解除关联 */
+  const handleUnlinkConfirm = useCallback(() => {
     if (!planId) return;
-    deleteCases(Number(planId), selectedCaseIds);
-  }, [planId, selectedCaseIds, deleteCases]);
+    unlinkCases(Number(planId), selectedCaseIds);
+  }, [planId, selectedCaseIds, unlinkCases]);
+
+  /** 打开物理删除确认弹窗（每次重置勾选状态） */
+  const handleDeletePermanentClick = useCallback(() => {
+    setDeletePermanentConfirmed(false);
+    setDeletePermanentModalVisible(true);
+  }, []);
+  /** 关闭物理删除确认弹窗 */
+  const handleDeletePermanentCancel = useCallback(() => {
+    setDeletePermanentModalVisible(false);
+    setDeletePermanentConfirmed(false);
+  }, []);
+  /** 确认物理删除 */
+  const handleDeletePermanentConfirm = useCallback(() => {
+    if (!planId) return;
+    deleteCasesPermanently(Number(planId), selectedCaseIds);
+  }, [planId, selectedCaseIds, deleteCasesPermanently]);
 
   /** 退出批量选择模式 */
   const handleExit = useCallback(() => {
@@ -240,11 +271,22 @@ const BatchActionBar: FC<BatchActionBarProps> = ({
               size="large"
             />
           </Tooltip>
-          <Tooltip title="批量删除" placement="top">
+          {/* 解除关联：仅删除用例与当前计划的关联，用例本体保留 */}
+          <Tooltip title="解除关联" placement="top">
+            <Button
+              icon={<DisconnectOutlined />}
+              onClick={handleUnlinkClick}
+              type="text"
+              shape="circle"
+              size="large"
+            />
+          </Tooltip>
+          {/* 物理删除：解除关联 + 删除用例本体及子步骤，不可恢复 */}
+          <Tooltip title="彻底删除用例" placement="top">
             <Button
               icon={<DeleteOutlined />}
               danger
-              onClick={handleDeleteClick}
+              onClick={handleDeletePermanentClick}
               type="text"
               shape="circle"
               size="large"
@@ -290,18 +332,18 @@ const BatchActionBar: FC<BatchActionBarProps> = ({
         onSuccess={handleEditSuccess}
       />
 
-      {/* 删除确认弹窗 */}
+      {/* 解除关联确认弹窗（轻量确认） */}
       <Modal
-        title="批量删除用例"
-        open={deleteModalVisible}
-        onCancel={handleDeleteCancel}
-        onOk={handleDeleteConfirm}
-        okText="确定"
+        title="解除用例关联"
+        open={unlinkModalVisible}
+        onCancel={handleUnlinkCancel}
+        onOk={handleUnlinkConfirm}
+        okText="解除关联"
         cancelText="取消"
-        okButtonProps={{ danger: true, loading: deleteLoading }}
+        okButtonProps={{ loading: unlinkLoading }}
       >
         <p style={{ color: colors.text, fontSize: token.fontSize }}>
-          确定要删除已选择的 {selectedCount} 项用例吗？
+          确认解除已选择的 {selectedCount} 项用例与本计划的关联吗？
         </p>
         <p
           style={{
@@ -310,8 +352,74 @@ const BatchActionBar: FC<BatchActionBarProps> = ({
             fontSize: token.fontSizeSM,
           }}
         >
-          删除后用例将无法恢复，请谨慎操作。
+          解除后用例本体仍保留在用例库中，可后续重新关联。
         </p>
+      </Modal>
+
+      {/* 物理删除确认弹窗（强警告 + 二次确认） */}
+      <Modal
+        title={
+          <span style={{ color: colors.error }}>彻底删除用例（不可恢复）</span>
+        }
+        open={deletePermanentModalVisible}
+        onCancel={handleDeletePermanentCancel}
+        onOk={handleDeletePermanentConfirm}
+        okText="彻底删除"
+        cancelText="取消"
+        okButtonProps={{
+          danger: true,
+          loading: deletePermanentLoading,
+          disabled: !deletePermanentConfirmed,
+        }}
+        width={460}
+      >
+        <p style={{ color: colors.text, fontSize: token.fontSize }}>
+          即将彻底删除已选择的{' '}
+          <span style={{ color: colors.error, fontWeight: 600 }}>
+            {selectedCount}
+          </span>{' '}
+          项用例。
+        </p>
+        <ul
+          style={{
+            color: colors.textTertiary,
+            marginTop: spacing.sm,
+            fontSize: token.fontSizeSM,
+            paddingLeft: spacing.lg,
+          }}
+        >
+          <li>解除用例与当前计划的关联</li>
+          <li>从用例库（test_case）物理删除用例本体</li>
+          <li>删除该用例下的所有子步骤（case_sub_step）</li>
+        </ul>
+        <p
+          style={{
+            color: colors.error,
+            marginTop: spacing.md,
+            fontSize: token.fontSizeSM,
+            fontWeight: 500,
+          }}
+        >
+          ⚠️ 若用例还被其他计划引用，将无法删除，请先解除其他关联。
+        </p>
+        <label
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: spacing.xs,
+            marginTop: spacing.md,
+            color: colors.text,
+            fontSize: token.fontSize,
+            cursor: 'pointer',
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={deletePermanentConfirmed}
+            onChange={(e) => setDeletePermanentConfirmed(e.target.checked)}
+          />
+          我已知晓此操作不可恢复，仍要继续
+        </label>
       </Modal>
     </>
   );
