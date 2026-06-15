@@ -613,18 +613,29 @@ const CaseDataTable: FC<Props> = (props) => {
                   style={{ color: colors.textSecondary, fontSize: 14 }}
                 />
                 <Text type="secondary" style={{ fontSize: 13 }}>
-                  当前目录下共
-                  <Text
-                    strong
-                    style={{
-                      color: colors.text,
-                      margin: '0 4px',
-                      fontVariantNumeric: 'tabular-nums',
-                    }}
-                  >
-                    {(moduleCaseCount ?? 0).toLocaleString()}
-                  </Text>
-                  条用例
+                  用例
+                </Text>
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minWidth: 28,
+                    height: 20,
+                    padding: '0 8px',
+                    borderRadius: borderRadius.sm,
+                    background: `${colors.primary}10`,
+                    color: colors.primary,
+                    fontSize: 12,
+                    fontWeight: 600,
+                    lineHeight: '20px',
+                    fontVariantNumeric: 'tabular-nums',
+                  }}
+                >
+                  {(moduleCaseCount ?? 0).toLocaleString()}
+                </span>
+                <Text type="secondary" style={{ fontSize: 13 }}>
+                  条
                 </Text>
               </Space>
             ) : null
