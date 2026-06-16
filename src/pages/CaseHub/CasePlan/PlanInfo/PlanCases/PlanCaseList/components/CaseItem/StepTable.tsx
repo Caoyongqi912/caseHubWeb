@@ -523,17 +523,88 @@ const StepTable: React.FC<StepTableProps> = ({
         key: 'second_status',
         dataIndex: 'second_status',
         width: '11%',
+        /**
+         * 与一轮一致:通过 Select 的 labelRender 把"更新人"与状态合并为单行
+         * (有 admin: 头像 + admin - 状态;无 admin: 状态)
+         * 下拉项 optionRender 保持纯状态展示,不带 admin 前缀。
+         */
         formItemRender: (_, { record }) => (
           <Select
             variant="underlined"
-            // record.second_status 已为 string 类型，与 options.value 直接匹配
             value={record?.second_status}
             style={{ width: '100%' }}
             options={statusOptions}
             optionRender={(option) =>
               renderStatusOption(option.data.value as string)
             }
-            labelRender={(option) => renderStatusOption(option.value as string)}
+            labelRender={(option) => {
+              const cfg = stepStatusConfig[option.value as string] || {};
+              const dot = (
+                <span
+                  style={{
+                    display: 'inline-block',
+                    width: 7,
+                    height: 7,
+                    borderRadius: '50%',
+                    backgroundColor: cfg.color || '#999',
+                    flexShrink: 0,
+                  }}
+                />
+              );
+              const labelEl = <span>{cfg.label || '-'}</span>;
+              if (record?.updaterName) {
+                return (
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 5,
+                      maxWidth: '100%',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                    title={`更新人: ${record.updaterName}`}
+                  >
+                    <UserOutlined
+                      style={{ fontSize: 11, color: colors.textTertiary }}
+                    />
+                    <span
+                      style={{
+                        color: colors.textTertiary,
+                        maxWidth: 55,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                    >
+                      {record.updaterName}
+                    </span>
+                    <span
+                      style={{
+                        color: colors.textTertiary,
+                        opacity: 0.5,
+                      }}
+                    >
+                      -
+                    </span>
+                    {dot}
+                    {labelEl}
+                  </span>
+                );
+              }
+              return (
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                  }}
+                >
+                  {dot}
+                  {labelEl}
+                </span>
+              );
+            }}
             disabled={!record}
           />
         ),
