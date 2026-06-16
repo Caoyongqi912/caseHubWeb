@@ -1,4 +1,4 @@
-import { CheckOutlined } from '@ant-design/icons';
+import { CheckOutlined, UserOutlined } from '@ant-design/icons';
 import {
   EditableFormInstance,
   EditableProTable,
@@ -8,6 +8,7 @@ import { Button, message, Select, Tooltip, Typography } from 'antd';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { updateCaseStepResult } from '@/api/case/caseplan';
+import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import { CaseSubStep } from '@/pages/CaseHub/types';
 import debounce from 'lodash/debounce';
 import BugUrlPopover from './BugUrlPopover';
@@ -53,6 +54,7 @@ const StepTable: React.FC<StepTableProps> = ({
   secondStatus,
 }) => {
   const editorFormRef = useRef<EditableFormInstance<CaseSubStep>>();
+  const { colors, borderRadius } = useCaseHubTheme();
   const [dataSource, setDataSource] = useState<CaseSubStep[]>(steps);
 
   /**
@@ -364,7 +366,7 @@ const StepTable: React.FC<StepTableProps> = ({
         title: '一轮测试状态',
         key: 'first_status',
         dataIndex: 'first_status',
-        width: '11%',
+        width: '13%',
         formItemRender: (_, { record }) => (
           <Select
             variant="underlined"
@@ -378,6 +380,72 @@ const StepTable: React.FC<StepTableProps> = ({
             disabled={!record}
           />
         ),
+        render: (_, record: CaseSubStep) => {
+          const cfg = stepStatusConfig[record?.first_status || ''];
+          return (
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 3,
+                lineHeight: 1.3,
+              }}
+            >
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                <span
+                  style={{
+                    display: 'inline-block',
+                    width: 7,
+                    height: 7,
+                    borderRadius: '50%',
+                    backgroundColor: cfg?.color || '#999',
+                    flexShrink: 0,
+                  }}
+                />
+                <span>{cfg?.label || '-'}</span>
+              </span>
+              {record?.updaterName ? (
+                <Tooltip title={`更新人: ${record.updaterName}`}>
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      paddingLeft: 13,
+                      fontSize: 11,
+                      color: colors.textTertiary,
+                      maxWidth: '100%',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    <UserOutlined style={{ fontSize: 10 }} />
+                    <span>更新人</span>
+                    <span
+                      style={{
+                        background: `${colors.primary}14`,
+                        color: colors.primary,
+                        padding: '0 6px',
+                        borderRadius: borderRadius.sm,
+                        fontWeight: 500,
+                        fontVariantNumeric: 'tabular-nums',
+                      }}
+                    >
+                      {record.updaterName}
+                    </span>
+                  </span>
+                </Tooltip>
+              ) : null}
+            </div>
+          );
+        },
       },
       {
         title: '二轮测试状态',
@@ -434,6 +502,8 @@ const StepTable: React.FC<StepTableProps> = ({
       emitDataChange,
       statusOptions,
       renderStatusOption,
+      colors,
+      borderRadius,
     ],
   );
 
