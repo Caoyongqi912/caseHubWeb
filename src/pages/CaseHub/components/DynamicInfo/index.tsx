@@ -3,7 +3,7 @@ import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import { ICaseDynamic } from '@/pages/CaseHub/types';
 import { HistoryOutlined, SoundTwoTone } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
-import { Avatar, Space, Timeline, Typography } from 'antd';
+import { Timeline, Typography } from 'antd';
 import {
   forwardRef,
   useEffect,
@@ -72,7 +72,9 @@ const DynamicInfo = forwardRef<DynamicInfoRef, IProps>(
         <ProCard style={styles.card()} styles={{ body: { padding: 0 } }}>
           <div style={styles.header()}>
             <div style={styles.headerIcon()}>
-              <HistoryOutlined style={{ fontSize: 20, color: '#fff' }} />
+              <HistoryOutlined
+                style={{ fontSize: 18, color: colors.primary }}
+              />
             </div>
             <div>
               <Title
@@ -87,62 +89,35 @@ const DynamicInfo = forwardRef<DynamicInfoRef, IProps>(
             </div>
           </div>
 
-          <div style={{ padding: spacing.lg }}>
+          <div>
             {displayData.length === 0 ? (
               <div style={styles.emptyState()}>
-                <SoundTwoTone style={{ fontSize: 48, opacity: 0.5 }} />
-                <div style={{ marginTop: spacing.md }}>
-                  <Text type="secondary">暂无操作记录</Text>
+                <div style={styles.emptyIconWrap()}>
+                  <SoundTwoTone style={{ fontSize: 24 }} />
                 </div>
+                <Text type="secondary">暂无操作记录</Text>
               </div>
             ) : (
               <Timeline
                 items={displayData.map((item, index) => ({
-                  icon: <div style={styles.dot(index)} />,
+                  icon: <div style={styles.dot()} />,
                   content: (
                     <div style={styles.timelineItem(index)} key={item.id}>
                       <div style={styles.contentCard() as any}>
-                        <div
-                          style={{
-                            display: 'flex',
-                            alignItems: 'flex-start',
-                            justifyContent: 'space-between',
-                            marginBottom: spacing.sm,
-                          }}
-                        >
-                          <Space size="middle" align="center">
-                            <Avatar style={styles.avatar(index)}>
-                              {item.creatorName[0]}
-                            </Avatar>
-                            <div>
-                              <Text strong style={{ color: colors.text }}>
-                                {item.creatorName}
-                              </Text>
-                              <div>
-                                <span style={styles.timeTag()}>
-                                  {item.create_time}
-                                </span>
-                              </div>
-                            </div>
-                          </Space>
+                        <div style={styles.metaRow()}>
+                          <Text strong style={{ color: colors.text }}>
+                            {item.creatorName}
+                          </Text>
+                          <span style={styles.timeTag()}>
+                            {item.create_time}
+                          </span>
                         </div>
-                        <div
-                          style={{
-                            display: 'flex',
-                            alignItems: 'flex-start',
-                            gap: spacing.sm,
-                            marginTop: spacing.sm,
-                          }}
-                        >
-                          <SoundTwoTone
-                            style={{ fontSize: 14, marginTop: 2 }}
-                          />
-                          <Text
-                            style={{
-                              color: colors.textSecondary,
-                              lineHeight: 1.6,
-                            }}
-                          >
+
+                        <div style={styles.descriptionRow()}>
+                          <span style={styles.descriptionIcon()}>
+                            <SoundTwoTone style={{ fontSize: 14 }} />
+                          </span>
+                          <Text style={styles.descriptionText()}>
                             {item.description}
                           </Text>
                         </div>
@@ -162,14 +137,14 @@ const DynamicInfo = forwardRef<DynamicInfoRef, IProps>(
                   borderTop: `1px dashed ${colors.border}`,
                 }}
               >
-                <Text
+                <span
                   style={styles.toggleButton()}
                   onClick={() => setShowMore(!showMore)}
                 >
                   {showMore
                     ? '收起'
                     : `展开更多 (${originalData.length - 5} 条)`}
-                </Text>
+                </span>
               </div>
             )}
           </div>
@@ -178,5 +153,7 @@ const DynamicInfo = forwardRef<DynamicInfoRef, IProps>(
     );
   },
 );
+
+DynamicInfo.displayName = 'DynamicInfo';
 
 export default DynamicInfo;

@@ -8,7 +8,6 @@ import {
 import { useGlassStyles } from '@/components/Glass';
 import MyDrawer from '@/components/MyDrawer';
 import MyModal from '@/components/MyModal';
-import MyProTable from '@/components/Table/MyProTable';
 import UserSelect from '@/components/Table/UserSelect';
 import InterfaceTaskBaseForm from '@/pages/Httpx/InterfaceApiCaseTask/InterfaceApiCaseTaskDetail/InterfaceTaskBaseForm';
 import InterfaceApiTaskResultTable from '@/pages/Httpx/InterfaceApiTaskResult/InterfaceApiTaskResultTable';
@@ -30,10 +29,12 @@ import {
 } from '@ant-design/icons';
 import {
   ActionType,
+  ProCard,
   ProColumns,
   ProForm,
   ProFormSelect,
   ProFormTreeSelect,
+  ProTable,
 } from '@ant-design/pro-components';
 import {
   Button,
@@ -93,7 +94,7 @@ const Index: FC<SelfProps> = ({
   const fetchPageTasks = useCallback(
     async (params: any, sort: any) => {
       if (!currentModuleId) {
-        return;
+        return [];
       }
       const { code, data } = await pageApiTask({
         ...params,
@@ -347,7 +348,14 @@ const Index: FC<SelfProps> = ({
   ];
 
   return (
-    <>
+    <div
+      style={{
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+      }}
+    >
       <MyDrawer
         name={'任务详情'}
         width={'85%'}
@@ -397,36 +405,68 @@ const Index: FC<SelfProps> = ({
           />
         </ProForm>
       </Modal>
-
-      <MyProTable
-        persistenceKey={perKey}
-        columns={taskColumns}
-        rowKey="id"
-        actionRef={actionRef}
-        request={fetchPageTasks}
-        toolBarRender={() => [
-          <MyModal
-            key="add"
-            form={taskForm}
-            title="添加任务"
-            onFinish={saveTaskBase}
-            trigger={
-              <Button
-                hidden={currentModuleId === undefined}
-                type="primary"
-                style={addBtnStyle}
-                icon={<PlusOutlined />}
-                onClick={() => setCurrentTaskId(undefined)}
-              >
-                添加任务
-              </Button>
-            }
-          >
-            <InterfaceTaskBaseForm />
-          </MyModal>,
-        ]}
-      />
-    </>
+      <ProCard
+        headerBordered
+        variant="outlined"
+        style={{
+          flex: 1,
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+        styles={{
+          body: {
+            padding: '5px',
+            flex: 1,
+            height: '100%',
+            overflow: 'hidden',
+          },
+        }}
+      >
+        <ProTable
+          columnsState={{
+            persistenceKey: perKey ?? 'pro-table',
+            persistenceType: 'localStorage',
+          }}
+          scroll={{
+            x: 1500,
+            y: 'calc(100vh - 400px)',
+            // y:"100%"
+          }}
+          pagination={{
+            showQuickJumper: true,
+            defaultPageSize: 20,
+            showSizeChanger: true,
+            pageSizeOptions: ['10', '20', '50', '100'],
+          }}
+          columns={taskColumns}
+          rowKey="id"
+          actionRef={actionRef}
+          request={fetchPageTasks}
+          toolBarRender={() => [
+            <MyModal
+              key="add"
+              form={taskForm}
+              title="添加任务"
+              onFinish={saveTaskBase}
+              trigger={
+                <Button
+                  hidden={currentModuleId === undefined}
+                  type="primary"
+                  style={addBtnStyle}
+                  icon={<PlusOutlined />}
+                  onClick={() => setCurrentTaskId(undefined)}
+                >
+                  添加任务
+                </Button>
+              }
+            >
+              <InterfaceTaskBaseForm />
+            </MyModal>,
+          ]}
+        />
+      </ProCard>
+    </div>
   );
 };
 

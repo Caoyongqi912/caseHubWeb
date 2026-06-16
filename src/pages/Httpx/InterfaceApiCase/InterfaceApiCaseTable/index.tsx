@@ -9,7 +9,6 @@ import {
 import { useGlassStyles } from '@/components/Glass';
 import MyDrawer from '@/components/MyDrawer';
 import MyModal from '@/components/MyModal';
-import MyProTable from '@/components/Table/MyProTable';
 import UserSelect from '@/components/Table/UserSelect';
 import ApiCaseBaseForm from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/ApiCaseBaseForm';
 import { IInterfaceAPICase } from '@/pages/Httpx/types';
@@ -30,10 +29,12 @@ import {
 } from '@ant-design/icons';
 import {
   ActionType,
+  ProCard,
   ProColumns,
   ProForm,
   ProFormSelect,
   ProFormTreeSelect,
+  ProTable,
 } from '@ant-design/pro-components';
 import {
   Button,
@@ -96,7 +97,7 @@ const Index: FC<SelfProps> = ({
 
   const fetchInterfaceCase = useCallback(
     async (params: any, sort: any) => {
-      if (!currentModuleId) return;
+      if (!currentModuleId) return [];
       const { code, data } = await pageInterApiCase({
         ...params,
         module_id: currentModuleId,
@@ -354,7 +355,14 @@ const Index: FC<SelfProps> = ({
   };
 
   return (
-    <div>
+    <div
+      style={{
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+      }}
+    >
       <MyDrawer
         name={'运行历史'}
         open={openHistory}
@@ -404,33 +412,64 @@ const Index: FC<SelfProps> = ({
           />
         </ProForm>
       </Modal>
-      <MyProTable
-        key={perKey}
-        rowKey="id"
-        actionRef={actionRef}
-        columns={columns}
-        request={fetchInterfaceCase}
-        toolBarRender={() => [
-          <MyModal
-            key="add"
-            onFinish={saveBaseInfo}
-            trigger={
-              <Button
-                hidden={currentModuleId === undefined}
-                type="primary"
-                style={addBtnStyle}
-                icon={<PlusOutlined />}
-                onClick={() => setCurrentCaseId(undefined)}
-              >
-                添加任务用例
-              </Button>
-            }
-            form={caseForm}
-          >
-            <ApiCaseBaseForm />
-          </MyModal>,
-        ]}
-      />
+      <ProCard
+        headerBordered
+        variant="outlined"
+        style={{
+          flex: 1,
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+        styles={{
+          body: {
+            padding: '5px',
+            flex: 1,
+            height: '100%',
+            overflow: 'hidden',
+          },
+        }}
+      >
+        <ProTable
+          key={perKey}
+          cardBordered
+          rowKey="id"
+          actionRef={actionRef}
+          columns={columns}
+          request={fetchInterfaceCase}
+          toolBarRender={() => [
+            <MyModal
+              key="add"
+              onFinish={saveBaseInfo}
+              trigger={
+                <Button
+                  hidden={currentModuleId === undefined}
+                  type="primary"
+                  style={addBtnStyle}
+                  icon={<PlusOutlined />}
+                  onClick={() => setCurrentCaseId(undefined)}
+                >
+                  添加任务用例
+                </Button>
+              }
+              form={caseForm}
+            >
+              <ApiCaseBaseForm />
+            </MyModal>,
+          ]}
+          scroll={{
+            x: 1500,
+            y: 'calc(100vh - 400px)',
+            // y:"100%"
+          }}
+          pagination={{
+            showQuickJumper: true,
+            defaultPageSize: 20,
+            showSizeChanger: true,
+            pageSizeOptions: ['10', '20', '50', '100'],
+          }}
+        />
+      </ProCard>
     </div>
   );
 };

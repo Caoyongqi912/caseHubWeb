@@ -1,14 +1,10 @@
-import { useGlassStyles } from '@/components/Glass';
 import LeftComponents from '@/components/LeftComponents';
 import InterfaceApiCaseTable from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseTable';
 import { ModuleEnum } from '@/utils/config';
-import { ProCard } from '@ant-design/pro-components';
 import { useState } from 'react';
 import { Group, Panel } from 'react-resizable-panels';
 
 const Index = () => {
-  const styles = useGlassStyles();
-
   const [currentModuleId, setCurrentModuleId] = useState<number>();
   const [currentProjectId, setCurrentProjectId] = useState<number>();
   const PerKey = 'InterfaceApiCase';
@@ -17,28 +13,19 @@ const Index = () => {
     setCurrentProjectId(projectId);
   };
 
-  const onModuleChange = (moduleId: number) => {
+  const onModuleChange = (moduleId: number | undefined) => {
     setCurrentModuleId(moduleId);
   };
 
   return (
     <>
-      <ProCard
+      <div
         style={{
-          marginBottom: 24,
-          borderRadius: '16px',
-          background: styles.colors.glass,
-          backdropFilter: 'blur(20px)',
-          border: `1px solid ${styles.colors.glassBorder}`,
-          boxShadow: `0 8px 32px ${styles.colors.primaryGlow}20`,
-        }}
-        styles={{
-          body: {
-            height: '100%',
-            minHeight: '90vh',
-            padding: 0,
-            overflow: 'hidden',
-          },
+          height: '90vh',
+          overflow: 'hidden',
+          display: 'flex',
+          padding: '12px',
+          gap: '12px',
         }}
       >
         <Group orientation="horizontal">
@@ -58,7 +45,7 @@ const Index = () => {
             />
           </Panel>
         </Group>
-      </ProCard>
+      </div>
     </>
   );
 };

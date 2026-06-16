@@ -39,7 +39,7 @@ const Index = () => {
   return (
     <div
       style={{
-        height: '90vh', // 🔥 改成 100%，不要用 100vh
+        height: '90vh',
         overflow: 'hidden',
         display: 'flex',
         padding: '12px',
