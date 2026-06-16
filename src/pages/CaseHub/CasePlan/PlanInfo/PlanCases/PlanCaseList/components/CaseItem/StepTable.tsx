@@ -367,18 +367,61 @@ const StepTable: React.FC<StepTableProps> = ({
         key: 'first_status',
         dataIndex: 'first_status',
         width: '13%',
+        /**
+         * 该列在 EditableProTable 中所有行均处于编辑态,
+         * 视图层只走 formItemRender 不会调 render,故把"更新人"展示
+         * 放在 formItemRender 内、Select 之下,保证可见。
+         * render 同步保留以防 editableKeys 后续改为受控时退化为只读。
+         */
         formItemRender: (_, { record }) => (
-          <Select
-            variant="underlined"
-            value={record?.first_status}
-            style={{ width: '100%' }}
-            options={statusOptions}
-            optionRender={(option) =>
-              renderStatusOption(option.data.value as string)
-            }
-            labelRender={(option) => renderStatusOption(option.value as string)}
-            disabled={!record}
-          />
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 4,
+              width: '100%',
+            }}
+          >
+            <Select
+              variant="underlined"
+              value={record?.first_status}
+              style={{ width: '100%' }}
+              options={statusOptions}
+              optionRender={(option) =>
+                renderStatusOption(option.data.value as string)
+              }
+              labelRender={(option) =>
+                renderStatusOption(option.value as string)
+              }
+              disabled={!record}
+            />
+            {record?.updaterName ? (
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  fontSize: 11,
+                  color: colors.textTertiary,
+                  lineHeight: 1.4,
+                  paddingLeft: 2,
+                }}
+                title={`更新人: ${record.updaterName}`}
+              >
+                <UserOutlined style={{ fontSize: 10 }} />
+                <span
+                  style={{
+                    maxWidth: 100,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {record.updaterName}
+                </span>
+              </span>
+            ) : null}
+          </div>
         ),
         render: (_, record: CaseSubStep) => {
           const cfg = stepStatusConfig[record?.first_status || ''];
@@ -411,37 +454,30 @@ const StepTable: React.FC<StepTableProps> = ({
                 <span>{cfg?.label || '-'}</span>
               </span>
               {record?.updaterName ? (
-                <Tooltip title={`更新人: ${record.updaterName}`}>
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    paddingLeft: 13,
+                    fontSize: 11,
+                    color: colors.textTertiary,
+                    maxWidth: '100%',
+                  }}
+                  title={`更新人: ${record.updaterName}`}
+                >
+                  <UserOutlined style={{ fontSize: 10 }} />
                   <span
                     style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 4,
-                      paddingLeft: 13,
-                      fontSize: 11,
-                      color: colors.textTertiary,
-                      maxWidth: '100%',
+                      maxWidth: 100,
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap',
                     }}
                   >
-                    <UserOutlined style={{ fontSize: 10 }} />
-                    <span>更新人</span>
-                    <span
-                      style={{
-                        background: `${colors.primary}14`,
-                        color: colors.primary,
-                        padding: '0 6px',
-                        borderRadius: borderRadius.sm,
-                        fontWeight: 500,
-                        fontVariantNumeric: 'tabular-nums',
-                      }}
-                    >
-                      {record.updaterName}
-                    </span>
+                    {record.updaterName}
                   </span>
-                </Tooltip>
+                </span>
               ) : null}
             </div>
           );
