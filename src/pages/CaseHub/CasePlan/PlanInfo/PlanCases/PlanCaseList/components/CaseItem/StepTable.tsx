@@ -392,7 +392,21 @@ const StepTable: React.FC<StepTableProps> = ({
               renderStatusOption(option.data.value as string)
             }
             labelRender={(option) => {
-              const cfg = stepStatusConfig[option.value as string] || {};
+              const value = option.value as string;
+              const cfg = stepStatusConfig[value];
+              // 状态为空/无效时:仅显示占位文字,不渲染 updater 前缀
+              if (!value || !cfg) {
+                return (
+                  <span
+                    style={{
+                      color: colors.textTertiary,
+                      fontSize: 12,
+                    }}
+                  >
+                    未开始
+                  </span>
+                );
+              }
               const dot = (
                 <span
                   style={{
@@ -405,7 +419,7 @@ const StepTable: React.FC<StepTableProps> = ({
                   }}
                 />
               );
-              const labelEl = <span>{cfg.label || '-'}</span>;
+              const labelEl = <span>{cfg.label}</span>;
               if (record?.updaterName) {
                 return (
                   <span
@@ -463,7 +477,16 @@ const StepTable: React.FC<StepTableProps> = ({
           />
         ),
         render: (_, record: CaseSubStep) => {
-          const cfg = stepStatusConfig[record?.first_status || ''] || {};
+          const value = record?.first_status || '';
+          const cfg = stepStatusConfig[value];
+          // 状态为空/无效时:仅显示占位文字,不渲染 updater 前缀
+          if (!value || !cfg) {
+            return (
+              <span style={{ color: colors.textTertiary, fontSize: 12 }}>
+                未开始
+              </span>
+            );
+          }
           const dot = (
             <span
               style={{
@@ -507,7 +530,7 @@ const StepTable: React.FC<StepTableProps> = ({
                   -
                 </span>
                 {dot}
-                <span>{cfg.label || '-'}</span>
+                <span>{cfg.label}</span>
               </span>
             );
           }
@@ -520,7 +543,7 @@ const StepTable: React.FC<StepTableProps> = ({
               }}
             >
               {dot}
-              <span>{cfg.label || '-'}</span>
+              <span>{cfg.label}</span>
             </span>
           );
         },
@@ -545,7 +568,21 @@ const StepTable: React.FC<StepTableProps> = ({
               renderStatusOption(option.data.value as string)
             }
             labelRender={(option) => {
-              const cfg = stepStatusConfig[option.value as string] || {};
+              const value = option.value as string;
+              const cfg = stepStatusConfig[value];
+              // 状态为空/无效时:仅显示占位文字,不渲染 updater 前缀
+              if (!value || !cfg) {
+                return (
+                  <span
+                    style={{
+                      color: colors.textTertiary,
+                      fontSize: 12,
+                    }}
+                  >
+                    未开始
+                  </span>
+                );
+              }
               const dot = (
                 <span
                   style={{
@@ -558,7 +595,7 @@ const StepTable: React.FC<StepTableProps> = ({
                   }}
                 />
               );
-              const labelEl = <span>{cfg.label || '-'}</span>;
+              const labelEl = <span>{cfg.label}</span>;
               if (record?.updaterName) {
                 return (
                   <span
