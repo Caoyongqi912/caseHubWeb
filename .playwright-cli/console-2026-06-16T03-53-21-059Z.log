@@ -1,0 +1,15 @@
+[     110ms] [LOG] [webpack] connecting... @ http://localhost:8000/vendors-node_modules_umijs_bundler-webpack_client_client_client_js.async.js:515
+[     111ms] [LOG] [webpack] connected. @ http://localhost:8000/vendors-node_modules_umijs_bundler-webpack_client_client_client_js.async.js:548
+[     122ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://localhost:8000/mf-dep____vendor.054de1cb.js:931454
+[     352ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ http://localhost:8000/userLogin:0
+[  261734ms] [ERROR] Warning: [antd: message] Static function can not consume context like dynamic theme. Please use 'App' component instead. @ http://localhost:8000/mf-dep____vendor.054de1cb.js:931571
+[  261918ms] [LOG] [webpack] connecting... @ http://localhost:8000/vendors-node_modules_umijs_bundler-webpack_client_client_client_js.async.js:515
+[  261925ms] [LOG] [webpack] connected. @ http://localhost:8000/vendors-node_modules_umijs_bundler-webpack_client_client_client_js.async.js:548
+[  261949ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://localhost:8000/mf-dep____vendor.054de1cb.js:931454
+[  736644ms] [LOG] [webpack] connecting... @ http://localhost:8000/vendors-node_modules_umijs_bundler-webpack_client_client_client_js.async.js:515
+[  736945ms] [LOG] [webpack] connected. @ http://localhost:8000/vendors-node_modules_umijs_bundler-webpack_client_client_client_js.async.js:548
+[  736972ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://localhost:8000/mf-dep____vendor.054de1cb.js:931454
+[ 1375240ms] [INFO] [webpack] Dev server disconnected. Polling for restart... @ http://localhost:8000/vendors-node_modules_umijs_bundler-webpack_client_client_client_js.async.js:608
+[ 1376375ms] [LOG] [webpack] connecting... @ http://localhost:8000/vendors-node_modules_umijs_bundler-webpack_client_client_client_js.async.js:515
+[ 1376447ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://localhost:8000/mf-dep____vendor.054de1cb.js:931454
+[ 1376500ms] [LOG] [webpack] connected. @ http://localhost:8000/vendors-node_modules_umijs_bundler-webpack_client_client_client_js.async.js:548

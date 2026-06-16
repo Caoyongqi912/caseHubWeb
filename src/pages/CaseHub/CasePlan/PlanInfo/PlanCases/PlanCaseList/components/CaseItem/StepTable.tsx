@@ -87,43 +87,50 @@ const StepTable: React.FC<StepTableProps> = ({
   }, [planId]);
 
   /**
-   * 当外部 steps 变化时初始化内部状态
+   * 当外部 steps 变化时同步内部状态
    *
-   * 初始化补全：如果步骤数据中 first_status / second_status 缺失，
-   * 但父组件传入了对应的 status 值，则用父级状态填充（保证初始渲染有数据）
+   * 重要: 不再用父级 status 兜底子步骤的 null 值。
+   * 原因: 后端 case_sub_step_result 中 first_status / second_status 为 null
+   * 表示"未开始",labelRender 会显示"未开始"占位;若用父级 status 兜底,
+   * 会出现父用例改了状态、所有子步骤都被强制刷成相同状态的副作用
+   * (覆盖了 labelRender 的"未开始"判断)。
    *
-   * 注意：仅依赖 steps，firstStatus / secondStatus 的后续变化不再触发本 effect，
-   * 避免父级一轮/二轮状态切换时覆盖用户已编辑的子步骤状态。
-   * 二轮状态的同步由下方单独的 useEffect 负责。
+   * 注意: 仅依赖 steps,firstStatus / secondStatus 的后续变化不再触发本 effect。
+   * 二轮状态的级联同步由下方单独的 useEffect 负责(且仅在 prop 真正变化时触发)。
    */
   useEffect(() => {
-    const parentFirst = firstStatus ?? '';
-    const parentSecond = secondStatus ?? '';
-
-    const initializedSteps = steps.map((step) => ({
-      ...step,
-      // 仅当步骤本身无值时才用父级值填充，避免覆盖后端已有数据
-      first_status: step.first_status ?? parentFirst,
-      second_status: step.second_status ?? parentSecond,
-    }));
-    setDataSource(initializedSteps);
+    setDataSource([...steps]);
   }, [steps]);
 
   /**
-   * 二轮测试状态同步：父用例二轮状态变化时，级联更新所有子步骤的二轮状态
-   * 一轮状态变化不触发此同步（由业务需求决定）
+   * 二轮测试状态同步:父用例二轮状态变化时,级联更新所有子步骤的二轮状态
+   * 一轮状态变化不触发此同步(由业务需求决定)
    *
-   * 注意：EditableProTable 在 multiple 编辑模式下内部 form 不会随 value prop 自动刷新，
-   * 必须通过 editorFormRef.setRowData 逐行同步内部编辑态，否则 UI 不会实时更新。
+   * 关键: 仅在 secondStatus 真正变化时级联,初次挂载(prop 由 undefined 变成
+   * 初始值)不算"用户主动修改父级",此时不动子步骤的真实 null,
+   * 保持"未开始"占位。后续父级 status 变化才级联。
+   *
+   * 注意: EditableProTable 在 multiple 编辑模式下内部 form 不会随 value prop 自动刷新,
+   * 必须通过 editorFormRef.setRowData 逐行同步内部编辑态,否则 UI 不会实时更新。
    */
+  const prevSecondStatusRef = useRef<string | undefined>(undefined);
   useEffect(() => {
     if (secondStatus === undefined) return;
+    // 初次挂载: 仅记录当前值,不级联(让 labelRender 自然展示"未开始")
+    if (prevSecondStatusRef.current === undefined) {
+      prevSecondStatusRef.current = secondStatus;
+      return;
+    }
+    // 值未变: 跳过(React 18 严格模式下 effect 可能跑两次)
+    if (prevSecondStatusRef.current === secondStatus) return;
+    prevSecondStatusRef.current = secondStatus;
+
     const next = dataSourceRef.current.map((step) => ({
       ...step,
       second_status: secondStatus,
     }));
     setDataSource(next);
-    // 同步 EditableProTable 内部 form，否则 multiple 编辑模式下表格 UI 不刷新
+    // 同步 EditableProTable 内部 form,否则 multiple 编辑模式下表格 UI 不刷新
     next.forEach((row, index) => {
       editorFormRef.current?.setRowData?.(index, row);
     });

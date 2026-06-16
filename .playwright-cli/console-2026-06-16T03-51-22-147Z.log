@@ -1,0 +1,4 @@
+[     247ms] [LOG] [webpack] connecting... @ http://localhost:8000/vendors-node_modules_umijs_bundler-webpack_client_client_client_js.async.js:515
+[     249ms] [LOG] [webpack] connected. @ http://localhost:8000/vendors-node_modules_umijs_bundler-webpack_client_client_client_js.async.js:548
+[     324ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://localhost:8000/mf-dep____vendor.054de1cb.js:931454
+[     559ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ http://localhost:8000/userLogin:0

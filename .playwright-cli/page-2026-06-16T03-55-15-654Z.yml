@@ -1,0 +1,55 @@
+- generic [ref=e3]:
+  - generic [ref=e8]:
+    - img "rocket" [ref=e10]:
+      - img [ref=e11]
+    - heading "CASEHUB" [level=1] [ref=e13]
+    - generic [ref=e14]: 智能测试管理平台
+    - generic [ref=e15]:
+      - generic [ref=e16]:
+        - img "thunderbolt" [ref=e18]:
+          - img [ref=e19]
+        - generic [ref=e21]:
+          - generic [ref=e22]: 高效测试
+          - generic [ref=e23]: 自动化测试流程，提升测试效率 200%
+      - generic [ref=e24]:
+        - img "api" [ref=e26]:
+          - img [ref=e27]
+        - generic [ref=e29]:
+          - generic [ref=e30]: 接口管理
+          - generic [ref=e31]: 一站式接口测试与管理解决方案
+      - generic [ref=e32]:
+        - img "safety-certificate" [ref=e34]:
+          - img [ref=e35]
+        - generic [ref=e37]:
+          - generic [ref=e38]: 安全可靠
+          - generic [ref=e39]: 企业级安全保障，数据加密存储
+  - generic [ref=e40]:
+    - generic [ref=e41]:
+      - heading "欢迎回来" [level=2] [ref=e42]
+      - generic [ref=e43]: 登录您的账户继续探索
+      - generic [ref=e46]:
+        - generic [ref=e53]:
+          - img "user" [ref=e55]:
+            - img [ref=e56]
+          - textbox "请输入用户名或邮箱" [ref=e58]: admin
+          - button "close-circle" [ref=e89] [cursor=pointer]:
+            - img "close-circle" [ref=e90]:
+              - img [ref=e91]
+        - generic [ref=e66]:
+          - img "lock" [ref=e68]:
+            - img [ref=e69]
+          - textbox "请输入密码" [ref=e71]: admin
+          - button "显示" [ref=e73] [cursor=pointer]:
+            - img "eye-invisible" [ref=e74]:
+              - img [ref=e75]
+        - generic [ref=e78]:
+          - generic [ref=e79] [cursor=pointer]:
+            - checkbox "记住我" [checked] [ref=e81]
+            - generic [ref=e82]: 记住我
+          - generic [ref=e83] [cursor=pointer]: 忘记密码？
+        - generic [ref=e85]: 还没有账号？ 申请账号
+        - button "loading 登 录" [active] [ref=e93]:
+          - img "loading" [ref=e95]:
+            - img [ref=e96]
+          - generic [ref=e87]: 登 录
+    - generic [ref=e88]: © 2026 CaseHub. All rights reserved.

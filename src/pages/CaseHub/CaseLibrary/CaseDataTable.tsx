@@ -44,7 +44,15 @@ import {
   Tooltip,
   Typography,
 } from 'antd';
-import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  FC,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import BatchActionBar from './components/BatchActionBar';
 import CaseForm from './components/CaseForm';
 import MoveCaseModal from './components/MoveCaseModal';
@@ -112,6 +120,85 @@ const CaseDataTable: FC<Props> = (props) => {
       setSelectedRows([]);
     }
   }, [currentModuleId]);
+
+  /**
+   * 动态测 ProTable chrome 高度，驱动 scroll.y 避开 "page 整页滚 50px" 问题。
+   *
+   * 之前是硬编码 `calc(100vh - 350px)`：350 是估算的 chrome（搜索表单+工具栏+表头+分页+padding），
+   * 实际 chrome 跟搜索表单展开/折叠强相关，差几十像素就会让 ProTable 整体高度超过内容区，
+   * 触发 .ant-pro-layout-content 的内部滚动条（用户看到"页面能稍微上下滚"）。
+   *
+   * 现在改成"真正量 chrome"：用 ResizeObserver 监听容器尺寸变化，再分别量
+   *   1) 搜索表单 .ant-pro-table-search / .ant-pro-query-filter
+   *   2) 工具栏 .ant-pro-table-toolbar
+   *   3) 表头 .ant-table-thead
+   *   4) 分页 .ant-pagination
+   * 把它们加起来作为 chrome，scroll.y = containerH - chrome。
+   *
+   * MutationObserver 兜住"搜索表单展开/折叠""列数变化"等不触发 ResizeObserver 的 DOM 变化。
+   *
+   * 为什么不走 "量 .ant-table-body 位置反算 chrome" 路线？
+   *   body 高度 = min(content, scroll.y)，bottomChrome 反算公式会跟 scroll.y 循环依赖，
+   *   第一次测量时 body 还没 max-height，算出来的 bottomChrome 是错的。要靠 setTimeout /
+   *   多帧循环才能收敛，复杂度高。直接量独立 chrome 元素就没有这个循环。
+   */
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+  const [tableScrollY, setTableScrollY] = useState<number | undefined>(
+    undefined,
+  );
+  useLayoutEffect(() => {
+    const el = tableContainerRef.current;
+    if (!el) return;
+
+    let rafId: number | null = null;
+    const measure = () => {
+      if (rafId !== null) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
+        const containerH = el.clientHeight;
+        if (containerH === 0) return;
+
+        // 直接量各 chrome 元素高度（0 表示元素不存在 / 隐藏）
+        const searchForm = el.querySelector(
+          '.ant-pro-table-search, .ant-pro-query-filter',
+        ) as HTMLElement | null;
+        const toolbar = el.querySelector(
+          '.ant-pro-table-toolbar',
+        ) as HTMLElement | null;
+        const thead = el.querySelector(
+          '.ant-table-thead',
+        ) as HTMLElement | null;
+        const pagination = el.querySelector(
+          '.ant-pagination',
+        ) as HTMLElement | null;
+
+        const searchH = searchForm?.offsetHeight ?? 0;
+        const toolbarH = toolbar?.offsetHeight ?? 0;
+        const theadH = thead?.offsetHeight ?? 0;
+        const paginationH = pagination?.offsetHeight ?? 0;
+        // ProTable 自身的 border / card body padding 留 8px buffer
+        const overhead = 8;
+
+        const chrome = searchH + toolbarH + theadH + paginationH + overhead;
+        const newScrollY = Math.max(0, containerH - chrome);
+
+        // 浅比较避免无意义 re-render（ProTable 拿到同样 scrollY 也会重建虚拟滚动区）
+        setTableScrollY((prev) => (prev === newScrollY ? prev : newScrollY));
+      });
+    };
+
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    // 搜索表单展开/折叠 / 表格列数变化不会触发 ResizeObserver，MutationObserver 兜底
+    const mo = new MutationObserver(measure);
+    mo.observe(el, { childList: true, subtree: true });
+
+    return () => {
+      if (rafId !== null) cancelAnimationFrame(rafId);
+      ro.disconnect();
+      mo.disconnect();
+    };
+  }, []);
 
   // 当前用例总数: 直接复用表格 pageInfo.total,
   // 这样 count 一定与表格数据一致 (表格有数据 → count > 0),
@@ -563,67 +650,84 @@ const CaseDataTable: FC<Props> = (props) => {
           body: {
             padding: '12px',
             height: '100%',
+            // body 改成 flex column 容器，让里面的 tableContainerRef div
+            // 能 flex: 1 撑开高度，否则 div 退化成 auto-height，量 chrome 拿到 0
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: 0,
           },
         }}
       >
-        <ProTable
-          footer={() => false}
-          cardBordered
-          headerTitle={
-            currentModuleId ? (
-              <Space size={6} align="center">
-                <FolderOpenOutlined
-                  style={{ color: colors.textSecondary, fontSize: 14 }}
-                />
-                <Text type="secondary" style={{ fontSize: 13 }}>
-                  用例
-                </Text>
-                <span
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    minWidth: 28,
-                    height: 20,
-                    padding: '0 8px',
-                    borderRadius: borderRadius.sm,
-                    background: `${colors.primary}10`,
-                    color: colors.primary,
-                    fontSize: 12,
-                    fontWeight: 600,
-                    lineHeight: '20px',
-                    fontVariantNumeric: 'tabular-nums',
-                  }}
-                >
-                  {(moduleCaseCount ?? 0).toLocaleString()}
-                </span>
-                <Text type="secondary" style={{ fontSize: 13 }}>
-                  条
-                </Text>
-              </Space>
-            ) : null
-          }
-          columnsState={{
-            persistenceKey: perKey ?? 'pro-table',
-            persistenceType: 'localStorage',
+        <div
+          ref={tableContainerRef}
+          style={{
+            flex: 1,
+            minHeight: 0,
+            display: 'flex',
+            flexDirection: 'column',
           }}
-          scroll={{
-            x: 1500,
-            y: 'calc(100vh - 350px)',
-          }}
-          pagination={{
-            showQuickJumper: true,
-            defaultPageSize: 20,
-            showSizeChanger: true,
-            pageSizeOptions: ['10', '20', '50', '100'],
-          }}
-          toolBarRender={() => toolBarRender}
-          actionRef={actionRef}
-          request={fetchPageData}
-          columns={column}
-          rowKey={'uid'}
-          rowSelection={rowSelection}
-        />
+        >
+          <ProTable
+            footer={() => false}
+            cardBordered
+            headerTitle={
+              currentModuleId ? (
+                <Space size={6} align="center">
+                  <FolderOpenOutlined
+                    style={{ color: colors.textSecondary, fontSize: 14 }}
+                  />
+                  <Text type="secondary" style={{ fontSize: 13 }}>
+                    用例
+                  </Text>
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      minWidth: 28,
+                      height: 20,
+                      padding: '0 8px',
+                      borderRadius: borderRadius.sm,
+                      background: `${colors.primary}10`,
+                      color: colors.primary,
+                      fontSize: 12,
+                      fontWeight: 600,
+                      lineHeight: '20px',
+                      fontVariantNumeric: 'tabular-nums',
+                    }}
+                  >
+                    {(moduleCaseCount ?? 0).toLocaleString()}
+                  </span>
+                  <Text type="secondary" style={{ fontSize: 13 }}>
+                    条
+                  </Text>
+                </Space>
+              ) : null
+            }
+            columnsState={{
+              persistenceKey: perKey ?? 'pro-table',
+              persistenceType: 'localStorage',
+            }}
+            scroll={{
+              x: 1500,
+              // scroll.y 由上面 useLayoutEffect 动态量 chrome 后算出，
+              // 替代原硬编码的 calc(100vh - 350px)（350 估算偏小会让 ProTable 撑出内容区）
+              y: tableScrollY,
+            }}
+            pagination={{
+              showQuickJumper: true,
+              defaultPageSize: 20,
+              showSizeChanger: true,
+              pageSizeOptions: ['10', '20', '50', '100'],
+            }}
+            toolBarRender={() => toolBarRender}
+            actionRef={actionRef}
+            request={fetchPageData}
+            columns={column}
+            rowKey={'uid'}
+            rowSelection={rowSelection}
+          />
+        </div>
       </ProCard>
 
       {selectedRowKeys.length > 0 && (
