@@ -369,117 +369,152 @@ const StepTable: React.FC<StepTableProps> = ({
         width: '13%',
         /**
          * 该列在 EditableProTable 中所有行均处于编辑态,
-         * 视图层只走 formItemRender 不会调 render,故把"更新人"展示
-         * 放在 formItemRender 内、Select 之下,保证可见。
+         * 视图层只走 formItemRender 不会调 render。
+         * 通过 Select 的 labelRender 把"更新人"与状态合并为单行:
+         *   `admin - ● 成功 ▾`  (无 admin 时退化为 `● 成功 ▾`)
+         * 下拉项仍为 `● 成功` 形式,避免选择项也带 admin 前缀。
          * render 同步保留以防 editableKeys 后续改为受控时退化为只读。
          */
         formItemRender: (_, { record }) => (
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 4,
-              width: '100%',
-            }}
-          >
-            <Select
-              variant="underlined"
-              value={record?.first_status}
-              style={{ width: '100%' }}
-              options={statusOptions}
-              optionRender={(option) =>
-                renderStatusOption(option.data.value as string)
-              }
-              labelRender={(option) =>
-                renderStatusOption(option.value as string)
-              }
-              disabled={!record}
-            />
-            {record?.updaterName ? (
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 4,
-                  fontSize: 11,
-                  color: colors.textTertiary,
-                  lineHeight: 1.4,
-                  paddingLeft: 2,
-                }}
-                title={`更新人: ${record.updaterName}`}
-              >
-                <UserOutlined style={{ fontSize: 10 }} />
-                <span
-                  style={{
-                    maxWidth: 100,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {record.updaterName}
-                </span>
-              </span>
-            ) : null}
-          </div>
-        ),
-        render: (_, record: CaseSubStep) => {
-          const cfg = stepStatusConfig[record?.first_status || ''];
-          return (
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 3,
-                lineHeight: 1.3,
-              }}
-            >
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                }}
-              >
+          <Select
+            variant="underlined"
+            value={record?.first_status}
+            style={{ width: '100%' }}
+            options={statusOptions}
+            optionRender={(option) =>
+              renderStatusOption(option.data.value as string)
+            }
+            labelRender={(option) => {
+              const cfg = stepStatusConfig[option.value as string] || {};
+              const dot = (
                 <span
                   style={{
                     display: 'inline-block',
                     width: 7,
                     height: 7,
                     borderRadius: '50%',
-                    backgroundColor: cfg?.color || '#999',
+                    backgroundColor: cfg.color || '#999',
                     flexShrink: 0,
                   }}
                 />
-                <span>{cfg?.label || '-'}</span>
-              </span>
-              {record?.updaterName ? (
-                <span
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 4,
-                    paddingLeft: 13,
-                    fontSize: 11,
-                    color: colors.textTertiary,
-                    maxWidth: '100%',
-                  }}
-                  title={`更新人: ${record.updaterName}`}
-                >
-                  <UserOutlined style={{ fontSize: 10 }} />
+              );
+              const labelEl = <span>{cfg.label || '-'}</span>;
+              if (record?.updaterName) {
+                return (
                   <span
                     style={{
-                      maxWidth: 100,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 5,
+                      maxWidth: '100%',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap',
                     }}
+                    title={`更新人: ${record.updaterName}`}
                   >
-                    {record.updaterName}
+                    <UserOutlined
+                      style={{ fontSize: 11, color: colors.textTertiary }}
+                    />
+                    <span
+                      style={{
+                        color: colors.textTertiary,
+                        maxWidth: 70,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                    >
+                      {record.updaterName}
+                    </span>
+                    <span
+                      style={{
+                        color: colors.textTertiary,
+                        opacity: 0.5,
+                      }}
+                    >
+                      -
+                    </span>
+                    {dot}
+                    {labelEl}
                   </span>
+                );
+              }
+              return (
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                  }}
+                >
+                  {dot}
+                  {labelEl}
                 </span>
-              ) : null}
-            </div>
+              );
+            }}
+            disabled={!record}
+          />
+        ),
+        render: (_, record: CaseSubStep) => {
+          const cfg = stepStatusConfig[record?.first_status || ''] || {};
+          const dot = (
+            <span
+              style={{
+                display: 'inline-block',
+                width: 7,
+                height: 7,
+                borderRadius: '50%',
+                backgroundColor: cfg.color || '#999',
+                flexShrink: 0,
+              }}
+            />
+          );
+          if (record?.updaterName) {
+            return (
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 5,
+                  maxWidth: '100%',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+                title={`更新人: ${record.updaterName}`}
+              >
+                <UserOutlined
+                  style={{ fontSize: 11, color: colors.textTertiary }}
+                />
+                <span
+                  style={{
+                    color: colors.textTertiary,
+                    maxWidth: 70,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}
+                >
+                  {record.updaterName}
+                </span>
+                <span style={{ color: colors.textTertiary, opacity: 0.5 }}>
+                  -
+                </span>
+                {dot}
+                <span>{cfg.label || '-'}</span>
+              </span>
+            );
+          }
+          return (
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              {dot}
+              <span>{cfg.label || '-'}</span>
+            </span>
           );
         },
       },
