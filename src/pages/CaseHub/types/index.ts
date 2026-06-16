@@ -55,13 +55,6 @@ export interface CaseSubStep {
   first_status?: string;
   second_status?: string;
   bug_url?: string | null;
-  /**
-   * 最后更新该步骤一轮/二轮状态的人
-   * 后端 step_result 表有 updater / updater_name 字段,
-   * 前端在状态列展示时用 updaterName 作为"更新人: xx"前缀
-   */
-  updater?: number | null;
-  updaterName?: string | null;
 }
 
 export interface ICaseDynamic {

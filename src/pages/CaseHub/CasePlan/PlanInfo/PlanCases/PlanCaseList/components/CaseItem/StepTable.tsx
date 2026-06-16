@@ -1,4 +1,4 @@
-import { CheckOutlined, UserOutlined } from '@ant-design/icons';
+import { CheckOutlined } from '@ant-design/icons';
 import {
   EditableFormInstance,
   EditableProTable,
@@ -6,8 +6,6 @@ import {
 } from '@ant-design/pro-components';
 import { Button, message, Select, Tooltip, Typography } from 'antd';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-
-import { useModel } from '@umijs/max';
 
 import { updateCaseStepResult } from '@/api/case/caseplan';
 import { useCaseHubTheme } from '@/pages/CaseHub/styles';
@@ -57,11 +55,6 @@ const StepTable: React.FC<StepTableProps> = ({
 }) => {
   const editorFormRef = useRef<EditableFormInstance<CaseSubStep>>();
   const { colors, borderRadius } = useCaseHubTheme();
-  // 当前用户: 用于 status 变更后乐观更新 updater 信息,避免等后端回写
-  const { initialState } = useModel('@@initialState');
-  const currentUser = initialState?.currentUser;
-  const currentUpdaterId = currentUser?.id;
-  const currentUpdaterName = currentUser?.username;
   const [dataSource, setDataSource] = useState<CaseSubStep[]>(steps);
 
   /**
@@ -380,15 +373,7 @@ const StepTable: React.FC<StepTableProps> = ({
         title: '一轮测试状态',
         key: 'first_status',
         dataIndex: 'first_status',
-        width: '13%',
-        /**
-         * 该列在 EditableProTable 中所有行均处于编辑态,
-         * 视图层只走 formItemRender 不会调 render。
-         * 通过 Select 的 labelRender 把"更新人"与状态合并为单行:
-         *   `admin - ● 成功 ▾`  (无 admin 时退化为 `● 成功 ▾`)
-         * 下拉项仍为 `● 成功` 形式,避免选择项也带 admin 前缀。
-         * render 同步保留以防 editableKeys 后续改为受控时退化为只读。
-         */
+        width: '11%',
         formItemRender: (_, { record }) => (
           <Select
             variant="underlined"
@@ -401,7 +386,7 @@ const StepTable: React.FC<StepTableProps> = ({
             labelRender={(option) => {
               const value = option.value as string;
               const cfg = stepStatusConfig[value];
-              // 状态为空/无效时:仅显示占位文字,不渲染 updater 前缀
+              // 状态为空/无效时:仅显示占位文字,不渲染 updater
               if (!value || !cfg) {
                 return (
                   <span
@@ -414,160 +399,21 @@ const StepTable: React.FC<StepTableProps> = ({
                   </span>
                 );
               }
-              const dot = (
-                <span
-                  style={{
-                    display: 'inline-block',
-                    width: 7,
-                    height: 7,
-                    borderRadius: '50%',
-                    backgroundColor: cfg.color || '#999',
-                    flexShrink: 0,
-                  }}
-                />
-              );
-              const labelEl = <span>{cfg.label}</span>;
-              if (record?.updaterName) {
-                return (
-                  <span
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 5,
-                      maxWidth: '100%',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                    title={`更新人: ${record.updaterName}`}
-                  >
-                    <UserOutlined
-                      style={{ fontSize: 11, color: colors.textTertiary }}
-                    />
-                    <span
-                      style={{
-                        color: colors.textTertiary,
-                        maxWidth: 70,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                      }}
-                    >
-                      {record.updaterName}
-                    </span>
-                    <span
-                      style={{
-                        color: colors.textTertiary,
-                        opacity: 0.5,
-                      }}
-                    >
-                      -
-                    </span>
-                    {dot}
-                    {labelEl}
-                  </span>
-                );
-              }
-              return (
-                <span
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 6,
-                  }}
-                >
-                  {dot}
-                  {labelEl}
-                </span>
-              );
+              return renderStatusOption(value);
             }}
             disabled={!record}
           />
         ),
-        render: (_, record: CaseSubStep) => {
-          const value = record?.first_status || '';
-          const cfg = stepStatusConfig[value];
-          // 状态为空/无效时:仅显示占位文字,不渲染 updater 前缀
-          if (!value || !cfg) {
-            return (
-              <span style={{ color: colors.textTertiary, fontSize: 12 }}>
-                未开始
-              </span>
-            );
-          }
-          const dot = (
-            <span
-              style={{
-                display: 'inline-block',
-                width: 7,
-                height: 7,
-                borderRadius: '50%',
-                backgroundColor: cfg.color || '#999',
-                flexShrink: 0,
-              }}
-            />
-          );
-          if (record?.updaterName) {
-            return (
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 5,
-                  maxWidth: '100%',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}
-                title={`更新人: ${record.updaterName}`}
-              >
-                <UserOutlined
-                  style={{ fontSize: 11, color: colors.textTertiary }}
-                />
-                <span
-                  style={{
-                    color: colors.textTertiary,
-                    maxWidth: 70,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  }}
-                >
-                  {record.updaterName}
-                </span>
-                <span style={{ color: colors.textTertiary, opacity: 0.5 }}>
-                  -
-                </span>
-                {dot}
-                <span>{cfg.label}</span>
-              </span>
-            );
-          }
-          return (
-            <span
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-              }}
-            >
-              {dot}
-              <span>{cfg.label}</span>
-            </span>
-          );
-        },
       },
       {
         title: '二轮测试状态',
         key: 'second_status',
         dataIndex: 'second_status',
         width: '11%',
-        /**
-         * 与一轮一致:通过 Select 的 labelRender 把"更新人"与状态合并为单行
-         * (有 admin: 头像 + admin - 状态;无 admin: 状态)
-         * 下拉项 optionRender 保持纯状态展示,不带 admin 前缀。
-         */
         formItemRender: (_, { record }) => (
           <Select
             variant="underlined"
+            // record.second_status 已为 string 类型，与 options.value 直接匹配
             value={record?.second_status}
             style={{ width: '100%' }}
             options={statusOptions}
@@ -577,7 +423,7 @@ const StepTable: React.FC<StepTableProps> = ({
             labelRender={(option) => {
               const value = option.value as string;
               const cfg = stepStatusConfig[value];
-              // 状态为空/无效时:仅显示占位文字,不渲染 updater 前缀
+              // 状态为空/无效时:仅显示占位文字,不渲染 updater
               if (!value || !cfg) {
                 return (
                   <span
@@ -590,71 +436,7 @@ const StepTable: React.FC<StepTableProps> = ({
                   </span>
                 );
               }
-              const dot = (
-                <span
-                  style={{
-                    display: 'inline-block',
-                    width: 7,
-                    height: 7,
-                    borderRadius: '50%',
-                    backgroundColor: cfg.color || '#999',
-                    flexShrink: 0,
-                  }}
-                />
-              );
-              const labelEl = <span>{cfg.label}</span>;
-              if (record?.updaterName) {
-                return (
-                  <span
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 5,
-                      maxWidth: '100%',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                    title={`更新人: ${record.updaterName}`}
-                  >
-                    <UserOutlined
-                      style={{ fontSize: 11, color: colors.textTertiary }}
-                    />
-                    <span
-                      style={{
-                        color: colors.textTertiary,
-                        maxWidth: 55,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                      }}
-                    >
-                      {record.updaterName}
-                    </span>
-                    <span
-                      style={{
-                        color: colors.textTertiary,
-                        opacity: 0.5,
-                      }}
-                    >
-                      -
-                    </span>
-                    {dot}
-                    {labelEl}
-                  </span>
-                );
-              }
-              return (
-                <span
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 6,
-                  }}
-                >
-                  {dot}
-                  {labelEl}
-                </span>
-              );
+              return renderStatusOption(value);
             }}
             disabled={!record}
           />
@@ -726,29 +508,7 @@ const StepTable: React.FC<StepTableProps> = ({
         type: 'multiple',
         editableKeys,
         onValuesChange: (changedRecord, recordList) => {
-          // 乐观更新: 当 first_status / second_status 变化时,
-          // 立即把当前用户标为 updater,让"admin - 成功"那一行
-          // 无需等后端回写就即时刷新。后端会通过 _do_update_case_step_result
-          // 持久化 updater 字段(待后端补上),下次刷新会与服务端一致。
-          const isStatusChange =
-            changedRecord &&
-            ('first_status' in changedRecord ||
-              'second_status' in changedRecord);
-
-          let nextList: CaseSubStep[] = recordList;
-          if (isStatusChange && currentUpdaterId && currentUpdaterName) {
-            const targetId = (changedRecord as CaseSubStep).id;
-            nextList = recordList.map((r) =>
-              r.id === targetId
-                ? {
-                    ...r,
-                    updater: currentUpdaterId,
-                    updaterName: currentUpdaterName,
-                  }
-                : r,
-            );
-          }
-          setDataSource(nextList);
+          setDataSource(recordList);
           if (changedRecord) {
             emitDataChange(changedRecord as CaseSubStep);
           }
