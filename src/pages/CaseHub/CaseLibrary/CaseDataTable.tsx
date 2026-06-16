@@ -609,7 +609,7 @@ const CaseDataTable: FC<Props> = (props) => {
           }}
           scroll={{
             x: 1500,
-            y: 'calc(100vh - 300px)',
+            y: 'calc(100vh - 350px)',
           }}
           pagination={{
             showQuickJumper: true,
