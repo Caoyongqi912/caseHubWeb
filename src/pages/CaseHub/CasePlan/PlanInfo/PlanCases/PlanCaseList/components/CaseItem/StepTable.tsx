@@ -7,6 +7,8 @@ import {
 import { Button, message, Select, Tooltip, Typography } from 'antd';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { useModel } from '@umijs/max';
+
 import { updateCaseStepResult } from '@/api/case/caseplan';
 import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import { CaseSubStep } from '@/pages/CaseHub/types';
@@ -55,6 +57,11 @@ const StepTable: React.FC<StepTableProps> = ({
 }) => {
   const editorFormRef = useRef<EditableFormInstance<CaseSubStep>>();
   const { colors, borderRadius } = useCaseHubTheme();
+  // 当前用户: 用于 status 变更后乐观更新 updater 信息,避免等后端回写
+  const { initialState } = useModel('@@initialState');
+  const currentUser = initialState?.currentUser;
+  const currentUpdaterId = currentUser?.id;
+  const currentUpdaterName = currentUser?.username;
   const [dataSource, setDataSource] = useState<CaseSubStep[]>(steps);
 
   /**
@@ -675,7 +682,29 @@ const StepTable: React.FC<StepTableProps> = ({
         type: 'multiple',
         editableKeys,
         onValuesChange: (changedRecord, recordList) => {
-          setDataSource(recordList);
+          // 乐观更新: 当 first_status / second_status 变化时,
+          // 立即把当前用户标为 updater,让"admin - 成功"那一行
+          // 无需等后端回写就即时刷新。后端会通过 _do_update_case_step_result
+          // 持久化 updater 字段(待后端补上),下次刷新会与服务端一致。
+          const isStatusChange =
+            changedRecord &&
+            ('first_status' in changedRecord ||
+              'second_status' in changedRecord);
+
+          let nextList: CaseSubStep[] = recordList;
+          if (isStatusChange && currentUpdaterId && currentUpdaterName) {
+            const targetId = (changedRecord as CaseSubStep).id;
+            nextList = recordList.map((r) =>
+              r.id === targetId
+                ? {
+                    ...r,
+                    updater: currentUpdaterId,
+                    updaterName: currentUpdaterName,
+                  }
+                : r,
+            );
+          }
+          setDataSource(nextList);
           if (changedRecord) {
             emitDataChange(changedRecord as CaseSubStep);
           }
