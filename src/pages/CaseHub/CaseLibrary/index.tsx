@@ -1,6 +1,5 @@
 import LeftComponents from '@/components/LeftComponents';
 import { ModuleEnum } from '@/utils/config';
-import { PageContainer } from '@ant-design/pro-components';
 import { useCallback, useState } from 'react';
 import { Group, Panel } from 'react-resizable-panels';
 import CaseDataTable from './CaseDataTable';
@@ -38,69 +37,45 @@ const Index = () => {
   }, []);
 
   return (
-    // 用 PageContainer 锁 100vh，绕开 ProLayout content 默认 height: auto 的问题。
-    // 跟 PlanInfo 同款写法（参考 src/pages/CaseHub/CasePlan/PlanInfo/index.tsx）：
-    //   1) height: 100vh — 把整个内容区钉死到视口高度，不跟 ProTable 一起长高
-    //   2) overflow: hidden — 即使子节点超出也不会触发外层滚动
-    //   3) minHeight: 100vh — 视口收缩时也保持满屏
-    // 这样下面所有 height: 100% 都能从 100vh 一路传到 ProTable 容器，
-    // 不依赖 ProLayout content 的高度链。
-    <PageContainer
-      title={false}
-      header={{
-        breadcrumb: {
-          items: [],
-        },
-      }}
+    <div
       style={{
-        height: '100vh',
-        minHeight: '100vh',
+        height: '100%', // 🔥 改成 100%，不要用 100vh
+        maxHeight: '100%',
         overflow: 'hidden',
+        display: 'flex',
+        padding: '12px',
+        gap: '12px',
       }}
     >
-      <div
+      <Group
+        orientation="horizontal"
         style={{
+          width: '100%',
           height: '100%',
-          maxHeight: '100%',
           overflow: 'hidden',
-          display: 'flex',
-          padding: '12px',
-          gap: '12px',
-          // border-box 让 height: 100% 包含 padding，
-          // 避免外层 height: 100% + padding 撑出父容器导致整页可滚
-          boxSizing: 'border-box',
         }}
       >
-        <Group
-          orientation="horizontal"
-          style={{
-            width: '100%',
-            height: '100%',
-            overflow: 'hidden',
-          }}
-        >
-          <Panel defaultSize={20} minSize={10} collapsible={true}>
-            <LeftComponents
-              moduleType={ModuleEnum.CASE}
-              currentProjectId={currentProjectId}
-              onModuleChange={onModuleChange}
-              onProjectChange={onProjectChange}
-              // 触发左侧模块目录树刷新：上传/导入用例成功后递增
-              reloadKey={moduleReloadKey}
-            />
-          </Panel>
-          <Panel defaultSize={80} minSize={30} style={{ height: '100%' }}>
-            <CaseDataTable
-              perKey={PerKey}
-              currentProjectId={currentProjectId}
-              currentModuleId={currentModuleId}
-              // 提交导入成功后，递增父级 reloadKey，联动刷新左侧目录
-              onModuleRefresh={handleModuleRefresh}
-            />
-          </Panel>
-        </Group>
-      </div>
-    </PageContainer>
+        <Panel defaultSize={20} minSize={10} collapsible={true}>
+          <LeftComponents
+            moduleType={ModuleEnum.CASE}
+            currentProjectId={currentProjectId}
+            onModuleChange={onModuleChange}
+            onProjectChange={onProjectChange}
+            // 触发左侧模块目录树刷新：上传/导入用例成功后递增
+            reloadKey={moduleReloadKey}
+          />
+        </Panel>
+        <Panel defaultSize={80} minSize={30} style={{ height: '100%' }}>
+          <CaseDataTable
+            perKey={PerKey}
+            currentProjectId={currentProjectId}
+            currentModuleId={currentModuleId}
+            // 提交导入成功后，递增父级 reloadKey，联动刷新左侧目录
+            onModuleRefresh={handleModuleRefresh}
+          />
+        </Panel>
+      </Group>
+    </div>
   );
 };
 
