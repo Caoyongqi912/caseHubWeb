@@ -555,14 +555,16 @@ const CaseDataTable: FC<Props> = (props) => {
         variant="outlined"
         style={{
           flex: 1,
-          height: 0,
+          height: '100%',
           display: 'flex',
           flexDirection: 'column',
         }}
         styles={{
           body: {
-            padding: '12px',
+            padding: '5px',
+            flex: 1,
             height: '100%',
+            overflow: 'hidden',
           },
         }}
       >
@@ -609,7 +611,8 @@ const CaseDataTable: FC<Props> = (props) => {
           }}
           scroll={{
             x: 1500,
-            y: 'calc(100vh - 350px)',
+            y: 'calc(100vh - 400px)',
+            // y:"100%"
           }}
           pagination={{
             showQuickJumper: true,

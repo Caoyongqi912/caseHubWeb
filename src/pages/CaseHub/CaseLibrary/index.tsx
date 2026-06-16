@@ -39,8 +39,7 @@ const Index = () => {
   return (
     <div
       style={{
-        height: '100%', // 🔥 改成 100%，不要用 100vh
-        maxHeight: '100%',
+        height: '90vh', // 🔥 改成 100%，不要用 100vh
         overflow: 'hidden',
         display: 'flex',
         padding: '12px',
