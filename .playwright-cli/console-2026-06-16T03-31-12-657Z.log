@@ -1,3 +1,0 @@
-[      89ms] [LOG] [webpack] connecting... @ http://localhost:8000/vendors-node_modules_umijs_bundler-webpack_client_client_client_js.async.js:515
-[      92ms] [LOG] [webpack] connected. @ http://localhost:8000/vendors-node_modules_umijs_bundler-webpack_client_client_client_js.async.js:548
-[     110ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://localhost:8000/mf-dep____vendor.054de1cb.js:931454
