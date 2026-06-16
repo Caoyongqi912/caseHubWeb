@@ -113,46 +113,11 @@ const CaseDataTable: FC<Props> = (props) => {
     }
   }, [currentModuleId]);
 
-  // 当前目录下用例总数 (与搜索/筛选无关, 只跟 module 绑定)
-  // 用 limit=1 的 pageTestCase 只取 pageInfo.total, 减少传输
+  // 当前用例总数: 直接复用表格 pageInfo.total,
+  // 这样 count 一定与表格数据一致 (表格有数据 → count > 0),
+  // 上传/删除/移动/筛选后表格 reload 时自动同步, 不需要额外的 trigger 机制.
+  // 副作用: count 会随筛选条件变化, 等同表格底部分页显示的总数.
   const [moduleCaseCount, setModuleCaseCount] = useState<number | null>(null);
-  // 触发器: 上传/删除/移动成功后 +1, 让 effect 重跑拉新总数
-  const [countRefreshTrigger, setCountRefreshTrigger] = useState(0);
-  const refreshCaseCount = useCallback(() => {
-    setCountRefreshTrigger((prev) => prev + 1);
-  }, []);
-  useEffect(() => {
-    if (!currentProjectId || !currentModuleId) {
-      setModuleCaseCount(null);
-      return;
-    }
-    let cancelled = false;
-    (async () => {
-      try {
-        const response: any = await pageTestCase({
-          module_id: currentModuleId,
-          module_type: ModuleEnum.CASE,
-          is_common: true,
-          limit: 1,
-          page: 1,
-        });
-        if (cancelled) return;
-        if (response?.code === 0 && response.data?.pageInfo) {
-          setModuleCaseCount(response.data.pageInfo.total);
-        } else {
-          setModuleCaseCount(0);
-        }
-      } catch (e) {
-        if (!cancelled) {
-          console.error('fetch module case count failed:', e);
-          setModuleCaseCount(0);
-        }
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [currentProjectId, currentModuleId, countRefreshTrigger]);
 
   // 反查当前 module 名称
   useEffect(() => {
@@ -200,6 +165,10 @@ const CaseDataTable: FC<Props> = (props) => {
         sort: sort,
       };
       const { code, data } = await pageTestCase(values);
+      // 同步更新 headerTitle 的 count (表格的真实总数)
+      if (code === 0 && data?.pageInfo) {
+        setModuleCaseCount(data.pageInfo.total);
+      }
       return pageData(code, data);
     },
     [currentModuleId],
@@ -422,7 +391,6 @@ const CaseDataTable: FC<Props> = (props) => {
     });
     if (code === 0) {
       actionRef.current?.reload();
-      refreshCaseCount();
       message.success('删除成功');
     }
   };
@@ -466,8 +434,7 @@ const CaseDataTable: FC<Props> = (props) => {
     setSelectedRowKeys([]);
     setSelectedRows([]);
     actionRef.current?.reload();
-    refreshCaseCount();
-  }, [refreshCaseCount]);
+  }, []);
 
   const handleExitBatch = useCallback(() => {
     setSelectedRowKeys([]);
@@ -489,10 +456,7 @@ const CaseDataTable: FC<Props> = (props) => {
     currentProjectId ? (
       <UploadCaseModal
         key="upload-case"
-        onSuccess={() => {
-          actionRef.current?.reload();
-          refreshCaseCount();
-        }}
+        onSuccess={() => actionRef.current?.reload()}
         onModuleRefresh={onModuleRefresh}
         currentProjectId={currentProjectId}
       />
@@ -547,7 +511,6 @@ const CaseDataTable: FC<Props> = (props) => {
         onSuccess={() => {
           setOpenModal(false);
           actionRef.current?.reload();
-          refreshCaseCount();
         }}
         currentCaseId={currentCaseId}
       />
