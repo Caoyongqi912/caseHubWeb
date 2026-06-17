@@ -87,6 +87,7 @@ export default [
       //   path: '/cases/requirement',
       //   name: '需求',
       //   component: '@/pages/CaseHub/Requirement',
+      //   ⚠️ 已弃用 (2026-06)：该模块暂时停用，保留配置以备后续恢复
       // },
       {
         path: '/cases/caseHub',
@@ -108,12 +109,6 @@ export default [
         name: '测试计划详情',
         component: '@/pages/CaseHub/CasePlan/PlanInfo',
         hideInMenu: true,
-      },
-      {
-        path: '/cases/caseHub/requirementCases/reqId=:reqId&projectId=:projectId&moduleId=:moduleId',
-        name: 'CaseHub',
-        hideInMenu: true,
-        component: '@/pages/CaseHub/Requirement/RequirementCases',
       },
     ],
   },

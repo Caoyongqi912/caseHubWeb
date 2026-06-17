@@ -1,3 +1,15 @@
+/**
+ * @file src/pages/CaseHub/Requirement/index.tsx
+ * @description 需求管理页面（已弃用）
+ * @deprecated 该页面暂时弃用，相关功能已迁移至其他模块
+ * @author 维护者信息（如适用）
+ *
+ * ⚠️ 弃用说明：
+ * - 本页面自 2026-06 起标记为弃用状态
+ * - 如需恢复使用，请取消 routes.ts 中的注释配置
+ * - 当前保留代码以备后续可能的功能恢复或重构参考
+ */
+
 import LeftComponents from '@/components/LeftComponents';
 import { ModuleEnum } from '@/utils/config';
 import { useState } from 'react';
