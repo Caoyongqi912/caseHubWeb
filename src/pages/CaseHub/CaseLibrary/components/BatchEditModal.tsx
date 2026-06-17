@@ -5,7 +5,7 @@ import {
 import { toSelectOptions } from '@/pages/CaseHub/hooks/caseEnumOption';
 import { useCaseEnumConfig } from '@/pages/CaseHub/hooks/useCaseEnumConfig';
 import { useCaseHubTheme } from '@/pages/CaseHub/styles';
-import { Checkbox, Input, Modal, Select } from 'antd';
+import { Checkbox, Modal, Select } from 'antd';
 import { FC, useCallback, useMemo, useState } from 'react';
 
 export interface BatchEditModalProps {
@@ -28,6 +28,13 @@ const BatchEditModal: FC<BatchEditModalProps> = ({
     [typeOptions],
   );
 
+  // 适用端从后端枚举配置拉取（用例配置中心 PLATFORM 分类）
+  const { options: platformOptions } = useCaseEnumConfig('PLATFORM');
+  const platformSelectOptions = useMemo(
+    () => toSelectOptions(platformOptions),
+    [platformOptions],
+  );
+
   const { colors, spacing, token } = useCaseHubTheme();
 
   // 用例等级从后端枚举配置拉取（管理员在配置中心增删后自动生效）
@@ -40,8 +47,12 @@ const BatchEditModal: FC<BatchEditModalProps> = ({
   const [caseTag, setCaseTag] = useState<string>('');
   const [caseLevel, setCaseLevel] = useState<string | undefined>(undefined);
   const [caseType, setCaseType] = useState<number | undefined>(undefined);
+  const [casePlatform, setCasePlatform] = useState<string | undefined>(
+    undefined,
+  );
   const [changeLevel, setChangeLevel] = useState(false);
   const [changeType, setChangeType] = useState(false);
+  const [changePlatform, setChangePlatform] = useState(false);
 
   const { editCases, loading } = useBatchEdit({ onSuccess });
 
@@ -49,8 +60,10 @@ const BatchEditModal: FC<BatchEditModalProps> = ({
     setCaseTag('');
     setCaseLevel(undefined);
     setCaseType(undefined);
+    setCasePlatform(undefined);
     setChangeLevel(false);
     setChangeType(false);
+    setChangePlatform(false);
     onCancel();
   }, [onCancel]);
 
@@ -59,8 +72,16 @@ const BatchEditModal: FC<BatchEditModalProps> = ({
     if (caseTag) values.case_tag = caseTag;
     if (changeLevel && caseLevel) values.case_level = caseLevel;
     if (changeType && caseType) values.case_type = caseType;
+    if (changePlatform && casePlatform) values.case_platform = casePlatform;
 
-    if (!values.case_tag && !values.case_level && !values.case_type) return;
+    if (
+      !values.case_tag &&
+      !values.case_level &&
+      !values.case_type &&
+      !values.case_platform
+    ) {
+      return;
+    }
 
     await editCases(selectedCaseIds, values);
     handleModalClose();
@@ -70,13 +91,18 @@ const BatchEditModal: FC<BatchEditModalProps> = ({
     caseLevel,
     changeType,
     caseType,
+    changePlatform,
+    casePlatform,
     selectedCaseIds,
     editCases,
     handleModalClose,
   ]);
 
   const hasSelection =
-    caseTag || (changeLevel && caseLevel) || (changeType && caseType);
+    caseTag ||
+    (changeLevel && caseLevel) ||
+    (changeType && caseType) ||
+    (changePlatform && casePlatform);
 
   return (
     <Modal
@@ -100,7 +126,7 @@ const BatchEditModal: FC<BatchEditModalProps> = ({
           已选择 {selectedCaseIds.length} 项用例
         </div>
 
-        <div style={{ marginBottom: spacing.md }}>
+        {/* <div style={{ marginBottom: spacing.md }}>
           <label
             style={{
               display: 'block',
@@ -122,7 +148,7 @@ const BatchEditModal: FC<BatchEditModalProps> = ({
           >
             将替换原有标签
           </div>
-        </div>
+        </div> */}
 
         <div style={{ marginBottom: spacing.md }}>
           <label
@@ -183,6 +209,38 @@ const BatchEditModal: FC<BatchEditModalProps> = ({
               value={caseType}
               onChange={setCaseType}
               options={typeSelectOptions}
+              allowClear
+            />
+          )}
+        </div>
+
+        <div style={{ marginTop: spacing.md }}>
+          <label
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              marginBottom: spacing.xs,
+              color: colors.text,
+              fontSize: token.fontSize,
+            }}
+          >
+            <Checkbox
+              checked={changePlatform}
+              onChange={(e) => {
+                setChangePlatform(e.target.checked);
+                if (!e.target.checked) setCasePlatform(undefined);
+              }}
+              style={{ marginRight: 8 }}
+            />
+            适用端
+          </label>
+          {changePlatform && (
+            <Select
+              style={{ width: '100%' }}
+              placeholder="选择适用端"
+              value={casePlatform}
+              onChange={setCasePlatform}
+              options={platformSelectOptions}
               allowClear
             />
           )}

@@ -114,7 +114,30 @@ const VALUE_FIELD_DEFS: Record<string, ValueFieldDef> = {
     ],
     toFormValue: (v) => v,
   },
+  [CaseConfigKeyEnum.PLATFORM]: {
+    type: 'text',
+    label: '值（适用端标识）',
+    placeholder: '请输入适用端标识，如 PC / H5 / Android / iOS',
+    tooltip:
+      '适用端场景下 value 与 label 默认一致；如需用枚举值与 label 分离，可自定义 value',
+    rules: [
+      { required: true, message: '适用端标识必填' },
+      { max: 32, message: '适用端标识长度不能超过 32' },
+    ],
+    toFormValue: (v) => v,
+  },
 };
+
+/**
+ * 不展示「颜色」字段的 configKey 集合
+ * 适用端等纯文本枚举本身没有主题色诉求，整列与表单字段都隐藏
+ */
+const NO_COLOR_CONFIG_KEYS: ReadonlySet<string> = new Set([
+  CaseConfigKeyEnum.PLATFORM,
+]);
+
+const isColorHidden = (configKey: string): boolean =>
+  NO_COLOR_CONFIG_KEYS.has(configKey);
 
 /**
  * 默认 value 字段定义：数字类型，用于 CASE_STATUS / REVIEW_STATUS
@@ -364,8 +387,29 @@ const CaseStatusConfig: FC<CaseStatusConfigProps> = ({
     [token, spacing, borderRadius],
   );
 
-  const columns: ProColumns<ICaseEnumConfig>[] = useMemo(
-    () => [
+  const columns: ProColumns<ICaseEnumConfig>[] = useMemo(() => {
+    const colorColumn: ProColumns<ICaseEnumConfig> = {
+      title: '颜色',
+      dataIndex: 'color',
+      width: '20%',
+      render: (_, record) => {
+        if (!record.color) {
+          return <Text type="secondary">-</Text>;
+        }
+        return (
+          <span style={styles.colorSwatch}>
+            <span
+              style={{
+                ...styles.colorDot,
+                background: record.color,
+              }}
+            />
+            <span style={styles.colorHex}>{record.color}</span>
+          </span>
+        );
+      },
+    };
+    return [
       {
         title: '名称',
         dataIndex: 'label',
@@ -379,27 +423,7 @@ const CaseStatusConfig: FC<CaseStatusConfigProps> = ({
         width: '20%',
         render: (_, record) => <Tag>{record.value}</Tag>,
       },
-      {
-        title: '颜色',
-        dataIndex: 'color',
-        width: '20%',
-        render: (_, record) => {
-          if (!record.color) {
-            return <Text type="secondary">-</Text>;
-          }
-          return (
-            <span style={styles.colorSwatch}>
-              <span
-                style={{
-                  ...styles.colorDot,
-                  background: record.color,
-                }}
-              />
-              <span style={styles.colorHex}>{record.color}</span>
-            </span>
-          );
-        },
-      },
+      ...(isColorHidden(configKey) ? [] : [colorColumn]),
       {
         title: '描述',
         dataIndex: 'description',
@@ -540,9 +564,8 @@ const CaseStatusConfig: FC<CaseStatusConfigProps> = ({
           </Space>
         ),
       },
-    ],
-    [token, styles, renderStatusTag, form],
-  );
+    ];
+  }, [token, styles, renderStatusTag, form, configKey]);
 
   /**
    * 打开新增弹窗
@@ -699,28 +722,30 @@ const CaseStatusConfig: FC<CaseStatusConfigProps> = ({
             fieldProps={{ precision: 0 }}
           />
         )}
-        <ProFormColorPicker
-          name="color"
-          label="颜色"
-          placeholder="请选择主题色（可选）"
-          allowClear
-          presets={[
-            {
-              label: '推荐',
-              colors: [
-                '#1677ff',
-                '#52c41a',
-                '#faad14',
-                '#ff4d4f',
-                '#722ed1',
-                '#13c2c2',
-                '#fa8c16',
-                '#eb2f96',
-                '#8c8c8c',
-              ],
-            },
-          ]}
-        />
+        {!isColorHidden(configKey) && (
+          <ProFormColorPicker
+            name="color"
+            label="颜色"
+            placeholder="请选择主题色（可选）"
+            allowClear
+            presets={[
+              {
+                label: '推荐',
+                colors: [
+                  '#1677ff',
+                  '#52c41a',
+                  '#faad14',
+                  '#ff4d4f',
+                  '#722ed1',
+                  '#13c2c2',
+                  '#fa8c16',
+                  '#eb2f96',
+                  '#8c8c8c',
+                ],
+              },
+            ]}
+          />
+        )}
         <ProFormTextArea
           name="description"
           label="描述"

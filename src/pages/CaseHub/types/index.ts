@@ -32,6 +32,8 @@ export interface ITestCase {
   case_status?: string;
   case_bugs?: string[] | [] | undefined;
   case_mark?: string | undefined;
+  /** 适用端：与用例配置中心 PLATFORM 枚举对齐，value 用字符串以兼容扩展 */
+  case_platform?: string;
   is_common?: boolean;
   is_review?: string;
   requirement_id?: number | string;

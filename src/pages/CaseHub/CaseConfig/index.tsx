@@ -9,6 +9,7 @@ import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import {
   ApartmentOutlined,
   AuditOutlined,
+  DesktopOutlined,
   ExperimentOutlined,
   FlagOutlined,
   RocketOutlined,
@@ -49,6 +50,7 @@ const RENDER_MAP: Record<
   [CaseConfigKeyEnum.CASE_TYPE]: CaseStatusConfig,
   [CaseConfigKeyEnum.PLAN_STATUS]: CaseStatusConfig,
   [CaseConfigKeyEnum.PLAN_PHASE]: CaseStatusConfig,
+  [CaseConfigKeyEnum.PLATFORM]: CaseStatusConfig,
 };
 
 /**
@@ -91,6 +93,7 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   ApartmentOutlined: <ApartmentOutlined />,
   FlagOutlined: <FlagOutlined />,
   RocketOutlined: <RocketOutlined />,
+  DesktopOutlined: <DesktopOutlined />,
 };
 
 /**

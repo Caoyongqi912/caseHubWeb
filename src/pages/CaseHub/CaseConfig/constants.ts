@@ -63,6 +63,13 @@ export const CASE_CONFIG_CATEGORIES: ICaseConfigCategory[] = [
       '配置测试计划执行阶段枚举（如 规划 / 设计 / 执行 / 验收 等），用于测试计划列表的阶段展示、阶段色点着色及搜索筛选。',
     icon: 'RocketOutlined',
   },
+  {
+    key: CaseConfigKeyEnum.PLATFORM,
+    label: '适用端',
+    description:
+      '配置测试用例适用端枚举（如 PC / H5 / Android / iOS / 小程序 等），用于标记用例的运行端，便于按端筛选、计划编排与执行分配。',
+    icon: 'DesktopOutlined',
+  },
 ];
 
 /**

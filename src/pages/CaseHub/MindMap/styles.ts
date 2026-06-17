@@ -19,8 +19,9 @@ const { useToken } = theme;
 export const useMindMapStyles = () => {
   const { token } = useToken();
 
-  // 复用项目里其它模块的暗色判定（PlanReuirements / PlanCaseImportModal 同款）
-  const isDark = token.colorBgContainer === '#141414';
+  // 脑图画布强制 light 主题 (不跟随 antd ConfigProvider 的 dark 模式)
+  // 原因: dark 模式下 mind-elixir 节点文字 + 角标配色冲突严重, 画布单独保持 light 更稳
+  const isDark = false;
 
   /** 灰阶（ink 体系）：亮色=黑阶，暗色=白阶 */
   const ink = useMemo(() => {
@@ -176,24 +177,28 @@ export const useMindMapStyles = () => {
       background-size: 24px 24px !important;
       background-position: -1px -1px !important;
     }
-    /* —— 普通节点：发丝边 + 字号编辑感 */
+    /* —— 普通节点：圆角卡片 + 浅投影 + 字号编辑感 */
     .map-container me-parent me-tpc {
       font-size: ${fontSize.t2}px !important;
-      border-radius: 4px !important;
+      border-radius: 12px !important;
       border: 1px solid ${ink[200]} !important;
       background: ${paper.card} !important;
       color: ${ink[800]} !important;
-      padding: 4px 12px !important;
+      padding: 5px 14px !important;
       line-height: 1.4 !important;
       letter-spacing: 0.01em !important;
       transition: background 160ms ease, border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease !important;
-      box-shadow: ${shadows.card} !important;
+      box-shadow:
+        0 1px 2px rgba(15, 23, 42, 0.04),
+        0 2px 6px rgba(15, 23, 42, 0.06) !important;
     }
     .map-container me-parent me-tpc:hover {
       background: ${paper.hover} !important;
-      border-color: ${ink[400]} !important;
+      border-color: ${ink[300]} !important;
       transform: translateY(-1px) !important;
-      box-shadow: ${shadows.cardHover} !important;
+      box-shadow:
+        0 2px 4px rgba(15, 23, 42, 0.06),
+        0 8px 18px rgba(15, 23, 42, 0.10) !important;
     }
     /* —— 一级（顶级）节点：略大、№ 风格（用 me-parent 的 data-depth 标识会有兼容问题，
        这里改用 main-gap-x 的视觉间距 + 子节点缩进对齐来表达层级） */
@@ -217,14 +222,18 @@ export const useMindMapStyles = () => {
       box-shadow: ${shadows.cardHover} !important;
       padding: 4px 10px !important;
     }
-    /* —— tag chips */
+    /* —— tag chips: 左侧彩色竖条 + 轻量卡片 (对齐 mind-elixir 官网 vibe)
+       主色用 case 节点的钢蓝 #3b6ce6, 让 tag 视觉上跟 case 节点绑定 */
     .map-container .tags span {
-      background: ${paper.primarySoft} !important;
+      background: linear-gradient(180deg, #ffffff 0%, #f5f7fb 100%) !important;
       color: ${ink[700]} !important;
       border: 1px solid ${ink[200]} !important;
-      border-radius: 2px !important;
+      border-left: 3px solid #3b6ce6 !important;
+      border-radius: 6px !important;
       font-size: 10px !important;
       letter-spacing: 0.04em !important;
+      padding: 1px 8px 1px 7px !important;
+      box-shadow: 0 1px 1px rgba(15, 23, 42, 0.04) !important;
     }
     /* —— tips 浮层 */
     .map-container .tips {
@@ -293,6 +302,50 @@ export const useMindMapStyles = () => {
       } !important;
       border: 1px dashed ${ink[600]} !important;
     }
+
+    /* —— 类型化节点: data-type 由 utils.syncNodeTypeAttrs 在 refresh 后注入 */
+    /* 画布强制 light 主题 */
+    /* type 视觉: 左边框 3px (克制) + 极淡底色 (高级感) + 节点文字前 emoji (由 utils.ensureTypeIcon 注入) */
+    /* 调色板: 饱和度降低, 与背景米黄纸更融合 */
+    /* type=module (目录) - 暖灰 */
+    .map-container me-parent[data-type="module"] me-tpc {
+      border-left: 3px solid #6b6b6b !important;
+      background: linear-gradient(180deg, #fbfaf6 0%, #f6f4ec 100%) !important;
+    }
+    /* type=case (用例) - 钢蓝 */
+    .map-container me-parent[data-type="case"] me-tpc {
+      border-left: 3px solid #3b6ce6 !important;
+      background: linear-gradient(180deg, #f6f8fc 0%, #eef2fa 100%) !important;
+    }
+    /* type=step (步骤) - 纯文字, padding 跟 case 对齐 (高度一致), 不染色 */
+    .map-container me-parent[data-type="step"] me-tpc {
+      border: none !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      padding: 5px 14px !important;
+    }
+    /* type=expected (预期) - 纯文字, padding 跟 case 对齐, 不染色 */
+    .map-container me-parent[data-type="expected"] me-tpc {
+      border: none !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      padding: 5px 14px !important;
+    }
+    /* type=note (注释) - 浅灰, 不染底色 */
+    .map-container me-parent[data-type="note"] me-tpc {
+      border-left: 3px solid #c2c2c2 !important;
+    }
+    /* icons 位置: mind-elixir 5.x 的 be 函数把 icons 放在 text 之后, 默认 margin-left: 5px.
+       这里用 flex 重新排序, 让 icons 紧贴 topic 文字左边 (满足 type 角标在前的视觉).
+       排除了根节点 (me-root) 的 me-tpc, 避免破坏黑底白字的中心主题样式. */
+    .map-container me-parent > me-tpc {
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 6px !important;
+    }
+    .map-container me-parent > me-tpc > .text { order: 2; }
+    .map-container me-parent > me-tpc > .icons { order: 1; margin: 0 !important; }
+    .map-container me-parent > me-tpc > .tags { order: 3; }
     `,
     [paper, ink, fontSize, shadows, isDark, token.fontFamilyCode],
   );

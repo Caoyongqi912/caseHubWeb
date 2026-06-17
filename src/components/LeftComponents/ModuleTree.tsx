@@ -69,7 +69,7 @@ const CountBadge: FC<{ value: number; color: string }> = ({ value, color }) => (
       fontWeight: 600,
       fontVariantNumeric: 'tabular-nums',
       color,
-      background: `${color}14`,
+      // background: `${color}14`,
     }}
   >
     {value}
@@ -168,7 +168,7 @@ const ModuleTree: FC<IProps> = ({
       data.map((item) => ({
         title: item.title,
         key: item.key,
-        count: (item as any).count,
+        count: item.count,
         children: item.children ? build(item.children) : undefined,
       }));
     return build(modules);
@@ -322,28 +322,48 @@ const ModuleTree: FC<IProps> = ({
           {node.title}
         </Text>
 
-        {/* 右侧：徽标 + 操作 */}
+        {/* 右侧：徽标与操作按钮共享同一槽位
+            - 默认展示用例数徽标
+            - hover 时徽标淡出, +/··· 操作按钮淡入 (绝对定位叠加, 不撑开布局) */}
         <div
           style={{
-            display: 'flex',
+            position: 'relative',
+            display: 'inline-flex',
             alignItems: 'center',
-            gap: 4,
+            justifyContent: 'flex-end',
             flexShrink: 0,
             marginLeft: 6,
+            // 预留足够宽度容纳较长的 count 数字, 避免 hover 时布局抖动
+            minWidth: 44,
+            height: 20,
           }}
         >
           {node.count > 0 && (
-            <CountBadge value={node.count} color={token.colorPrimary} />
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                opacity: isHovered ? 0 : 1,
+                transition: 'opacity 0.15s ease',
+              }}
+            >
+              <CountBadge value={node.count} color={token.colorPrimary} />
+            </span>
           )}
 
           {isAdmin && !isUngrouped && (
             <span
               style={{
+                position: 'absolute',
+                right: 0,
+                top: 0,
+                bottom: 0,
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 2,
                 opacity: isHovered ? 1 : 0,
                 transition: 'opacity 0.15s ease',
+                pointerEvents: isHovered ? 'auto' : 'none',
               }}
             >
               <Tooltip title="新增子模块" mouseEnterDelay={0.4}>

@@ -17,7 +17,6 @@ import {
   ProCard,
   ProForm,
   ProFormSelect,
-  ProFormText,
   ProFormTextArea,
 } from '@ant-design/pro-components';
 import { Button, Form, Space, Spin, Tag, Typography } from 'antd';
@@ -52,6 +51,13 @@ const TestCaseDetail: FC<Props> = ({ planId, testcase, callback }: Props) => {
   const typeSelectOptions = useMemo(
     () => toSelectOptions(typeOptions),
     [typeOptions],
+  );
+
+  // 适用端从后端枚举配置拉取（用例配置中心 PLATFORM 分类）
+  const { options: platformOptions } = useCaseEnumConfig('PLATFORM');
+  const platformSelectOptions = useMemo(
+    () => toSelectOptions(platformOptions),
+    [platformOptions],
   );
 
   const [form] = Form.useForm();
@@ -224,7 +230,8 @@ const TestCaseDetail: FC<Props> = ({ planId, testcase, callback }: Props) => {
         allValues.case_name !== testcase.case_name ||
         allValues.case_level !== testcase.case_level ||
         allValues.case_type !== testcase.case_type ||
-        allValues.case_tag !== testcase.case_tag;
+        allValues.case_tag !== testcase.case_tag ||
+        allValues.case_platform !== testcase.case_platform;
 
       if (hasChanges) {
         if (saveTimeoutRef.current) {
@@ -240,6 +247,7 @@ const TestCaseDetail: FC<Props> = ({ planId, testcase, callback }: Props) => {
             case_mark: allValues.case_mark,
             case_tag: allValues.case_tag,
             case_setup: allValues.case_setup,
+            case_platform: allValues.case_platform,
           } as ITestCase);
 
           if (code === 0) {
@@ -426,9 +434,17 @@ const TestCaseDetail: FC<Props> = ({ planId, testcase, callback }: Props) => {
                   fieldProps={{ variant: 'filled' }}
                   width={'md'}
                 />
+                <ProFormSelect
+                  name="case_platform"
+                  placeholder="请选择适用端"
+                  options={platformSelectOptions}
+                  fieldProps={{ variant: 'filled' }}
+                  width={'md'}
+                  allowClear
+                />
               </ProForm.Group>
               {/* 标签 */}
-              <div style={{ marginBottom: spacing.lg }}>
+              {/* <div style={{ marginBottom: spacing.lg }}>
                 <Space style={{ marginBottom: spacing.sm }}>
                   <Text strong>标签</Text>
                   <Text type="secondary" style={{ fontSize: 12 }}>
@@ -442,7 +458,7 @@ const TestCaseDetail: FC<Props> = ({ planId, testcase, callback }: Props) => {
                     variant: 'filled',
                   }}
                 />
-              </div>
+              </div> */}
               {/* 备注 */}
               <div style={{ marginBottom: spacing.lg }}>
                 <Space style={{ marginBottom: spacing.sm }}>

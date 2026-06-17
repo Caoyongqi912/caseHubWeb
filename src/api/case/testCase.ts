@@ -106,6 +106,8 @@ export const updateBatchTestCase = async (
     case_level?: string;
     case_type?: number;
     case_tag?: string;
+    /** 适用端，与 PLATFORM 枚举 value 对齐；批量修改时与 case_level / case_type 并列可选 */
+    case_platform?: string;
   },
   options?: IObjGet,
 ) => {
@@ -578,12 +580,22 @@ export const exportCases = async (
  * 下载用例模版 Excel
  * 通过 umi-request 发起请求，响应拦截器 (isBlob) 会自动处理 blob 下载，
  * 调用方无需手动创建 <a> 标签触发下载，否则会导致重复下载
+ *
+ * - 用例库导入传 project_id，B 列下拉带该项目全量目录路径
+ * - 测试计划导入传 plan_id，B 列下拉带该计划全量目录路径
+ *
  * @param options - 配置选项（responseType: 'blob' 触发拦截器自动下载）
  */
-export const downloadCaseExcel = async (options: { responseType: 'blob' }) => {
+export const downloadCaseExcel = async (options: {
+  responseType: 'blob';
+  project_id?: number;
+  plan_id?: number;
+}) => {
+  const { project_id, plan_id, ...rest } = options;
   await request('/api/hub/cases/downloadCaseDemo', {
     method: 'GET',
-    ...(options || {}),
+    params: { project_id, plan_id },
+    ...rest,
   });
 };
 

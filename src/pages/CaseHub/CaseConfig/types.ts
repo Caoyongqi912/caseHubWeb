@@ -53,6 +53,8 @@ export enum CaseConfigKeyEnum {
   PLAN_STATUS = 'PLAN_STATUS',
   /** 测试计划执行阶段（如 规划 / 设计 / 执行 / 验收 等，可由用户在配置中心自定义） */
   PLAN_PHASE = 'PLAN_PHASE',
+  /** 用例适用端（如 PC / H5 / Android / iOS / 小程序 等，可由用户在配置中心自定义） */
+  PLATFORM = 'PLATFORM',
 }
 
 /**

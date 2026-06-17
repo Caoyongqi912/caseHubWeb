@@ -33,6 +33,13 @@ const NewCaseForm: FC<Props> = ({ onSubmit }) => {
     [typeOptions],
   );
 
+  // 适用端从后端枚举配置拉取（用例配置中心 PLATFORM 分类）
+  const { options: platformOptions } = useCaseEnumConfig('PLATFORM');
+  const platformSelectOptions = useMemo(
+    () => toSelectOptions(platformOptions),
+    [platformOptions],
+  );
+
   const { token } = useToken();
   const [form] = Form.useForm();
 
@@ -89,11 +96,11 @@ const NewCaseForm: FC<Props> = ({ onSubmit }) => {
           }}
         />
 
-        <ProFormText
+        {/* <ProFormText
           label="用例标签"
           name="case_tag"
           placeholder="请输入用例标签，多个标签用逗号分隔"
-        />
+        /> */}
 
         <ProForm.Group>
           <ProFormSelect
@@ -112,6 +119,16 @@ const NewCaseForm: FC<Props> = ({ onSubmit }) => {
             fieldProps={{ variant: 'filled' }}
             style={{ flex: 1 }}
             width={'md'}
+          />
+
+          <ProFormSelect
+            label="适用端"
+            name="case_platform"
+            options={platformSelectOptions}
+            fieldProps={{ variant: 'filled' }}
+            style={{ flex: 1 }}
+            width={'md'}
+            allowClear
           />
         </ProForm.Group>
 

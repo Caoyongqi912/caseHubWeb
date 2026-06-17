@@ -123,6 +123,13 @@ export interface IModule {
   module_type: number;
   children_length?: number;
   children?: IModule[];
+  /**
+   * 该目录下的测试用例数 (含全部后代模块的累加)
+   * - 用例库 (module_type=CASE) 由后端 queryTreeByProject 填充
+   * - 其它 module_type 暂未统计, 字段可能缺失, 视为 0
+   * - "未分组数据" 虚拟节点携带的是 module_id IS NULL 的用例数
+   */
+  count?: number;
 }
 
 export interface IModuleEnum {

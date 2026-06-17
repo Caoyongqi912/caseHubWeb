@@ -70,6 +70,13 @@ const CaseDataTable: FC<Props> = (props) => {
   const { options: typeOptions } = useCaseEnumConfig('CASE_TYPE');
   const typeValueEnum = useMemo(() => toValueEnum(typeOptions), [typeOptions]);
 
+  // 适用端从后端枚举配置拉取（用例配置中心 PLATFORM 分类）
+  const { options: platformOptions } = useCaseEnumConfig('PLATFORM');
+  const platformValueEnum = useMemo(
+    () => toValueEnum(platformOptions),
+    [platformOptions],
+  );
+
   const { perKey, currentProjectId, currentModuleId, onModuleRefresh } = props;
 
   // 用例等级从后端枚举配置拉取（管理员在配置中心增删后自动生效）
@@ -184,17 +191,17 @@ const CaseDataTable: FC<Props> = (props) => {
         width: '20%',
         render: (text) => <Text>{text}</Text>,
       },
-      {
-        title: '标签',
-        dataIndex: 'case_tag',
-        ellipsis: true,
-        width: '15%',
-        render: (text) => (
-          <Text strong ellipsis={{ tooltip: text }}>
-            {text}
-          </Text>
-        ),
-      },
+      // {
+      //   title: '标签',
+      //   dataIndex: 'case_tag',
+      //   ellipsis: true,
+      //   width: '15%',
+      //   render: (text) => (
+      //     <Text strong ellipsis={{ tooltip: text }}>
+      //       {text}
+      //     </Text>
+      //   ),
+      // },
       {
         title: '用例等级',
         dataIndex: 'case_level',
@@ -247,6 +254,30 @@ const CaseDataTable: FC<Props> = (props) => {
           >
             {record.case_type
               ? typeValueEnum[record.case_type]?.text || record.case_type
+              : '-'}
+          </Text>
+        ),
+      },
+      {
+        title: '适用端',
+        dataIndex: 'case_platform',
+        valueType: 'select',
+        valueEnum: platformValueEnum,
+        width: '10%',
+        render: (_, record: ITestCase) => (
+          <Text
+            type="secondary"
+            ellipsis={{
+              tooltip: record.case_platform
+                ? platformValueEnum[record.case_platform]?.text ||
+                  record.case_platform
+                : '-',
+            }}
+            style={{ fontWeight: 500 }}
+          >
+            {record.case_platform
+              ? platformValueEnum[record.case_platform]?.text ||
+                record.case_platform
               : '-'}
           </Text>
         ),

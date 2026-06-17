@@ -41,6 +41,13 @@ const CaseForm: FC<Props> = ({
     [typeOptions],
   );
 
+  // 适用端从后端枚举配置拉取（用例配置中心 PLATFORM 分类）
+  const { options: platformOptions } = useCaseEnumConfig('PLATFORM');
+  const platformSelectOptions = useMemo(
+    () => toSelectOptions(platformOptions),
+    [platformOptions],
+  );
+
   const { token } = useToken();
   const [form] = Form.useForm();
 
@@ -168,6 +175,16 @@ const CaseForm: FC<Props> = ({
             fieldProps={{ variant: 'filled' }}
             style={{ flex: 1 }}
             width={'md'}
+          />
+
+          <ProFormSelect
+            label="适用端"
+            name="case_platform"
+            options={platformSelectOptions}
+            fieldProps={{ variant: 'filled' }}
+            style={{ flex: 1 }}
+            width={'md'}
+            allowClear
           />
         </ProForm.Group>
 

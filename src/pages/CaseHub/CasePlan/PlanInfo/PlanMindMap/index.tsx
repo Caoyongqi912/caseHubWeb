@@ -21,6 +21,7 @@ import { getPlanInfo } from '@/api/case/caseplan';
 import MindMapCanvas from '@/pages/CaseHub/MindMap/MindMapCanvas';
 import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import { ICasePlan } from '@/pages/CaseHub/types';
+import { LoadingOutlined } from '@ant-design/icons';
 import { Spin, Tag } from 'antd';
 import dayjs from 'dayjs';
 import { FC, useCallback, useEffect, useState } from 'react';
@@ -33,6 +34,17 @@ const PlanMindMap: FC<Props> = ({ planId }) => {
   const { token, colors, spacing } = useCaseHubTheme();
   const [planInfo, setPlanInfo] = useState<ICasePlan>();
   const [loading, setLoading] = useState(true);
+  /** 脑图自动保存状态 —— 右上角 Spin 展示 */
+  const [mindSaving, setMindSaving] = useState(false);
+  const [mindLastSavedAt, setMindLastSavedAt] = useState<number>();
+
+  const handleMindSavingChange = useCallback(
+    (saving: boolean, savedAt?: number) => {
+      setMindSaving(saving);
+      if (savedAt) setMindLastSavedAt(savedAt);
+    },
+    [],
+  );
 
   const loadPlanInfo = useCallback(async () => {
     if (!planId) return;
@@ -179,7 +191,39 @@ const PlanMindMap: FC<Props> = ({ planId }) => {
             fontFamily: token.fontFamily,
           }}
         >
-          <span>Last sync</span>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              minHeight: 14,
+            }}
+          >
+            {mindSaving ? (
+              <>
+                <Spin
+                  size="small"
+                  indicator={
+                    <LoadingOutlined
+                      style={{ fontSize: 12, color: colors.primary }}
+                      spin
+                    />
+                  }
+                />
+                <span
+                  style={{
+                    color: colors.primary,
+                    letterSpacing: '0.18em',
+                    fontSize: 10,
+                  }}
+                >
+                  自动保存中
+                </span>
+              </>
+            ) : (
+              <span>Last sync</span>
+            )}
+          </div>
           <span
             style={{
               fontSize: 12,
@@ -190,7 +234,9 @@ const PlanMindMap: FC<Props> = ({ planId }) => {
               textTransform: 'none',
             }}
           >
-            {dayjs().format('YYYY-MM-DD HH:mm')}
+            {mindLastSavedAt
+              ? dayjs(mindLastSavedAt).format('YYYY-MM-DD HH:mm')
+              : '—'}
           </span>
         </div>
       </header>
@@ -207,6 +253,7 @@ const PlanMindMap: FC<Props> = ({ planId }) => {
         <MindMapCanvas
           planId={Number(planId)}
           projectId={planInfo.project_id}
+          onSavingChange={handleMindSavingChange}
         />
       </div>
     </div>

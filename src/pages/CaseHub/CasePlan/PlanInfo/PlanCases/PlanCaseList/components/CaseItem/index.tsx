@@ -50,8 +50,6 @@ interface CaseItemProps {
   moduleId?: number | null;
   onSelectedChange?: (id: number | undefined, selected: boolean) => void;
   onReviewChange?: (caseId: number, isReview: string) => void;
-  /** 一轮测试状态切换回调（用于驱动父组件 caseList 更新与 StepTable 级联） */
-  onFirstStatusChange?: (caseId: number, status: string) => void;
   /** 二轮测试状态切换回调 */
   onSecondStatusChange?: (caseId: number, status: string) => void;
   /** 卡片折叠状态变更回调（用于通知父级虚拟列表重新计算行高） */
@@ -84,7 +82,6 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
     selected = false,
     onSelectedChange,
     onReviewChange,
-    onFirstStatusChange,
     onSecondStatusChange,
     onCollapsedChange,
     isSortable = false,
@@ -140,7 +137,6 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
     : {};
 
   const [switchingReview, setSwitchingReview] = useState(false);
-  const [switchingFirstStatus, setSwitchingFirstStatus] = useState(false);
   const [switchingSecondStatus, setSwitchingSecondStatus] = useState(false);
   const [copyLoading, setCopyLoading] = useState(false);
   const [removeLoading, setRemoveLoading] = useState(false);
@@ -221,13 +217,11 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
    */
   const callbacksRef = useRef({
     onReviewChange,
-    onFirstStatusChange,
     onSecondStatusChange,
     onRefresh,
   });
   callbacksRef.current = {
     onReviewChange,
-    onFirstStatusChange,
     onSecondStatusChange,
     onRefresh,
   };
@@ -349,16 +343,10 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
    * @param updates - 更新内容，value 为 string 枚举值
    */
   const handleStatusUpdate = useCallback(
-    async (updates: {
-      first_status?: string;
-      second_status?: string;
-      is_review?: string;
-    }) => {
+    async (updates: { second_status?: string; is_review?: string }) => {
       if (!caseId || !planId) return;
 
-      if (updates.first_status !== undefined) {
-        setSwitchingFirstStatus(true);
-      } else if (updates.second_status !== undefined) {
+      if (updates.second_status !== undefined) {
         setSwitchingSecondStatus(true);
       } else {
         setSwitchingReview(true);
@@ -376,9 +364,6 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
           if (updates.is_review !== undefined) {
             // 回调参数已统一为 string 类型（与后端枚举 value 对齐）
             onReviewChange?.(caseId, updates.is_review);
-          } else if (updates.first_status !== undefined) {
-            // 同步驱动父组件 caseList 更新，进而触发 StepTable 的 firstStatus 级联
-            onFirstStatusChange?.(caseId, updates.first_status);
           } else if (updates.second_status !== undefined) {
             // 同步驱动父组件 caseList 更新，进而触发 StepTable 的 secondStatus 级联
             onSecondStatusChange?.(caseId, updates.second_status);
@@ -389,7 +374,6 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
       } catch {
         message.error('修改失败');
       } finally {
-        setSwitchingFirstStatus(false);
         setSwitchingSecondStatus(false);
         setSwitchingReview(false);
       }
@@ -406,15 +390,6 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
     [switchingReview, handleStatusUpdate],
   );
 
-  /** 选择一轮测试状态（value 为 string 枚举值） */
-  const handleFirstStatusSelect = useCallback(
-    (newStatus: string) => {
-      if (switchingFirstStatus) return;
-      handleStatusUpdate({ first_status: newStatus });
-    },
-    [switchingFirstStatus, handleStatusUpdate],
-  );
-
   /** 选择二轮测试状态（value 为 string 枚举值） */
   const handleSecondStatusSelect = useCallback(
     (newStatus: string) => {
@@ -425,8 +400,6 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
   );
 
   // 使用 string key 查找配置（枚举 value 为 string 类型）
-  const currentFirstStatusConfig = caseStatusConfig[firstStatus] ||
-    caseStatusConfig['0'] || { label: '未知', color: 'default' };
   const currentSecondStatusConfig = caseStatusConfig[secondStatus] ||
     caseStatusConfig['0'] || { label: '未知', color: 'default' };
 
@@ -575,7 +548,7 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
     ],
   );
 
-  /** 卡片右侧操作区域：折叠按钮 + 一轮测试 + 二轮测试 + 更多操作 */
+  /** 卡片右侧操作区域：折叠按钮 + 二轮测试 + 更多操作 */
   const cardExtra = useMemo(
     () => (
       <Space size="small" onClick={(e) => e.stopPropagation()}>
@@ -590,12 +563,6 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
           }}
           style={{ transition: 'transform 0.2s' }}
         />
-        {renderStatusTag(
-          currentFirstStatusConfig,
-          switchingFirstStatus,
-          handleFirstStatusSelect,
-          '一轮',
-        )}
         {renderStatusTag(
           currentSecondStatusConfig,
           switchingSecondStatus,
@@ -614,10 +581,6 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
     ),
     [
       collapsed,
-      firstStatus,
-      currentFirstStatusConfig,
-      switchingFirstStatus,
-      handleFirstStatusSelect,
       secondStatus,
       currentSecondStatusConfig,
       switchingSecondStatus,

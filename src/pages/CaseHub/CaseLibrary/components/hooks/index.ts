@@ -107,6 +107,7 @@ export interface BatchEditValues {
   case_tag?: string;
   case_level?: string;
   case_type?: number;
+  case_platform?: string;
 }
 
 export interface UseBatchEditOptions {
@@ -126,7 +127,12 @@ export const useBatchEdit = (
   const editCases = useCallback(
     async (caseIds: number[], values: BatchEditValues): Promise<boolean> => {
       if (caseIds.length === 0) return false;
-      if (!values.case_tag && !values.case_level && !values.case_type) {
+      if (
+        !values.case_tag &&
+        !values.case_level &&
+        !values.case_type &&
+        !values.case_platform
+      ) {
         message.warning('请至少选择一项要修改的内容');
         return false;
       }
@@ -138,6 +144,7 @@ export const useBatchEdit = (
           case_tag: values.case_tag,
           case_level: values.case_level,
           case_type: values.case_type,
+          case_platform: values.case_platform,
         });
 
         if (code === 0) {

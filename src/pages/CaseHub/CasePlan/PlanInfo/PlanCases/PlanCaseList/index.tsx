@@ -109,8 +109,6 @@ interface CaseRowData {
   moduleId?: number | null;
   onSelectedChange: (id: number | undefined, selected: boolean) => void;
   onReviewChange: (caseId: number, isReview: string) => void;
-  /** 一轮测试状态变更回调（同步更新左侧模块树计数） */
-  onFirstStatusChange: (caseId: number, status: string) => void;
   /** 二轮测试状态变更回调 */
   onSecondStatusChange: (caseId: number, status: string) => void;
   /** 卡片折叠状态变更回调（用于虚拟列表动态调整行高） */
@@ -159,7 +157,6 @@ const CaseRow: React.FC<{
           selected={tc.id !== undefined && safeSelected.has(tc.id)}
           onSelectedChange={data?.onSelectedChange ?? (() => {})}
           onReviewChange={data?.onReviewChange ?? (() => {})}
-          onFirstStatusChange={data?.onFirstStatusChange ?? (() => {})}
           onSecondStatusChange={data?.onSecondStatusChange ?? (() => {})}
           onCollapsedChange={data?.onCollapsedChange ?? (() => {})}
           isSortable={data?.isSortable ?? false}
@@ -510,23 +507,8 @@ const Index: FC<PlanCaseListProps> = ({
   }, []);
 
   /**
-   * 单个用例一轮测试状态切换
-   * 仅更新对应字段，保持其它状态不变；
-   */
-  const handleFirstStatusChange = useCallback(
-    (caseId: number, status: string) => {
-      setCaseList((prev) =>
-        prev.map((tc) =>
-          tc.id === caseId ? { ...tc, first_status: status } : tc,
-        ),
-      );
-    },
-    [],
-  );
-
-  /**
    * 单个用例二轮测试状态切换
-   * 逻辑同 handleFirstStatusChange
+   * 仅更新对应字段，保持其它状态不变；
    */
   const handleSecondStatusChange = useCallback(
     (caseId: number, status: string) => {
@@ -886,7 +868,6 @@ const Index: FC<PlanCaseListProps> = ({
       moduleId,
       onSelectedChange: handleCaseSelectedChange,
       onReviewChange: handleReviewChange,
-      onFirstStatusChange: handleFirstStatusChange,
       onSecondStatusChange: handleSecondStatusChange,
       onCollapsedChange: handleCollapsedChange,
       isSortable: true,
@@ -906,7 +887,6 @@ const Index: FC<PlanCaseListProps> = ({
       moduleId,
       handleCaseSelectedChange,
       handleReviewChange,
-      handleFirstStatusChange,
       handleSecondStatusChange,
       handleCollapsedChange,
       handleRefresh,

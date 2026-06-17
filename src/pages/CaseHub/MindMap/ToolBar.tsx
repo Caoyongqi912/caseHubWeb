@@ -5,7 +5,13 @@
  * - 主操作「保存」用细线方框强调；其它为「下划线 hover」文字操作
  * - 完全跟随 antd token，亮/暗自动反色
  */
-import { exportAsJson } from '@/pages/CaseHub/MindMap/utils';
+import type { MindNode, NodeType } from '@/pages/CaseHub/MindMap/utils';
+import {
+  exportAsJson,
+  getCurrentNodeObj,
+  NODE_TYPE_ICONS,
+  setNodeType,
+} from '@/pages/CaseHub/MindMap/utils';
 import { message, Tooltip } from 'antd';
 import React, { FC, useCallback, useState } from 'react';
 import { useMindMapStyles } from './styles';
@@ -13,6 +19,8 @@ import { useMindMapStyles } from './styles';
 interface Props {
   mind: React.MutableRefObject<any>;
   saveMap: () => Promise<void>;
+  /** type='case' 节点触发: 父组件打开 MetaDrawer */
+  onEditCaseMeta: (node: MindNode) => void;
 }
 
 interface OpProps {
@@ -75,7 +83,7 @@ const Sep: FC = () => {
   );
 };
 
-const ToolBar: FC<Props> = ({ mind, saveMap }) => {
+const ToolBar: FC<Props> = ({ mind, saveMap, onEditCaseMeta }) => {
   const styles = useMindMapStyles();
 
   const ensure = useCallback((): boolean => {
@@ -146,6 +154,56 @@ const ToolBar: FC<Props> = ({ mind, saveMap }) => {
     }
   }, [ensure, requireNode, mind]);
 
+  /**
+   * 标记当前节点为指定 type. 直接改 nodeObj 引用,
+   * mind-elixir 内部会响应式刷新卡片样式.
+   * 改完触发防抖保存 (用 mind.current.refresh 走 operation bus).
+   */
+  const handleSetType = useCallback(
+    (type: NodeType) => {
+      if (!ensure()) return;
+      const cur = mind.current?.currentNode;
+      if (!cur?.nodeObj) {
+        message.warning('请先选中一个节点');
+        return;
+      }
+      const node = cur.nodeObj as MindNode;
+      if (node.type === type) return;
+      setNodeType(node, type);
+      // 触发 mind-elixir 重绘 + operation 事件 → 防抖保存
+      try {
+        mind.current.refresh();
+      } catch (e) {
+        console.warn('refresh after setType failed', e);
+      }
+      message.success(
+        `已标记为${NODE_TYPE_ICONS[type]} ${
+          type === 'module' ? '目录' : type === 'case' ? '用例' : '注释'
+        }`,
+      );
+      // type='case' 时, 顺手打开 meta 抽屉让用户填字段
+      if (type === 'case') {
+        onEditCaseMeta(node);
+      }
+    },
+    [ensure, mind, onEditCaseMeta],
+  );
+
+  /** 选中 case 节点时, 显式打开 meta 编辑器 */
+  const handleEditCaseMeta = useCallback(() => {
+    if (!ensure()) return;
+    const node = getCurrentNodeObj(mind.current) as MindNode | undefined;
+    if (!node) {
+      message.warning('请先选中一个节点');
+      return;
+    }
+    if (node.type !== 'case') {
+      message.warning('该节点不是用例节点, 请先标记为"用例"');
+      return;
+    }
+    onEditCaseMeta(node);
+  }, [ensure, mind, onEditCaseMeta]);
+
   const handleReset = useCallback(() => {
     if (!mind.current) return;
     mind.current.scale(1);
@@ -192,6 +250,17 @@ const ToolBar: FC<Props> = ({ mind, saveMap }) => {
       <Sep />
       <Op label="重置视图" hint="重置视图" onClick={handleReset} />
       <Op label="导出 JSON" hint="导出 JSON" onClick={handleExport} />
+      <Sep />
+      <Op
+        label="🗂️ 目录"
+        hint="把当前节点标记为目录 (手动切换)"
+        onClick={() => handleSetType('module')}
+      />
+      <Op
+        label="🧪 用例"
+        hint="把当前节点标记为用例 (手动切换)"
+        onClick={() => handleSetType('case')}
+      />
       <Sep />
       <Op label="保存" hint="保存脑图结构" onClick={handleSave} primary />
     </div>
