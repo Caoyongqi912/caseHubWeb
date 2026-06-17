@@ -375,7 +375,8 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
 
   /**
    * 树勾选回调（checkStrictly 模式）。
-   * - 勾选/取消子节点不会联动父节点/兄弟节点
+   * - 自动向下传播：勾选/取消父节点时,所有后代(子、孙子...)也跟随
+   *   勾选/取消,避免漏选深层目录
    * - 自动向上传播：当某个父节点的所有直接子节点都被勾选时，自动勾选该父节点
    * - 取消子节点时，之前因"全子节点勾选"而自动勾选的父节点会自动取消
    * - 右侧 case 列表的 module_ids 仍由 coveredLeafKeys 派生
@@ -402,8 +403,30 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
       return;
     }
 
+    // 向下传播: 对比前后状态,对新增/移除的 key 级联到所有后代
+    // (checkStrictly 模式下 Tree 不会自动联动,需要手动补)
+    const prevSet = new Set<React.Key>(safeCheckedModuleKeys);
+    const nextSet = new Set<React.Key>(userChecked);
+
+    for (const key of nextSet) {
+      if (!prevSet.has(key)) {
+        const node = moduleByKey.get(Number(key));
+        if (node) {
+          collectNodeDescendants(node).forEach((d) => nextSet.add(d));
+        }
+      }
+    }
+    for (const key of prevSet) {
+      if (!nextSet.has(key)) {
+        const node = moduleByKey.get(Number(key));
+        if (node) {
+          collectNodeDescendants(node).forEach((d) => nextSet.delete(d));
+        }
+      }
+    }
+
     // 向上自动勾选：若父节点的所有直接子节点都在勾选集合中，则自动勾选父节点
-    const finalChecked = new Set<React.Key>(userChecked);
+    const finalChecked = new Set<React.Key>(nextSet);
 
     const getDepth = (key: number): number => {
       let depth = 0;
