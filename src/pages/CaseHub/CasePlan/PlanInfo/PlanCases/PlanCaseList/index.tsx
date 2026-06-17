@@ -44,7 +44,9 @@ import CaseFilterBar from './components/CaseFilterBar';
 import CaseItem from './components/CaseItem';
 import NewCaseForm from './components/NewCaseForm';
 import PlanCaseImportModal from './components/PlanCaseImportModal';
-import PlanCaseSortableWrapper from './components/PlanCaseSortableWrapper';
+import PlanCaseSortableWrapper, {
+  DropPosition,
+} from './components/PlanCaseSortableWrapper';
 import { useCaseFilter } from './hooks/useCaseFilter';
 
 /**
@@ -699,7 +701,7 @@ const Index: FC<PlanCaseListProps> = ({
    * @param overId 目标位置的用例ID（dnd-kit 提供的 drop target）
    */
   const handleCaseReorder = useCallback(
-    async (activeId: number, overId: number) => {
+    async (activeId: number, overId: number, dropPosition: DropPosition) => {
       if (activeId === overId) return;
 
       // 1) 检测是否多选块拖拽
@@ -723,7 +725,7 @@ const Index: FC<PlanCaseListProps> = ({
         return;
       }
 
-      // 4) 乐观更新：取块 → 从原列表删除 → 插入到 over 之后
+      // 4) 乐观更新：取块 → 从原列表删除 → 按 dropPosition 插到 over 之前 / 之后
       const prevList = caseList;
       const block = caseList.filter(
         (tc) => tc.id !== undefined && movedIds.includes(tc.id),
@@ -733,27 +735,39 @@ const Index: FC<PlanCaseListProps> = ({
       );
       const anchorIdx = cleanList.findIndex((tc) => tc.id === overId);
       if (anchorIdx === -1) return;
-      // 插入到 over 之后
+      // 根据 dropPosition 决定插入到 over 之前还是之后
+      const insertIdx = dropPosition === 'before' ? anchorIdx : anchorIdx + 1;
       const newList = [
-        ...cleanList.slice(0, anchorIdx + 1),
+        ...cleanList.slice(0, insertIdx),
         ...block,
-        ...cleanList.slice(anchorIdx + 1),
+        ...cleanList.slice(insertIdx),
       ];
       setCaseList(newList);
 
       // 5) 构造 items：链式锚点
-      const items = movedIds.map((cid, i) => ({
-        case_id: cid,
-        after_id: i === 0 ? overId : movedIds[i - 1],
-      }));
+      // - dropPosition='after': 第一条 after_id=overId，后续链式 after_id=前一条
+      // - dropPosition='before': 第一条 before_id=overId 落到 over 之前，后续链式 after_id=前一条
+      //   （链式用 after_id 是因为：第一条已落到 over 之前，后续每条只要 after 前一条
+      //   就会自然夹在第一条和 over 之间，从而保持块内顺序）
+      const items = movedIds.map((cid, i) => {
+        if (i === 0 && dropPosition === 'before') {
+          return { case_id: cid, before_id: overId };
+        }
+        return {
+          case_id: cid,
+          after_id: i === 0 ? overId : movedIds[i - 1],
+        };
+      });
 
       try {
         if (movedIds.length === 1) {
-          // 单条：单条接口
+          // 单条：单条接口，根据 dropPosition 选用 before_id / after_id
           const { code } = await reorderPlanCases({
             plan_id: Number(planId),
             case_id: activeId,
-            after_id: overId,
+            ...(dropPosition === 'before'
+              ? { before_id: overId }
+              : { after_id: overId }),
           });
           if (code !== 0) throw new Error('reorder failed');
         } else {

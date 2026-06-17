@@ -16,11 +16,23 @@ import { ReactNode } from 'react';
 
 import { ITestCase } from '@/pages/CaseHub/types';
 
+/** 拖拽相对 over 节点的落点位置 */
+export type DropPosition = 'before' | 'after';
+
 interface PlanCaseSortableWrapperProps {
   /** 用例列表（用于构建 SortableContext 的 items） */
   items: ITestCase[];
-  /** 拖拽结束回调，参数为 (activeId, overId) */
-  onReorder: (activeId: number, overId: number) => void;
+  /**
+   * 拖拽结束回调
+   * @param activeId 被拖拽的用例 ID
+   * @param overId 目标位置的用例 ID（dnd-kit 提供的 drop target）
+   * @param dropPosition 相对 over 的落点：'before' = 落到 over 之上；'after' = 落到 over 之下
+   */
+  onReorder: (
+    activeId: number,
+    overId: number,
+    dropPosition: DropPosition,
+  ) => void;
   children: ReactNode;
 }
 
@@ -50,9 +62,19 @@ const PlanCaseSortableWrapper: React.FC<PlanCaseSortableWrapperProps> = ({
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!active || !over) return;
-    if (active.id !== over.id) {
-      onReorder(Number(active.id), Number(over.id));
+    if (active.id === over.id) return;
+
+    // 判定落点：active 拖动后中心在 over 中心之上 -> 落到 over 之前
+    const activeRect = active.rect.current.translated;
+    const overRect = over.rect;
+    let dropPosition: DropPosition = 'after';
+    if (activeRect && overRect) {
+      const activeCenterY = activeRect.top + activeRect.height / 2;
+      const overCenterY = overRect.top + overRect.height / 2;
+      dropPosition = activeCenterY < overCenterY ? 'before' : 'after';
     }
+
+    onReorder(Number(active.id), Number(over.id), dropPosition);
   };
 
   return (
