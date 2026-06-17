@@ -212,15 +212,21 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
   const [modules, setModules] = useState<IModule[]>([]);
   const [moduleLoading, setModuleLoading] = useState(false);
   const [expandedKeys, setExpandedKeys] = useState<React.Key[]>([]);
-  const [checkedModuleKeys, setCheckedModuleKeys] = useState<React.Key[]>([]);
+  const [activeModuleId, setActiveModuleId] = useState<number | null>(null);
+  /**
+   * 按目录记忆用户已勾选的用例 ID 列表
+   * - key: 源项目 module_id(用户点击激活的目录)
+   * - value: 该目录下用户勾选的 case_id 列表(顺序为用户勾选顺序)
+   * 用于支持"勾完 A 切到 B 再切回 A,A 的勾选还在"的连续操作体验
+   */
+  const [picksByModule, setPicksByModule] = useState<Record<number, number[]>>(
+    {},
+  );
   const [moduleKeyword, setModuleKeyword] = useState('');
 
   /* -------------------- 用例表格状态 -------------------- */
   const actionRef = useRef<ActionType>();
   const [caseList, setCaseList] = useState<ITestCase[]>([]);
-  const [selectedCaseIds, setSelectedCaseIds] = useState<Set<number>>(
-    new Set(),
-  );
   const [caseKeyword, setCaseKeyword] = useState('');
   /** 排序方向：'ascend' = 最早（创建时间升序）; 'descend' = 最新（创建时间降序，默认） */
   const [sortOrder, setSortOrder] = useState<'ascend' | 'descend'>('descend');
@@ -267,9 +273,9 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
   useEffect(() => {
     if (!planInfoLoaded) return;
     loadModules();
-    // 切换项目时清空之前的选择
-    setCheckedModuleKeys([]);
-    setSelectedCaseIds(new Set());
+    // 切换项目时清空之前的选择(激活目录 + 每目录的勾选记忆)
+    setActiveModuleId(null);
+    setPicksByModule({});
   }, [loadModules, planInfoLoaded]);
 
   /* -------------------- 树渲染数据 -------------------- */
@@ -314,166 +320,82 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
   }, [moduleKeyword, filteredTreeData]);
 
   /* -------------------- 树操作 -------------------- */
-  // 整棵模块树的扁平 key 列表 + key -> IModule 索引
-  const { allModuleKeys, moduleByKey } = useMemo(() => {
+  // 整棵模块树的 key -> IModule 索引(用于按 id 查目录信息)
+  const { moduleByKey } = useMemo(() => {
     const out = collectDescendantKeys(modules ?? []);
-    return { allModuleKeys: out.keys, moduleByKey: out.byKey };
+    return { moduleByKey: out.byKey };
   }, [modules]);
-  // 防御性兜底
-  const safeAllModuleKeys: React.Key[] = Array.isArray(allModuleKeys)
-    ? allModuleKeys
-    : [];
-  const safeCheckedModuleKeys: React.Key[] = Array.isArray(checkedModuleKeys)
-    ? checkedModuleKeys
-    : [];
+  /**
+   * 当前激活目录已勾选的 case_id Set(派生值,供表格 rowSelection 使用)
+   * - activeModuleId == null  -> 空集
+   * - 否则                    -> picksByModule[activeModuleId] 的 Set 视图
+   */
+  const activeCaseIds = useMemo<Set<number>>(
+    () =>
+      new Set(
+        activeModuleId != null ? picksByModule[activeModuleId] ?? [] : [],
+      ),
+    [activeModuleId, picksByModule],
+  );
 
   /**
-   * 把"已勾选 key 集合"展开成"被覆盖的叶子 key 集合"
-   * - 选中某内部节点 -> 该节点所有后代叶子视为覆盖
-   * - 选中叶子 -> 自身视为覆盖
-   * 这样右侧 case 列表的 module_ids 永远是叶子 id，符合后端 page_by_module 的语义
+   * 跨所有目录的总勾选数 / 有勾选的目录数
+   * 用于头部"已选 N 个用例 / M 个分组"展示
    */
-  const coveredLeafKeys = useMemo<Set<number>>(() => {
-    const out = new Set<number>();
-    if (!moduleByKey) return out;
-    safeCheckedModuleKeys.forEach((k) => {
-      const node = moduleByKey.get(Number(k));
-      if (!node) return;
-      collectNodeDescendants(node).forEach((ck) => out.add(ck));
+  const { totalPickedCount, pickedModuleCount } = useMemo(() => {
+    let total = 0;
+    let modules = 0;
+    Object.values(picksByModule).forEach((arr) => {
+      if (arr.length > 0) {
+        total += arr.length;
+        modules += 1;
+      }
     });
-    return out;
-  }, [safeCheckedModuleKeys, moduleByKey]);
+    return { totalPickedCount: total, pickedModuleCount: modules };
+  }, [picksByModule]);
 
-  // 是否"全选"：所有叶子都被覆盖即可
-  const allLeafKeys = useMemo<number[]>(() => {
-    const out: number[] = [];
-    const walk = (list: IModule[]) => {
-      list.forEach((m) => {
-        const isLeaf = !m.children || m.children.length === 0;
-        if (isLeaf) out.push(m.key);
-        else walk(m.children);
-      });
-    };
-    walk(modules ?? []);
-    return out;
-  }, [modules]);
+  /** 当前激活的目录节点(用于右侧 header 展示目录名) */
+  const activeModule = useMemo<IModule | null>(
+    () =>
+      activeModuleId != null ? moduleByKey.get(activeModuleId) ?? null : null,
+    [activeModuleId, moduleByKey],
+  );
 
-  const isAllModuleSelected =
-    allLeafKeys.length > 0 && allLeafKeys.every((k) => coveredLeafKeys.has(k));
-
-  const isModuleIndeterminate =
-    coveredLeafKeys.size > 0 && coveredLeafKeys.size < allLeafKeys.length;
-
-  const handleSelectAllModules = (e: CheckboxChangeEvent) => {
-    if (e.target.checked) {
-      // 全选 = 把所有内部+叶子都勾上（视觉一致）
-      setCheckedModuleKeys(safeAllModuleKeys);
-    } else {
-      setCheckedModuleKeys([]);
-    }
+  /**
+   * 更新当前激活目录的勾选集合
+   * - 空数组会被清理(让 pickedModuleCount 准确反映"有勾选的目录数")
+   */
+  const updateActivePicks = (updater: (prev: number[]) => number[]) => {
+    if (activeModuleId == null) return;
+    const id = activeModuleId;
+    setPicksByModule((prev) => {
+      const cur = prev[id] ?? [];
+      const next = updater(cur);
+      const out = { ...prev };
+      if (next.length === 0) {
+        delete out[id];
+      } else {
+        out[id] = next;
+      }
+      return out;
+    });
   };
 
   /**
-   * 树勾选回调（checkStrictly 模式）。
-   * - 自动向下传播：勾选/取消父节点时,所有后代(子、孙子...)也跟随
-   *   勾选/取消,避免漏选深层目录
-   * - 自动向上传播：当某个父节点的所有直接子节点都被勾选时，自动勾选该父节点
-   * - 取消子节点时，之前因"全子节点勾选"而自动勾选的父节点会自动取消
-   * - 右侧 case 列表的 module_ids 仍由 coveredLeafKeys 派生
+   * 树点击回调(非 checkable 模式)
+   * - 点击节点 -> 设为当前激活目录,右侧表格展示该目录(含子节点)的用例
+   * - 点击已激活节点 -> 保持激活(避免误触清空右侧数据)
+   * - 切换激活目录会触发 fetchPageData 重新拉取(activeModuleId 变化)
    */
-  const handleModuleCheck = (
-    info:
-      | React.Key[]
-      | { checked: React.Key[]; halfChecked: React.Key[] }
-      | undefined
-      | null,
-  ) => {
-    if (!info) {
-      setCheckedModuleKeys([]);
-      return;
-    }
-
-    let userChecked: React.Key[];
-    if (Array.isArray(info)) {
-      userChecked = info;
-    } else if (typeof info === 'object' && Array.isArray(info.checked)) {
-      userChecked = info.checked;
-    } else {
-      setCheckedModuleKeys([]);
-      return;
-    }
-
-    // 向下传播: 对比前后状态,对新增/移除的 key 级联到所有后代
-    // (checkStrictly 模式下 Tree 不会自动联动,需要手动补)
-    const prevSet = new Set<React.Key>(safeCheckedModuleKeys);
-    const nextSet = new Set<React.Key>(userChecked);
-
-    for (const key of nextSet) {
-      if (!prevSet.has(key)) {
-        const node = moduleByKey.get(Number(key));
-        if (node) {
-          collectNodeDescendants(node).forEach((d) => nextSet.add(d));
-        }
-      }
-    }
-    for (const key of prevSet) {
-      if (!nextSet.has(key)) {
-        const node = moduleByKey.get(Number(key));
-        if (node) {
-          collectNodeDescendants(node).forEach((d) => nextSet.delete(d));
-        }
-      }
-    }
-
-    // 向上自动勾选：若父节点的所有直接子节点都在勾选集合中，则自动勾选父节点
-    const finalChecked = new Set<React.Key>(nextSet);
-
-    const getDepth = (key: number): number => {
-      let depth = 0;
-      let node = moduleByKey.get(key);
-      while (node?.parent_id) {
-        depth++;
-        node = moduleByKey.get(node.parent_id);
-      }
-      return depth;
-    };
-
-    // 按深度从大到小排序，先处理叶子节点，再逐层向上传播
-    const sortedKeys = Array.from(finalChecked).sort(
-      (a, b) => getDepth(Number(b)) - getDepth(Number(a)),
-    );
-
-    for (const key of sortedKeys) {
-      let currentKey: number | undefined = moduleByKey.get(
-        Number(key),
-      )?.parent_id;
-      while (currentKey !== undefined) {
-        const parent = moduleByKey.get(currentKey);
-        if (!parent || !parent.children || parent.children.length === 0) break;
-
-        const allChildrenChecked = parent.children.every((child) =>
-          finalChecked.has(child.key),
-        );
-
-        if (allChildrenChecked) {
-          if (!finalChecked.has(parent.key)) {
-            finalChecked.add(parent.key);
-          }
-          currentKey = parent.parent_id;
-        } else {
-          break;
-        }
-      }
-    }
-
-    setCheckedModuleKeys(Array.from(finalChecked));
+  const handleModuleSelect = (keys: React.Key[]) => {
+    const next = keys[0];
+    setActiveModuleId(next != null ? Number(next) : null);
   };
 
-  // 选中模块变更时刷新表格
+  // 切换激活目录时刷新表格(不要清空 picksByModule,保留跨目录的勾选记忆)
   useEffect(() => {
-    setSelectedCaseIds(new Set());
     actionRef.current?.reloadAndRest?.();
-  }, [checkedModuleKeys]);
+  }, [activeModuleId]);
 
   /* -------------------- 用例表格 -------------------- */
 
@@ -483,9 +405,11 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
    * - 选中 1 个模块：传 module_id（保留旧接口兼容）
    * - 选中 ≥2 个模块：传 module_ids（后端展开每个模块的子节点后求并集）
    */
-  // 使用"被覆盖的叶子 key"作为筛选条件（后端 page_by_module 会再展开子节点，行为兼容）
-  const leafIds = useMemo(() => Array.from(coveredLeafKeys), [coveredLeafKeys]);
-
+  /**
+   * ProTable request: 选中目录时 module_id 传该目录 id
+   * (后端 page_cases 对单 module_id 自动展开子节点,行为兼容)
+   * 未选中目录时不传 module_id,后端返回未分类用例
+   */
   const fetchPageData = useCallback(
     async (params: any, sort: any) => {
       const baseParams = {
@@ -498,21 +422,14 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
         case_level: filterLevel,
         case_type: filterType,
       };
-
-      // 避免和 module_id 同时传（后端会同时收到导致困惑）
-      let values: Record<string, unknown>;
-      if (leafIds.length === 0) {
-        values = baseParams;
-      } else if (leafIds.length === 1) {
-        values = { ...baseParams, module_id: leafIds[0] };
-      } else {
-        values = { ...baseParams, module_ids: leafIds };
-      }
-
+      const values =
+        activeModuleId != null
+          ? { ...baseParams, module_id: activeModuleId }
+          : baseParams;
       const { code, data } = await pageTestCase(values);
       return pageData(code, data);
     },
-    [leafIds, projectId, caseKeyword, filterLevel, filterType],
+    [activeModuleId, projectId, caseKeyword, filterLevel, filterType],
   );
 
   // 搜索关键字 / 筛选条件变化时重新拉取（带短防抖）
@@ -604,7 +521,7 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
   );
 
   /**
-   * 把 ProTable 行选择映射回 selectedCaseIds Set
+   * 把 ProTable 行选择映射回当前激活目录的 picksByModule
    * - selectedRowKeys 用 case id 字符串
    * - 当前页命中的 id 全部勾上，未命中的（来自其他页/旧状态）保留
    */
@@ -615,10 +532,10 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
   ) => {
     // 防御性：rows 可能在边界情况下为 undefined
     const safeRows = rows ?? [];
-    setSelectedCaseIds((prev) => {
-      const next = new Set<number>(prev);
+    if (activeModuleId == null) return;
+    updateActivePicks((prev) => {
+      const next = new Set(prev);
       if (info?.type === 'all') {
-        // 全选/取消全选：把当前列表的 id 全部勾上或全部取消
         if (keys.length > 0) {
           safeRows.forEach((r) => {
             if (r.id !== undefined) next.add(r.id);
@@ -629,7 +546,6 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
           });
         }
       } else {
-        // 单行切换：以 safeRows 中存在与否判断
         safeRows.forEach((r) => {
           if (r.id !== undefined) {
             if (keys.includes(r.id)) next.add(r.id);
@@ -637,7 +553,7 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
           }
         });
       }
-      return next;
+      return Array.from(next);
     });
   };
 
@@ -645,42 +561,56 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
   const safeCaseList = caseList ?? [];
   const isAllCaseSelected =
     safeCaseList.length > 0 &&
-    safeCaseList.every(
-      (tc) => tc.id !== undefined && selectedCaseIds.has(tc.id),
-    );
+    safeCaseList.every((tc) => tc.id !== undefined && activeCaseIds.has(tc.id));
 
-  const isCaseIndeterminate = selectedCaseIds.size > 0 && !isAllCaseSelected;
+  const isCaseIndeterminate = activeCaseIds.size > 0 && !isAllCaseSelected;
 
   const handleSelectAllCases = (e: CheckboxChangeEvent) => {
+    if (activeModuleId == null) return;
     const list = caseList ?? [];
     if (e.target.checked) {
-      const next = new Set<number>(selectedCaseIds);
-      list.forEach((tc) => {
-        if (tc.id !== undefined) next.add(tc.id);
+      updateActivePicks((prev) => {
+        const next = new Set(prev);
+        list.forEach((tc) => {
+          if (tc.id !== undefined) next.add(tc.id);
+        });
+        return Array.from(next);
       });
-      setSelectedCaseIds(next);
     } else {
-      // 取消全选 = 取消当前页所有
-      const next = new Set<number>(selectedCaseIds);
-      list.forEach((tc) => {
-        if (tc.id !== undefined) next.delete(tc.id);
+      // 取消全选 = 取消当前页所有(保留其他页/其他目录的勾选)
+      updateActivePicks((prev) => {
+        const next = new Set(prev);
+        list.forEach((tc) => {
+          if (tc.id !== undefined) next.delete(tc.id);
+        });
+        return Array.from(next);
       });
-      setSelectedCaseIds(next);
     }
   };
 
   /* -------------------- 提交 -------------------- */
   const handleConfirm = async () => {
-    if (selectedCaseIds.size === 0) {
+    if (totalPickedCount === 0) {
       message.warning('请至少选择一个用例');
       return;
     }
     setConfirming(true);
     try {
-      // 只传用户实际勾选的模块 ID，不自动展开后代
-      const moduleIds = safeCheckedModuleKeys.map((k) => Number(k));
-      await onConfirm(Array.from(selectedCaseIds), {
-        moduleIds,
+      // 跨所有被激活目录的勾选用例
+      const allCaseIds = Object.values(picksByModule).flat();
+      // 把每个被激活的目录展开成完整子树(自身 + 所有后代),
+      // 后端 _resolve_source_to_plan_module_map 会按 case.module_id 路由到对应 plan_module
+      // 若不展开,被点击目录的子目录里的 case 就会落到兜底 plan_module_id
+      const moduleIds = new Set<number>();
+      Object.keys(picksByModule).forEach((k) => {
+        const id = Number(k);
+        const node = moduleByKey.get(id);
+        if (node) {
+          collectNodeDescendants(node).forEach((d) => moduleIds.add(d));
+        }
+      });
+      await onConfirm(allCaseIds, {
+        moduleIds: Array.from(moduleIds),
         mergeSameGroup,
       });
     } finally {
@@ -871,16 +801,12 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
         <div style={styles.leftPane()}>
           <div style={styles.paneHeader()}>
             <div style={styles.paneTitle()}>
-              <Checkbox
-                checked={isAllModuleSelected}
-                indeterminate={isModuleIndeterminate}
-                onChange={handleSelectAllModules}
-              >
-                <span style={{ fontWeight: 600 }}>全选</span>
-              </Checkbox>
+              <span style={{ fontWeight: 600 }}>模块</span>
             </div>
             <span style={styles.paneCount()}>
-              {coveredLeafKeys.size}/{allLeafKeys.length}
+              {pickedModuleCount > 0
+                ? `已选 ${pickedModuleCount} 个分组`
+                : '点击分组选择'}
             </span>
           </div>
           <div style={styles.paneBody()}>
@@ -895,14 +821,12 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
             ) : (
               <div style={styles.treeWrap()}>
                 <Tree
-                  checkable
-                  checkStrictly
                   blockNode
                   showLine={{ showLeafIcon: false }}
                   expandedKeys={expandedKeys}
-                  checkedKeys={safeCheckedModuleKeys}
-                  onExpand={(keys) => setExpandedKeys(keys)}
-                  onCheck={handleModuleCheck as any}
+                  selectedKeys={activeModuleId != null ? [activeModuleId] : []}
+                  onExpand={(keys) => setExpandedKeys(keys as React.Key[])}
+                  onSelect={handleModuleSelect}
                   treeData={filteredTreeData}
                   titleRender={(node) => renderModuleTitle(node as any)}
                 />
@@ -919,18 +843,20 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
                 checked={isAllCaseSelected}
                 indeterminate={isCaseIndeterminate}
                 onChange={handleSelectAllCases}
+                disabled={activeModuleId == null}
               >
                 <span style={{ fontWeight: 600 }}>全选</span>
               </Checkbox>
               <span style={{ color: colors.textTertiary, fontSize: 12 }}>
-                {coveredLeafKeys.size > 0
-                  ? '已选模块内的用例'
+                {activeModule
+                  ? `${activeModule.title} 的用例`
                   : '请在左侧选择分组'}
               </span>
             </div>
             <span style={styles.paneCount()}>
-              {selectedCaseIds.size}
-              {selectedCaseIds.size > 0 ? ' 已选' : ''}
+              {totalPickedCount > 0
+                ? `已选 ${totalPickedCount} 个用例 / ${pickedModuleCount} 个分组`
+                : ''}
             </span>
           </div>
           <ProCard
@@ -974,7 +900,7 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
               }}
               tableAlertRender={false}
               rowSelection={{
-                selectedRowKeys: Array.from(selectedCaseIds),
+                selectedRowKeys: Array.from(activeCaseIds),
                 preserveSelectedRowKeys: true,
                 onChange: handleRowSelectChange as any,
                 columnWidth: 48,
@@ -1000,7 +926,7 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
           <Button
             type="primary"
             loading={confirming}
-            disabled={selectedCaseIds.size === 0}
+            disabled={totalPickedCount === 0}
             onClick={handleConfirm}
           >
             确定
