@@ -840,13 +840,21 @@ const Index: FC<PlanCaseListProps> = ({
                 indeterminate={isIndeterminate}
                 onChange={handleSelectAll}
               />
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={() => setDrawerVisible(true)}
-              >
-                新增用例
-              </Button>
+              {/*
+                "新增用例"仅在选中具体子目录时出现。
+                - moduleId 为 null (= 左侧选中"全部用例")时, 没有"放入哪个目录"的语义,
+                  硬让用户新增会落不到任何 plan_module, 容易让用例"飘"在全部用例里;
+                - 选了子目录, moduleId 是有效数字, 此时新增会自动挂到该 plan_module.
+              */}
+              {moduleId != null && (
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={() => setDrawerVisible(true)}
+                >
+                  新增用例
+                </Button>
+              )}
               <Button
                 icon={<LinkOutlined />}
                 onClick={() => setOpenChoiceCaseDrawer(true)}

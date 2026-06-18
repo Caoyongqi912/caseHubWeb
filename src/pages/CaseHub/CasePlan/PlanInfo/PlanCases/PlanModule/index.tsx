@@ -370,7 +370,7 @@ const Index: FC<PlanModuleProps> = ({
       }}
     >
       <ProCard
-        title="计划目录"
+        title="用例分组"
         headerBordered
         variant="outlined"
         style={{

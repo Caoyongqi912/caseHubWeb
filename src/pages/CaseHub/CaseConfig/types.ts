@@ -41,8 +41,11 @@ export interface ICaseEnumConfig {
  * 后续新增配置只需在此追加并配合 CASE_CONFIG_CATEGORIES 添加 Tab
  */
 export enum CaseConfigKeyEnum {
-  /** 测试用例执行状态 */
-  CASE_STATUS = 'CASE_STATUS',
+  /**
+   * 注: 用例执行状态 (CASE_STATUS) 已 hardcode 在后端 (app/constant/caseStatus.py),
+   * 不再走配置中心, 不在配置中心 Tab 出现. 字符串字面量 'CASE_STATUS' 仍可用于
+   * useCaseEnumConfig 等只读消费场景 (后端短路返回 hardcode), 这里不再列枚举项.
+   */
   /** 评审状态 */
   REVIEW_STATUS = 'REVIEW_STATUS',
   /** 用例等级（如 P0 / P1 / P2） */

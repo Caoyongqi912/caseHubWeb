@@ -15,6 +15,7 @@ import {
   setLocalStorageModule,
 } from '@/components/LeftComponents/func';
 import ModuleModal from '@/components/LeftComponents/ModuleModal';
+import { ModuleEnum } from '@/utils/config';
 import { useAccess } from '@@/exports';
 import { PlusOutlined } from '@ant-design/icons';
 import {
@@ -554,7 +555,7 @@ const ModuleTree: FC<IProps> = ({
               }}
             >
               <Text strong style={{ fontSize: 15, letterSpacing: 0.2 }}>
-                模块目录
+                {moduleType === ModuleEnum.CASE ? '用例分组' : '模块目录'}
               </Text>
               {isAdmin && (
                 <Tooltip title="新建根模块">

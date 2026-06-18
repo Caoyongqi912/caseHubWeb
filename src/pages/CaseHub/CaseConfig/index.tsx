@@ -10,7 +10,6 @@ import {
   ApartmentOutlined,
   AuditOutlined,
   DesktopOutlined,
-  ExperimentOutlined,
   FlagOutlined,
   RocketOutlined,
   SettingOutlined,
@@ -44,7 +43,7 @@ const RENDER_MAP: Record<
     description: string;
   }>
 > = {
-  [CaseConfigKeyEnum.CASE_STATUS]: CaseStatusConfig,
+  // CASE_STATUS 已 hardcode (见后端 app/constant/caseStatus.py), 不再走配置中心
   [CaseConfigKeyEnum.REVIEW_STATUS]: CaseStatusConfig,
   [CaseConfigKeyEnum.CASE_LEVEL]: CaseStatusConfig,
   [CaseConfigKeyEnum.CASE_TYPE]: CaseStatusConfig,
@@ -102,7 +101,8 @@ const ICON_MAP: Record<string, React.ReactNode> = {
 const CaseConfigPage: FC = () => {
   const { token, borderRadius } = useCaseHubTheme();
   const [activeKey, setActiveKey] = useState<string>(
-    CASE_CONFIG_CATEGORIES[0]?.key ?? CaseConfigKeyEnum.CASE_STATUS,
+    // CASE_STATUS 已 hardcode, 不在配置中心, 默认激活 REVIEW_STATUS
+    CASE_CONFIG_CATEGORIES[0]?.key ?? CaseConfigKeyEnum.REVIEW_STATUS,
   );
 
   const activeCategory = useMemo(

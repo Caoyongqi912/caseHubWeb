@@ -33,6 +33,7 @@ import {
   Space,
   Spin,
   Tag,
+  Tooltip,
   Tree,
 } from 'antd';
 import type { CheckboxChangeEvent } from 'antd/es/checkbox';
@@ -401,17 +402,27 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
   /**
    * 跨所有目录的总勾选数 / 有勾选的目录数
    * 用于头部"已选 N 个用例 / M 个分组"展示
+   *
+   * totalPickedCount 必须按"唯一 case_id"算:
+   *   picksByModule 是按 module_id 拆开存的;
+   *   父目录(例 BBB)被勾上时,子目录(例 B1/B1-2/B2)的所有 case 也会塞进 picksByModule[BBB];
+   *   如果用户又把 B1/B1-2/B2 在树上勾上(默认向上传播到父),它们的 case 也会再塞进
+   *   picksByModule[B1]/picksByModule[B1-2]/picksByModule[B2] — 同一 case_id 出现 N 次.
+   *   因此这里用 Set 去重后再算 size,得出去重后的实际"将入库的"用例数.
+   *
+   * pickedModuleCount 是"有勾选用例的目录数",含义不变:
+   *   arr.length === 0 的空目录不计(避免出现"勾了 B1-1 但 B1-1 没有 case"的视觉错位).
    */
   const { totalPickedCount, pickedModuleCount } = useMemo(() => {
-    let total = 0;
+    const allIds = new Set<number>();
     let modules = 0;
     Object.values(picksByModule).forEach((arr) => {
       if (arr.length > 0) {
-        total += arr.length;
+        arr.forEach((id) => allIds.add(id));
         modules += 1;
       }
     });
-    return { totalPickedCount: total, pickedModuleCount: modules };
+    return { totalPickedCount: allIds.size, pickedModuleCount: modules };
   }, [picksByModule]);
 
   /** 当前激活的目录节点(用于右侧 header 展示目录名) */
@@ -651,31 +662,84 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
     return () => clearTimeout(timer);
   }, [caseKeyword, filterLevel, filterType, filterPlatform]);
 
+  /**
+   * 用例 → 所属分组路径 解析器
+   * - modules 是当前项目下用例库的目录树, 来自 queryTreeModuleByProject
+   * - 走 IModule.parent_id 上溯, 用 '|' 拼接祖→孙路径 (与 CaseDataTable 一致)
+   * - 缓存: 同一棵树内重复访问 O(1)
+   * - 用不上 modules 时 (例如首次加载未完成) 返回空 map
+   */
+  const modulePathBuilder = useMemo(() => {
+    const map = new Map<number, IModule>();
+    const walk = (list: IModule[]) => {
+      for (const m of list) {
+        map.set(m.key, m);
+        if (m.children?.length) walk(m.children);
+      }
+    };
+    walk(modules ?? []);
+    const cache = new Map<number, string>();
+    const build = (id: number): string | undefined => {
+      if (cache.has(id)) return cache.get(id);
+      const chain: string[] = [];
+      let cur: IModule | undefined = map.get(id);
+      const seen = new Set<number>();
+      while (cur && !seen.has(cur.key)) {
+        seen.add(cur.key);
+        chain.unshift(cur.title);
+        if (!cur.parent_id) break;
+        cur = map.get(cur.parent_id);
+      }
+      if (chain.length === 0) return undefined;
+      const path = chain.join('|');
+      cache.set(id, path);
+      return path;
+    };
+    return { map, build };
+  }, [modules]);
+
   const columns: ProColumns<ITestCase>[] = useMemo(
     () => [
-      {
-        title: 'ID',
-        dataIndex: 'uid',
-        width: 90,
-        render: (_, record) => (
-          <Tag
-            style={{
-              background: colors.primaryBg,
-              borderColor: colors.primary,
-              color: colors.primary,
-              borderRadius: borderRadius.md,
-              fontWeight: 500,
-              margin: 0,
-            }}
-          >
-            {record.uid}
-          </Tag>
-        ),
-      },
       {
         title: '用例名称',
         dataIndex: 'case_name',
         ellipsis: true,
+      },
+      {
+        // 所属分组: 反查模块树, 拼接 "BBB|B1|B1xx" 形式的祖→孙路径
+        // 跟 CaseDataTable 用例库表格保持一致
+        // 兜底: module_id 缺失 / 树里查不到 → "未分组"
+        title: '所属分组',
+        dataIndex: 'module_id',
+        width: 200,
+        ellipsis: true,
+        render: (_, record: ITestCase) => {
+          if (record.module_id == null) {
+            return <span style={{ color: colors.textTertiary }}>未分组</span>;
+          }
+          const path = modulePathBuilder.build(record.module_id);
+          if (!path) {
+            return <span style={{ color: colors.textTertiary }}>未分组</span>;
+          }
+          return (
+            <Tooltip title={path} placement="topLeft">
+              <Tag
+                style={{
+                  background: token.colorFillAlter,
+                  borderColor: token.colorBorderSecondary,
+                  color: colors.textSecondary,
+                  fontWeight: 500,
+                  maxWidth: '100%',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {path}
+              </Tag>
+            </Tooltip>
+          );
+        },
       },
       {
         title: '等级',
@@ -725,7 +789,7 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
         defaultSortOrder: 'descend',
       },
     ],
-    [colors, levelColorMap, token, borderRadius],
+    [colors, levelColorMap, token, borderRadius, modulePathBuilder],
   );
 
   /**
@@ -804,8 +868,10 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
     }
     setConfirming(true);
     try {
-      // 跨所有被激活目录的勾选用例
-      const allCaseIds = Object.values(picksByModule).flat();
+      // 跨所有被激活目录的勾选用例 (去重, 避免父目录拉过的 case_id 在子目录再出现一次)
+      const allCaseIds = Array.from(
+        new Set(Object.values(picksByModule).flat()),
+      );
       // 把每个被激活的目录展开成完整子树(自身 + 所有后代),
       // 后端 _resolve_source_to_plan_module_map 会按 case.module_id 路由到对应 plan_module
       // 若不展开,被点击目录的子目录里的 case 就会落到兜底 plan_module_id

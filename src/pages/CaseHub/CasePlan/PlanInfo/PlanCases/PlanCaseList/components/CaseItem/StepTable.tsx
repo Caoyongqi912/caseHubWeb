@@ -41,6 +41,19 @@ interface StepTableProps {
    * 父用例状态后续变化【不再】级联到子步骤
    */
   secondStatus?: string;
+  /**
+   * 子步骤状态变更回调 (任一 step 的 first_status / second_status 改动时触发).
+   *
+   * 触发场景: 用户在 EditableProTable 里改了步骤的"一轮/二轮测试状态".
+   * 父组件 (CaseItem) 拿到最新 steps, 按后端相同规则做聚合:
+   *   - 全部 pass -> 用例 pass
+   *   - 否则      -> 用例 fail
+   * 然后乐观更新父级 case 的 first/second_status, 用户不用刷新就能看到联动.
+   *
+   * 注意: 父级状态变化反向推到 step 的"二轮级联"会受这里标记影响, 避免把
+   * 用户刚改的 step 状态又覆盖回去.
+   */
+  onStepStatusesChange?: (steps: CaseSubStep[]) => void;
 }
 
 /**
@@ -52,6 +65,7 @@ const StepTable: React.FC<StepTableProps> = ({
   planId,
   firstStatus,
   secondStatus,
+  onStepStatusesChange,
 }) => {
   const editorFormRef = useRef<EditableFormInstance<CaseSubStep>>();
   const { colors, borderRadius } = useCaseHubTheme();
@@ -78,6 +92,12 @@ const StepTable: React.FC<StepTableProps> = ({
   useEffect(() => {
     planIdRef.current = planId;
   }, [planId]);
+
+  /**
+   * 防循环 ref: 标记"本次 secondStatus prop 变化是由 step 改动引起的",
+   * 让下方的二轮级联 useEffect 跳过这一次. 详见 effect 注释.
+   */
+  const isFromStepChangeRef = useRef<boolean>(false);
 
   /**
    * 当外部 steps 变化时同步内部状态
@@ -117,6 +137,13 @@ const StepTable: React.FC<StepTableProps> = ({
     // 值未变: 跳过(React 18 严格模式下 effect 可能跑两次)
     if (prevSecondStatusRef.current === secondStatus) return;
     prevSecondStatusRef.current = secondStatus;
+
+    // 防循环: 如果本次 prop 变化是 step 改动触发的(父级按聚合规则自动更新了),
+    // 不要再用 prop 反向覆盖 step, 否则会把用户刚改的 step 状态冲掉.
+    if (isFromStepChangeRef.current) {
+      isFromStepChangeRef.current = false;
+      return;
+    }
 
     const next = dataSourceRef.current.map((step) => ({
       ...step,
@@ -509,6 +536,29 @@ const StepTable: React.FC<StepTableProps> = ({
         editableKeys,
         onValuesChange: (changedRecord, recordList) => {
           setDataSource(recordList);
+
+          // 检测是否改了"一轮/二轮测试状态"字段.
+          // 改了 -> 标 ref (让上面二轮级联 effect 跳过本次) + 通知父组件聚合.
+          // 只改 actual_result / bug_url 不触发聚合, 跟后端逻辑一致.
+          let statusFieldChanged = false;
+          if (changedRecord) {
+            const prev = dataSourceRef.current.find(
+              (s) => s.id === changedRecord.id,
+            );
+            if (prev) {
+              if (prev.first_status !== changedRecord.first_status) {
+                statusFieldChanged = true;
+              } else if (prev.second_status !== changedRecord.second_status) {
+                statusFieldChanged = true;
+              }
+            }
+          }
+
+          if (statusFieldChanged) {
+            isFromStepChangeRef.current = true;
+            onStepStatusesChange?.(recordList as CaseSubStep[]);
+          }
+
           if (changedRecord) {
             emitDataChange(changedRecord as CaseSubStep);
           }

@@ -23,13 +23,6 @@ export interface ICaseConfigCategory {
  */
 export const CASE_CONFIG_CATEGORIES: ICaseConfigCategory[] = [
   {
-    key: CaseConfigKeyEnum.CASE_STATUS,
-    label: '用例状态',
-    description:
-      '配置测试用例执行状态枚举。用于测试计划用例状态展示、筛选、批量操作及运行结果汇总。',
-    icon: 'ExperimentOutlined',
-  },
-  {
     key: CaseConfigKeyEnum.REVIEW_STATUS,
     label: '评审状态',
     description: '配置测试用例评审状态枚举，控制用例评审流程中的可用状态。',

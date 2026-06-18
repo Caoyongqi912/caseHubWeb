@@ -46,6 +46,36 @@ import StepTable from './StepTable';
 
 const { Text } = Typography;
 
+/**
+ * 步骤 → 用例 状态聚合 (与后端 _aggregate_case_status_from_steps 规则一致)
+ *
+ * 规则 (v2 修正: "未设置" 不算"非 pass"):
+ *   - 只看已设置的 step (排除 undefined / null / ''), 未测试的不参与判定
+ *   - 没有任何已设置 step -> 返回 null, 调用方保持原状 (用户没开始测就不动 case)
+ *   - 所有已设置 step = 'pass' -> 用例 status = 'pass'
+ *   - 任意已设置 step 是 'fail' / 'block' / 'skip' / 'ready' 等非 pass -> 用例 status = 'fail'
+ *
+ * 旧版问题: 把 undefined 视为"非 pass", 用户改第一个 step 时 case 直接 fail,
+ * 即使后面 step 还没开始测, 体验差. 现版本对齐用户预期: "如果后面有 fail 了 再 fail".
+ *
+ * 该函数纯函数, 不依赖 React, 便于单测. 前端做"乐观更新"时调用,
+ * 后端 update_case_step_result 的 _aggregate_case_status_from_steps
+ * 会做相同计算并写 DB, 前后端规则保持单一来源.
+ */
+type AggregableStatusField = 'first_status' | 'second_status';
+function aggregateStepStatuses(
+  steps: CaseSubStep[] | undefined | null,
+  field: AggregableStatusField,
+): string | null {
+  if (!steps || steps.length === 0) return null;
+  // 过滤掉未设置的 (undefined / null / ''), 这些视为"未测试", 不参与判定
+  const setValues = steps
+    .map((s) => s[field])
+    .filter((v): v is string => v != null && v !== '');
+  if (setValues.length === 0) return null;
+  return setValues.every((v) => v === 'pass') ? 'pass' : 'fail';
+}
+
 interface CaseItemProps {
   testCase: ITestCase;
   selected?: boolean;
@@ -95,9 +125,55 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
 
   const caseId = testCase.id;
   // ITestCase 的 first_status / second_status / is_review 已为 string 类型，直接使用
-  const firstStatus = testCase.first_status ?? '';
-  const secondStatus = testCase.second_status ?? '';
   const isReview = testCase.is_review ?? '';
+
+  /**
+   * 用例一/二轮状态的本地覆盖 (可控 state).
+   *
+   * 为什么要 local state:
+   * 1) 步骤聚合联动: 用户改完 step 状态 -> 子组件 onStepStatusesChange 回调
+   *    触发 -> 这里按后端相同规则做聚合, 乐观更新徽章, 无需刷页
+   * 2) 防 prop 漂移: 父级 onSecondStatusChange 触发 refetch 之前, 本地
+   *    state 是唯一可靠的真值, 给 StepTable 传值用本地 state
+   * 3) 用 lazy initializer 取初值, 避免每次 render 都重置
+   *
+   * 同步策略 (见下方 useEffect): testCase prop 变化 (含 refetch 拿到新值)
+   * 时同步本地 state, 让后端数据回流后覆盖乐观更新.
+   */
+  const [firstStatus, setFirstStatus] = useState<string>(
+    () => testCase.first_status ?? '',
+  );
+  const [secondStatus, setSecondStatus] = useState<string>(
+    () => testCase.second_status ?? '',
+  );
+
+  /**
+   * prop 同步: testCase.first/second_status 变化时 (refetch / 外部更新)
+   * 拉齐本地 state. 仅依赖具体字段, 避免 testCase 引用变化导致无谓重置.
+   */
+  useEffect(() => {
+    setFirstStatus(testCase.first_status ?? '');
+  }, [testCase.first_status]);
+  useEffect(() => {
+    setSecondStatus(testCase.second_status ?? '');
+  }, [testCase.second_status]);
+
+  /**
+   * 处理子步骤状态变更: 按后端规则做聚合, 乐观更新本地 state.
+   * - steps 取最新一次回调的快照, 同时算 first/second 两轮
+   * - 仅当聚合结果与本地 state 不同才 setState, 避免触发 StepTable
+   *   重复渲染
+   */
+  const handleStepStatusesChange = useCallback((steps: CaseSubStep[]) => {
+    const newFirst = aggregateStepStatuses(steps, 'first_status');
+    const newSecond = aggregateStepStatuses(steps, 'second_status');
+    setFirstStatus((prev) =>
+      newFirst !== null && newFirst !== prev ? newFirst : prev,
+    );
+    setSecondStatus((prev) =>
+      newSecond !== null && newSecond !== prev ? newSecond : prev,
+    );
+  }, []);
 
   /**
    * useSortable: 拖拽排序能力（仅 isSortable 时启用）
@@ -679,6 +755,7 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
             planId={planId}
             firstStatus={firstStatus}
             secondStatus={secondStatus}
+            onStepStatusesChange={handleStepStatusesChange}
           />
         )}
       </ProCard>
