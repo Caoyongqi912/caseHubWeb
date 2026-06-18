@@ -63,6 +63,12 @@ interface Props {
    * 表格自身的刷新由 onSuccess（UploadCaseModal）内部触发，不依赖此回调
    */
   onModuleRefresh?: () => void;
+  /**
+   * 模块目录树 (来自父级透传自 ModuleTree).
+   * - 用于渲染"所属分组"列: 根据 record.module_id 反查并拼接 AAA|aaa|... 路径
+   * - 不传时该列退化为"-"占位, 不影响其它功能
+   */
+  modules?: IModule[];
 }
 
 const CaseDataTable: FC<Props> = (props) => {
@@ -77,7 +83,13 @@ const CaseDataTable: FC<Props> = (props) => {
     [platformOptions],
   );
 
-  const { perKey, currentProjectId, currentModuleId, onModuleRefresh } = props;
+  const {
+    perKey,
+    currentProjectId,
+    currentModuleId,
+    onModuleRefresh,
+    modules = [],
+  } = props;
 
   // 用例等级从后端枚举配置拉取（管理员在配置中心增删后自动生效）
   const { options: levelOptions } = useCaseEnumConfig('CASE_LEVEL');
@@ -180,6 +192,53 @@ const CaseDataTable: FC<Props> = (props) => {
     },
     [currentModuleId],
   );
+  /**
+   * 模块索引: 把树扁平为 Map<id, IModule>, O(1) 查任意 module_id
+   * 父链查找: IModule.parent_id + key, 循环直到 parent_id = 0 / 找不到父
+   * - 未传 modules 时索引为空, getModulePath 全部返回 undefined
+   * - 计算结果用 useMemo 缓存, 模块树变更时才重算
+   */
+  const modulePathCache = useMemo(() => {
+    const map = new Map<number, IModule>();
+    const walk = (list: IModule[]) => {
+      for (const m of list) {
+        map.set(m.key, m);
+        if (m.children?.length) walk(m.children);
+      }
+    };
+    walk(modules);
+    const cache = new Map<number, string>();
+    const build = (id: number): string | undefined => {
+      if (cache.has(id)) return cache.get(id);
+      const chain: string[] = [];
+      let cur: IModule | undefined = map.get(id);
+      const seen = new Set<number>();
+      while (cur && !seen.has(cur.key)) {
+        seen.add(cur.key);
+        chain.unshift(cur.title);
+        if (!cur.parent_id) break;
+        cur = map.get(cur.parent_id);
+      }
+      if (chain.length === 0) return undefined;
+      const path = chain.join('|');
+      cache.set(id, path);
+      return path;
+    };
+    return { map, build };
+  }, [modules]);
+
+  /**
+   * 给定 module_id, 返回 "根 → 当前" 的路径, 用 "|" 拼接
+   * - 没找到对应 module (比如跨项目残留 id) 返回 undefined, 渲染层走"未分组"占位
+   */
+  const getModulePath = useCallback(
+    (id?: number | null): string | undefined => {
+      if (id == null) return undefined;
+      return modulePathCache.build(id);
+    },
+    [modulePathCache],
+  );
+
   const column: ProColumns<ITestCase>[] = useMemo(
     () => [
       {
@@ -190,6 +249,41 @@ const CaseDataTable: FC<Props> = (props) => {
         fixed: 'left',
         width: '20%',
         render: (text) => <Text>{text}</Text>,
+      },
+      {
+        // 所属分组: 反查模块树, 拼接 "AAA|aaa|..." 形式的祖先链
+        // 例: 用例直接落在 AAA → 展示 "AAA"
+        //     用例落在 AAA/aaa → 展示 "AAA|aaa"
+        //     用例未分配模块 (module_id 缺失) → 展示 "未分组"
+        title: '所属分组',
+        dataIndex: 'module_id',
+        width: '15%',
+        search: false,
+        ellipsis: true,
+        render: (_, record: ITestCase) => {
+          const path = getModulePath(record.module_id);
+          if (!path) {
+            return <Text type="secondary">未分组</Text>;
+          }
+          return (
+            <Tooltip title={path} placement="topLeft">
+              <Tag
+                style={{
+                  background: token.colorFillAlter,
+                  borderColor: token.colorBorderSecondary,
+                  color: token.colorTextSecondary,
+                  fontWeight: 500,
+                  maxWidth: '100%',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {path}
+              </Tag>
+            </Tooltip>
+          );
+        },
       },
       // {
       //   title: '标签',

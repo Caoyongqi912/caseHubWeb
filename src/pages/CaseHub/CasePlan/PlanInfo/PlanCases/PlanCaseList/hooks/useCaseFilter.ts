@@ -31,6 +31,8 @@ export interface CaseFilterValues {
   firstStatus?: string;
   secondStatus?: string;
   isReview?: string;
+  /** 适用端 (PLATFORM 枚举值, 与 case_platform 字段对齐) */
+  casePlatform?: string;
   creators?: CreatorFilterItem[];
 }
 
@@ -92,6 +94,10 @@ export const useCaseFilter = (
       result = result.filter((c) => c.is_review === filters.isReview);
     }
 
+    if (filters.casePlatform !== undefined) {
+      result = result.filter((c) => c.case_platform === filters.casePlatform);
+    }
+
     return result;
   }, [originalList, filters]);
 
@@ -106,6 +112,7 @@ export const useCaseFilter = (
       filters.firstStatus !== undefined ||
       filters.secondStatus !== undefined ||
       filters.isReview !== undefined ||
+      filters.casePlatform !== undefined ||
       (filters.creators !== undefined && filters.creators.length > 0)
     );
   }, [filters]);

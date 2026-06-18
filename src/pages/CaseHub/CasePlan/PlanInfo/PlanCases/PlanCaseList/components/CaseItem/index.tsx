@@ -1,7 +1,9 @@
 import { useCaseEnumConfig } from '@/pages/CaseHub/hooks/useCaseEnumConfig';
+import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import {
   DownOutlined,
   HolderOutlined,
+  InfoCircleOutlined,
   MoreOutlined,
   UpOutlined,
 } from '@ant-design/icons';
@@ -14,6 +16,7 @@ import {
   Dropdown,
   message,
   Modal,
+  Popover,
   Space,
   Tag,
   Tooltip,
@@ -152,6 +155,8 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
   const { caseStatusConfig, statusSelectItems, reviewSelectItems } =
     useDynamicStatusConfig();
   const { options: reviewOptions } = useCaseEnumConfig('REVIEW_STATUS');
+  // 主题色 (淡底色 / 边色都从主题拿, 不写死 hex)
+  const { colors } = useCaseHubTheme();
   const reviewOptionMap = useMemo(
     () => new Map(reviewOptions.map((o) => [o.value, o])),
     [reviewOptions],
@@ -169,6 +174,9 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
       ? `${caseName.slice(0, MAX_NAME_LEN)}…`
       : caseName;
   const needNameTooltip = caseName.length > MAX_NAME_LEN;
+  // 用例前置条件 (case_setup), 用来在标题上挂 popover
+  // trim 后空值就不渲染 popover, 标题保持原样
+  const caseSetup = (testCase.case_setup || '').trim();
 
   /**
    * 卡片折叠状态
@@ -506,8 +514,12 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
             <DownOutlined style={{ fontSize: 10, opacity: 0.6 }} />
           </Tag>
         </Dropdown>
-        {needNameTooltip ? (
-          <Tooltip title={caseName} mouseEnterDelay={0.3}>
+        {(() => {
+          // 标题点击 → 打开详情; hover 行为按下面三档分支:
+          //   1) 有前置: Popover, 内容展示用例前置 (附带完整用例名当 title)
+          //   2) 长名无前置: Tooltip, 显示完整用例名
+          //   3) 短名无前置: 裸 Text
+          const nameText = (
             <Text
               strong
               style={{ cursor: 'pointer' }}
@@ -518,19 +530,55 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
             >
               {truncatedName}
             </Text>
-          </Tooltip>
-        ) : (
-          <Text
-            strong
-            style={{ cursor: 'pointer' }}
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsDetailOpen(true);
-            }}
-          >
-            {truncatedName}
-          </Text>
-        )}
+          );
+          if (caseSetup) {
+            return (
+              <Popover
+                trigger="hover"
+                mouseEnterDelay={0.3}
+                placement="bottomLeft"
+                title={
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                    }}
+                  >
+                    <InfoCircleOutlined style={{ fontSize: 12 }} />
+                    用例前置
+                  </span>
+                }
+                content={
+                  <div
+                    style={{
+                      maxWidth: 380,
+                      maxHeight: 280,
+                      overflow: 'auto',
+                      whiteSpace: 'pre-wrap',
+                      wordBreak: 'break-word',
+                      fontSize: 12,
+                      lineHeight: 1.6,
+                      color: colors.textSecondary,
+                    }}
+                  >
+                    {caseSetup}
+                  </div>
+                }
+              >
+                {nameText}
+              </Popover>
+            );
+          }
+          if (needNameTooltip) {
+            return (
+              <Tooltip title={caseName} mouseEnterDelay={0.3}>
+                {nameText}
+              </Tooltip>
+            );
+          }
+          return nameText;
+        })()}
       </Space>
     ),
     [
@@ -540,11 +588,13 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
       switchingReview,
       handleReviewSelect,
       testCase.case_name,
+      testCase.case_setup,
       onSelectedChange,
       isSortable,
       truncatedName,
       needNameTooltip,
       caseName,
+      caseSetup,
     ],
   );
 

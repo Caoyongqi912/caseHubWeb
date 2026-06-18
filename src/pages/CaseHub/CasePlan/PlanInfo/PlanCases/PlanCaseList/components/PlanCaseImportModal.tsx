@@ -201,11 +201,12 @@ const PlanCaseImportModal: FC<PlanCaseImportModalProps> = ({
     try {
       await downloadCaseExcel({
         responseType: 'blob',
+        project_id: projectId,
       });
     } catch (error) {
       message.error('下载模板失败');
     }
-  }, []);
+  }, [projectId]);
 
   const handleUpload = useCallback(
     async (fileList: { originFileObj?: File }[]) => {

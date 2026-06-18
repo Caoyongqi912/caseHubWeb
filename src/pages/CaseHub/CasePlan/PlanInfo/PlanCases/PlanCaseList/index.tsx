@@ -9,22 +9,9 @@ import { exportCases } from '@/api/case/testCase';
 import MyDrawer from '@/components/MyDrawer';
 import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import { ICasePlan, IPlanModule, ITestCase } from '@/pages/CaseHub/types';
-import {
-  DownloadOutlined,
-  LinkOutlined,
-  PlusOutlined,
-} from '@ant-design/icons';
+import { LinkOutlined, PlusOutlined } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
-import {
-  Button,
-  Checkbox,
-  Empty,
-  message,
-  Popconfirm,
-  Space,
-  Spin,
-  Tooltip,
-} from 'antd';
+import { Button, Checkbox, Empty, message, Space, Spin } from 'antd';
 import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 import {
   FC,
@@ -183,7 +170,6 @@ interface PlanCaseListProps {
   planInfo?: ICasePlan;
   /**
    * 计划目录树 (来自父级 PlanCases, 用于反查当前 moduleId 对应的 module 名称,
-   * 给工具栏'导出'按钮的 Popconfirm 文案用)
    */
   planModules?: IPlanModule[];
   onModulesRefresh?: () => void;
@@ -218,13 +204,6 @@ const Index: FC<PlanCaseListProps> = ({
   const [importAfterCaseId, setImportAfterCaseId] = useState<number | null>(
     null,
   );
-  // 工具栏'导出'按钮 loading 状态 (按当前 plan_module 导出)
-  const [exportLoading, setExportLoading] = useState(false);
-  // 当前 plan_module 的名称 (用于 Popconfirm 文案: 确认导出 {name} 目录下关联用例?)
-  // 走 planModules 递归反查 (跟 CaseDataTable 反查用例库 module 名称同模式)
-  const [currentModuleName, setCurrentModuleName] = useState<
-    string | undefined
-  >();
 
   /**
    * 跟踪已折叠的用例 ID 集合
@@ -311,31 +290,6 @@ const Index: FC<PlanCaseListProps> = ({
     fetchPlanData();
   }, [planId, moduleId, fetchPlanData]);
 
-  // 反查当前 plan_module 名称 (用于工具栏导出按钮 Popconfirm 文案)
-  useEffect(() => {
-    if (!moduleId || !planModules?.length) {
-      setCurrentModuleName(undefined);
-      return;
-    }
-    let cancelled = false;
-    const findName = (nodes: IPlanModule[]): string | undefined => {
-      for (const n of nodes) {
-        if (n.id === moduleId) return n.title;
-        if (n.children) {
-          const r = findName(n.children);
-          if (r) return r;
-        }
-      }
-      return undefined;
-    };
-    // 同步递归 (planModules 是树, 数据量小, 不发请求)
-    const name = findName(planModules);
-    if (!cancelled) setCurrentModuleName(name);
-    return () => {
-      cancelled = true;
-    };
-  }, [planModules, moduleId]);
-
   /**
    * 刷新列表
    * 同步触发 module 刷新，用于复制/删除等引起数据增减的场景，
@@ -362,7 +316,6 @@ const Index: FC<PlanCaseListProps> = ({
         message.warning('计划信息未加载, 无法导出');
         return;
       }
-      setExportLoading(true);
       try {
         await exportCases({
           scope_type: 'plan',
@@ -374,37 +327,10 @@ const Index: FC<PlanCaseListProps> = ({
       } catch (err) {
         // 全局拦截器已 message.error, 这里吞掉避免 unhandled rejection
         console.error('exportCases failed:', err);
-      } finally {
-        setExportLoading(false);
       }
     },
     [planId, planInfo, selectedCaseIds],
   );
-
-  /**
-   * 按当前 plan_module 导出目录全量 (走 exportCases 的 plan_module_id 路径).
-   * 没选 module 时按钮 disabled, 避免一键'导出整个 plan' 太重.
-   */
-  const handleExportByModule = useCallback(async () => {
-    if (!planId || !planInfo?.project_id || !moduleId) {
-      message.warning('请先选择项目和目录');
-      return;
-    }
-    setExportLoading(true);
-    try {
-      await exportCases({
-        scope_type: 'plan',
-        scope_id: Number(planId),
-        project_id: planInfo.project_id,
-        plan_module_id: moduleId,
-      });
-      message.success('导出已开始, 留意浏览器下载');
-    } catch (err) {
-      console.error('exportCases failed:', err);
-    } finally {
-      setExportLoading(false);
-    }
-  }, [planId, planInfo, moduleId]);
 
   const handleBatchImport = useCallback(() => setImportModalVisible(true), []);
 
@@ -412,11 +338,10 @@ const Index: FC<PlanCaseListProps> = ({
    * 关联用例到当前计划
    * @param caseIds 选中的用例 ID 列表
    * @param options.moduleIds 源项目模块 ID 列表（用于后端按目录复制/匹配计划分组）
-   * @param options.mergeSameGroup 是否合并相同用例分组
    */
   const handleAssociateCases = async (
     caseIds: number[],
-    options?: { moduleIds?: number[]; mergeSameGroup?: boolean },
+    options?: { moduleIds?: number[] },
   ) => {
     if (caseIds.length === 0) {
       message.warning('请至少选择一个用例');
@@ -429,8 +354,6 @@ const Index: FC<PlanCaseListProps> = ({
       plan_module_id: moduleId ?? undefined,
       // 源项目模块 ID 列表：传了就走后端"按目录复制"逻辑
       module_ids: options?.moduleIds?.length ? options.moduleIds : undefined,
-      // 是否合并相同用例分组（与同名计划目录合并）
-      merge_same_group: options?.mergeSameGroup ?? false,
     });
     if (code === 0) {
       message.success('关联成功');
@@ -931,37 +854,10 @@ const Index: FC<PlanCaseListProps> = ({
                 关联用例
               </Button>
               {/*
-                按当前 plan_module 导出. 没选目录时 disabled + tooltip.
-                走 exportCases 的 plan_module_id 路径 (recursive=True 后端拉子 plan_module).
-                文案跟 CaseDataTable 的'导出'按钮风格保持一致 (Popconfirm + 模块名 + okText).
+                原"按当前 plan_module 导出"按钮已移除。
+                改为:批量导出统一在 BatchActionBar 内的"导出所选"入口里完成,
+                避免工具栏上重复出现导出入口,操作更聚焦。
               */}
-              <Tooltip
-                title={
-                  moduleId
-                    ? '导出当前 plan_module 子树下的全部关联用例'
-                    : '请先在左侧选择一个目录'
-                }
-              >
-                <Popconfirm
-                  title={
-                    currentModuleName
-                      ? `确认导出 ${currentModuleName} 目录下关联用例?`
-                      : '确认导出当前目录下关联用例?'
-                  }
-                  okText="确认导出"
-                  cancelText="取消"
-                  disabled={!moduleId}
-                  onConfirm={handleExportByModule}
-                >
-                  <Button
-                    icon={<DownloadOutlined />}
-                    loading={exportLoading}
-                    disabled={!moduleId}
-                  >
-                    导出
-                  </Button>
-                </Popconfirm>
-              </Tooltip>
             </Space>
           }
           headerBordered
@@ -1078,7 +974,7 @@ const Index: FC<PlanCaseListProps> = ({
         name={'规划用例'}
         open={openChoiceCaseDrawer}
         setOpen={setOpenChoiceCaseDrawer}
-        width={'70%'}
+        width={'75%'}
       >
         <ModuleCaseSelector
           planId={planId}

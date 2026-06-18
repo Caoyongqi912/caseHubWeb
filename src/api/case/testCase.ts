@@ -581,20 +581,18 @@ export const exportCases = async (
  * 通过 umi-request 发起请求，响应拦截器 (isBlob) 会自动处理 blob 下载，
  * 调用方无需手动创建 <a> 标签触发下载，否则会导致重复下载
  *
- * - 用例库导入传 project_id，B 列下拉带该项目全量目录路径
- * - 测试计划导入传 plan_id，B 列下拉带该计划全量目录路径
+ * - 传 project_id 时 B 列下拉带该项目全量目录路径；不传则 B 列无下拉，只挂 F/G/H
  *
  * @param options - 配置选项（responseType: 'blob' 触发拦截器自动下载）
  */
 export const downloadCaseExcel = async (options: {
   responseType: 'blob';
   project_id?: number;
-  plan_id?: number;
 }) => {
-  const { project_id, plan_id, ...rest } = options;
+  const { project_id, ...rest } = options;
   await request('/api/hub/cases/downloadCaseDemo', {
     method: 'GET',
-    params: { project_id, plan_id },
+    params: { project_id },
     ...rest,
   });
 };
@@ -650,6 +648,71 @@ export const pageTestCase = async (searchParams: any, options?: IObjGet) => {
     data: searchParams,
     ...(options || {}),
   });
+};
+
+/**
+ * 拉取项目下全部 common 用例, 按 module_id 聚合为 case_id 列表
+ *
+ * 用途:
+ *  - ModuleCaseSelector (规划用例弹窗) 树勾选 -> 拿目录全量 case id 时用
+ *    (避免在 onCheck 里再发请求, 体验更顺)
+ *  - ModuleTree (用例库侧栏) 计算每个目录的递归用例数
+ *
+ * 返回:
+ *  - byModule: Map<module_id, number[]>  按 module_id 分组的 case id 列表
+ *  - total: 拉到的总用例数 (近似, 等于 pageInfo.total 第一次拿到的值)
+ *  - module_id === null 的项表示 module_id IS NULL 的"未分组"用例
+ *
+ * 性能: 单次最多 pageSize=1000, 超过则分页拉, 直至 pageInfo.total 拉完
+ * 防御: 任意一页失败或 pageInfo 缺失, 返回已有的部分结果, 由调用方决定
+ *
+ * 注意: 后端 page_cases 对 module_id/module_ids 都为 None 时会走"未分类"分支
+ * (module_id IS NULL). 这里要拿的是全量, 所以显式传 module_ids: [] 跳过该分支;
+ * 同时按 schema 约定用 current 而不是 page, 并显式带 module_type (后端 mapper
+ * 必填位置参数, 漏传会 TypeError).
+ */
+export const fetchAllCaseIdsByModule = async (
+  projectId?: number,
+  options?: IObjGet,
+): Promise<{
+  byModule: Map<number | null, number[]>;
+  total: number;
+}> => {
+  const PAGE_SIZE = 1000;
+  const byModule = new Map<number | null, number[]>();
+  let page = 1;
+  let total = 0;
+  // 防御: 后端可能对 total=0 / pageInfo 缺失给出空 data, 别死循环
+  const MAX_PAGES = 500;
+
+  for (let i = 0; i < MAX_PAGES; i++) {
+    const { code, data } = await pageTestCase(
+      {
+        current: page,
+        pageSize: PAGE_SIZE,
+        is_common: true,
+        module_type: 10, // ModuleEnum.CASE, 避免循环依赖这里硬编码
+        module_ids: [], // 显式空数组, 跳过后端"未分类"分支
+        project_id: projectId,
+      },
+      options,
+    );
+    if (code !== 0 || !data) break;
+    const items = (data.items ?? []) as ITestCase[];
+    if (items.length === 0 && page > 1) break;
+    if (page === 1) total = data.pageInfo?.total ?? items.length;
+    for (const c of items) {
+      if (c.id === undefined) continue;
+      const mid = (c.module_id ?? null) as number | null;
+      const arr = byModule.get(mid);
+      if (arr) arr.push(c.id);
+      else byModule.set(mid, [c.id]);
+    }
+    if (items.length < PAGE_SIZE) break;
+    if (page * PAGE_SIZE >= total) break;
+    page += 1;
+  }
+  return { byModule, total };
 };
 
 /**

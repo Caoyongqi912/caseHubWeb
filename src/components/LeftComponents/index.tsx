@@ -1,4 +1,4 @@
-import { IProject } from '@/api';
+import { IModule, IProject } from '@/api';
 import { queryProject } from '@/api/base';
 import EmptyProject from '@/components/LeftComponents/EmptyProject';
 import ModuleTree from '@/components/LeftComponents/ModuleTree';
@@ -18,6 +18,8 @@ interface SelfProps {
    * 不传则 ModuleTree 只在 currentProjectId/moduleType 变化时刷新（兼容历史用法）
    */
   reloadKey?: number;
+  /** 透传到 ModuleTree: 树数据变更时回调,供右侧表格等消费方同步 */
+  onModulesLoaded?: (modules: IModule[]) => void;
 }
 
 const { useToken } = theme;
@@ -29,6 +31,7 @@ const Index: FC<SelfProps> = (props) => {
     onProjectChange,
     onModuleChange,
     reloadKey,
+    onModulesLoaded,
   } = props;
   const { token } = useToken();
   const [projects, setProjects] = useState<IProject[]>([]);
@@ -78,6 +81,7 @@ const Index: FC<SelfProps> = (props) => {
             onModuleChange={onModuleChange}
             currentProjectId={currentProjectId}
             reloadKey={reloadKey}
+            onModulesLoaded={onModulesLoaded}
           />
         </div>
       ) : (

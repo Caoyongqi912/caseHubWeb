@@ -260,6 +260,7 @@ const UploadCaseModal: FC<Props> = ({
     try {
       await downloadCaseExcel({
         responseType: 'blob',
+        project_id: currentProjectId,
       });
     } catch (error) {
       console.error('下载模板失败:', error);
@@ -267,7 +268,7 @@ const UploadCaseModal: FC<Props> = ({
     } finally {
       setDownloading(false);
     }
-  }, []);
+  }, [currentProjectId]);
 
   /**
    * 安全调用刷新回调

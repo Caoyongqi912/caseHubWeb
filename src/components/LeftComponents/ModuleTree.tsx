@@ -6,8 +6,10 @@ import {
   removeModule,
   updateModule,
 } from '@/api/base';
+import { fetchAllCaseIdsByModule } from '@/api/case/testCase';
 import EmptyModule from '@/components/LeftComponents/EmptyModule';
 import {
+  applyRecursiveCounts,
   getLocalStorageModule,
   getParentKey,
   setLocalStorageModule,
@@ -101,6 +103,13 @@ interface IProps {
   moduleType: number;
   onModuleChange: (moduleId: number | undefined) => void;
   reloadKey?: number;
+  /**
+   * 树数据对外透出
+   * - 用例库右侧表格需要根据 (project → module tree) 渲染"所属分组"列,
+   *   通过此回调把树冒泡到父级,避免重复请求
+   * - 不传则保持旧行为 (树只用于左侧展示)
+   */
+  onModulesLoaded?: (modules: IModule[]) => void;
 }
 
 /* ============================================================
@@ -112,6 +121,7 @@ const ModuleTree: FC<IProps> = ({
   moduleType,
   onModuleChange,
   reloadKey,
+  onModulesLoaded,
 }) => {
   const { isAdmin } = useAccess();
   const { token } = useToken();
@@ -134,6 +144,7 @@ const ModuleTree: FC<IProps> = ({
   useEffect(() => {
     if (!currentProjectId) {
       setModules([]);
+      onModulesLoaded?.([]);
       setSelectedKeys([]);
       setExpandedKeys([]);
       return;
@@ -143,6 +154,7 @@ const ModuleTree: FC<IProps> = ({
       ({ code, data }) => {
         if (code === 0 && data) {
           setModules(data);
+          onModulesLoaded?.(data);
           const storageNum = getLocalStorageModule(moduleType);
           if (storageNum) {
             const moduleId = parseInt(storageNum);
@@ -155,6 +167,42 @@ const ModuleTree: FC<IProps> = ({
         }
       },
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentProjectId, moduleType, reload, reloadKey]);
+
+  /**
+   * 拉取项目下全部 common 用例, 按 module_id 聚合, 自底向上累加写到每节点 count
+   * - 仅 moduleType=CASE 时执行 (其它 module_type 没意义)
+   * - 后端若已带 count, 这里会覆盖 (以聚合为准)
+   * - 失败/超时静默回退: 维持 modules 现状, 用户侧表现为徽标不显示
+   */
+  useEffect(() => {
+    if (!currentProjectId || moduleType !== 10) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { byModule } = await fetchAllCaseIdsByModule(currentProjectId);
+        if (cancelled) return;
+        // byModule: Map<module_id|null, number[]>, 过滤 null (未分组走专门虚拟节点)
+        const directCounts = new Map<number, number>();
+        byModule.forEach((ids, mid) => {
+          if (mid != null) directCounts.set(mid as number, ids.length);
+        });
+        setModules((prev) => {
+          if (prev.length === 0) return prev;
+          const next = applyRecursiveCounts(prev, directCounts);
+          // 通知父级,让右侧表格同步拿到带 count 的最新树
+          onModulesLoaded?.(next);
+          return next;
+        });
+      } catch (e) {
+        // 静默: 失败时保持树原状, 用户能看到目录但无徽标
+        console.warn('[ModuleTree] applyRecursiveCounts failed', e);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [currentProjectId, moduleType, reload, reloadKey]);
 
   const checkModuleExists = (list: IModule[], id: number): boolean =>

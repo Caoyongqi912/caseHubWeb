@@ -1,7 +1,7 @@
 import { IModule } from '@/api';
 import { queryTreeModuleByProject } from '@/api/base';
 import { getPlanInfo } from '@/api/case/caseplan';
-import { pageTestCase } from '@/api/case/testCase';
+import { fetchAllCaseIdsByModule, pageTestCase } from '@/api/case/testCase';
 import { toValueEnum } from '@/pages/CaseHub/hooks/caseEnumOption';
 import { useCaseEnumConfig } from '@/pages/CaseHub/hooks/useCaseEnumConfig';
 import { useCaseLevelColorMap } from '@/pages/CaseHub/hooks/useCaseLevelColor';
@@ -56,7 +56,7 @@ interface ModuleCaseSelectorProps {
    */
   onConfirm: (
     caseIds: number[],
-    options: { moduleIds: number[]; mergeSameGroup: boolean },
+    options: { moduleIds: number[] },
   ) => Promise<void> | void;
   /** 取消按钮回调 */
   onCancel?: () => void;
@@ -120,16 +120,18 @@ const renderModuleTitle = (node: ModuleDataNode) => (
     style={{
       display: 'flex',
       alignItems: 'center',
-      gap: 6,
+      gap: 8,
       overflow: 'hidden',
+      width: '100%',
     }}
   >
     <span
       style={{
+        flex: 1,
+        minWidth: 0,
         overflow: 'hidden',
         textOverflow: 'ellipsis',
         whiteSpace: 'nowrap',
-        maxWidth: 160,
       }}
     >
       {node.title as string}
@@ -207,6 +209,8 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
   );
   const { options: typeOptions } = useCaseEnumConfig('CASE_TYPE');
   const typeValueEnum = useMemo(() => toValueEnum(typeOptions), [typeOptions]);
+  // 适用端 (PLATFORM) - 跟用例库其它场景共用同一份配置, 配置中心改了这里自动同步
+  const { options: platformOptions } = useCaseEnumConfig('PLATFORM');
 
   /* -------------------- 模块树状态 -------------------- */
   const [modules, setModules] = useState<IModule[]>([]);
@@ -222,6 +226,22 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
   const [picksByModule, setPicksByModule] = useState<Record<number, number[]>>(
     {},
   );
+  /**
+   * 树勾选的目录 key 列表 (含子-父级联后的最终集合)
+   * - 与 picksByModule 联动: 勾上 = 拿目录全量 case 写入 picksByModule[folder]
+   * - 取消 = 清空 picksByModule[folder]
+   * - 点击/全选/手动勾选 case 不会影响这个集合
+   */
+  const [checkedModuleKeys, setCheckedModuleKeys] = useState<React.Key[]>([]);
+  /**
+   * 项目下所有 common 用例按 module_id 聚合: module_id -> case_id[]
+   * - 树勾选时直接拿这个数据填 picksByModule, 避免再发请求
+   * - 防御: 后端 page 接口对 fields 不支持时, 退化为全字段返回, 这里只用 id+module_id
+   */
+  const [caseIdsByModule, setCaseIdsByModule] = useState<
+    Record<number, number[]>
+  >({});
+  const [caseIdsLoading, setCaseIdsLoading] = useState(false);
   const [moduleKeyword, setModuleKeyword] = useState('');
 
   /* -------------------- 用例表格状态 -------------------- */
@@ -235,15 +255,18 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
   useEffect(() => {
     actionRef.current?.reloadAndRest?.();
   }, [sortOrder]);
-  /** 筛选：等级 / 类型 */
+  /** 筛选：等级 / 类型 / 适用端 */
   const [filterLevel, setFilterLevel] = useState<string | undefined>();
   const [filterType, setFilterType] = useState<string | undefined>();
+  const [filterPlatform, setFilterPlatform] = useState<string | undefined>();
   const [filterOpen, setFilterOpen] = useState(false);
   const [tempFilterLevel, setTempFilterLevel] = useState<string | undefined>();
   const [tempFilterType, setTempFilterType] = useState<string | undefined>();
+  const [tempFilterPlatform, setTempFilterPlatform] = useState<
+    string | undefined
+  >();
 
   /* -------------------- Footer 状态 -------------------- */
-  const [mergeSameGroup, setMergeSameGroup] = useState(false);
   const [confirming, setConfirming] = useState(false);
 
   /* -------------------- 模块树加载 -------------------- */
@@ -254,9 +277,12 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
     }
     setModuleLoading(true);
     try {
+      // 规划用例弹窗不要"未分组数据"虚拟节点: 未分组的用例不应该被批量关联到计划里
+      // (后端 queryTreeByProject 默认会拼一个 ungrouped_module_{type} 节点, 这里显式 no_group=true 过滤掉)
       const { code, data } = await queryTreeModuleByProject(
         projectId,
         ModuleEnum.CASE,
+        true,
       );
       if (code === 0 && data) {
         setModules(data);
@@ -273,10 +299,44 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
   useEffect(() => {
     if (!planInfoLoaded) return;
     loadModules();
-    // 切换项目时清空之前的选择(激活目录 + 每目录的勾选记忆)
+    // 切换项目时清空之前的选择(激活目录 + 树勾选 + 每目录的勾选记忆)
     setActiveModuleId(null);
+    setCheckedModuleKeys([]);
     setPicksByModule({});
   }, [loadModules, planInfoLoaded]);
+
+  /**
+   * 预取项目下所有 common 用例的 case_id + module_id, 按 module_id 聚合
+   * - 树勾选时直接拿这个数据填 picksByModule, 避免再发请求
+   * - 与 modules 拉取并行触发, 失败静默回退到"勾选时按需拉"
+   */
+  useEffect(() => {
+    if (!projectId) {
+      setCaseIdsByModule({});
+      return;
+    }
+    let cancelled = false;
+    setCaseIdsLoading(true);
+    (async () => {
+      try {
+        const { byModule } = await fetchAllCaseIdsByModule(projectId);
+        if (cancelled) return;
+        const obj: Record<number, number[]> = {};
+        byModule.forEach((ids, mid) => {
+          if (mid != null) obj[mid as number] = ids;
+        });
+        setCaseIdsByModule(obj);
+      } catch (e) {
+        // 静默: 失败时 picksByModule 会留空, 用户仍可通过右侧表格手动勾选
+        console.warn('[ModuleCaseSelector] fetchAllCaseIdsByModule failed', e);
+      } finally {
+        if (!cancelled) setCaseIdsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [projectId]);
 
   /* -------------------- 树渲染数据 -------------------- */
   const treeData = useMemo(() => buildTreeData(modules), [modules]);
@@ -392,6 +452,146 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
     setActiveModuleId(next != null ? Number(next) : null);
   };
 
+  /**
+   * 计算一个目录(含全部后代)对应的 case id 集合
+   * - 优先用预取的 caseIdsByModule; 缺数据时返回空集
+   * - 用于"勾上 = 拿目录全量 case 写入 picksByModule"
+   */
+  const collectAllCaseIdsForNode = useCallback(
+    (node: IModule): number[] => {
+      const out = new Set<number>();
+      const walk = (n: IModule) => {
+        (caseIdsByModule[n.key] ?? []).forEach((id) => out.add(id));
+        if (n.children) n.children.forEach(walk);
+      };
+      walk(node);
+      return Array.from(out);
+    },
+    [caseIdsByModule],
+  );
+
+  /**
+   * 树勾选回调(checkStrictly 模式)
+   * - 向下传播: 勾选/取消父节点时, 所有后代也跟随
+   * - 向上传播: 当某个父节点的所有直接子节点都被勾选时, 自动勾选该父节点
+   * - 取消子节点时, 之前因"全子节点勾选"而自动勾选的父节点会自动取消
+   * - 同步到 picksByModule: 勾上 = 写入目录全量 case; 取消 = 清空
+   */
+  const handleModuleCheck = (
+    info:
+      | React.Key[]
+      | { checked: React.Key[]; halfChecked: React.Key[] }
+      | undefined
+      | null,
+  ) => {
+    if (!info) {
+      setCheckedModuleKeys([]);
+      setPicksByModule({});
+      return;
+    }
+
+    let userChecked: React.Key[];
+    if (Array.isArray(info)) {
+      userChecked = info;
+    } else if (typeof info === 'object' && Array.isArray(info.checked)) {
+      userChecked = info.checked;
+    } else {
+      setCheckedModuleKeys([]);
+      setPicksByModule({});
+      return;
+    }
+
+    // 防御: 用 safeCheckedModuleKeys 同款兜底
+    const safeChecked: React.Key[] = Array.isArray(checkedModuleKeys)
+      ? checkedModuleKeys
+      : [];
+    const prevSet = new Set<React.Key>(safeChecked);
+    const nextSet = new Set<React.Key>(userChecked);
+
+    // 向下传播: 新增 key -> 补全所有后代; 移除 key -> 删除所有后代
+    for (const key of nextSet) {
+      if (!prevSet.has(key)) {
+        const node = moduleByKey.get(Number(key));
+        if (node) {
+          collectNodeDescendants(node).forEach((d) => nextSet.add(d));
+        }
+      }
+    }
+    for (const key of prevSet) {
+      if (!nextSet.has(key)) {
+        const node = moduleByKey.get(Number(key));
+        if (node) {
+          collectNodeDescendants(node).forEach((d) => nextSet.delete(d));
+        }
+      }
+    }
+
+    // 向上自动勾选: 若父节点的所有直接子节点都在勾选集合中, 自动勾选该父节点
+    const finalChecked = new Set<React.Key>(nextSet);
+
+    const getDepth = (key: number): number => {
+      let depth = 0;
+      let node = moduleByKey.get(key);
+      while (node?.parent_id) {
+        depth++;
+        node = moduleByKey.get(node.parent_id);
+      }
+      return depth;
+    };
+
+    // 按深度从大到小排序, 先处理叶子, 再逐层向上传播
+    const sortedKeys = Array.from(finalChecked).sort(
+      (a, b) => getDepth(Number(b)) - getDepth(Number(a)),
+    );
+
+    for (const key of sortedKeys) {
+      let currentKey: number | undefined = moduleByKey.get(
+        Number(key),
+      )?.parent_id;
+      while (currentKey !== undefined) {
+        const parent = moduleByKey.get(currentKey);
+        if (!parent || !parent.children || parent.children.length === 0) break;
+
+        const allChildrenChecked = parent.children.every((child) =>
+          finalChecked.has(child.key),
+        );
+
+        if (allChildrenChecked) {
+          if (!finalChecked.has(parent.key)) {
+            finalChecked.add(parent.key);
+          }
+          currentKey = parent.parent_id;
+        } else {
+          break;
+        }
+      }
+    }
+
+    setCheckedModuleKeys(Array.from(finalChecked));
+
+    // 同步到 picksByModule:
+    //   - 新勾上的 folder: 写入目录全量 case (覆盖之前的)
+    //   - 取消的 folder: 清空 picksByModule[folder]
+    //   - 之前通过右侧表格手动勾选/取消的, 不在这个 diff 范围里, 保留不动
+    setPicksByModule((prev) => {
+      const out = { ...prev };
+      for (const key of finalChecked) {
+        if (!prevSet.has(key)) {
+          const id = Number(key);
+          const node = moduleByKey.get(id);
+          if (!node) continue;
+          out[id] = collectAllCaseIdsForNode(node);
+        }
+      }
+      for (const key of prevSet) {
+        if (!finalChecked.has(key)) {
+          delete out[Number(key)];
+        }
+      }
+      return out;
+    });
+  };
+
   // 切换激活目录时刷新表格(不要清空 picksByModule,保留跨目录的勾选记忆)
   useEffect(() => {
     actionRef.current?.reloadAndRest?.();
@@ -421,6 +621,7 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
         sort: sort,
         case_level: filterLevel,
         case_type: filterType,
+        case_platform: filterPlatform,
       };
       const values =
         activeModuleId != null
@@ -429,7 +630,14 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
       const { code, data } = await pageTestCase(values);
       return pageData(code, data);
     },
-    [activeModuleId, projectId, caseKeyword, filterLevel, filterType],
+    [
+      activeModuleId,
+      projectId,
+      caseKeyword,
+      filterLevel,
+      filterType,
+      filterPlatform,
+    ],
   );
 
   // 搜索关键字 / 筛选条件变化时重新拉取（带短防抖）
@@ -441,7 +649,7 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
       actionRef.current?.reloadAndRest?.();
     }, 80);
     return () => clearTimeout(timer);
-  }, [caseKeyword, filterLevel, filterType]);
+  }, [caseKeyword, filterLevel, filterType, filterPlatform]);
 
   const columns: ProColumns<ITestCase>[] = useMemo(
     () => [
@@ -611,7 +819,6 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
       });
       await onConfirm(allCaseIds, {
         moduleIds: Array.from(moduleIds),
-        mergeSameGroup,
       });
     } finally {
       setConfirming(false);
@@ -689,6 +896,7 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
               if (open) {
                 setTempFilterLevel(filterLevel);
                 setTempFilterType(filterType);
+                setTempFilterPlatform(filterPlatform);
               }
             }}
             placement="bottomRight"
@@ -745,6 +953,28 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
                     }))}
                   />
                 </div>
+                <div>
+                  <div
+                    style={{
+                      fontSize: 12,
+                      color: colors.textSecondary,
+                      marginBottom: 4,
+                    }}
+                  >
+                    适用端
+                  </div>
+                  <Select
+                    allowClear
+                    placeholder="选择适用端"
+                    value={tempFilterPlatform}
+                    onChange={setTempFilterPlatform}
+                    style={{ width: '100%' }}
+                    options={platformOptions.map((o) => ({
+                      value: o.value,
+                      label: o.label,
+                    }))}
+                  />
+                </div>
                 <div
                   style={{
                     display: 'flex',
@@ -759,6 +989,7 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
                     onClick={() => {
                       setTempFilterLevel(undefined);
                       setTempFilterType(undefined);
+                      setTempFilterPlatform(undefined);
                     }}
                   >
                     重置
@@ -769,6 +1000,7 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
                     onClick={() => {
                       setFilterLevel(tempFilterLevel);
                       setFilterType(tempFilterType);
+                      setFilterPlatform(tempFilterPlatform);
                       setFilterOpen(false);
                     }}
                   >
@@ -782,14 +1014,14 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
               style={{
                 ...styles.toolbarRight(),
                 color:
-                  filterLevel || filterType
+                  filterLevel || filterType || filterPlatform
                     ? colors.primary
                     : colors.textSecondary,
               }}
             >
               <FilterOutlined style={{ fontSize: 13 }} />
               筛选
-              {filterLevel || filterType ? ' •' : ''}
+              {filterLevel || filterType || filterPlatform ? ' •' : ''}
             </span>
           </Popover>
         </Space>
@@ -822,11 +1054,15 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
               <div style={styles.treeWrap()}>
                 <Tree
                   blockNode
+                  checkable
+                  checkStrictly
                   showLine={{ showLeafIcon: false }}
                   expandedKeys={expandedKeys}
                   selectedKeys={activeModuleId != null ? [activeModuleId] : []}
+                  checkedKeys={checkedModuleKeys}
                   onExpand={(keys) => setExpandedKeys(keys as React.Key[])}
                   onSelect={handleModuleSelect}
+                  onCheck={handleModuleCheck}
                   treeData={filteredTreeData}
                   titleRender={(node) => renderModuleTitle(node as any)}
                 />
@@ -914,13 +1150,6 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
 
       {/* Footer */}
       <div style={styles.footer()}>
-        <label style={styles.footerLeft()}>
-          <Checkbox
-            checked={mergeSameGroup}
-            onChange={(e) => setMergeSameGroup(e.target.checked)}
-          />
-          合并相同用例分组
-        </label>
         <div style={styles.footerRight()}>
           <Button onClick={onCancel}>取消</Button>
           <Button

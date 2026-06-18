@@ -1,3 +1,4 @@
+import type { IModule } from '@/api';
 import LeftComponents from '@/components/LeftComponents';
 import { ModuleEnum } from '@/utils/config';
 import { useCallback, useState } from 'react';
@@ -17,6 +18,12 @@ const Index = () => {
    * 避免 React 浅比较跳过更新。
    */
   const [moduleReloadKey, setModuleReloadKey] = useState<number>(0);
+  /**
+   * 左侧模块目录树 (向上透传自 ModuleTree, 用作右侧表格"所属分组"列的查表源)
+   * - 不在 LeftComponents 内自管是因为右侧表格也要用
+   * - 切换项目 / 新建/删除/重命名模块时由 ModuleTree 通过 onModulesLoaded 同步
+   */
+  const [caseModules, setCaseModules] = useState<IModule[]>([]);
 
   const PerKey = 'TEST_CASE';
 
@@ -62,6 +69,8 @@ const Index = () => {
             onProjectChange={onProjectChange}
             // 触发左侧模块目录树刷新：上传/导入用例成功后递增
             reloadKey={moduleReloadKey}
+            // 透传模块树,供右侧表格渲染"所属分组"列
+            onModulesLoaded={setCaseModules}
           />
         </Panel>
         <Panel defaultSize={80} minSize={30} style={{ height: '100%' }}>
@@ -71,6 +80,8 @@ const Index = () => {
             currentModuleId={currentModuleId}
             // 提交导入成功后，递增父级 reloadKey，联动刷新左侧目录
             onModuleRefresh={handleModuleRefresh}
+            // 模块树 (来自 ModuleTree 透传), 用于渲染"所属分组"列
+            modules={caseModules}
           />
         </Panel>
       </Group>

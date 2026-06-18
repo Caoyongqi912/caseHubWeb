@@ -35,7 +35,16 @@ import {
   ProFormTextArea,
   ProTable,
 } from '@ant-design/pro-components';
-import { Button, Form, message, Modal, Space, Tag, Typography } from 'antd';
+import {
+  Alert,
+  Button,
+  Form,
+  message,
+  Modal,
+  Space,
+  Tag,
+  Typography,
+} from 'antd';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 const { Text, Paragraph } = Typography;
@@ -608,6 +617,8 @@ const CaseStatusConfig: FC<CaseStatusConfigProps> = ({
       };
       if (isEdit && editingRecord?.uid) {
         payload.uid = editingRecord.uid;
+        // value 创建后不可修改，编辑接口显式剔除，避免前端被绕过时仍能改 value
+        delete payload.value;
         const { code, msg } = await updateCaseEnumConfig(payload);
         if (code === 0) {
           message.success(msg || '更新成功');
@@ -692,6 +703,14 @@ const CaseStatusConfig: FC<CaseStatusConfigProps> = ({
           cancelText: '取消',
         }}
       >
+        {!isEdit && (
+          <Alert
+            type="warning"
+            showIcon
+            message="提示：value 字段保存后将不可修改，请谨慎填写"
+            style={{ marginBottom: 16 }}
+          />
+        )}
         <ProFormText
           name="label"
           label="名称"
@@ -702,6 +721,7 @@ const CaseStatusConfig: FC<CaseStatusConfigProps> = ({
           ]}
           placeholder="请输入显示名称，如：通过"
         />
+        {/* value 字段：创建后即不可修改，在新建/编辑态分别给出提示与锁定 */}
         {valueFieldDef.type === 'text' ? (
           <ProFormText
             name="value"
@@ -710,6 +730,12 @@ const CaseStatusConfig: FC<CaseStatusConfigProps> = ({
             rules={valueFieldDef.rules}
             placeholder={valueFieldDef.placeholder}
             tooltip={valueFieldDef.tooltip}
+            extra={
+              isEdit
+                ? 'value 字段已锁定，创建后不可修改'
+                : '保存后 value 将不可修改，请谨慎填写'
+            }
+            fieldProps={isEdit ? { disabled: true } : undefined}
           />
         ) : (
           <ProFormDigit
@@ -719,7 +745,12 @@ const CaseStatusConfig: FC<CaseStatusConfigProps> = ({
             rules={valueFieldDef.rules}
             placeholder={valueFieldDef.placeholder}
             min={0}
-            fieldProps={{ precision: 0 }}
+            fieldProps={{ precision: 0, disabled: isEdit }}
+            extra={
+              isEdit
+                ? 'value 字段已锁定，创建后不可修改'
+                : '保存后 value 将不可修改，请谨慎填写'
+            }
           />
         )}
         {!isColorHidden(configKey) && (

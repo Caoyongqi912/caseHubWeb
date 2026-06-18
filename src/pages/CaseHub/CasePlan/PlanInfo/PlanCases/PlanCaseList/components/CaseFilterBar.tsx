@@ -69,6 +69,14 @@ const useReviewOptions = () => {
 };
 
 /**
+ * 适用端筛选选项（从 Context 动态获取，与用例库共用 PLATFORM 配置）
+ */
+const usePlatformOptions = () => {
+  const { options: platformOptions } = useCaseEnumConfig('PLATFORM');
+  return useMemo(() => toSelectOptions(platformOptions), [platformOptions]);
+};
+
+/**
  * 主题 token 透传给小组件，避免在小组件内重复 useCaseHubTheme
  * 保留具体子集的类型安全（避免 any 滥用）
  */
@@ -156,6 +164,7 @@ const CaseFilterBar: FC<CaseFilterBarProps> = ({
    */
   const statusOptions = useStatusOptions();
   const reviewFilterOptions = useReviewOptions();
+  const platformFilterOptions = usePlatformOptions();
   const [keyword, setKeyword] = useState(filters?.keyword || '');
   const [filterOpen, setFilterOpen] = useState(false);
   const [tempFirstStatus, setTempFirstStatus] = useState<string | undefined>();
@@ -163,6 +172,7 @@ const CaseFilterBar: FC<CaseFilterBarProps> = ({
     string | undefined
   >();
   const [tempReview, setTempReview] = useState<string | undefined>();
+  const [tempPlatform, setTempPlatform] = useState<string | undefined>();
   /** UserSelect 多选值形态：{ label, value: number }[] */
   const [tempCreators, setTempCreators] = useState<
     { label: string; value: number }[]
@@ -253,6 +263,7 @@ const CaseFilterBar: FC<CaseFilterBarProps> = ({
     setTempFirstStatus(filters?.firstStatus);
     setTempSecondStatus(filters?.secondStatus);
     setTempReview(filters?.isReview);
+    setTempPlatform(filters?.casePlatform);
     setTempCreators(
       filters?.creators?.map((c) => ({ label: c.name, value: c.id })) ?? [],
     );
@@ -262,6 +273,7 @@ const CaseFilterBar: FC<CaseFilterBarProps> = ({
     filters?.firstStatus,
     filters?.secondStatus,
     filters?.isReview,
+    filters?.casePlatform,
     filters?.creators,
   ]);
 
@@ -291,6 +303,7 @@ const CaseFilterBar: FC<CaseFilterBarProps> = ({
         firstStatus: tempFirstStatus,
         secondStatus: tempSecondStatus,
         isReview: tempReview,
+        casePlatform: tempPlatform,
         creators: buildAppliedCreators(),
       });
     },
@@ -299,6 +312,7 @@ const CaseFilterBar: FC<CaseFilterBarProps> = ({
       tempFirstStatus,
       tempSecondStatus,
       tempReview,
+      tempPlatform,
       buildAppliedCreators,
     ],
   );
@@ -311,6 +325,7 @@ const CaseFilterBar: FC<CaseFilterBarProps> = ({
       firstStatus: tempFirstStatus,
       secondStatus: tempSecondStatus,
       isReview: tempReview,
+      casePlatform: tempPlatform,
       creators: buildAppliedCreators(),
     });
   }, [
@@ -318,6 +333,7 @@ const CaseFilterBar: FC<CaseFilterBarProps> = ({
     tempFirstStatus,
     tempSecondStatus,
     tempReview,
+    tempPlatform,
     buildAppliedCreators,
   ]);
 
@@ -330,6 +346,7 @@ const CaseFilterBar: FC<CaseFilterBarProps> = ({
       firstStatus: tempFirstStatus,
       secondStatus: tempSecondStatus,
       isReview: tempReview,
+      casePlatform: tempPlatform,
       creators: buildAppliedCreators(),
     });
   }, [
@@ -337,6 +354,7 @@ const CaseFilterBar: FC<CaseFilterBarProps> = ({
     tempFirstStatus,
     tempSecondStatus,
     tempReview,
+    tempPlatform,
     buildAppliedCreators,
     onFilterChange,
     debouncedSearch,
@@ -351,6 +369,7 @@ const CaseFilterBar: FC<CaseFilterBarProps> = ({
       firstStatus: tempFirstStatus,
       secondStatus: tempSecondStatus,
       isReview: tempReview,
+      casePlatform: tempPlatform,
       creators: buildAppliedCreators(),
     });
   }, [
@@ -358,6 +377,7 @@ const CaseFilterBar: FC<CaseFilterBarProps> = ({
     tempFirstStatus,
     tempSecondStatus,
     tempReview,
+    tempPlatform,
     buildAppliedCreators,
     onFilterChange,
   ]);
@@ -367,6 +387,7 @@ const CaseFilterBar: FC<CaseFilterBarProps> = ({
     setTempFirstStatus(undefined);
     setTempSecondStatus(undefined);
     setTempReview(undefined);
+    setTempPlatform(undefined);
     setTempCreators([]);
     onFilterChange?.({ keyword });
   }, [keyword, onFilterChange]);
@@ -421,6 +442,19 @@ const CaseFilterBar: FC<CaseFilterBarProps> = ({
       });
     }
 
+    if (filters?.casePlatform !== undefined) {
+      const platformLabel = platformFilterOptions.find(
+        (opt) => opt.value === filters.casePlatform,
+      )?.label;
+      chips.push({
+        key: 'casePlatform',
+        label: '适用端',
+        value: platformLabel ?? filters.casePlatform,
+        onRemove: () =>
+          onFilterChange?.({ ...filters, casePlatform: undefined }),
+      });
+    }
+
     if (filters?.creators && filters.creators.length > 0) {
       const names = filters.creators.map((c) => c.name);
       const displayValue =
@@ -436,7 +470,13 @@ const CaseFilterBar: FC<CaseFilterBarProps> = ({
     }
 
     return chips;
-  }, [filters, onFilterChange]);
+  }, [
+    filters,
+    onFilterChange,
+    statusOptions,
+    reviewFilterOptions,
+    platformFilterOptions,
+  ]);
 
   return (
     <div>
@@ -527,6 +567,17 @@ const CaseFilterBar: FC<CaseFilterBarProps> = ({
                   onChange={setTempReview}
                   style={{ width: '100%' }}
                   options={reviewFilterOptions}
+                />
+              </FilterGroup>
+
+              <FilterGroup title="适用端" colors={colors} spacing={spacing}>
+                <Select
+                  allowClear
+                  placeholder="选择适用端"
+                  value={tempPlatform}
+                  onChange={setTempPlatform}
+                  style={{ width: '100%' }}
+                  options={platformFilterOptions}
                 />
               </FilterGroup>
 
