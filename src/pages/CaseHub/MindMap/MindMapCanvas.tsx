@@ -251,7 +251,7 @@ const MindMapCanvas: React.FC<MindMapCanvasProps> = ({
       }
       setNodeType(node, type);
       try {
-        mindInstance.reshapeNode(cur, { type, icons: node.icons });
+        mindInstance.reshapeNode(cur, { type, icons: node.icons } as any);
       } catch (e) {
         console.warn('[MindMap] reshapeNode after setType failed', e);
       }
@@ -265,9 +265,9 @@ const MindMapCanvas: React.FC<MindMapCanvasProps> = ({
       }
       setTypeAndReshape(type);
       message.success(
-        `已标记为${NODE_TYPE_ICON_MAP[type]} ${
-          type === 'module' ? '目录' : type === 'case' ? '用例' : '注释'
-        }`,
+        `已标记为${
+          NODE_TYPE_ICON_MAP[type as keyof typeof NODE_TYPE_ICON_MAP]
+        } ${type === 'module' ? '目录' : type === 'case' ? '用例' : '注释'}`,
       );
     };
     const handleContextBumpLevel = (delta: number) => {
@@ -296,7 +296,7 @@ const MindMapCanvas: React.FC<MindMapCanvasProps> = ({
         case_level: next as CaseMeta['case_level'],
       };
       try {
-        mindInstance.reshapeNode(cur, { meta: node.meta });
+        mindInstance.reshapeNode(cur!, { meta: node.meta } as any);
       } catch (e) {
         console.warn('[MindMap] reshapeNode after bump level failed', e);
       }
@@ -353,7 +353,7 @@ const MindMapCanvas: React.FC<MindMapCanvasProps> = ({
     const fixContextMenuLabels = (mind: any) => {
       const ul = mind?.container?.querySelector('.context-menu .menu-list');
       if (!ul) return;
-      const allLi = Array.from(ul.querySelectorAll('li'));
+      const allLi = Array.from(ul.querySelectorAll('li')) as HTMLElement[];
       // 1) 隐藏不需要的默认项
       allLi.forEach((li) => {
         if (HIDE_DEFAULT_LI_IDS.has(li.id)) {
@@ -374,7 +374,7 @@ const MindMapCanvas: React.FC<MindMapCanvasProps> = ({
       const ul = mind?.container?.querySelector('.context-menu .menu-list');
       if (!ul) return;
       const nodeType = mind.currentNode?.nodeObj?.type;
-      const allLi = Array.from(ul.querySelectorAll('li'));
+      const allLi = Array.from(ul.querySelectorAll('li')) as HTMLElement[];
       const startIdx = allLi.length - EXTEND_LABELS.length;
       EXTEND_LABELS.forEach((ex, i) => {
         const li = allLi[startIdx + i];
@@ -407,10 +407,10 @@ const MindMapCanvas: React.FC<MindMapCanvasProps> = ({
     const origAddChild = mindInstance.addChild.bind(mindInstance);
     mindInstance.addChild = function (parentEl?: any, obj?: any) {
       const parentNode = parentEl?.nodeObj ?? mindInstance.currentNode?.nodeObj;
-      const parentType = parentNode?.type;
+      const parentType = (parentNode as MindNode | undefined)?.type;
       if (parentType === 'expected') {
         console.info('[MindMap] expected 节点下不允许添加子节点');
-        return;
+        return undefined as any;
       }
       if (parentType === 'step') {
         const hasExpected = parentNode?.children?.some(
@@ -418,7 +418,7 @@ const MindMapCanvas: React.FC<MindMapCanvasProps> = ({
         );
         if (hasExpected) {
           console.info('[MindMap] step 节点下已有 expected, 不能再加');
-          return;
+          return undefined as any;
         }
       }
       // 预生成带 type + icons + 默认 topic 的新节点
@@ -432,7 +432,9 @@ const MindMapCanvas: React.FC<MindMapCanvasProps> = ({
         if (newType === 'step' || newType === 'expected') {
           newObj.icons = [];
         } else {
-          newObj.icons = [NODE_TYPE_ICON_MAP[newType]];
+          newObj.icons = [
+            NODE_TYPE_ICON_MAP[newType as keyof typeof NODE_TYPE_ICON_MAP],
+          ];
         }
         newObj.topic = inferDefaultTopic(parentNode, newType);
       }
@@ -450,7 +452,7 @@ const MindMapCanvas: React.FC<MindMapCanvasProps> = ({
       direction: 'before' | 'after' = 'after',
     ) {
       const cur = mindInstance.currentNode;
-      const siblingType = cur?.nodeObj?.type;
+      const siblingType = (cur?.nodeObj as MindNode | undefined)?.type;
       const parentNode = cur?.nodeObj?.parent as MindNode | undefined;
       // 在 origInsertSibling 之前算默认 topic, 此时 parentNode.children 不含新节点
       // 序号 = 父节点下同 type 兄弟数 + 1
@@ -464,12 +466,14 @@ const MindMapCanvas: React.FC<MindMapCanvasProps> = ({
         if (newType === 'step' || newType === 'expected') {
           newNode.icons = [];
         } else {
-          newNode.icons = [NODE_TYPE_ICON_MAP[newType]];
+          newNode.icons = [
+            NODE_TYPE_ICON_MAP[newType as keyof typeof NODE_TYPE_ICON_MAP],
+          ];
         }
         newNode.topic = defaultTopic;
         // 触发 be 重渲染 (reshapeNode 内部 Object.assign + be)
         try {
-          mindInstance.reshapeNode(mindInstance.currentNode, {
+          mindInstance.reshapeNode(mindInstance.currentNode!, {
             icons: newNode.icons,
             topic: defaultTopic,
           });
@@ -696,7 +700,7 @@ const MindMapCanvas: React.FC<MindMapCanvasProps> = ({
     (info: Operation) => {
       scheduleSave();
       // 复制节点后清空 case_id (复制粘贴会产生重复 case_id 冲突, 重新打通用例时再补)
-      const obj = info.obj as any;
+      const obj = (info as any).obj;
       if (info.name === 'copyNode' && obj?.meta?.case_id) {
         delete obj.meta.case_id;
       }
