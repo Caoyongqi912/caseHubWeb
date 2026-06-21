@@ -865,6 +865,7 @@ const CasePlanPage: React.FC = () => {
 
             multipleLine: false,
           }}
+          options={false}
           pagination={{
             showQuickJumper: true,
             defaultPageSize: 10,

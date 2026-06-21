@@ -65,7 +65,16 @@ export const usePlanOverviewStyles = (): PlanOverviewStyles => {
       flexDirection: 'column',
       gap: spacing.lg,
       padding: `${spacing.md}px 0`,
-      minHeight: '100%',
+      // parent PageContainer is height:100vh + overflow:hidden,
+      // and the Tabs tabpane above this container has no definite height
+      // (default height:auto), so 'height:100%' would collapse to content
+      // size and overflowY:auto would never trigger. Bypass the chain and
+      // use a viewport-based calc that matches the visible area between the
+      // Tabs nav and the viewport bottom: 100vh - (PageContainer body
+      // padding-top 24px + Tabs nav ~46px) = calc(100vh - 70px).
+      height: 'calc(100vh - 70px)',
+      overflowY: 'auto',
+      overflowX: 'hidden',
       background: 'transparent',
     },
 
