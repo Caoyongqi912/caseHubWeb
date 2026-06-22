@@ -151,7 +151,11 @@ const ApiDetailForm: FC<IProps> = (props) => {
           required={true}
           fieldProps={{
             suffixIcon: <GlobalOutlined />,
-            dropdownStyle: { minWidth: 200 },
+            styles: {
+              popup: {
+                root: { minWidth: 200 },
+              },
+            },
             style: {
               borderTopRightRadius: 0,
               borderBottomRightRadius: 0,

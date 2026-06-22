@@ -21,8 +21,8 @@ import {
   ProFormSwitch,
   ProFormText,
 } from '@ant-design/pro-components';
-import { FormInstance, Space, Tag, Tooltip } from 'antd';
-import { FC, useEffect, useState } from 'react';
+import { Form, FormInstance, Space, Tag, Tooltip } from 'antd';
+import { FC, useEffect, useRef, useState } from 'react';
 
 const AssertTarget = {
   status_code: {
@@ -53,12 +53,17 @@ const InterAssertList: FC<ISelfProps> = ({ form, readonly = false }) => {
   const [editingIndex, setEditingIndex] = useState<number | null>(0);
   const [showTools, setShowTools] = useState(false);
 
+  // 等接口详情回填后，再决定初始编辑态：没有断言就停在添加态，有断言就停在查看态。
+  const watchedAsserts = Form.useWatch('interface_asserts', form);
+  const seededAsserts = useRef(false);
   useEffect(() => {
-    const asserts = form.getFieldValue('interface_asserts');
-    if (asserts === null || asserts?.length === 0) {
-      setEditingIndex(0);
-    } else setEditingIndex(null);
-  }, []);
+    if (seededAsserts.current) return;
+    if (watchedAsserts === undefined) return;
+    setEditingIndex(
+      watchedAsserts === null || watchedAsserts?.length === 0 ? 0 : null,
+    );
+    seededAsserts.current = true;
+  }, [watchedAsserts]);
 
   const handleEdit = (index: number) => {
     setEditingIndex(index);

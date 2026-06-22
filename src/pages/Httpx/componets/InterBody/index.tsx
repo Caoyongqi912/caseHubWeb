@@ -3,9 +3,9 @@ import APIFormData from '@/pages/Httpx/componets/InterBody/APIFormData';
 import JsonBody from '@/pages/Httpx/componets/InterBody/JsonBody';
 import { IInterfaceAPI } from '@/pages/Httpx/types';
 import { ProCard, ProFormSelect } from '@ant-design/pro-components';
-import { Empty, FormInstance, Radio, Space, Typography } from 'antd';
+import { Empty, Form, FormInstance, Radio, Space, Typography } from 'antd';
 import { RadioChangeEvent } from 'antd/lib/radio/interface';
-import { FC, useEffect, useState } from 'react';
+import { FC, useEffect, useRef, useState } from 'react';
 
 interface SelfProps {
   form: FormInstance<IInterfaceAPI>;
@@ -15,12 +15,15 @@ interface SelfProps {
 const Index: FC<SelfProps> = (props) => {
   const { readonly = false } = props;
   const [bodyType, setBodyType] = useState(0);
+  // 等接口详情回填后，再把 body 类型同步到本地。原先空依赖 effect 拿不到值。
+  const watchedBodyType = Form.useWatch('interface_body_type', props.form);
+  const seededBodyType = useRef(false);
   useEffect(() => {
-    const t = props.form.getFieldValue('interface_body_type');
-    if (t) {
-      setBodyType(t);
-    }
-  }, []);
+    if (seededBodyType.current) return;
+    if (watchedBodyType === undefined) return;
+    if (watchedBodyType) setBodyType(watchedBodyType);
+    seededBodyType.current = true;
+  }, [watchedBodyType]);
   const BodyMap = () => {
     switch (bodyType) {
       case 0:

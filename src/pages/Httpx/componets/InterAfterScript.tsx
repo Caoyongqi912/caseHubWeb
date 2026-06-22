@@ -3,8 +3,8 @@ import MyDrawer from '@/components/MyDrawer';
 import FuncScriptDesc from '@/pages/Httpx/componets/funcScriptDesc';
 import { IInterfaceAPI } from '@/pages/Httpx/types';
 import { ProCard } from '@ant-design/pro-components';
-import { Button, FormInstance } from 'antd';
-import { FC, useEffect, useState } from 'react';
+import { Button, Form, FormInstance } from 'antd';
+import { FC, useEffect, useRef, useState } from 'react';
 
 interface SelfProps {
   form: FormInstance<IInterfaceAPI>;
@@ -25,12 +25,15 @@ const InterAfterScript: FC<SelfProps> = ({ form, mode }) => {
       }
     }
   }, [mode]);
+  // 等接口详情回填后，再把后置脚本同步到本地。原先空依赖 effect 拿不到值。
+  const watchedScript = Form.useWatch('interface_after_script', form);
+  const seededScript = useRef(false);
   useEffect(() => {
-    const script = form.getFieldValue('interface_after_script');
-    if (script) {
-      setScriptData(script);
-    }
-  }, []);
+    if (seededScript.current) return;
+    if (watchedScript === undefined) return;
+    if (watchedScript) setScriptData(watchedScript);
+    seededScript.current = true;
+  }, [watchedScript]);
   const handleOnChange = (value: any) => {
     if (value) {
       setScriptData(value);

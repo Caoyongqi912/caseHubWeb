@@ -2,7 +2,7 @@ import AceCodeEditor from '@/components/CodeEditor/AceCodeEditor';
 import { FormEditableOnValueChange } from '@/pages/Httpx/componets/FormEditableOnValueChange';
 import { IInterfaceAPI } from '@/pages/Httpx/types';
 import { ProCard } from '@ant-design/pro-components';
-import { FormInstance } from 'antd';
+import { Form, FormInstance } from 'antd';
 import { FC, useEffect, useRef, useState } from 'react';
 
 interface SelfProps {
@@ -16,12 +16,15 @@ const JsonBody: FC<SelfProps> = ({ form, readonly = false }) => {
   const [showError, setShowError] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
 
+  // 等接口详情回填后，再把 body 同步到编辑器。原先空依赖 effect 拿不到值。
+  const watchedBody = Form.useWatch('interface_body', form);
+  const seededBody = useRef(false);
   useEffect(() => {
-    const body = form.getFieldValue('interface_body');
-    if (body) {
-      setBody(JSON.stringify(body, null, 2));
-    }
-  }, []);
+    if (seededBody.current) return;
+    if (watchedBody === undefined) return;
+    if (watchedBody) setBody(JSON.stringify(watchedBody, null, 2));
+    seededBody.current = true;
+  }, [watchedBody]);
   const handleOnChange = async (newValue: any) => {
     clearTimeout(timeoutRef.current);
     setBody(newValue);

@@ -12,7 +12,7 @@ export const FormEditableOnValueChange = async (
     const fieldValues = await form.validateFields([field]);
     console.log('====', InterfaceId, fieldValues);
     const { code, msg } = await updateInterApiById({
-      id: InterfaceId,
+      interface_id: InterfaceId,
       // @ts-ignore
       [field]: fieldValues[field],
     });

@@ -10,8 +10,8 @@ import {
   ProFormText,
   ProFormTextArea,
 } from '@ant-design/pro-components';
-import { FormInstance, Space, Tag, Tooltip } from 'antd';
-import { FC, useEffect, useState } from 'react';
+import { Form, FormInstance, Space, Tag, Tooltip } from 'antd';
+import { FC, useEffect, useRef, useState } from 'react';
 
 const EXTRACT_TARGET_OPTION = [
   { label: 'ResponseJson', value: 6 },
@@ -28,12 +28,17 @@ interface ISelfProps {
 const InterExtractList: FC<ISelfProps> = ({ form, readonly = false }) => {
   const [editingIndex, setEditingIndex] = useState<number | null>(0);
 
+  // 等接口详情回填后，再决定初始编辑态：没有提取就停在添加态，有提取就停在查看态。
+  const watchedExtracts = Form.useWatch('interface_extracts', form);
+  const seededExtracts = useRef(false);
   useEffect(() => {
-    const extracts = form.getFieldValue('interface_extracts');
-    if (extracts === null || extracts?.length === 0) {
-      setEditingIndex(0);
-    } else setEditingIndex(null);
-  }, []);
+    if (seededExtracts.current) return;
+    if (watchedExtracts === undefined) return;
+    setEditingIndex(
+      watchedExtracts === null || watchedExtracts?.length === 0 ? 0 : null,
+    );
+    seededExtracts.current = true;
+  }, [watchedExtracts]);
 
   const handleEdit = (index: number) => {
     setEditingIndex(index);

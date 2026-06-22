@@ -151,7 +151,7 @@ export const setCurl2InterApi = async (
   data: { script: string },
   options?: IObjGet,
 ) => {
-  return request<IResponse<any>>('/api/interface/transCurl', {
+  return request<IResponse<any>>('/api/interface/trans_curl', {
     method: 'POST',
     data: data,
     ...(options || {}),
@@ -226,7 +226,7 @@ export const updateInterApiById = async (data?: any, options?: IObjGet) => {
  * @param options
  */
 export const tryInterScript = async (data: string, options?: IObjGet) => {
-  return request<IResponse<any>>('/api/interface/tryScript', {
+  return request<IResponse<any>>('/api/interface/try_script', {
     method: 'POST',
     data: { script: data },
     ...(options || {}),

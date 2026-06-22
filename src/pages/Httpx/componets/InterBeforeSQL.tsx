@@ -19,6 +19,7 @@ import {
 } from '@ant-design/pro-components';
 import {
   Button,
+  Form,
   FormInstance,
   message,
   Popover,
@@ -116,19 +117,24 @@ const InterBeforeSql: FC<SelfProps> = (props) => {
   const [open, setOpen] = useState<boolean>(false);
   const [tryData, setTryData] = useState<any>();
 
-  /**
-   * 初始化SQL和数据库ID
-   */
+  // 等接口详情回填后，再把 SQL 和数据库 ID 同步到本地。
+  // 之前用空依赖 effect 在挂载时读 form，那一刻 form 还是空的，编辑器一直显示空白。
+  const watchedSql = Form.useWatch('interface_before_sql', form);
+  const watchedDbId = Form.useWatch('interface_before_db_id', form);
+  const seededSql = useRef(false);
   useEffect(() => {
-    const interface_before_sql = form.getFieldValue('interface_before_sql');
-    const interface_before_db_id = form.getFieldValue('interface_before_db_id');
-    if (interface_before_db_id) {
-      setBeforeDbId(interface_before_db_id);
-    }
-    if (interface_before_sql) {
-      setSqlValue(interface_before_sql);
-    }
-  }, []);
+    if (seededSql.current) return;
+    if (watchedSql === undefined) return;
+    if (watchedSql) setSqlValue(watchedSql);
+    seededSql.current = true;
+  }, [watchedSql]);
+  const seededDbId = useRef(false);
+  useEffect(() => {
+    if (seededDbId.current) return;
+    if (watchedDbId === undefined) return;
+    if (watchedDbId) setBeforeDbId(watchedDbId);
+    seededDbId.current = true;
+  }, [watchedDbId]);
 
   /**
    * 根据SQL值控制Try按钮显示

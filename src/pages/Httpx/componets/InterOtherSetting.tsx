@@ -22,19 +22,18 @@ const InterOtherSetting: FC<Props> = (props) => {
     <ProCard>
       <>
         <ProForm.Group>
+          {/* interface_level / interface_status 的默认值在 ApiBaseForm 里设，这里不要再写 initialValue，否则会触发 Multiple Field 警告。 */}
           <ProFormSelect
             disabled={currentMode === 1}
             name="interface_level"
             label="优先级"
             width={'sm'}
-            initialValue={'P1'}
             options={API_LEVEL_SELECT}
           />
           <ProFormSelect
             disabled={currentMode === 1}
             name="interface_status"
             label="状态"
-            initialValue={'DEBUG'}
             width={'sm'}
             options={API_STATUS_SELECT}
           />

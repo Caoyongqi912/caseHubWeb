@@ -29,7 +29,7 @@ const ApiBeforeItems: FC<ISelfProps> = (props) => {
       key: '2',
       label: '添加脚本',
       icon: <PythonOutlined />,
-      children: <InterScript form={interApiForm} tag={'before_script'} />,
+      children: <InterScript form={interApiForm} />,
     },
     {
       key: '3',

@@ -14,6 +14,7 @@ import {
   Divider,
   FormInstance,
   List,
+  message,
   Popover,
   Space,
   theme,
@@ -27,7 +28,6 @@ const { useToken } = theme;
 
 interface SelfProps {
   form: FormInstance<IInterfaceAPI>;
-  tag: 'before_script' | 'after_script';
 }
 
 const ScriptList = [
@@ -104,7 +104,7 @@ const ScriptList = [
   },
 ];
 
-const InterScript: FC<SelfProps> = ({ form, tag }) => {
+const InterScript: FC<SelfProps> = ({ form }) => {
   const { token } = useToken();
   const timeoutRef = useRef<any>(null);
 
@@ -114,20 +114,15 @@ const InterScript: FC<SelfProps> = ({ form, tag }) => {
   const [tryData, setTryData] = useState<any>();
   const [isSaved, setIsSaved] = useState(false);
 
+  // 后置脚本走的是另一个组件，这里只处理前置脚本
+  const scriptField = 'interface_before_script';
+
   const formSetter = (value: string | null) => {
-    form.setFieldsValue({
-      [tag === 'before_script'
-        ? 'interface_before_script'
-        : 'interface_after_script']: value,
-    });
+    form.setFieldsValue({ [scriptField]: value });
   };
 
   useEffect(() => {
-    const script = form.getFieldValue(
-      tag === 'before_script'
-        ? 'interface_before_script'
-        : 'interface_after_script',
-    );
+    const script = form.getFieldValue(scriptField);
     if (script) {
       setScriptData(script);
     }
@@ -143,7 +138,7 @@ const InterScript: FC<SelfProps> = ({ form, tag }) => {
     setScriptData(value);
     formSetter(value);
     timeoutRef.current = setTimeout(async () => {
-      await FormEditableOnValueChange(form, tag, false).then(() => {
+      await FormEditableOnValueChange(form, scriptField, false).then(() => {
         setIsSaved(true);
         // 2秒后设置回 false
         setTimeout(() => {
@@ -212,14 +207,20 @@ const InterScript: FC<SelfProps> = ({ form, tag }) => {
               type="primary"
               icon={<PlayCircleOutlined />}
               onClick={async () => {
-                const { code, data } = await tryInterScript(scriptData);
-                if (code === 0) {
-                  try {
-                    setTryData(JSON.stringify(data, null, 2));
-                  } catch (err) {
-                    setTryData(data);
+                try {
+                  const { code, msg, data } = await tryInterScript(scriptData);
+                  if (code === 0) {
+                    try {
+                      setTryData(JSON.stringify(data, null, 2));
+                    } catch (err) {
+                      setTryData(data);
+                    }
+                    setOpen(true);
+                  } else {
+                    message.error(msg || '脚本执行失败');
                   }
-                  setOpen(true);
+                } catch (err) {
+                  message.error('脚本执行失败，请检查网络或后端服务');
                 }
               }}
               style={{

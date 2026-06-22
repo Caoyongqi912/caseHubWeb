@@ -89,7 +89,6 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
   );
   const [tryLoading, setTryLoading] = useState(false);
   const [responseInfo, setResponseInfo] = useState<IResponseInfo[]>();
-  const [currentInterAPIId, setCurrentInterAPIId] = useState<number>();
   const [drawers, setDrawers] = useState({
     remark: false,
     doc: false,
@@ -120,22 +119,18 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
     }
   }, [moduleId, projectId, interApiForm]);
 
+  // 统一处理 URL 上的 interId 和 prop 上的 interfaceId，决定加载详情还是进入新增态。
   useEffect(() => {
     if (interId) {
       setCurrentMode(MODE.DETAIL);
       fetchInterfaceDetails(interId);
-    } else if (!interfaceId) {
+    } else if (interfaceId) {
+      setCurrentMode(MODE.DETAIL);
+      fetchInterfaceDetails(interfaceId);
+    } else {
       setCurrentMode(MODE.ADD);
     }
   }, [interId, interfaceId, fetchInterfaceDetails]);
-
-  useEffect(() => {
-    if (interfaceId) {
-      setCurrentInterAPIId(interfaceId);
-      setCurrentMode(MODE.DETAIL);
-      fetchInterfaceDetails(interfaceId);
-    }
-  }, [interfaceId, fetchInterfaceDetails]);
 
   useEffect(() => {
     if (currentProjectId) {
@@ -161,7 +156,13 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
     await interApiForm.validateFields();
     const values = interApiForm.getFieldsValue(true);
 
-    if (interId !== undefined || values.id !== undefined) {
+    // 任何一个 id 存在（URL / prop / form）都走更新，否则视为新增。
+    // 之前只看 interId 和 form 的 id，prop 传入的 interfaceId 模式下会被误判成新增。
+    if (
+      interId !== undefined ||
+      interfaceId !== undefined ||
+      values.id !== undefined
+    ) {
       const { code, msg } = await updateInterApiById(values);
       if (code === 0) {
         message.success(msg);
@@ -177,7 +178,7 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
         );
       }
     }
-  }, [interId, interApiForm, callback]);
+  }, [interId, interfaceId, interApiForm, callback]);
 
   const scrollToResponse = useCallback(() => {
     if (responseRef.current) {
@@ -199,14 +200,14 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
       return;
     }
 
-    const interfaceId = interId || currentInterAPIId;
-    if (!interfaceId) return;
+    const effectiveId = interId ?? interfaceId;
+    if (!effectiveId) return;
 
     setTryLoading(true);
     setTimeout(scrollToResponse, 100);
 
     const { code, data } = await tryInterApi({
-      interface_id: interfaceId,
+      interface_id: effectiveId,
       env_id: runningEnv,
     });
 
@@ -215,7 +216,7 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
       setResponseInfo(data);
     }
     setTryLoading(false);
-  }, [runningEnv, interId, currentInterAPIId, scrollToResponse]);
+  }, [runningEnv, interId, interfaceId, scrollToResponse]);
 
   const isInterfaceActionDisabled = currentMode !== MODE.DETAIL;
 
@@ -394,7 +395,7 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
         open={drawers.remark}
         setOpen={() => handleCloseDrawer('remark')}
       >
-        <ApiRemark inteface_id={interId || currentInterAPIId} />
+        <ApiRemark inteface_id={interId ?? interfaceId} />
       </MyDrawer>
       <MyDrawer
         name="API Doc"
