@@ -97,11 +97,9 @@ const GroupProCard: FC<Props> = (props) => {
 
   return (
     <ProCard
-      bordered
       collapsible
       hoverable
       defaultCollapsed
-      styles={{ body: { padding: 0 } }}
       style={{
         borderRadius: '16px',
         boxShadow: showOption

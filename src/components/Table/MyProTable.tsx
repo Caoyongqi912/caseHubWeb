@@ -99,7 +99,6 @@ const MyProTable: FC<MyProTableProps> = (props) => {
     >
       <ProTable
         tableAlertOptionRender={tableAlertOptionRender}
-        tableStyle={{ width: '100%', minHeight: '400px' }}
         form={form}
         formProps={{ labelAlign: 'left' }}
         dataSource={dataSource}

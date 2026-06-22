@@ -1,6 +1,8 @@
 import { IPlanOverviewRound } from '@/api/case/caseplan';
-import { resolveStatusColor } from '@/pages/CaseHub/CasePlan/statusColor';
-import { useCaseEnumConfig } from '@/pages/CaseHub/hooks/useCaseEnumConfig';
+import {
+  BUILTIN_CASE_STATUS,
+  BUILTIN_CASE_STATUS_MAP,
+} from '@/pages/CaseHub/CaseConfig/caseStatus';
 import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import { Empty } from 'antd';
 import { useMemo } from 'react';
@@ -9,10 +11,11 @@ import { useMemo } from 'react';
  * 一轮 / 二轮 完成率对比
  *
  *  - 横向双行进度条：上方「一轮」下方「二轮」
- *  - 条内分段：通过 / 失败 / 未执行 比例着色
+ *  - 条内分段：通过(绿) / 失败(红) / 未执行(灰) 比例着色
  *  - 右侧数字：完成率 + 通过 / 失败 计数
- *  - 颜色：走配置中心 CASE_STATUS —— 与状态分布图保持同源
- *  - 数据源：overview.first_round / overview.second_round
+ *  - 颜色: 走 BUILTIN_CASE_STATUS 硬编码 (与后端 app/constant/caseStatus.py
+ *    保持同源), 不再读 case_config 表, 避免配置漂移
+ *  - 数据源: overview.first_round / overview.second_round
  */
 interface Props {
   first: IPlanOverviewRound;
@@ -21,16 +24,19 @@ interface Props {
 
 const CompletionRateChart: React.FC<Props> = ({ first, second }) => {
   const { token } = useCaseHubTheme();
-  const { options: caseStatusOptions } = useCaseEnumConfig('CASE_STATUS');
 
-  // 从配置中心解析「通过 / 失败」色
-  const colorOf = useMemo(() => {
+  // 状态色不读 case_config 表, 走 BUILTIN_CASE_STATUS 硬编码. 这样
+  //   1) admin 在配置中心改掉 label/color 不会污染统计图
+  //   2) 一轮/二轮 step 状态共用同一份枚举, 收口在代码层
+  //   3) 用 stable value (pass / fail) 查色, 不依赖 label 字符串,
+  //      未来 i18n 也不会让"通过" / "成功" 这种 label 漂移
+  const statusColorOf = useMemo(() => {
     const built: Record<string, string> = {};
-    for (const opt of caseStatusOptions) {
-      built[opt.label] = resolveStatusColor(token, opt.color);
+    for (const item of BUILTIN_CASE_STATUS) {
+      built[item.value] = item.color;
     }
-    return (label: string) => built[label] || token.colorTextTertiary;
-  }, [caseStatusOptions, token]);
+    return built;
+  }, []);
 
   const data = useMemo(
     () => [
@@ -63,10 +69,11 @@ const CompletionRateChart: React.FC<Props> = ({ first, second }) => {
         const failedPct = (round.failed / sum) * 100;
         const notExecPct = 100 - passedPct - failedPct;
 
-        // 通过色: 优先"通过"label 的色, 否则 success token
-        const passedColor =
-          colorOf('通过') || colorOf('成功') || token.colorSuccess;
-        const failedColor = colorOf('失败') || token.colorError;
+        // 用 stable value 查 BUILTIN_CASE_STATUS_MAP, 拿不到再降级到 antd token
+        const passedItem = BUILTIN_CASE_STATUS_MAP['pass'];
+        const failedItem = BUILTIN_CASE_STATUS_MAP['fail'];
+        const passedColor = passedItem?.color || token.colorSuccess;
+        const failedColor = failedItem?.color || token.colorError;
 
         return (
           <div
@@ -148,7 +155,7 @@ const CompletionRateChart: React.FC<Props> = ({ first, second }) => {
               <div
                 style={{
                   width: `${notExecPct}%`,
-                  background: 'transparent',
+                  background: token.colorFillSecondary,
                 }}
                 title={`未执行 ${round.not_executed}`}
               />
@@ -167,11 +174,7 @@ const CompletionRateChart: React.FC<Props> = ({ first, second }) => {
             >
               <LegendDot color={passedColor} label="通过" />
               <LegendDot color={failedColor} label="失败" />
-              <LegendDot
-                color="transparent"
-                borderColor={token.colorBorder}
-                label="未执行"
-              />
+              <LegendDot color={token.colorFillSecondary} label="未执行" />
               <span style={{ marginLeft: 'auto' }}>总数 {sum}</span>
             </div>
           </div>
@@ -183,10 +186,9 @@ const CompletionRateChart: React.FC<Props> = ({ first, second }) => {
 
 interface LegendDotProps {
   color: string;
-  borderColor?: string;
   label: string;
 }
-const LegendDot: React.FC<LegendDotProps> = ({ color, borderColor, label }) => (
+const LegendDot: React.FC<LegendDotProps> = ({ color, label }) => (
   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
     <span
       style={{
@@ -195,7 +197,6 @@ const LegendDot: React.FC<LegendDotProps> = ({ color, borderColor, label }) => (
         height: 8,
         borderRadius: 2,
         background: color,
-        border: borderColor ? `1px solid ${borderColor}` : 'none',
       }}
     />
     {label}
