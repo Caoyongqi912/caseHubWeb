@@ -163,7 +163,10 @@ const Index: FC<SelfProps> = ({ interfaceId, callback }) => {
       interfaceId !== undefined ||
       values.id !== undefined
     ) {
-      const { code, msg } = await updateInterApiById(values);
+      const { code, msg } = await updateInterApiById({
+        ...values,
+        interface_id: values.id,
+      });
       if (code === 0) {
         message.success(msg);
         setCurrentMode(MODE.DETAIL);
