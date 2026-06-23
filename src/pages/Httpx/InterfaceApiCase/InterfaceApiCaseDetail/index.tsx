@@ -95,6 +95,7 @@ const Index: FC<SelfProps> = ({ interfaceCase, hiddenRunButton }) => {
   const [isChoiceGroupDrawerOpen, setIsChoiceGroupDrawerOpen] = useState(false);
   const [resultReloadCount, setResultReloadCount] = useState(0);
   const [selectedEnvId, setSelectedEnvId] = useState<number>();
+  const [stepsLoading, setStepsLoading] = useState(false);
   const [isErrorStop, setIsErrorStop] = useState(false);
   const [runMode, setRunMode] = useState(1);
   const [activeKey, setActiveKey] = useState('2');
@@ -169,7 +170,12 @@ const Index: FC<SelfProps> = ({ interfaceCase, hiddenRunButton }) => {
 
   const handleRefreshSteps = useCallback(async () => {
     if (!currentCaseId) return;
-    await queryCaseContentSteps(currentCaseId);
+    setStepsLoading(true);
+    try {
+      await queryCaseContentSteps(currentCaseId);
+    } finally {
+      setStepsLoading(false);
+    }
   }, [currentCaseId, queryCaseContentSteps]);
 
   const refresh = useCallback(async () => {
@@ -467,14 +473,18 @@ const Index: FC<SelfProps> = ({ interfaceCase, hiddenRunButton }) => {
     () => (
       <Space size={12}>
         <Button
-          icon={<SyncOutlined style={{ fontSize: 14 }} />}
+          icon={<SyncOutlined style={{ fontSize: 16 }} />}
+          loading={stepsLoading}
           onClick={handleRefreshSteps}
           style={{
-            height: 32,
-            borderRadius: 6,
+            height: 36,
+            padding: '0 14px',
+            borderRadius: 8,
             display: 'flex',
             alignItems: 'center',
             gap: 6,
+            fontWeight: 500,
+            borderColor: token.colorBorderSecondary,
           }}
         >
           刷新

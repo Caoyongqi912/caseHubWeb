@@ -8,6 +8,7 @@ import Handler from '@/components/DnDDraggable/handler';
 import CardExtraOption from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/CardExtraOption';
 import DBEditorCard from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/DBScriptProCard/DBEditorCard';
 import DBExtractTable from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/DBScriptProCard/DBExtractTable';
+import { STEP_TAG_BASE_STYLE } from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/tagConfig';
 import { IBeforeSQLExtract, IInterfaceCaseContent } from '@/pages/Httpx/types';
 import { DatabaseOutlined, EditOutlined } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
@@ -228,17 +229,14 @@ const Index: FC<Props> = (props) => {
         <Tag
           icon={<DatabaseOutlined />}
           style={{
-            background: 'linear-gradient(135deg, #9333ea 0%, #7c3aed 100%)',
-            color: '#fff',
-            border: 'none',
-            fontWeight: 600,
-            fontSize: '12px',
-            padding: '4px 10px',
-            borderRadius: '6px',
-            boxShadow: '0 2px 8px rgba(147, 51, 234, 0.3)',
+            ...STEP_TAG_BASE_STYLE,
             display: 'flex',
             alignItems: 'center',
             gap: '4px',
+            background: 'linear-gradient(135deg, #9333ea 0%, #7c3aed 100%)',
+            color: '#fff',
+            border: 'none',
+            boxShadow: '0 2px 8px rgba(147, 51, 234, 0.3)',
           }}
         >
           DB Script

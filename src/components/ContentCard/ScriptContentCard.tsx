@@ -1,5 +1,6 @@
 import AceCodeEditor from '@/components/CodeEditor/AceCodeEditor';
 import Handler from '@/components/DnDDraggable/handler';
+import { STEP_TAG_BASE_STYLE } from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/tagConfig';
 import { CodeOutlined, EditOutlined, SaveOutlined } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
 import {
@@ -433,17 +434,14 @@ const ScriptContentCard: FC<Props> = (props) => {
           <Tag
             icon={<CodeOutlined />}
             style={{
-              background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
-              color: '#fff',
-              border: 'none',
-              fontWeight: 600,
-              fontSize: '12px',
-              padding: '4px 10px',
-              borderRadius: '6px',
-              boxShadow: '0 2px 8px rgba(37, 99, 235, 0.3)',
+              ...STEP_TAG_BASE_STYLE,
               display: 'flex',
               alignItems: 'center',
               gap: '4px',
+              background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+              color: '#fff',
+              border: 'none',
+              boxShadow: '0 2px 8px rgba(37, 99, 235, 0.3)',
             }}
           >
             脚本

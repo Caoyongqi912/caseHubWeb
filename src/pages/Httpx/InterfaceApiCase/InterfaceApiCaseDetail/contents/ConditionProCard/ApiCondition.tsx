@@ -18,6 +18,7 @@ import {
   DeleteOutlined,
   LoadingOutlined,
   PlusOutlined,
+  RedoOutlined,
   SelectOutlined,
 } from '@ant-design/icons';
 import {
@@ -443,60 +444,38 @@ const ApiCondition: FC<SelfProps> = (props) => {
       >
         {formRender}
         <Divider style={{ margin: '16px 0' }} />
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '16px',
-          }}
-        >
-          <Text
-            strong
-            style={{
-              fontSize: '15px',
-              color: token.colorText,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-            }}
-          >
-            <span
-              style={{
-                background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
-                width: '4px',
-                height: '16px',
-                borderRadius: '2px',
-                display: 'inline-block',
-              }}
-            />
-            条件接口列表
-          </Text>
-          <Dropdown
-            arrow
-            menu={{ items: dropdownItems }}
-            placement="bottomRight"
-          >
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              style={{
-                background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
-                border: 'none',
-                borderRadius: '8px',
-                boxShadow: '0 4px 12px rgba(139, 92, 246, 0.35)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-              }}
-            >
-              添加接口
-            </Button>
-          </Dropdown>
-        </div>
         <DragSortTable
+          toolBarRender={() => [
+            <RedoOutlined
+              style={{ fontSize: '14px', color: '#8b5cf6', marginRight: 12 }}
+              onClick={() => actionRef.current?.reload()}
+            />,
+            <Dropdown
+              arrow
+              menu={{ items: dropdownItems }}
+              placement="bottomRight"
+            >
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                style={{
+                  background:
+                    'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+                  border: 'none',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 12px rgba(139, 92, 246, 0.35)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                添加接口
+              </Button>
+            </Dropdown>,
+          ]}
           actionRef={actionRef}
           columns={columns}
+          options={false}
           rowKey="id"
           request={fetchConditionAPIS}
           search={false}
@@ -504,10 +483,6 @@ const ApiCondition: FC<SelfProps> = (props) => {
           dataSource={conditionAPI}
           dragSortKey="sort"
           onDragSortEnd={handleDragSortEnd}
-          style={{
-            borderRadius: '8px',
-            overflow: 'hidden',
-          }}
         />
       </div>
       <MyDrawer width={'75%'} open={showAPIDetail} setOpen={setShowAPIDetail}>

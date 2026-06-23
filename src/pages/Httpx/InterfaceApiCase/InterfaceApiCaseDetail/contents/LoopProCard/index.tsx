@@ -2,6 +2,7 @@ import { updateCaseContent } from '@/api/inter/interCase';
 import Handler from '@/components/DnDDraggable/handler';
 import CardExtraOption from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/CardExtraOption';
 import LoopSteps from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/LoopProCard/LoopSteps';
+import { STEP_TAG_BASE_STYLE } from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/tagConfig';
 import { IInterfaceCaseContent } from '@/pages/Httpx/types';
 import { EditOutlined, RetweetOutlined } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
@@ -169,17 +170,14 @@ const Index: FC<Props> = (props) => {
         <Tag
           icon={<RetweetOutlined />}
           style={{
-            background: 'linear-gradient(135deg, #ca8a04 0%, #a16207 100%)',
-            color: '#fff',
-            border: 'none',
-            fontWeight: 600,
-            fontSize: '12px',
-            padding: '4px 10px',
-            borderRadius: '6px',
-            boxShadow: '0 2px 8px rgba(202, 138, 4, 0.3)',
+            ...STEP_TAG_BASE_STYLE,
             display: 'flex',
             alignItems: 'center',
             gap: '4px',
+            background: 'linear-gradient(135deg, #ca8a04 0%, #a16207 100%)',
+            color: '#fff',
+            border: 'none',
+            boxShadow: '0 2px 8px rgba(202, 138, 4, 0.3)',
           }}
         >
           Loop

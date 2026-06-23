@@ -1,6 +1,7 @@
 import Handler from '@/components/DnDDraggable/handler';
 import GroupInterfaceTable from '@/pages/Httpx/Interface/interfaceApiGroup/GroupInterfaceTable';
 import CardExtraOption from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/CardExtraOption';
+import { STEP_TAG_BASE_STYLE } from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/tagConfig';
 import { IInterfaceCaseContent } from '@/pages/Httpx/types';
 import { GroupOutlined } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
@@ -63,17 +64,14 @@ const GroupProCard: FC<Props> = (props) => {
         <Tag
           icon={<GroupOutlined />}
           style={{
-            background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-            color: '#fff',
-            border: 'none',
-            fontWeight: 600,
-            fontSize: '12px',
-            padding: '4px 10px',
-            borderRadius: '6px',
-            boxShadow: '0 2px 8px rgba(59, 130, 246, 0.3)',
+            ...STEP_TAG_BASE_STYLE,
             display: 'flex',
             alignItems: 'center',
             gap: '4px',
+            background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+            color: '#fff',
+            border: 'none',
+            boxShadow: '0 2px 8px rgba(59, 130, 246, 0.3)',
           }}
         >
           组 x {caseContent.group_interface_num}

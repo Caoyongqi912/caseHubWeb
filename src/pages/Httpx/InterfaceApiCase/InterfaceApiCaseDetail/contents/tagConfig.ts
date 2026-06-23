@@ -88,3 +88,16 @@ export const TagConfig = {
 } as const;
 
 export type HttpMethod = keyof typeof TagConfig.API;
+
+/**
+ * 步骤卡片标题行内嵌标签的统一尺寸。
+ * 只放决定高度和文字外观的字段，display 留给调用方按"是否带 icon"决定：
+ * 带 icon 的渐变 Tag 需要 flex 让 icon 和文字居中对齐，STEP_xx 这种纯文字 Tag
+ * 保持 antd 默认的 inline-block，避免变成 block 把 Space 撑换行。
+ */
+export const STEP_TAG_BASE_STYLE = {
+  fontSize: '12px',
+  fontWeight: 600,
+  padding: '4px 10px',
+  borderRadius: '6px',
+} as const;

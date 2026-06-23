@@ -1,5 +1,6 @@
 import Handler from '@/components/DnDDraggable/handler';
 import { AssertOption } from '@/pages/Httpx/componets/assertEnum';
+import { STEP_TAG_BASE_STYLE } from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/tagConfig';
 import {
   CheckCircleOutlined,
   EditOutlined,
@@ -172,17 +173,14 @@ const AssertContentCard: FC<Props> = (props) => {
         <Tag
           icon={<CheckCircleOutlined />}
           style={{
-            background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
-            color: '#fff',
-            border: 'none',
-            fontWeight: 600,
-            fontSize: '12px',
-            padding: '4px 10px',
-            borderRadius: '6px',
-            boxShadow: '0 2px 8px rgba(5, 150, 105, 0.3)',
+            ...STEP_TAG_BASE_STYLE,
             display: 'flex',
             alignItems: 'center',
             gap: '4px',
+            background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+            color: '#fff',
+            border: 'none',
+            boxShadow: '0 2px 8px rgba(5, 150, 105, 0.3)',
           }}
         >
           断言

@@ -6,6 +6,7 @@ import {
 import { updateCaseContentDBScript } from '@/api/inter/interCase';
 import AceCodeEditor from '@/components/CodeEditor/AceCodeEditor';
 import MyDrawer from '@/components/MyDrawer';
+import { STEP_TAG_BASE_STYLE } from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/tagConfig';
 import { IBeforeSQLExtract } from '@/pages/Httpx/types';
 import { IDBConfig } from '@/pages/Project/types';
 import {
@@ -379,13 +380,13 @@ const DBContentCard: FC<Props> = (props) => {
               <Tag
                 icon={<DatabaseOutlined />}
                 style={{
+                  ...STEP_TAG_BASE_STYLE,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
                   background: '#f3e8ff',
                   color: '#9333ea',
                   border: '1px solid #9333ea20',
-                  fontWeight: 600,
-                  fontSize: '12px',
-                  padding: '2px 8px',
-                  borderRadius: token.borderRadiusSM,
                 }}
               >
                 DB

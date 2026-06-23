@@ -2,6 +2,7 @@ import { getConditionContentInfo } from '@/api/inter/interCase';
 import Handler from '@/components/DnDDraggable/handler';
 import CardExtraOption from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/CardExtraOption';
 import ApiCondition from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/ConditionProCard/ApiCondition';
+import { STEP_TAG_BASE_STYLE } from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/tagConfig';
 import { IInterfaceCaseContent } from '@/pages/Httpx/types';
 import { BranchesOutlined } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
@@ -115,30 +116,28 @@ const Index: FC<Props> = (props) => {
         <Tag
           icon={<BranchesOutlined />}
           style={{
-            background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
-            color: '#fff',
-            border: 'none',
-            fontWeight: 600,
-            fontSize: '12px',
-            padding: '4px 10px',
-            borderRadius: '6px',
-            boxShadow: '0 2px 8px rgba(139, 92, 246, 0.3)',
+            ...STEP_TAG_BASE_STYLE,
             display: 'flex',
             alignItems: 'center',
             gap: '4px',
+            background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+            color: '#fff',
+            border: 'none',
+            boxShadow: '0 2px 8px rgba(139, 92, 246, 0.3)',
           }}
         >
           IF 条件
         </Tag>
         {conditionKey && (
+          // 跟同行的 STEP_xx / IF 条件 Tag 对齐高度。
           <Text
             style={{
-              fontSize: '14px',
+              ...STEP_TAG_BASE_STYLE,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
               color: '#8b5cf6',
-              fontWeight: 600,
               background: 'rgba(139, 92, 246, 0.1)',
-              padding: '2px 8px',
-              borderRadius: '4px',
               border: '1px solid rgba(139, 92, 246, 0.2)',
             }}
           >
@@ -153,12 +152,12 @@ const Index: FC<Props> = (props) => {
         {conditionValue && (
           <Text
             style={{
-              fontSize: '14px',
+              ...STEP_TAG_BASE_STYLE,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
               color: '#8b5cf6',
-              fontWeight: 600,
               background: 'rgba(139, 92, 246, 0.1)',
-              padding: '2px 8px',
-              borderRadius: '4px',
               border: '1px solid rgba(139, 92, 246, 0.2)',
             }}
           >
@@ -172,7 +171,7 @@ const Index: FC<Props> = (props) => {
 
   return (
     <ProCard
-      bordered
+      variant={'outlined'}
       collapsible
       hoverable
       styles={{ body: { padding: 0 } }}

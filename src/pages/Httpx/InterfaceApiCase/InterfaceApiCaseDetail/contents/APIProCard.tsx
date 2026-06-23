@@ -4,6 +4,7 @@ import InterfaceApiDetail from '@/pages/Httpx/Interface/InterfaceApiDetail';
 import CardExtraOption from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/CardExtraOption';
 import {
   HttpMethod,
+  STEP_TAG_BASE_STYLE,
   TagConfig,
 } from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/tagConfig';
 import { IInterfaceCaseContent } from '@/pages/Httpx/types';
@@ -92,17 +93,14 @@ const ApiProCard: FC<Props> = (props) => {
         <Tag
           icon={<ApiOutlined />}
           style={{
-            background: 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)',
-            color: '#fff',
-            border: 'none',
-            fontWeight: 600,
-            fontSize: '12px',
-            padding: '4px 10px',
-            borderRadius: '6px',
-            boxShadow: '0 2px 8px rgba(6, 182, 212, 0.3)',
+            ...STEP_TAG_BASE_STYLE,
             display: 'flex',
             alignItems: 'center',
             gap: '4px',
+            background: 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)',
+            color: '#fff',
+            border: 'none',
+            boxShadow: '0 2px 8px rgba(6, 182, 212, 0.3)',
           }}
         >
           {methodConfig.label}
@@ -110,13 +108,13 @@ const ApiProCard: FC<Props> = (props) => {
         <Tag
           icon={<VisibilityIcon />}
           style={{
+            ...STEP_TAG_BASE_STYLE,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
             background: visibilityConfig.bgColor,
             color: visibilityConfig.color,
             border: `1px solid ${visibilityConfig.borderColor}`,
-            fontWeight: 500,
-            fontSize: '12px',
-            padding: '2px 8px',
-            borderRadius: '6px',
           }}
         >
           {visibilityConfig.label}

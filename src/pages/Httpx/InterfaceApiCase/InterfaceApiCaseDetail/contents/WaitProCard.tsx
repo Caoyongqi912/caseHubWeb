@@ -1,7 +1,10 @@
 import { updateCaseContent } from '@/api/inter/interCase';
 import Handler from '@/components/DnDDraggable/handler';
 import CardExtraOption from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/CardExtraOption';
-import { TagConfig } from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/tagConfig';
+import {
+  STEP_TAG_BASE_STYLE,
+  TagConfig,
+} from '@/pages/Httpx/InterfaceApiCase/InterfaceApiCaseDetail/contents/tagConfig';
 import { IInterfaceCaseContent } from '@/pages/Httpx/types';
 import { ClockCircleOutlined, EditOutlined } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
@@ -165,17 +168,14 @@ const WaitProCard: FC<Props> = (props) => {
         <Tag
           icon={<ClockCircleOutlined />}
           style={{
-            background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-            color: '#fff',
-            border: 'none',
-            fontWeight: 600,
-            fontSize: '12px',
-            padding: '4px 10px',
-            borderRadius: '6px',
-            boxShadow: '0 2px 8px rgba(245, 158, 11, 0.3)',
+            ...STEP_TAG_BASE_STYLE,
             display: 'flex',
             alignItems: 'center',
             gap: '4px',
+            background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+            color: '#fff',
+            border: 'none',
+            boxShadow: '0 2px 8px rgba(245, 158, 11, 0.3)',
           }}
         >
           等待
