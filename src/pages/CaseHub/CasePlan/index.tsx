@@ -8,6 +8,7 @@
 
 import {
   deleteCasePlan,
+  getCasePlanStatistics,
   pageCasePlan,
   updateCasePlan,
 } from '@/api/case/caseplan';
@@ -54,7 +55,7 @@ import dayjs from 'dayjs';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import CasePlanForm from './components/CasePlanForm';
 import type { PlanStatusItem } from './components/StatCards';
-import { computePlanStats, type PlanStats } from './components/StatCards';
+import { type PlanStats } from './components/StatCards';
 import { resolveStatusColor } from './statusColor';
 
 const { Content } = Layout;
@@ -426,14 +427,7 @@ const CasePlanPage: React.FC = () => {
         sort,
         project_id: selectedProjectId,
       });
-      if (
-        code === 0 &&
-        Array.isArray(data?.items) &&
-        !statusFilter &&
-        !phaseFilter
-      ) {
-        setStats(computePlanStats(data.items, statuses, phases));
-      }
+      // 顶部统计卡片由 loadStats 单独拉全量接口，避免被 page 分页影响
       return pageData(code, data);
     },
     [
@@ -449,6 +443,8 @@ const CasePlanPage: React.FC = () => {
   );
 
   // 加载全量统计
+  // 之前用 page 接口 pageSize=100 兜底：计划超过 100 条时 total / statusCounts
+  // / avgCompletion 全部失真。后端 list_statistics 走全量聚合，不再受分页影响。
   const reloadKey = useRef(0);
   const loadStats = useCallback(async () => {
     if (selectedProjectId === undefined) {
@@ -463,19 +459,31 @@ const CasePlanPage: React.FC = () => {
     setStatsLoading(true);
     const fetchId = ++reloadKey.current;
     try {
-      const { code, data } = await pageCasePlan({
-        current: 1,
-        pageSize: 100,
+      const { code, data } = await getCasePlanStatistics({
         project_id: selectedProjectId,
       });
       if (fetchId !== reloadKey.current) return;
-      if (code === 0 && Array.isArray(data?.items)) {
-        setStats(computePlanStats(data.items, statuses, phases));
+      if (code === 0 && data) {
+        setStats({
+          total: data.total ?? 0,
+          statusCounts: data.statusCounts ?? {},
+          phaseCounts: data.phaseCounts ?? {},
+          avgCompletion: data.avgCompletion ?? 0,
+        });
       }
     } finally {
       if (fetchId === reloadKey.current) setStatsLoading(false);
     }
-  }, [selectedProjectId, statuses, phases]);
+  }, [selectedProjectId]);
+
+  // 顶部统计卡片只在 selectedProjectId 变化时刷新
+  // stats 口径是当前项目下"全量"计划，跟 keyword / charge / date /
+  // status / phase 等筛选无关——这些筛选只动表格 reload。
+  useEffect(() => {
+    if (selectedProjectId !== undefined) {
+      loadStats();
+    }
+  }, [selectedProjectId, loadStats]);
 
   // 筛选变化时刷新表格
   useEffect(() => {

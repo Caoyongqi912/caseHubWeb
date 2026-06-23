@@ -779,15 +779,6 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
           <span style={{ color: colors.textSecondary }}>{text}</span>
         ),
       },
-      {
-        title: '创建时间',
-        dataIndex: 'create_time',
-        valueType: 'dateTime',
-        width: 160,
-        sorter: true,
-        sortOrder,
-        defaultSortOrder: 'descend',
-      },
     ],
     [colors, levelColorMap, token, borderRadius, modulePathBuilder],
   );

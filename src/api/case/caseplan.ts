@@ -654,3 +654,42 @@ export const getPlanStatistics = async (plan_id: number) => {
     params: { plan_id },
   });
 };
+
+/**
+ * 测试计划全量统计（不走分页）
+ *
+ * 跟 GET /api/hub/plan/statistics 的区别：
+ * - /statistics 算的是单个 plan 的用例分布
+ * - 本接口算的是"测试计划列表"页面顶部的统计卡片（总计划数 /
+ *   各状态计划数 / 各阶段计划数 / 平均完成率），按筛选条件对全量 plan
+ *   做 COUNT / GROUP BY / AVG。
+ *
+ * 之前用 page 接口做这个统计有分页偏差（pageSize=100 兜底），超过 100
+ * 条计划时统计严重失真。
+ *
+ * 对应后端 POST /api/hub/plan/statistics/list
+ */
+export interface IPlanListStatistics {
+  total: number;
+  statusCounts: Record<string, number>;
+  phaseCounts: Record<string, number>;
+  avgCompletion: number;
+}
+
+export const getCasePlanStatistics = async (data: {
+  project_id: number;
+  plan_name?: string;
+  plan_status?: string;
+  plan_phase?: string;
+  charge_id?: number;
+  plan_start_time?: string;
+  plan_end_time?: string;
+}) => {
+  return request<IResponse<IPlanListStatistics>>(
+    '/api/hub/plan/statistics/list',
+    {
+      method: 'POST',
+      data,
+    },
+  );
+};
