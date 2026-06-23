@@ -44,6 +44,10 @@ export interface ITestCase {
   module_id?: number;
   first_status?: string;
   second_status?: string;
+  // 用例在所属 module 内的排序序号, 后端 test_case.order 字段
+  // page 接口默认 sort: { order: ascend, id: ascend },
+  // 拖拽后由 POST /hub/cases/reorder 回写, 列表刷新即可看见新顺序
+  order?: number;
 }
 
 export interface CaseSubStep {

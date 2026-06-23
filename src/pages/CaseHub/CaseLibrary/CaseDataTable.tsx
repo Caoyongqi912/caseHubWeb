@@ -5,6 +5,7 @@ import {
   exportCases,
   pageTestCase,
   removeTestCase,
+  reorderTestCase,
 } from '@/api/case/testCase';
 import MyDrawer from '@/components/MyDrawer';
 import UserSelect from '@/components/Table/UserSelect';
@@ -29,9 +30,9 @@ import {
 } from '@ant-design/icons';
 import {
   ActionType,
+  DragSortTable,
   ProCard,
   ProColumns,
-  ProTable,
 } from '@ant-design/pro-components';
 import type { MenuProps } from 'antd';
 import {
@@ -175,13 +176,20 @@ const CaseDataTable: FC<Props> = (props) => {
 
   /** 分页查询用例数据 */
   const fetchPageData = useCallback(
-    async (params: any, sort: any) => {
+    async (params: any, sort: any, filter?: any) => {
+      // 默认按 order 升序 (拖拽列维护的字段) 主排, id 升序次排.
+      // DragSortTable 拖拽后会触发 reload, 此时 sort 由父组件传, 不强制覆盖.
+      // 用户点列表头切单字段排序时, sort 会被 antd 传过来, 后端响应按 sort 处理.
+      const finalSort =
+        sort && Object.keys(sort).length > 0
+          ? sort
+          : { order: 'ascend', id: 'ascend' };
       const values = {
         ...params,
         is_common: true,
         module_id: currentModuleId,
         module_type: ModuleEnum.CASE,
-        sort: sort,
+        sort: finalSort,
       };
       const { code, data } = await pageTestCase(values);
       // 同步更新 headerTitle 的 count (表格的真实总数)
@@ -191,6 +199,64 @@ const CaseDataTable: FC<Props> = (props) => {
       return pageData(code, data);
     },
     [currentModuleId],
+  );
+
+  /**
+   * DragSortTable 拖拽结束回调: 把 newDataSource 的最终顺序通过
+   * POST /hub/cases/reorder 同步到后端.
+   *
+   * 锚点解析
+   * --------
+   * - to > from: 把 case_id 放到 newDataSource[to].id 之后 → after_id
+   * - to < from: 把 case_id 放到 newDataSource[to].id 之前 → before_id
+   * - 拖到末尾且 to 是 newDataSource 最后一个索引: 不传锚点, 后端追加到 module 末尾
+   *
+   * 失败回滚
+   * --------
+   * - 调接口失败 / 业务报错时, actionRef.reload() 重新拉取后端真实顺序,
+   *   避免 UI 与 DB 错位 (DragSortTable 已经把 DOM 顺序更新了)
+   * - reload() 会触发 loading, 用户感知"操作失败, 正在恢复"
+   */
+  const handleDragSortEnd = useCallback(
+    async (from: number, to: number, newDataSource: ITestCase[]) => {
+      if (!currentProjectId) return;
+      const movedRow = newDataSource[from];
+      if (!movedRow || movedRow.id === undefined) {
+        actionRef.current?.reload();
+        return;
+      }
+
+      // 找出锚点: 取 to 位置相邻的 case (用 from/to 上下文)
+      let before_id: number | undefined;
+      let after_id: number | undefined;
+      if (to === newDataSource.length - 1) {
+        // 拖到末尾: 不传锚点, 后端追加到 module 末尾
+      } else if (to > from) {
+        after_id = newDataSource[to]?.id;
+      } else {
+        before_id = newDataSource[to]?.id;
+      }
+
+      try {
+        const { code, msg } = await reorderTestCase({
+          project_id: currentProjectId,
+          case_id: movedRow.id,
+          ...(before_id !== undefined ? { before_id } : {}),
+          ...(after_id !== undefined ? { after_id } : {}),
+        });
+        if (code !== 0) {
+          message.error(msg || '排序失败');
+          actionRef.current?.reload();
+        } else {
+          // 同步成功: 后端 order 已重排, 列表无需 reload (顺序由后端单源决定)
+          // 但 moduleCaseCount 不变, 不需要重设
+        }
+      } catch (err) {
+        message.error('排序失败,请重试');
+        actionRef.current?.reload();
+      }
+    },
+    [currentProjectId],
   );
   /**
    * 模块索引: 把树扁平为 Map<id, IModule>, O(1) 查任意 module_id
@@ -241,6 +307,17 @@ const CaseDataTable: FC<Props> = (props) => {
 
   const column: ProColumns<ITestCase>[] = useMemo(
     () => [
+      {
+        // 拖拽手柄列: valueType: 'drag' 让 DragSortTable 渲染拖拽图标
+        // 并响应 onDragSortEnd; dataIndex 与 DragSortTable.dragSortKey 对齐
+        // 后端字段是 test_case.order, 默认按 order ASC 排序展示
+        title: '排序',
+        dataIndex: 'order',
+        valueType: 'drag',
+        width: '3%',
+        fixed: 'left',
+        search: false,
+      },
       {
         title: '用例名称',
         dataIndex: 'case_name',
@@ -693,9 +770,10 @@ const CaseDataTable: FC<Props> = (props) => {
           },
         }}
       >
-        <ProTable
+        <DragSortTable
           footer={() => false}
           cardBordered
+          dragSortKey="order"
           headerTitle={
             currentModuleId ? (
               <Space size={6} align="center">
@@ -750,6 +828,7 @@ const CaseDataTable: FC<Props> = (props) => {
           request={fetchPageData}
           columns={column}
           rowKey={'uid'}
+          onDragSortEnd={handleDragSortEnd}
           rowSelection={rowSelection}
         />
       </ProCard>

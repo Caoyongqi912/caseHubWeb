@@ -357,18 +357,66 @@ export const queryTestCaseDynamic = async (
 };
 
 /**
- * 重排序测试用例
- * @param info - 包含 requirement_id 和 caseIds
- * @param options - 可选的请求配置
+ * 重排序测试用例（module 维度, 单 case 移动）
+ *
+ * 之前 requirement 维度的旧版 reorderTestCase(requirement_id, caseIds) 是死代码:
+ * 后端从未提供对应路由 (model / controller / mapper 都没引用过 ReorderCase schema).
+ * 这里重写为 module 维度 + before/after 锚点语义, 对应后端 POST /hub/cases/reorder
+ * 与 planCaseMapper.reorder_plan_case 同款设计.
+ *
+ * 锚点语义
+ * --------
+ * - before_id 优先: 被移动 case 放在此 case 之前
+ * - after_id 次之: 被移动 case 放在此 case 之后
+ * - 都为空: 被移动 case 移到目标 module 末尾
+ *
+ * 跨 module 移动
+ * --------
+ * - target_module_id 指定新模块即可, 后端用单条 UPDATE ... CASE 整组回写 order
+ *   并顺带改 module_id
+ *
+ * @param info 重排序参数
+ * @param options 可选的请求配置
  */
 export const reorderTestCase = async (
   info: {
-    requirement_id: number;
-    caseIds: number[];
+    project_id: number;
+    case_id: number;
+    target_module_id?: number;
+    before_id?: number;
+    after_id?: number;
   },
   options?: IObjGet,
 ) => {
-  return request<IResponse<null>>(`/api/hub/cases/reorder`, {
+  return request<IResponse<number>>(`/api/hub/cases/reorder`, {
+    method: 'POST',
+    data: info,
+    ...(options || {}),
+  });
+};
+
+/**
+ * 批量重排序测试用例（多选拖拽 / 跨 module 批量调整）
+ *
+ * 所有 items 在后端同一事务内顺序应用, 任一失败整体回滚.
+ * 返回值为每条 item 的 affected 行数列表, 便于前端精确定位失败项.
+ *
+ * @param info 批量重排序参数 (project_id + items)
+ * @param options 可选的请求配置
+ */
+export const reorderTestCasesBulk = async (
+  info: {
+    project_id: number;
+    items: Array<{
+      case_id: number;
+      target_module_id?: number;
+      before_id?: number;
+      after_id?: number;
+    }>;
+  },
+  options?: IObjGet,
+) => {
+  return request<IResponse<number[]>>(`/api/hub/cases/reorder/bulk`, {
     method: 'POST',
     data: info,
     ...(options || {}),
