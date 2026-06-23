@@ -54,7 +54,7 @@ const Index: FC<Props> = ({ caseResultId }) => {
 
   return (
     <ProCard
-      bordered
+      variant={'outlined'}
       extra={
         <Button type={'primary'} onClick={() => setFailOnly(!failOnly)}>
           {failOnly ? '查看全部' : '只看失败'}
