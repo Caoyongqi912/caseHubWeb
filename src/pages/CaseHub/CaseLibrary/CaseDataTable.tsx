@@ -205,36 +205,71 @@ const CaseDataTable: FC<Props> = (props) => {
    * DragSortTable 拖拽结束回调: 把 newDataSource 的最终顺序通过
    * POST /hub/cases/reorder 同步到后端.
    *
-   * 锚点解析
+   * 锚点解析 (基于 movedRow 在 newDataSource 中的新位置 = to)
    * --------
-   * - to > from: 把 case_id 放到 newDataSource[to].id 之后 → after_id
-   * - to < from: 把 case_id 放到 newDataSource[to].id 之前 → before_id
-   * - 拖到末尾且 to 是 newDataSource 最后一个索引: 不传锚点, 后端追加到 module 末尾
+   * DragSortTable 的 to 是被移动 case 在新数组中的索引, 此时
+   * newDataSource[to] 就是 movedRow 本身, 不能拿它当锚点.
+   * 真正作参照的"邻居"在 movedRow 旁边:
+   *
+   * - to < from (往前拖): 意图是 "movedRow 放在某条之前", 那条就是
+   *   newDataSource[to + 1] (movedRow 之后的邻居), 传 before_id
+   * - to > from (往后拖): 意图是 "movedRow 放在某条之后", 那条就是
+   *   newDataSource[to - 1] (movedRow 之前的邻居), 传 after_id
+   * - to === 0 且 newDataSource 长度 1: 整个 page 只有 movedRow,
+   *   没邻居可参考, 不传锚点, 后端放到 module 最前
+   * - to === from: 没真正移动, 不发请求
+   *
+   * 验证
+   * --------
+   * 原始 [A, B, C, D], 拖 D (from=3) 到 A 之前:
+   *   newDataSource = [D, A, B, C], to=0, 邻居 = newDataSource[1] = A
+   *   → before_id = A  ✓
+   * 原始 [A, B, C, D], 拖 A (from=0) 到 D 之后:
+   *   newDataSource = [B, C, D, A], to=3, 邻居 = newDataSource[2] = D
+   *   → after_id = D  ✓
+   *
+   * 成功后必须 reload
+   * --------
+   * - DragSortTable 的 onDragSortEnd 给的 newDataSource 只是 "推算的" 目标顺序,
+   *   它不会写回 request 拉到的内部 data. 一旦父组件任意 prop 变化
+   *   (比如 pagination / 筛选 / 切 module), data 就会被 request 的结果覆盖,
+   *   用户感知为 "拖完看似成功, 刷新又回去了".
+   * - 解决: 成功后立刻 actionRef.reload(), 让 request 重新拉后端真实顺序
+   *   并替换 dataSource. reload 期间表格 loading 闪烁几百毫秒,
+   *   但能确保 UI 跟后端一致, 避免 "刷新一次才对" 的诡异现象.
    *
    * 失败回滚
    * --------
    * - 调接口失败 / 业务报错时, actionRef.reload() 重新拉取后端真实顺序,
    *   避免 UI 与 DB 错位 (DragSortTable 已经把 DOM 顺序更新了)
-   * - reload() 会触发 loading, 用户感知"操作失败, 正在恢复"
    */
   const handleDragSortEnd = useCallback(
     async (from: number, to: number, newDataSource: ITestCase[]) => {
       if (!currentProjectId) return;
-      const movedRow = newDataSource[from];
+      if (to === from) return;
+      // 从 newDataSource[to] 取 movedRow (DragSortTable 已把它放到 to 位置)
+      const movedRow = newDataSource[to];
       if (!movedRow || movedRow.id === undefined) {
         actionRef.current?.reload();
         return;
       }
 
-      // 找出锚点: 取 to 位置相邻的 case (用 from/to 上下文)
       let before_id: number | undefined;
       let after_id: number | undefined;
-      if (to === newDataSource.length - 1) {
-        // 拖到末尾: 不传锚点, 后端追加到 module 末尾
-      } else if (to > from) {
-        after_id = newDataSource[to]?.id;
+      if (to < from) {
+        // 往前拖: 锚点 = movedRow 之后的邻居 (newDataSource[to + 1])
+        const anchor = newDataSource[to + 1];
+        if (anchor && anchor.id !== undefined) {
+          before_id = anchor.id;
+        }
+        // newDataSource 只有 movedRow 一条时 anchor 不存在,
+        // 不传锚点, 后端会按 module 现有顺序追加
       } else {
-        before_id = newDataSource[to]?.id;
+        // 往后拖: 锚点 = movedRow 之前的邻居 (newDataSource[to - 1])
+        const anchor = newDataSource[to - 1];
+        if (anchor && anchor.id !== undefined) {
+          after_id = anchor.id;
+        }
       }
 
       try {
@@ -246,13 +281,12 @@ const CaseDataTable: FC<Props> = (props) => {
         });
         if (code !== 0) {
           message.error(msg || '排序失败');
-          actionRef.current?.reload();
-        } else {
-          // 同步成功: 后端 order 已重排, 列表无需 reload (顺序由后端单源决定)
-          // 但 moduleCaseCount 不变, 不需要重设
         }
       } catch (err) {
         message.error('排序失败,请重试');
+      } finally {
+        // 无论成功失败都 reload: 让 request 重新拉后端真实顺序,
+        // 覆盖 DragSortTable 内部临时推算的 newDataSource
         actionRef.current?.reload();
       }
     },
@@ -313,7 +347,6 @@ const CaseDataTable: FC<Props> = (props) => {
         // 后端字段是 test_case.order, 默认按 order ASC 排序展示
         title: '排序',
         dataIndex: 'order',
-        valueType: 'drag',
         width: '3%',
         fixed: 'left',
         search: false,

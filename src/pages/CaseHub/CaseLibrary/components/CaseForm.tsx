@@ -152,11 +152,11 @@ const CaseForm: FC<Props> = ({
           }}
         />
 
-        <ProFormText
+        {/* <ProFormText
           label="用例标签"
           name="case_tag"
           placeholder="请输入用例标签，多个标签用逗号分隔"
-        />
+        /> */}
 
         <ProForm.Group>
           <ProFormSelect

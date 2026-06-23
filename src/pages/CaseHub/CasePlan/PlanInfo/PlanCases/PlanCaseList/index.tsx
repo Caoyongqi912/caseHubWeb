@@ -133,7 +133,7 @@ const CaseRow: React.FC<{
         display: 'block',
         boxSizing: 'border-box',
         // 卡片之间留 4px 视觉间隙（itemSize 已在 EXPANDED_HEIGHT 计入此 padding）
-        paddingBottom: 6,
+        paddingBottom: 4,
       }}
     >
       {tc ? (
