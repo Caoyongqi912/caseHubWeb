@@ -13,7 +13,7 @@ import {
   CloseCircleTwoTone,
 } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
-import { Tag, theme, Tooltip, Typography } from 'antd';
+import { Space, Tag, theme, Tooltip, Typography } from 'antd';
 import { FC, useMemo } from 'react';
 
 const { Text } = Typography;
@@ -102,17 +102,7 @@ const ApiResult: FC<Props> = ({ result, prefix }) => {
       text: '',
     };
     return (
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: 8,
-          padding: '4px 8px',
-          borderRadius: 4,
-          maxWidth: '100%',
-        }}
-      >
+      <Space>
         <InfoItem
           label="Method"
           value={response.request_method}
@@ -126,7 +116,7 @@ const ApiResult: FC<Props> = ({ result, prefix }) => {
         />
         <InfoItem label="Request_Time" value={start_time || '-'} noBg />
         <InfoItem label="Latency" value={`${use_time}ms`} noBg />
-      </div>
+      </Space>
     );
   };
 
@@ -145,17 +135,10 @@ const ApiResult: FC<Props> = ({ result, prefix }) => {
           {result.data.map((item: IResponseInfo, index: number) => (
             <ProCard
               extra={tabExtra(item)}
-              bordered
+              variant={'outlined'}
               style={styles.card}
-              collapsibleIconRender={() => (
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    flexWrap: 'wrap',
-                    gap: 8,
-                  }}
-                >
+              title={
+                <Space>
                   {stepTag(index)}
                   <Tooltip title={'接口'}>
                     <Tag color="gold" variant="solid" icon={<ApiOutlined />} />
@@ -166,8 +149,11 @@ const ApiResult: FC<Props> = ({ result, prefix }) => {
                     <CloseCircleTwoTone twoToneColor={token.colorError} />
                   )}
                   <Text type={'secondary'}>{item.interface_name}</Text>
-                </div>
-              )}
+                </Space>
+              }
+              collapsibleIconRender={({}) => {
+                return null;
+              }}
               headerBordered
               collapsible
               defaultCollapsed

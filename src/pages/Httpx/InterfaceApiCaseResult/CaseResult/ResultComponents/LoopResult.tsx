@@ -2,7 +2,7 @@ import APIResult from '@/pages/Httpx/InterfaceApiCaseResult/CaseResult/ResultCom
 import { ICaseContentResult } from '@/pages/Httpx/types';
 import { CheckCircleTwoTone, CloseCircleTwoTone } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
-import { Tag, theme, Tooltip, Typography } from 'antd';
+import { Space, Tag, theme, Tooltip, Typography } from 'antd';
 import { FC, useMemo } from 'react';
 
 const { Text } = Typography;
@@ -182,14 +182,7 @@ const LoopResult: FC<Props> = ({ result }) => {
 
   const headerContent = useMemo(
     () => (
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: 8,
-        }}
-      >
+      <Space align="center" style={{ width: '100%' }}>
         <Tag color="green" variant="solid">
           STEP_{result.content_step}
         </Tag>
@@ -211,16 +204,17 @@ const LoopResult: FC<Props> = ({ result }) => {
             loopItems={result.loop_items}
           />
         )}
-      </div>
+      </Space>
     ),
     [result, token],
   );
 
   return (
     <ProCard
-      bordered
+      variant={'outlined'}
       style={cardStyle}
-      collapsibleIconRender={() => headerContent}
+      title={headerContent}
+      collapsibleIconRender={() => null}
       headerBordered
       collapsible
       defaultCollapsed

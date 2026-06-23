@@ -38,43 +38,44 @@ const AssertResult: FC<Props> = ({ result }) => {
 
   return (
     <ProCard
-      bordered
+      variant={'outlined'}
       style={{
         borderRadius: '8px',
         marginTop: 8,
         overflow: 'hidden',
         borderLeft: `4px solid ${result.result ? '#52c41a' : '#ff4d4f'}`,
       }}
-      collapsibleIconRender={({}) => {
-        return (
-          <Space align="center" style={{ width: '100%' }}>
-            <Space size={[8, 0]}>
-              <Tag color="green" variant="solid">
-                STEP_{result.content_step}
-              </Tag>
-              <Tooltip title={'断言'}>
-                <Tag color="red" variant="solid" icon={<QuestionOutlined />} />
-              </Tooltip>
-            </Space>
-            {result.result ? (
-              <CheckCircleTwoTone twoToneColor="#52c41a" />
-            ) : (
-              <CloseCircleTwoTone twoToneColor={'#c20000'} />
-            )}
-            <Text type={'secondary'} style={{ marginLeft: 20 }}>
-              {result.content_name}
-            </Text>
-            <div style={{ flex: 1, margin: '0 16px' }}>
-              <Text
-                ellipsis={{ tooltip: result.content_name }}
-                style={{
-                  fontSize: '14px',
-                  fontWeight: 500,
-                }}
-              ></Text>
-            </div>
+      title={
+        <Space align="center" style={{ width: '100%' }}>
+          <Space size={[8, 0]}>
+            <Tag color="green" variant="solid">
+              STEP_{result.content_step}
+            </Tag>
+            <Tooltip title={'断言'}>
+              <Tag color="red" variant="solid" icon={<QuestionOutlined />} />
+            </Tooltip>
           </Space>
-        );
+          {result.result ? (
+            <CheckCircleTwoTone twoToneColor="#52c41a" />
+          ) : (
+            <CloseCircleTwoTone twoToneColor={'#c20000'} />
+          )}
+          <Text type={'secondary'} style={{ marginLeft: 20 }}>
+            {result.content_name}
+          </Text>
+          <div style={{ flex: 1, margin: '0 16px' }}>
+            <Text
+              ellipsis={{ tooltip: result.content_name }}
+              style={{
+                fontSize: '14px',
+                fontWeight: 500,
+              }}
+            ></Text>
+          </div>
+        </Space>
+      }
+      collapsibleIconRender={({}) => {
+        return null;
       }}
       headerBordered
       collapsible
@@ -87,7 +88,7 @@ const AssertResult: FC<Props> = ({ result }) => {
     >
       {assert_data && assert_data.length > 0 && (
         <div style={{ marginTop: 8 }}>
-          <Divider orientation="left" plain>
+          <Divider orientation="horizontal" plain>
             <Space>
               <CheckCircleOutlined />
               <Text strong>断言详情</Text>

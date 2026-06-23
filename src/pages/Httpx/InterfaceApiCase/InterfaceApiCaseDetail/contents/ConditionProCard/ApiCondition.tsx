@@ -18,8 +18,8 @@ import {
   DeleteOutlined,
   LoadingOutlined,
   PlusOutlined,
-  RedoOutlined,
   SelectOutlined,
+  SyncOutlined,
 } from '@ant-design/icons';
 import {
   ActionType,
@@ -446,10 +446,10 @@ const ApiCondition: FC<SelfProps> = (props) => {
         <Divider style={{ margin: '16px 0' }} />
         <DragSortTable
           toolBarRender={() => [
-            <RedoOutlined
+            <Button
               style={{ fontSize: '14px', color: '#8b5cf6', marginRight: 12 }}
-              onClick={() => actionRef.current?.reload()}
-            />,
+              loading={{ icon: <SyncOutlined /> }}
+            ></Button>,
             <Dropdown
               arrow
               menu={{ items: dropdownItems }}

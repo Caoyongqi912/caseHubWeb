@@ -81,9 +81,8 @@ const ConditionResult: FC<Props> = ({ result }) => {
 
   const renderConditionDisplay = () => {
     if (!content_condition) return null;
-
     return (
-      <div style={styles.conditionBadge}>
+      <div>
         <span style={styles.keyText}>{content_condition.key}</span>
         <span style={styles.operatorText}>
           {OperatorOption[content_condition.operator]}
@@ -95,7 +94,7 @@ const ConditionResult: FC<Props> = ({ result }) => {
 
   return (
     <ProCard
-      bordered
+      variant={'outlined'}
       style={styles.card}
       title={
         <Space style={{ width: '100%', justifyContent: 'space-between' }}>

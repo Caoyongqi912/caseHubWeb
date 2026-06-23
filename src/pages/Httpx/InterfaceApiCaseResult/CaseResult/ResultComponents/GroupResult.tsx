@@ -34,7 +34,7 @@ const GroupResult: FC<Props> = ({ result }) => {
 
   return (
     <ProCard
-      bordered
+      variant={'outlined'}
       style={styles.card}
       collapsibleIconRender={() => (
         <div

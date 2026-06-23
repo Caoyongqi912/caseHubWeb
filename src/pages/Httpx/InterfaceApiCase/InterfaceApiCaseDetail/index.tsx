@@ -474,7 +474,14 @@ const Index: FC<SelfProps> = ({ interfaceCase, hiddenRunButton }) => {
       <Space size={12}>
         <Button
           icon={<SyncOutlined style={{ fontSize: 16 }} />}
-          loading={stepsLoading}
+          // 走 loading object 模式，加载中让同一个 SyncOutlined 旋转，
+          // 避免被 antd 默认 loading icon 替换掉。loading 为 false 时由
+          // icon prop 提供静态图标。
+          loading={
+            stepsLoading
+              ? { icon: <SyncOutlined spin style={{ fontSize: 16 }} /> }
+              : false
+          }
           onClick={handleRefreshSteps}
           style={{
             height: 36,

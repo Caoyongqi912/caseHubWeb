@@ -56,7 +56,7 @@ const BdResult: FC<Props> = ({ result }) => {
           <Text type="secondary">共 {db_query_result.length} 个变量</Text>
         )
       }
-      bordered
+      variant={'outlined'}
       style={{
         borderRadius: '5px',
         borderLeft: `3px solid ${db_query_result ? '#52c41a' : '#ff4d4f'}`,

@@ -193,11 +193,9 @@ const AssertContentCard: FC<Props> = (props) => {
 
   return (
     <ProCard
-      variant="outlined"
       collapsible
       hoverable
       defaultCollapsed
-      styles={{ body: { padding: 0 } }}
       style={{
         borderRadius: '16px',
         boxShadow: showOption
@@ -224,7 +222,6 @@ const AssertContentCard: FC<Props> = (props) => {
     >
       <ProCard
         style={{
-          background: `linear-gradient(180deg, ${token.colorBgContainer} 0%, ${token.colorBgLayout} 100%)`,
           padding: '20px 24px',
         }}
       >
