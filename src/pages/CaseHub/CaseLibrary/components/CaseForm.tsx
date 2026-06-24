@@ -73,6 +73,12 @@ const CaseForm: FC<Props> = ({
         project_id,
         module_id,
         is_common: is_common,
+        // case_platform: 多选 array -> CSV 字符串, 去重避免后端存 "PC,PC,xxx"
+        case_platform: Array.isArray(values.case_platform)
+          ? Array.from(
+              new Set((values.case_platform as string[]).filter(Boolean)),
+            ).join(',') || undefined
+          : values.case_platform,
         case_sub_steps: steps.map((step) => ({
           order: step.order,
           action: step.action,

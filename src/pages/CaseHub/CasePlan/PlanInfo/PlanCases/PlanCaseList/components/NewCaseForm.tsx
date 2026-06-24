@@ -63,6 +63,13 @@ const NewCaseForm: FC<Props> = ({ onSubmit }) => {
     (values: Record<string, unknown>) => {
       return {
         ...values,
+        // case_platform: 多选 array -> CSV 字符串, Array.from(new Set(...)) 去重
+        // 避免用户不小心点重复项时后端存 "PC,PC,xxx" 这种脏数据
+        case_platform: Array.isArray(values.case_platform)
+          ? Array.from(
+              new Set((values.case_platform as string[]).filter(Boolean)),
+            ).join(',') || undefined
+          : values.case_platform,
         case_sub_steps: steps.map((step) => ({
           order: step.order,
           action: step.action,

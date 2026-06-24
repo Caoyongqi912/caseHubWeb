@@ -132,6 +132,7 @@ const CaseRow: React.FC<{
         ...style,
         display: 'block',
         boxSizing: 'border-box',
+        padding: 8,
         // 卡片之间留 4px 视觉间隙（itemSize 已在 EXPANDED_HEIGHT 计入此 padding）
         paddingBottom: 4,
       }}
@@ -730,12 +731,27 @@ const Index: FC<PlanCaseListProps> = ({
    * 约等于 ProCard headerBordered 区域 + padding
    */
   const COLLAPSED_HEIGHT = 52;
+  /**
+   * 用例前置条件 (case_setup) 块的估算高度
+   * 对应 CaseItem 内 caseSetupBlock 的渲染高度:
+   *   padding 4px(top) + 6px(bottom) + 内部 16~20px 文字行高 ≈ 28~30px
+   * 取 32 与 STEP_ROW_HEIGHT 对齐, 后续要调 CaseItem 排版时记得同步这里,
+   * 否则虚拟列表铺位会跟实际 DOM 错位, 表现为 "下一步骤被覆盖"
+   */
+  const CASE_SETUP_BLOCK_HEIGHT = 32;
 
   /**
    * 行高查表：key=caseId, value=估算高度
    * 通过 useMemo 在 filteredList / collapsedCaseIds 变化时一次性算好，
    * 让 itemSize 回调本身保持纯函数 + 稳定依赖（不读 filteredList 引用），
    * 避免任何 setState 重建 itemSize 引用从而触发 VariableSizeList 全表重测。
+   *
+   * 高度规则:
+   *   - 折叠态: 仅 header, 不渲染 caseSetupBlock / StepTable, 高度 = COLLAPSED_HEIGHT
+   *   - 展开态: header + caseSetupBlock + StepTable,
+   *     高度 = EXPANDED_BASE + stepCount * STEP_ROW_HEIGHT + CASE_SETUP_BLOCK_HEIGHT
+   *     展开态每张卡片都追加 caseSetupBlock 高度, 不管有没有 case_setup,
+   *     让有/无前置 case 行高一致, 避免虚拟列表铺位错乱.
    */
   const heightByCaseId = useMemo(() => {
     const map = new Map<number, number>();
@@ -745,7 +761,10 @@ const Index: FC<PlanCaseListProps> = ({
         map.set(tc.id, COLLAPSED_HEIGHT);
       } else {
         const stepCount = tc.case_sub_steps?.length || 0;
-        map.set(tc.id, EXPANDED_BASE + stepCount * STEP_ROW_HEIGHT);
+        map.set(
+          tc.id,
+          EXPANDED_BASE + stepCount * STEP_ROW_HEIGHT + CASE_SETUP_BLOCK_HEIGHT,
+        );
       }
     }
     return map;

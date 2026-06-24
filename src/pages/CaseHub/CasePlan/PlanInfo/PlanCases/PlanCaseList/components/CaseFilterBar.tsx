@@ -448,7 +448,7 @@ const CaseFilterBar: FC<CaseFilterBarProps> = ({
       )?.label;
       chips.push({
         key: 'casePlatform',
-        label: '适用端',
+        label: '多选适用端',
         value: platformLabel ?? filters.casePlatform,
         onRemove: () =>
           onFilterChange?.({ ...filters, casePlatform: undefined }),
@@ -570,7 +570,7 @@ const CaseFilterBar: FC<CaseFilterBarProps> = ({
                 />
               </FilterGroup>
 
-              <FilterGroup title="适用端" colors={colors} spacing={spacing}>
+              <FilterGroup title="多选适用端" colors={colors} spacing={spacing}>
                 <Select
                   allowClear
                   placeholder="选择适用端"

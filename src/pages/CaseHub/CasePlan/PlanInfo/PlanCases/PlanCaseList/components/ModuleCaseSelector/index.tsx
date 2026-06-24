@@ -1018,7 +1018,7 @@ const ModuleCaseSelector: FC<ModuleCaseSelectorProps> = ({
                       marginBottom: 4,
                     }}
                   >
-                    适用端
+                    多选适用端
                   </div>
                   <Select
                     allowClear

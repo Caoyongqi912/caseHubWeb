@@ -95,7 +95,12 @@ export const useCaseFilter = (
     }
 
     if (filters.casePlatform !== undefined) {
-      result = result.filter((c) => c.case_platform === filters.casePlatform);
+      // case_platform 存的是 CSV 字符串 (如 "PC,H5"), 用 includes 判断是否包含筛选值
+      result = result.filter((c) =>
+        c.case_platform
+          ? c.case_platform.split(',').includes(filters.casePlatform as string)
+          : false,
+      );
     }
 
     return result;

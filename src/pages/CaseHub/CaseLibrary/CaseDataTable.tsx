@@ -463,28 +463,32 @@ const CaseDataTable: FC<Props> = (props) => {
         ),
       },
       {
-        title: '适用端',
+        title: '多选适用端',
         dataIndex: 'case_platform',
         valueType: 'select',
         valueEnum: platformValueEnum,
         width: '10%',
-        render: (_, record: ITestCase) => (
-          <Text
-            type="secondary"
-            ellipsis={{
-              tooltip: record.case_platform
-                ? platformValueEnum[record.case_platform]?.text ||
-                  record.case_platform
-                : '-',
-            }}
-            style={{ fontWeight: 500 }}
-          >
-            {record.case_platform
-              ? platformValueEnum[record.case_platform]?.text ||
-                record.case_platform
-              : '-'}
-          </Text>
-        ),
+        render: (_, record: ITestCase) => {
+          // 后端存的是 CSV 字符串 (如 "PC,H5"), 拆开逐个取 valueEnum 的中文名再拼回来
+          // Array.from(new Set(...)) 同时去重避免 "PC,PC" 这种脏数据展示成两个 Tag
+          const raw = record.case_platform;
+          if (!raw) {
+            return <Text type="secondary">-</Text>;
+          }
+          const labels = Array.from(
+            new Set(raw.split(',').filter(Boolean)),
+          ).map((p) => platformValueEnum[p]?.text || p);
+          const display = labels.join('、');
+          return (
+            <Text
+              type="secondary"
+              ellipsis={{ tooltip: display }}
+              style={{ fontWeight: 500 }}
+            >
+              {display}
+            </Text>
+          );
+        },
       },
       {
         title: '创建人',

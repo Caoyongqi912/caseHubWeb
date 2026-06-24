@@ -3,7 +3,6 @@ import { useCaseHubTheme } from '@/pages/CaseHub/styles';
 import {
   DownOutlined,
   HolderOutlined,
-  InfoCircleOutlined,
   MoreOutlined,
   UpOutlined,
 } from '@ant-design/icons';
@@ -11,12 +10,12 @@ import { ProCard } from '@ant-design/pro-components';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import {
+  BorderBeam,
   Button,
   Checkbox,
   Dropdown,
   message,
   Modal,
-  Popover,
   Space,
   Tag,
   Tooltip,
@@ -38,7 +37,7 @@ import {
 } from '@/api/case/caseplan';
 import MyDrawer from '@/components/MyDrawer';
 import TestCaseDetail from '@/pages/CaseHub/CaseLibrary/TestCaseDetail';
-import { ITestCase } from '@/pages/CaseHub/types';
+import { CaseSubStep, ITestCase } from '@/pages/CaseHub/types';
 
 import { createMoreMenuItems } from './moreMenu';
 import { StatusConfig, useDynamicStatusConfig } from './statusConfig';
@@ -128,7 +127,7 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
   const isReview = testCase.is_review ?? '';
 
   /**
-   * 用例一/二轮状态的本地覆盖 (可控 state).
+   * 用例二轮状态的本地覆盖 (可控 state).
    *
    * 为什么要 local state:
    * 1) 步骤聚合联动: 用户改完 step 状态 -> 子组件 onStepStatusesChange 回调
@@ -140,9 +139,6 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
    * 同步策略 (见下方 useEffect): testCase prop 变化 (含 refetch 拿到新值)
    * 时同步本地 state, 让后端数据回流后覆盖乐观更新.
    */
-  const [firstStatus, setFirstStatus] = useState<string>(
-    () => testCase.first_status ?? '',
-  );
   const [secondStatus, setSecondStatus] = useState<string>(
     () => testCase.second_status ?? '',
   );
@@ -151,9 +147,6 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
    * prop 同步: testCase.first/second_status 变化时 (refetch / 外部更新)
    * 拉齐本地 state. 仅依赖具体字段, 避免 testCase 引用变化导致无谓重置.
    */
-  useEffect(() => {
-    setFirstStatus(testCase.first_status ?? '');
-  }, [testCase.first_status]);
   useEffect(() => {
     setSecondStatus(testCase.second_status ?? '');
   }, [testCase.second_status]);
@@ -165,11 +158,7 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
    *   重复渲染
    */
   const handleStepStatusesChange = useCallback((steps: CaseSubStep[]) => {
-    const newFirst = aggregateStepStatuses(steps, 'first_status');
     const newSecond = aggregateStepStatuses(steps, 'second_status');
-    setFirstStatus((prev) =>
-      newFirst !== null && newFirst !== prev ? newFirst : prev,
-    );
     setSecondStatus((prev) =>
       newSecond !== null && newSecond !== prev ? newSecond : prev,
     );
@@ -214,6 +203,18 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
         background: 'rgba(22, 119, 255, 0.04)',
       }
     : {};
+
+  /**
+   * 边框光束 (BorderBeam) 显示控制
+   * 需求: 卡片未 hover 时不显示光束, 鼠标进入后才显示, 离开后淡出
+   * 实现: ProCard 自身已有 hoverable (自带 hover 边框/阴影),
+   * 在它上面挂 onMouseEnter / onMouseLeave 维护本地 isHovered,
+   * BorderBeam 的 opacity 跟 state 联动即可。
+   * 注意: BorderBeam 内部 effect 容器 (portal 到 ProCard 内部的那个 div)
+   * 默认 pointerEvents: none, 不会拦截 ProCard 的 mouse 事件,
+   * 所以光束不会挡住光标、不会导致 onMouseLeave 误触发。
+   */
+  const [isHovered, setIsHovered] = useState(false);
 
   const [switchingReview, setSwitchingReview] = useState(false);
   const [switchingSecondStatus, setSwitchingSecondStatus] = useState(false);
@@ -590,12 +591,10 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
             <DownOutlined style={{ fontSize: 10, opacity: 0.6 }} />
           </Tag>
         </Dropdown>
-        {(() => {
-          // 标题点击 → 打开详情; hover 行为按下面三档分支:
-          //   1) 有前置: Popover, 内容展示用例前置 (附带完整用例名当 title)
-          //   2) 长名无前置: Tooltip, 显示完整用例名
-          //   3) 短名无前置: 裸 Text
-          const nameText = (
+        {needNameTooltip ? (
+          // 长名截断: hover Tooltip 展示完整名称
+          // 短名走下面裸 Text, 避免不必要 hover 拦截
+          <Tooltip title={caseName} mouseEnterDelay={0.3}>
             <Text
               strong
               style={{ cursor: 'pointer' }}
@@ -606,55 +605,19 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
             >
               {truncatedName}
             </Text>
-          );
-          if (caseSetup) {
-            return (
-              <Popover
-                trigger="hover"
-                mouseEnterDelay={0.3}
-                placement="bottomLeft"
-                title={
-                  <span
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 4,
-                    }}
-                  >
-                    <InfoCircleOutlined style={{ fontSize: 12 }} />
-                    用例前置
-                  </span>
-                }
-                content={
-                  <div
-                    style={{
-                      maxWidth: 380,
-                      maxHeight: 280,
-                      overflow: 'auto',
-                      whiteSpace: 'pre-wrap',
-                      wordBreak: 'break-word',
-                      fontSize: 12,
-                      lineHeight: 1.6,
-                      color: colors.textSecondary,
-                    }}
-                  >
-                    {caseSetup}
-                  </div>
-                }
-              >
-                {nameText}
-              </Popover>
-            );
-          }
-          if (needNameTooltip) {
-            return (
-              <Tooltip title={caseName} mouseEnterDelay={0.3}>
-                {nameText}
-              </Tooltip>
-            );
-          }
-          return nameText;
-        })()}
+          </Tooltip>
+        ) : (
+          <Text
+            strong
+            style={{ cursor: 'pointer' }}
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsDetailOpen(true);
+            }}
+          >
+            {truncatedName}
+          </Text>
+        )}
       </Space>
     ),
     [
@@ -664,13 +627,11 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
       switchingReview,
       handleReviewSelect,
       testCase.case_name,
-      testCase.case_setup,
       onSelectedChange,
       isSortable,
       truncatedName,
       needNameTooltip,
       caseName,
-      caseSetup,
     ],
   );
 
@@ -720,45 +681,146 @@ const CaseItem: React.FC<CaseItemProps> = React.memo((props) => {
       ref={isSortable ? setNodeRef : undefined}
       style={{ ...sortableStyle, ...blockPeerStyle }}
     >
-      <ProCard
-        title={cardTitle}
-        variant="outlined"
-        headerBordered
-        extra={cardExtra}
-        styles={{
-          // 折叠时彻底隐藏 body 容器（display:none + 条件渲染双重保障）
-          // 不再依赖 ProCard 自带的 collapsible，完全自主控制
-          body: collapsed
-            ? {
-                display: 'none',
-                padding: 0,
-                margin: 0,
-                overflow: 'hidden',
-                height: 0,
-              }
-            : { padding: 2 },
-          header: {
-            padding: '6px 12px',
-            cursor: 'pointer',
-          },
+      <BorderBeam
+        style={{
+          opacity: isHovered ? 1 : 0,
+          transition: 'opacity 0.25s ease',
         }}
       >
-        {/*
-         * 关键：折叠时彻底卸载 StepTable（条件渲染）
-         * 配合 styles.body 的 display:none，双重保障确保：
-         * 1. DOM 节点被移除（条件渲染）
-         * 2. body 容器本身也不占空间（CSS 隐藏）
-         */}
-        {!collapsed && (
-          <StepTable
-            steps={testCase.case_sub_steps || []}
-            planId={planId}
-            firstStatus={firstStatus}
-            secondStatus={secondStatus}
-            onStepStatusesChange={handleStepStatusesChange}
-          />
-        )}
-      </ProCard>
+        <ProCard
+          // hoverable: 鼠标悬浮时整张卡片有边框/阴影高亮,
+          // 列表多 case 场景下让用户清楚看到光标定位在哪一条
+          hoverable
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+          title={cardTitle}
+          variant="outlined"
+          headerBordered
+          extra={cardExtra}
+          styles={{
+            // 折叠态: body 容器彻底隐藏 (display:none + 0 height + overflow hidden),
+            // 避免 ProCard 自带 body padding / border 在 header 下方留白,
+            // 视觉上看起来 "折叠后仍有一点点空白".
+            // 展开态: body 正常 padding, caseSetupBlock + StepTable 都在里面.
+            body: collapsed
+              ? {
+                  display: 'none',
+                  padding: 0,
+                  margin: 0,
+                  overflow: 'hidden',
+                  height: 0,
+                }
+              : { padding: 2 },
+            header: {
+              padding: '6px 12px',
+              cursor: 'pointer',
+            },
+          }}
+        >
+          {/*
+           * 用例前置条件 (case_setup) 直接渲染在步骤上方
+           * 需求: 不再用 Popover 弹出, 卡片展开 / 折叠两种状态都要可见
+           * 排版约束:
+           *   - 强制一行 (whiteSpace: nowrap), 即便内容有 \n 换行
+           *   - 过长截断 + ellipsis, hover Tooltip 展示完整内容
+           *   - Tooltip 内保留原换行 (whiteSpace: pre-line), 多行用户也能看全
+           * 视觉:
+           *   - 有前置: "前置" tag + 灰底小字前缀, hover 弹完整 setup
+           *   - 无前置: "无前置" tag 占位, 让每张卡片都有同样的视觉锚点,
+           *     也避免无前置 case 跟有前置 case 行高不同导致虚拟列表铺位错乱
+           *   - 整体主色贴近次要文本色, 不跟标题强抢视觉权重
+           *
+           * 行高约束: 展开态永远渲染此块, 让父级 heightByCaseId 能稳定 +CASE_SETUP_BLOCK_HEIGHT,
+           * 折叠态不渲染 (跟 StepTable 一起在 !collapsed 里),
+           * 折叠态不 + 这一行, 父级高度计算才不会跟实际 DOM 错位
+           */}
+
+          {/*
+           * 折叠态整个 caseSetupBlock + StepTable 一起不渲染:
+           *   - 视觉上折叠卡片只显示 header, 不再有 "无前置" 占位留白
+           *   - 父级 heightByCaseId 折叠态不追加 CASE_SETUP_BLOCK_HEIGHT
+           * 如果后续想把 case_setup 信息挪到 header 行的 hover Tooltip 展示,
+           * 在 cardTitle 那块挂一个 Tooltip 即可, 不需要再渲染此块
+           */}
+          {!collapsed && (
+            <>
+              <Tooltip
+                mouseEnterDelay={0.3}
+                title={
+                  caseSetup ? (
+                    <div
+                      style={{
+                        whiteSpace: 'pre-line',
+                        wordBreak: 'break-word',
+                        maxWidth: 380,
+                        maxHeight: 240,
+                        overflow: 'auto',
+                      }}
+                    >
+                      {caseSetup}
+                    </div>
+                  ) : (
+                    <span>该用例未填写前置条件</span>
+                  )
+                }
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '4px 8px 6px',
+                    fontSize: 12,
+                    lineHeight: 1.6,
+                    color: colors.textSecondary,
+                    borderBottom: collapsed
+                      ? 'none'
+                      : '1px dashed ' + colors.borderSecondary,
+                    cursor: caseSetup ? 'help' : 'default',
+                  }}
+                >
+                  <Tag
+                    color="default"
+                    style={{
+                      margin: 0,
+                      flexShrink: 0,
+                      fontSize: 11,
+                      lineHeight: '16px',
+                      padding: '0 6px',
+                      background: colors.bgLayout,
+                      borderColor: colors.borderSecondary,
+                      color: colors.textTertiary,
+                    }}
+                  >
+                    {caseSetup ? '前置' : '无前置'}
+                  </Tag>
+                  <span
+                    style={{
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      flex: 1,
+                      minWidth: 0,
+                      color: caseSetup
+                        ? colors.textSecondary
+                        : colors.textTertiary,
+                    }}
+                  >
+                    {caseSetup || '-'}
+                  </span>
+                </div>
+              </Tooltip>
+              <StepTable
+                steps={testCase.case_sub_steps || []}
+                planId={planId}
+                secondStatus={secondStatus}
+                onStepStatusesChange={handleStepStatusesChange}
+              />
+            </>
+          )}
+        </ProCard>
+      </BorderBeam>
+
       <MyDrawer
         width={'60%'}
         open={isDetailOpen}

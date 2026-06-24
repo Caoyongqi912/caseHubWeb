@@ -10,6 +10,7 @@ import {
   ApartmentOutlined,
   AuditOutlined,
   DesktopOutlined,
+  ExperimentOutlined,
   FlagOutlined,
   RocketOutlined,
   SettingOutlined,

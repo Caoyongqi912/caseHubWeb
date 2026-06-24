@@ -94,8 +94,15 @@ const TestCaseDetail: FC<Props> = ({ planId, testcase, callback }: Props) => {
   /** 同步 testcase 数据到表单 */
   useEffect(() => {
     if (!testcase) return;
-    console.log(testcase);
-    form.setFieldsValue(testcase);
+    // case_platform 后端存的是 CSV 字符串 (如 "PC,H5"),
+    // ProFormSelect mode=multiple 要 array 才能匹配 options 显示中文 label,
+    // Array.from(new Set(...)) 同时去重避免 "PC,PC,xxx" 这种脏数据回显
+    form.setFieldsValue({
+      ...testcase,
+      case_platform: testcase.case_platform
+        ? Array.from(new Set(testcase.case_platform.split(','))).filter(Boolean)
+        : [],
+    });
   }, [testcase, form]);
 
   /** 加载测试步骤数据 */
@@ -231,7 +238,11 @@ const TestCaseDetail: FC<Props> = ({ planId, testcase, callback }: Props) => {
         allValues.case_level !== testcase.case_level ||
         allValues.case_type !== testcase.case_type ||
         allValues.case_tag !== testcase.case_tag ||
-        allValues.case_platform !== testcase.case_platform;
+        // allValues.case_platform 是 array (ProFormSelect multiple 形态),
+        // testcase.case_platform 是后端存的 CSV 字符串, 统一 join 后再比较
+        (Array.isArray(allValues.case_platform)
+          ? allValues.case_platform.join(',')
+          : allValues.case_platform || '') !== (testcase.case_platform || '');
 
       if (hasChanges) {
         if (saveTimeoutRef.current) {
@@ -247,7 +258,13 @@ const TestCaseDetail: FC<Props> = ({ planId, testcase, callback }: Props) => {
             case_mark: allValues.case_mark,
             case_tag: allValues.case_tag,
             case_setup: allValues.case_setup,
-            case_platform: allValues.case_platform,
+            case_platform: Array.isArray(allValues.case_platform)
+              ? Array.from(
+                  new Set(
+                    (allValues.case_platform as string[]).filter(Boolean),
+                  ),
+                ).join(',') || undefined
+              : allValues.case_platform,
           } as ITestCase);
 
           if (code === 0) {
@@ -441,6 +458,7 @@ const TestCaseDetail: FC<Props> = ({ planId, testcase, callback }: Props) => {
                   fieldProps={{ variant: 'filled' }}
                   width={'md'}
                   allowClear
+                  mode={'multiple'}
                 />
               </ProForm.Group>
               {/* 标签 */}

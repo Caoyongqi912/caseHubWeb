@@ -30,12 +30,6 @@ interface StepTableProps {
   steps: CaseSubStep[];
   planId?: string;
   /**
-   * 父用例一轮测试状态（可选）
-   * 仅在首次渲染、子步骤自身无值时用于兜底填充，
-   * 父用例状态后续变化【不再】级联到子步骤
-   */
-  firstStatus?: string;
-  /**
    * 父用例二轮测试状态（可选）
    * 仅在首次渲染、子步骤自身无值时用于兜底填充，
    * 父用例状态后续变化【不再】级联到子步骤
@@ -63,7 +57,6 @@ interface StepTableProps {
 const StepTable: React.FC<StepTableProps> = ({
   steps,
   planId,
-  firstStatus,
   secondStatus,
   onStepStatusesChange,
 }) => {
@@ -108,7 +101,7 @@ const StepTable: React.FC<StepTableProps> = ({
    * 会出现父用例改了状态、所有子步骤都被强制刷成相同状态的副作用
    * (覆盖了 labelRender 的"未开始"判断)。
    *
-   * 注意: 仅依赖 steps,firstStatus / secondStatus 的后续变化不再触发本 effect。
+   * 注意: 仅依赖 steps / secondStatus 的后续变化不再触发本 effect。
    * 二轮状态的级联同步由下方单独的 useEffect 负责(且仅在 prop 真正变化时触发)。
    */
   useEffect(() => {
@@ -331,41 +324,73 @@ const StepTable: React.FC<StepTableProps> = ({
       },
       {
         title: '预期',
-        width: '20%',
+        width: '15%',
         dataIndex: 'expected_result',
         ellipsis: true,
         editable: false,
-        render: (_, record: CaseSubStep) => (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              width: '100%',
-            }}
-          >
-            <Tooltip title={record.expected_result || '-'}>
-              <span
-                style={{
-                  flex: 1,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}
+        render: (_, record: CaseSubStep) => {
+          // 截断 + Tooltip
+          // - 把内容里 \n 替换成空格, 避免硬换行让 ellipsis 失效
+          // - 字符数超过 MAX_EXPECTED_LEN 就截断 + 省略号
+          // - Tooltip 展示原始完整内容 (含换行), 用户 hover 看全
+          // - 空值用 "-" 占位, 跟其它列风格统一
+          const raw = record.expected_result ?? '';
+          const singleLine = raw.replace(/\s*\n\s*/g, ' ').trim();
+          const MAX_EXPECTED_LEN = 40;
+          const truncated =
+            singleLine.length > MAX_EXPECTED_LEN
+              ? singleLine.slice(0, MAX_EXPECTED_LEN) + '…'
+              : singleLine;
+          return (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                width: 'auto',
+              }}
+            >
+              <Tooltip
+                title={
+                  raw ? (
+                    <div
+                      style={{
+                        whiteSpace: 'pre-line',
+                        wordBreak: 'break-word',
+                        maxWidth: 360,
+                        maxHeight: 240,
+                        overflow: 'auto',
+                      }}
+                    >
+                      {raw}
+                    </div>
+                  ) : (
+                    '-'
+                  )
+                }
               >
-                <Text type="secondary">{record.expected_result || '-'}</Text>
-              </span>
-            </Tooltip>
-            <Tooltip title="复制到实际结果">
-              <Button
-                type="text"
-                size="small"
-                icon={<CheckOutlined style={{ color: 'green' }} />}
-                onClick={() => handleCopyExpectedToActual(record)}
-              />
-            </Tooltip>
-          </div>
-        ),
+                <span
+                  style={{
+                    flex: 1,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  <Text type="secondary">{truncated || '-'}</Text>
+                </span>
+              </Tooltip>
+              <Tooltip title="复制到实际结果">
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<CheckOutlined style={{ color: 'green' }} />}
+                  onClick={() => handleCopyExpectedToActual(record)}
+                />
+              </Tooltip>
+            </div>
+          );
+        },
       },
       {
         title: '实际结果',
@@ -397,10 +422,10 @@ const StepTable: React.FC<StepTableProps> = ({
           ),
       },
       {
-        title: '一轮测试状态',
+        title: '一轮状态',
         key: 'first_status',
         dataIndex: 'first_status',
-        width: '11%',
+        width: '10%',
         formItemRender: (_, { record }) => (
           <Select
             variant="underlined"
@@ -433,10 +458,10 @@ const StepTable: React.FC<StepTableProps> = ({
         ),
       },
       {
-        title: '二轮测试状态',
+        title: '二轮状态',
         key: 'second_status',
         dataIndex: 'second_status',
-        width: '11%',
+        width: '10%',
         formItemRender: (_, { record }) => (
           <Select
             variant="underlined"
@@ -520,6 +545,7 @@ const StepTable: React.FC<StepTableProps> = ({
 
   return (
     <EditableProTable
+      bordered={false}
       editableFormRef={editorFormRef}
       value={dataSource}
       size="small"
@@ -546,9 +572,7 @@ const StepTable: React.FC<StepTableProps> = ({
               (s) => s.id === changedRecord.id,
             );
             if (prev) {
-              if (prev.first_status !== changedRecord.first_status) {
-                statusFieldChanged = true;
-              } else if (prev.second_status !== changedRecord.second_status) {
+              if (prev.second_status !== changedRecord.second_status) {
                 statusFieldChanged = true;
               }
             }

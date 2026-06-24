@@ -47,7 +47,7 @@ const BatchEditModal: FC<BatchEditModalProps> = ({
   const [caseTag, setCaseTag] = useState<string>('');
   const [caseLevel, setCaseLevel] = useState<string | undefined>(undefined);
   const [caseType, setCaseType] = useState<number | undefined>(undefined);
-  const [casePlatform, setCasePlatform] = useState<string | undefined>(
+  const [casePlatform, setCasePlatform] = useState<string[] | undefined>(
     undefined,
   );
   const [changeLevel, setChangeLevel] = useState(false);
@@ -72,7 +72,11 @@ const BatchEditModal: FC<BatchEditModalProps> = ({
     if (caseTag) values.case_tag = caseTag;
     if (changeLevel && caseLevel) values.case_level = caseLevel;
     if (changeType && caseType) values.case_type = caseType;
-    if (changePlatform && casePlatform) values.case_platform = casePlatform;
+    if (changePlatform && casePlatform?.length) {
+      values.case_platform = Array.from(
+        new Set(casePlatform.filter(Boolean)),
+      ).join(',');
+    }
 
     if (
       !values.case_tag &&
@@ -232,7 +236,7 @@ const BatchEditModal: FC<BatchEditModalProps> = ({
               }}
               style={{ marginRight: 8 }}
             />
-            适用端
+            多选适用端
           </label>
           {changePlatform && (
             <Select
@@ -241,7 +245,7 @@ const BatchEditModal: FC<BatchEditModalProps> = ({
               value={casePlatform}
               onChange={setCasePlatform}
               options={platformSelectOptions}
-              allowClear
+              mode="multiple"
             />
           )}
         </div>
